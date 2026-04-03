@@ -62,6 +62,8 @@ const config: Config = {
       logo: {
         alt: 'Prof by Lex AI',
         src: 'img/lexailogo.svg',
+        href: 'https://prof-lexai.vercel.app/',
+        target: '_self',
       },
       items: [],
     },
