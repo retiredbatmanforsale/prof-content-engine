@@ -64,68 +64,6 @@ const sidebars: SidebarsConfig = {
         'ai-for-engineering/agentic-ai/intro',
       ],
     },
-    {
-      type: 'category',
-      label: 'Machine Learning',
-      items: [
-        'machine-learning/intro',
-        'machine-learning/supervised-learning',
-        'machine-learning/logistic_regression_tutorial',
-      ],
-    },
-    {
-      type: 'category',
-      label: 'Deep Learning',
-      items: [
-        'deep-learning/intro',
-        'deep-learning/perceptron',
-        'deep-learning/CNNS',
-        'deep-learning/RNNs',
-      ],
-    },
-    {
-      type: 'category',
-      label: 'Language Models',
-      items: [
-        'language-models/intro',
-        'language-models/Tokenization',
-        'language-models/AttentionMechanism',
-        'language-models/NNTraining',
-        'language-models/NNInference',
-        'language-models/NNInternals',
-        'language-models/PostTraining',
-        'language-models/EvolutionGpt2',
-        'language-models/BaseModels',
-        'language-models/Hallucinations',
-        'language-models/LLMIdentity',
-        'language-models/ThinkingInTokens',
-        'language-models/LLMInconsistencies',
-        'language-models/PostTrainingReinforcementLearning',
-        'language-models/LoRAFineTuning',
-        'language-models/RAGAgents',
-        'language-models/ThinkingRL',
-        'language-models/ReinforcementLearning',
-        'language-models/LLMJudgement',
-        'language-models/Multimodality',
-        'language-models/Evaluation',
-        'language-models/AccessingLLMs',
-        'language-models/QueryToResponse',
-      ],
-    },
-    {
-      type: 'category',
-      label: 'Interactive Tutorials',
-      items: [
-        'tutorials/logistic-regression',
-      ],
-    },
-    {
-      type: 'category',
-      label: 'Resources',
-      items: [
-        'resources/intro',
-      ],
-    },
   ],
 };
 
