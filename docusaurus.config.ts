@@ -9,7 +9,7 @@ const config: Config = {
   tagline: 'Prof by Lex AI – community-driven platform for Machine Learning, Deep Learning, and Language Models',
   favicon: 'img/lexailogo.svg',
 
-  url: process.env.SITE_URL || 'https://content.lexailabs.com',
+  url: process.env.SITE_URL || 'https://docusaurus-lexailabs.vercel.app',
   baseUrl: '/',
 
   organizationName: 'rachit-k12',

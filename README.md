@@ -2,7 +2,7 @@
 
 The course content platform for **[Prof by Lex AI](https://prof-lexai.vercel.app/)**. Built with [Docusaurus](https://docusaurus.io/), it serves structured courses on AI and Machine Learning, rendered from MDX files with LaTeX math support.
 
-**Live site:** [content.lexailabs.com](https://content.lexailabs.com)
+**Live site:** [docusaurus-lexailabs.vercel.app](https://docusaurus-lexailabs.vercel.app/) (will move to [content.lexailabs.com](https://content.lexailabs.com) in the future)
 
 ## Courses
 
