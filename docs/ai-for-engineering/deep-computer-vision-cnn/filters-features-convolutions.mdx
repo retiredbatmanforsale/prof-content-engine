@@ -1,0 +1,351 @@
+---
+sidebar_label: '7 · Filters & feature maps'
+title: 'Lesson 7 — Filters, Features, and the Power of Convolutions'
+description: >-
+  How filters detect edges and shapes, the math of convolution, classic Sobel
+  kernels, and what CNNs learn instead of hand-coded matrices.
+---
+
+import imageXConvolutionLesson7 from './image-x-convolution-lesson7.png';
+
+# Filters, Features, and the Power of Convolutions
+
+## The Feature Detection Power of Convolutions
+
+So far, we&apos;ve learned that:
+
+<div className="not-prose my-6 grid gap-3 md:grid-cols-3">
+  <div className="rounded-xl border-2 border-rose-300 bg-rose-50/90 p-4 dark:border-rose-900/45 dark:bg-rose-950/25">
+    <p className="m-0 text-xs font-bold uppercase tracking-wide text-rose-800 dark:text-rose-300">Fully connected</p>
+    <p className="mt-2 mb-0 text-sm text-slate-800 dark:text-slate-200">
+      Fully connected networks <strong>DISCARD SPATIAL</strong> structure.
+    </p>
+  </div>
+  <div className="rounded-xl border-2 border-teal-300 bg-teal-50/90 p-4 dark:border-teal-800 dark:bg-teal-950/30">
+    <p className="m-0 text-xs font-bold uppercase tracking-wide text-teal-800 dark:text-teal-300">Convolutions</p>
+    <p className="mt-2 mb-0 text-sm text-slate-800 dark:text-slate-200">
+      Convolutions preserve <strong>SPATIALITY</strong> by operating locally.
+    </p>
+  </div>
+  <div className="rounded-xl border-2 border-violet-300 bg-violet-50/90 p-4 dark:border-violet-800 dark:bg-violet-950/30">
+    <p className="m-0 text-xs font-bold uppercase tracking-wide text-violet-800 dark:text-violet-300">Each filter</p>
+    <p className="mt-2 mb-0 text-sm text-slate-800 dark:text-slate-200">
+      Each <strong>FILTER</strong>/<strong>KERNEL</strong> detects a specific pattern by sliding over the image.
+    </p>
+  </div>
+</div>
+
+But **how exactly** does a filter detect features like *edges*, *textures*, or *shapes*?
+
+Let&apos;s answer that through an example.
+
+---
+
+## Detecting Shapes: The Case of an &quot;X&quot;
+
+Suppose you&apos;re trying to detect whether an image contains an **X** — *not necessarily centered*, possibly *rotated* or *distorted*. You could:
+
+<div className="not-prose my-5 space-y-3 rounded-xl border border-slate-200 bg-slate-50/80 p-4 dark:border-slate-700 dark:bg-slate-900/40">
+  <p className="m-0 text-sm font-semibold text-slate-800 dark:text-slate-100">You could:</p>
+  <ul className="m-0 list-none space-y-3 p-0 text-sm text-slate-800 dark:text-slate-200">
+    <li className="flex gap-2">
+      <span className="font-bold text-rose-600 dark:text-rose-400">•</span>
+      <span>
+        Compare the input image <strong>pixel by pixel</strong> with a prototype X (but this <em>fails under deformation</em>),
+      </span>
+    </li>
+    <li className="flex gap-2">
+      <span className="font-bold text-teal-600 dark:text-teal-400">•</span>
+      <span>
+        <strong>Or</strong>, break the image into <strong>patches</strong>, and search for <strong>elemental components</strong> of an X:
+      </span>
+    </li>
+  </ul>
+</div>
+
+<div className="not-prose my-5 flex flex-wrap gap-2">
+  <span className="rounded-full border-2 border-indigo-400 bg-indigo-50 px-4 py-2 text-sm font-semibold text-indigo-900 dark:border-indigo-600 dark:bg-indigo-950/40 dark:text-indigo-200">a forward diagonal</span>
+  <span className="rounded-full border-2 border-fuchsia-400 bg-fuchsia-50 px-4 py-2 text-sm font-semibold text-fuchsia-900 dark:border-fuchsia-600 dark:bg-fuchsia-950/40 dark:text-fuchsia-200">a backward diagonal</span>
+  <span className="rounded-full border-2 border-cyan-400 bg-cyan-50 px-4 py-2 text-sm font-semibold text-cyan-900 dark:border-cyan-600 dark:bg-cyan-950/40 dark:text-cyan-200">a crossing pattern</span>
+</div>
+
+Instead of recognizing the **full structure** all at once, we **detect and recombine** parts of it.
+
+These **elemental detectors** are what **filters** are for. Each filter is a **small matrix** (e.g., **3×3**) that looks for a basic pattern:
+
+<div className="not-prose my-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+  {[
+    { label: 'A diagonal line', color: 'border-amber-300 bg-amber-50 dark:border-amber-800 dark:bg-amber-950/30' },
+    { label: 'A vertical edge', color: 'border-sky-300 bg-sky-50 dark:border-sky-800 dark:bg-sky-950/30' },
+    { label: 'A horizontal transition', color: 'border-lime-300 bg-lime-50 dark:border-lime-800 dark:bg-lime-950/30' },
+    { label: 'A corner', color: 'border-orange-300 bg-orange-50 dark:border-orange-800 dark:bg-orange-950/30' },
+  ].map((item) => (
+    <div
+      key={item.label}
+      className={`rounded-xl border-2 p-3 text-center text-sm font-medium text-slate-800 dark:text-slate-200 ${item.color}`}
+    >
+      {item.label}
+    </div>
+  ))}
+</div>
+
+These filters are our **learned eyes** — they decide **what to look for** in the data.
+
+<div className="not-prose my-8 flex flex-col items-center">
+  <div className="overflow-hidden rounded-xl border-2 border-indigo-300 bg-white shadow-md dark:border-indigo-700 dark:bg-slate-900">
+    <img
+      src={imageXConvolutionLesson7}
+      alt="Diagram: detecting an X shape with convolution over image patches"
+      className="mx-auto block h-auto max-h-[min(90vh,720px)] w-full max-w-3xl object-contain"
+      loading="lazy"
+      decoding="async"
+    />
+  </div>
+</div>
+
+---
+
+## Convolution: Mathematical Recap
+
+Let&apos;s define the operation **formally**.
+
+Let:
+
+<div className="not-prose my-6 rounded-xl border border-teal-200 bg-gradient-to-br from-teal-50/80 to-white p-5 dark:border-teal-900/50 dark:from-teal-950/25 dark:to-slate-900/40">
+  <ul className="m-0 list-none space-y-3 p-0 text-sm text-slate-800 dark:text-slate-200">
+    <li className="flex flex-wrap items-baseline gap-2">
+      <span className="font-mono font-bold text-teal-800 dark:text-teal-300">I ∈ ℝ<sup>H×W</sup>:</span>
+      <span>Input image (grayscale)</span>
+    </li>
+    <li className="flex flex-wrap items-baseline gap-2">
+      <span className="font-mono font-bold text-teal-800 dark:text-teal-300">F ∈ ℝ<sup>k×k</sup>:</span>
+      <span>Filter of size <em>k</em>×<em>k</em></span>
+    </li>
+    <li className="flex flex-wrap items-baseline gap-2">
+      <span className="font-mono font-bold text-teal-800 dark:text-teal-300">O ∈ ℝ<sup>H′×W′</sup>:</span>
+      <span>Output feature map</span>
+    </li>
+  </ul>
+</div>
+
+Then the **convolution** operation at location **(i, j)** is defined as:
+
+$$
+O(i,j) = \sum_{m=0}^{k-1} \sum_{n=0}^{k-1} I(i+m,\, j+n)\, F(m,n)
+$$
+
+<div className="not-prose my-6 flex flex-col items-center gap-4 rounded-xl border-2 border-dashed border-violet-300 bg-violet-50/40 p-5 dark:border-violet-800 dark:bg-violet-950/20">
+  <p className="m-0 text-center text-xs font-semibold uppercase tracking-wide text-violet-800 dark:text-violet-300">One output pixel</p>
+  <div className="flex flex-wrap items-center justify-center gap-3 text-sm text-slate-700 dark:text-slate-300">
+    <span className="rounded-lg border-2 border-slate-400 bg-white px-3 py-2 font-mono text-xs dark:border-slate-500 dark:bg-slate-800">patch of <strong>I</strong></span>
+    <span className="text-violet-600 dark:text-violet-400">⊙</span>
+    <span className="rounded-lg border-2 border-slate-400 bg-white px-3 py-2 font-mono text-xs dark:border-slate-500 dark:bg-slate-800"><strong>F</strong></span>
+    <span className="text-violet-600 dark:text-violet-400">→</span>
+    <span className="rounded-lg border-2 border-violet-500 bg-violet-100 px-3 py-2 font-mono text-xs font-bold dark:border-violet-600 dark:bg-violet-950/50">sum → scalar</span>
+  </div>
+</div>
+
+This is an **element-wise multiplication** of the filter and the **patch** of the image it covers.
+
+The result is **summed** up to a **single scalar**.
+
+We then **slide** this filter across the image (usually with **stride = 1**).
+
+Optionally, we add a **bias** and apply a **nonlinearity** (e.g., **ReLU**).
+
+This gives us a **2D output** — a **feature map** — indicating **where** in the image that particular pattern is **detected**.
+
+---
+
+## Interpretable Filters and Hand-Engineering
+
+Before learning filters via **backpropagation** became common, **hand-engineered** filters were widely used.
+
+Let&apos;s examine a few examples:
+
+### Edge Detection Filters
+
+**Horizontal edge filter (Sobel):**
+
+<div className="not-prose my-4 flex flex-col items-center gap-3">
+  <div className="inline-grid grid-cols-3 gap-1 rounded-xl border-2 border-sky-400 bg-sky-950/5 p-3 dark:border-sky-600 dark:bg-sky-950/30">
+    {[
+      [-1, -2, -1],
+      [0, 0, 0],
+      [1, 2, 1],
+    ].map((row, ri) =>
+      row.map((v, ci) => (
+        <span
+          key={`h-${ri}-${ci}`}
+          className={`flex h-11 w-11 items-center justify-center rounded-md font-mono text-sm font-bold shadow-sm ${
+            v < 0
+              ? 'bg-rose-200 text-rose-950 dark:bg-rose-900/60 dark:text-rose-100'
+              : v > 0
+                ? 'bg-emerald-200 text-emerald-950 dark:bg-emerald-900/60 dark:text-emerald-100'
+                : 'bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-200'
+          }`}
+        >
+          {v > 0 ? `+${v}` : v}
+        </span>
+      )),
+    )}
+  </div>
+  $$
+  F_{\text{h-Sobel}} = \begin{bmatrix} -1 & -2 & -1 \\ 0 & 0 & 0 \\ 1 & 2 & 1 \end{bmatrix}
+  $$
+</div>
+
+**Vertical edge filter (Sobel):**
+
+<div className="not-prose my-4 flex flex-col items-center gap-3">
+  <div className="inline-grid grid-cols-3 gap-1 rounded-xl border-2 border-indigo-400 bg-indigo-950/5 p-3 dark:border-indigo-600 dark:bg-indigo-950/30">
+    {[
+      [-1, 0, 1],
+      [-2, 0, 2],
+      [-1, 0, 1],
+    ].map((row, ri) =>
+      row.map((v, ci) => (
+        <span
+          key={`v-${ri}-${ci}`}
+          className={`flex h-11 w-11 items-center justify-center rounded-md font-mono text-sm font-bold shadow-sm ${
+            v < 0
+              ? 'bg-rose-200 text-rose-950 dark:bg-rose-900/60 dark:text-rose-100'
+              : v > 0
+                ? 'bg-emerald-200 text-emerald-950 dark:bg-emerald-900/60 dark:text-emerald-100'
+                : 'bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-200'
+          }`}
+        >
+          {v > 0 ? `+${v}` : v}
+        </span>
+      )),
+    )}
+  </div>
+  $$
+  F_{\text{v-Sobel}} = \begin{bmatrix} -1 & 0 & 1 \\ -2 & 0 & 2 \\ -1 & 0 & 1 \end{bmatrix}
+  $$
+</div>
+
+These filters **approximate derivatives** — they highlight where **pixel intensity** changes **rapidly**. They are **high-pass filters**, designed to detect **edges**.
+
+### Sharpening Filters
+
+**Sharpen:**
+
+<div className="not-prose my-4 flex flex-col items-center gap-3">
+  <div className="inline-grid grid-cols-3 gap-1 rounded-xl border-2 border-amber-400 bg-amber-950/5 p-3 dark:border-amber-600 dark:bg-amber-950/30">
+    {[
+      [0, -1, 0],
+      [-1, 5, -1],
+      [0, -1, 0],
+    ].map((row, ri) =>
+      row.map((v, ci) => (
+        <span
+          key={`s-${ri}-${ci}`}
+          className={`flex h-11 w-11 items-center justify-center rounded-md font-mono text-sm font-bold shadow-sm ${
+            v < 0
+              ? 'bg-rose-200 text-rose-950 dark:bg-rose-900/60 dark:text-rose-100'
+              : v > 0
+                ? 'bg-emerald-200 text-emerald-950 dark:bg-emerald-900/60 dark:text-emerald-100'
+                : 'bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-200'
+          }`}
+        >
+          {v > 0 ? `+${v}` : v}
+        </span>
+      )),
+    )}
+  </div>
+  $$
+  F_{\text{sharpen}} = \begin{bmatrix} 0 & -1 & 0 \\ -1 & 5 & -1 \\ 0 & -1 & 0 \end{bmatrix}
+  $$
+</div>
+
+These **emphasize central pixels** and **subtract neighbors** — enhancing **contrast** and **details**.
+
+These filters are **interpretable** — you can understand their behavior **just by inspecting the matrix**.
+
+---
+
+## What&apos;s learned in CNNs?
+
+In modern CNNs, these filters are **not hand-coded**. Instead:
+
+<div className="not-prose my-5 space-y-3 rounded-xl border border-emerald-200 bg-emerald-50/40 p-4 dark:border-emerald-900/40 dark:bg-emerald-950/20">
+  <div className="flex gap-3 text-sm text-slate-800 dark:text-slate-200">
+    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-emerald-600 text-xs font-bold text-white">1</span>
+    <span>They are <strong>learned directly from data</strong> via <strong>backpropagation</strong>.</span>
+  </div>
+  <div className="flex gap-3 text-sm text-slate-800 dark:text-slate-200">
+    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-emerald-600 text-xs font-bold text-white">2</span>
+    <span>The model finds the <strong>optimal set of filters</strong> that maximize task performance (e.g., <em>classification accuracy</em>).</span>
+  </div>
+</div>
+
+<div className="not-prose my-6 grid gap-4 md:grid-cols-2">
+  <div className="rounded-xl border-2 border-cyan-300 bg-cyan-50/90 p-4 dark:border-cyan-800 dark:bg-cyan-950/25">
+    <p className="m-0 text-xs font-bold uppercase tracking-wide text-cyan-900 dark:text-cyan-200">Early layers typically learn</p>
+    <ul className="mt-3 mb-0 list-disc space-y-1 pl-5 text-sm text-slate-800 dark:text-slate-200">
+      <li>Edges</li>
+      <li>Corners</li>
+      <li>Color blobs</li>
+    </ul>
+  </div>
+  <div className="rounded-xl border-2 border-purple-300 bg-purple-50/90 p-4 dark:border-purple-800 dark:bg-purple-950/25">
+    <p className="m-0 text-xs font-bold uppercase tracking-wide text-purple-900 dark:text-purple-200">Deeper layers combine these to form</p>
+    <ul className="mt-3 mb-0 list-disc space-y-1 pl-5 text-sm text-slate-800 dark:text-slate-200">
+      <li>Parts of objects (e.g., <em>eyes</em>, <em>wheels</em>)</li>
+      <li>Full objects (e.g., <em>faces</em>, <em>cats</em>)</li>
+    </ul>
+  </div>
+</div>
+
+Each **convolutional filter** becomes a **template detector** for a particular **feature**.
+
+:::tip[Voila moments to remember]
+
+Let&apos;s consolidate what we&apos;ve covered:
+
+<div className="not-prose mt-4 overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-700">
+  <table className="w-full min-w-[min(100%,640px)] border-collapse text-left text-sm">
+    <thead>
+      <tr className="border-b border-slate-200 bg-teal-600 text-white dark:border-slate-600 dark:bg-teal-800">
+        <th className="p-3 font-semibold">Concept</th>
+        <th className="p-3 font-semibold">Explanation</th>
+      </tr>
+    </thead>
+    <tbody className="text-slate-700 dark:text-slate-300">
+      <tr className="border-b border-slate-100 bg-teal-50/30 dark:border-slate-800 dark:bg-teal-950/15">
+        <td className="p-3 font-bold text-teal-900 dark:text-teal-200">Filter (Kernel)</td>
+        <td className="p-3">A small matrix that scans over the image, detecting a feature</td>
+      </tr>
+      <tr className="border-b border-slate-100 dark:border-slate-800">
+        <td className="p-3 font-bold text-teal-900 dark:text-teal-200">Convolution</td>
+        <td className="p-3">Element-wise multiplication + summation between filter and patch</td>
+      </tr>
+      <tr className="border-b border-slate-100 bg-teal-50/30 dark:border-slate-800 dark:bg-teal-950/15">
+        <td className="p-3 font-bold text-teal-900 dark:text-teal-200">Stride</td>
+        <td className="p-3">How far the filter moves at each step (e.g., 1 pixel, 2 pixels)</td>
+      </tr>
+      <tr className="border-b border-slate-100 dark:border-slate-800">
+        <td className="p-3 font-bold text-teal-900 dark:text-teal-200">Padding</td>
+        <td className="p-3">Adding zeros around the image to preserve spatial dimensions</td>
+      </tr>
+      <tr className="border-b border-slate-100 bg-teal-50/30 dark:border-slate-800 dark:bg-teal-950/15">
+        <td className="p-3 font-bold text-teal-900 dark:text-teal-200">Feature map</td>
+        <td className="p-3">Output after applying a filter across the entire image</td>
+      </tr>
+      <tr className="bg-white dark:bg-slate-950/30">
+        <td className="p-3 font-bold text-teal-900 dark:text-teal-200">Learnable filters</td>
+        <td className="p-3">CNNs optimize these filters via training to extract useful features</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+:::
+
+---
+
+<div className="not-prose mt-10 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-6 dark:border-slate-700">
+  <a href="./preserving-spatial-structure-cnns" className="text-sm font-medium text-slate-600 no-underline hover:text-teal-700 hover:underline dark:text-slate-400 dark:hover:text-teal-400">← Lesson 6 · Spatial structure & CNNs</a>
+  <a href="./learning-to-see-cnns" className="text-sm font-semibold text-teal-700 no-underline hover:underline dark:text-teal-400">Next: Lesson 8 — Inner workings →</a>
+</div>

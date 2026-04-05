@@ -1,0 +1,204 @@
+---
+sidebar_label: '5 · Learned features from data'
+title: 'Lesson 5 — Learning features directly from data with neural networks'
+description: >-
+  From hand-designed extractors to learned representations—depth, compositionality,
+  and why data-driven hierarchy beats recursive manual rules.
+---
+
+# Learning features directly from data with neural networks
+
+## Moving beyond human-defined features
+
+Traditionally, computer vision systems depended on **human-designed feature extractors**. A developer might explicitly define that to detect a face, one must first detect **eyes**, **ears**, and **noses**. To go further, they might break those down even more — for instance, to detect an ear, look for a **vertical line** followed by a **semicircle**.
+
+This **recursive manual engineering** is *fragile*, *time-consuming*, and *hard to generalize*. What if, instead, we could **eliminate this step entirely?*
+
+This is exactly what **deep learning** enables. Rather than define features, we **learn them directly from raw data**.
+
+---
+
+## The new paradigm
+
+<div className="not-prose my-6 overflow-x-auto rounded-xl border border-teal-200 dark:border-teal-900/50">
+  <table className="w-full min-w-[min(100%,520px)] border-collapse text-left text-sm">
+    <thead>
+      <tr className="border-b border-teal-200 bg-teal-600 text-white dark:border-teal-800 dark:bg-teal-800">
+        <th className="w-12 p-3 text-center font-semibold">#</th>
+        <th className="p-3 font-semibold">What happens</th>
+      </tr>
+    </thead>
+    <tbody className="text-slate-700 dark:text-slate-300">
+      <tr className="border-b border-teal-100 bg-teal-50/50 dark:border-slate-800 dark:bg-teal-950/20">
+        <td className="p-3 text-center font-bold text-teal-800 dark:text-teal-300">1</td>
+        <td className="p-3">
+          Feed the model a <strong>large dataset</strong> of images (e.g. <em>faces</em>).
+        </td>
+      </tr>
+      <tr className="border-b border-teal-100 dark:border-slate-800">
+        <td className="p-3 text-center font-bold text-teal-800 dark:text-teal-300">2</td>
+        <td className="p-3">
+          Let the model figure out which <strong>patterns of pixels</strong> are most useful for distinguishing these images from others (e.g. <em>cars</em>, <em>trees</em>, or other objects).
+        </td>
+      </tr>
+      <tr className="bg-white dark:bg-slate-950/30">
+        <td className="p-3 text-center font-bold text-teal-800 dark:text-teal-300">3</td>
+        <td className="p-3">
+          Do this <strong>automatically</strong>, across <strong>many layers</strong>, with <strong>increasing abstraction</strong>.
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+---
+
+## Hierarchy through depth
+
+The key architectural insight lies in **depth**. A neural network is composed of **many layers**, each transforming the image representation in a **structured, learnable way**.
+
+<div className="not-prose my-6 grid gap-3 md:grid-cols-3">
+  <div className="rounded-xl border-2 border-sky-300 bg-gradient-to-b from-sky-50 to-white p-4 dark:border-sky-800 dark:from-sky-950/40 dark:to-slate-900/40">
+    <p className="m-0 text-xs font-bold uppercase tracking-wide text-sky-800 dark:text-sky-300">Early layers</p>
+    <p className="mt-2 mb-0 text-sm text-slate-800 dark:text-slate-200">
+      Learn <strong>simple features</strong> like <em>edges</em> and <em>textures</em>.
+    </p>
+  </div>
+  <div className="rounded-xl border-2 border-violet-300 bg-gradient-to-b from-violet-50 to-white p-4 dark:border-violet-800 dark:from-violet-950/40 dark:to-slate-900/40">
+    <p className="m-0 text-xs font-bold uppercase tracking-wide text-violet-800 dark:text-violet-300">Middle layers</p>
+    <p className="mt-2 mb-0 text-sm text-slate-800 dark:text-slate-200">
+      Build on these to form <strong>motifs</strong> like <em>eyes</em>, <em>wheels</em>, or <em>leaf patterns</em>.
+    </p>
+  </div>
+  <div className="rounded-xl border-2 border-emerald-300 bg-gradient-to-b from-emerald-50 to-white p-4 dark:border-emerald-800 dark:from-emerald-950/40 dark:to-slate-900/40">
+    <p className="m-0 text-xs font-bold uppercase tracking-wide text-emerald-800 dark:text-emerald-300">Deeper layers</p>
+    <p className="mt-2 mb-0 text-sm text-slate-800 dark:text-slate-200">
+      Combine these motifs into <strong>object-level</strong> understanding — <em>faces</em>, <em>vehicles</em>, <em>animals</em>, etc.
+    </p>
+  </div>
+</div>
+
+<div className="not-prose my-6 rounded-xl border border-slate-300 bg-gradient-to-b from-slate-50 to-slate-100 p-5 text-center dark:border-slate-600 dark:from-slate-900 dark:to-slate-950">
+  <p className="m-0 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Depth → abstraction</p>
+  <div className="mt-4 flex flex-col items-center gap-2 text-sm font-medium text-slate-800 dark:text-slate-200">
+    <span className="rounded-lg border-2 border-slate-400 bg-white px-4 py-2 shadow-sm dark:border-slate-500 dark:bg-slate-800">Pixels / local structure</span>
+    <span className="text-teal-600 dark:text-teal-400" aria-hidden>
+      ↓ layers
+    </span>
+    <span className="rounded-lg border-2 border-slate-400 bg-white px-4 py-2 shadow-sm dark:border-slate-500 dark:bg-slate-800">Parts & motifs</span>
+    <span className="text-teal-600 dark:text-teal-400" aria-hidden>
+      ↓ layers
+    </span>
+    <span className="rounded-lg border-2 border-teal-500 bg-teal-50 px-4 py-2 shadow-sm dark:border-teal-600 dark:bg-teal-950/50">Objects & semantics</span>
+  </div>
+</div>
+
+This progression is **not manually programmed**. It *emerges* from training data through **backpropagation** and **gradient descent**.
+
+Each layer&apos;s role is to extract **more abstract, more informative** features from the layer below it. The **deeper** the network, the **more complex** the learned representations become.
+
+---
+
+## Why this works
+
+The power of this approach lies in the **distributed** and **compositional** nature of representations in deep neural networks:
+
+<div className="not-prose my-5 grid gap-4 md:grid-cols-2">
+  <div className="rounded-xl border-2 border-cyan-200 bg-cyan-50/90 p-4 dark:border-cyan-900/50 dark:bg-cyan-950/25">
+    <p className="m-0 text-base font-bold text-cyan-900 dark:text-cyan-200">Distributed</p>
+    <p className="mt-2 mb-0 text-sm text-slate-800 dark:text-slate-200">
+      No <strong>single neuron</strong> defines a concept. Instead, <em>many neurons jointly encode</em> patterns.
+    </p>
+  </div>
+  <div className="rounded-xl border-2 border-amber-200 bg-amber-50/90 p-4 dark:border-amber-900/50 dark:bg-amber-950/25">
+    <p className="m-0 text-base font-bold text-amber-900 dark:text-amber-200">Compositional</p>
+    <p className="mt-2 mb-0 text-sm text-slate-800 dark:text-slate-200">
+      High-level features are <strong>composed of lower-level ones</strong>, learned through <em>successive transformations</em>.
+    </p>
+  </div>
+</div>
+
+What makes this powerful in vision is the **sheer variability** in how objects appear:
+
+<div className="not-prose my-5 overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-700">
+  <table className="w-full min-w-[320px] border-collapse text-sm">
+    <thead>
+      <tr className="border-b border-slate-200 bg-slate-800 text-white dark:border-slate-600 dark:bg-slate-900">
+        <th className="p-3 text-left font-semibold">Sources of appearance change</th>
+        <th className="p-3 text-left font-semibold">Why it matters</th>
+      </tr>
+    </thead>
+    <tbody className="text-slate-700 dark:text-slate-300">
+      <tr className="border-b border-slate-100 dark:border-slate-800">
+        <td className="p-3 font-medium">Lighting</td>
+        <td className="p-3">Same object, different exposure and shadows</td>
+      </tr>
+      <tr className="border-b border-slate-100 dark:border-slate-800">
+        <td className="p-3 font-medium">Pose</td>
+        <td className="p-3">Viewpoint and geometry shift pixel patterns</td>
+      </tr>
+      <tr className="border-b border-slate-100 dark:border-slate-800">
+        <td className="p-3 font-medium">Occlusion</td>
+        <td className="p-3">Parts missing or partially hidden</td>
+      </tr>
+      <tr className="bg-slate-50/80 dark:bg-slate-900/30">
+        <td className="p-3 font-medium">Background noise</td>
+        <td className="p-3">Clutter competes with the signal you care about</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+Instead of hand-coding every edge case, we allow the model to **generalize from examples**.
+
+Given enough data and a sufficiently **expressive model**, the network can learn to tease apart the **subtle cues** that distinguish one object class from another *without any explicit definition* of what a nose, a car, or a building looks like.
+
+---
+
+## Revisiting our example
+
+Suppose we want to distinguish **faces** from **cars**.
+
+<div className="not-prose my-6 overflow-x-auto rounded-xl border border-indigo-200 dark:border-indigo-900/40">
+  <table className="w-full min-w-[min(100%,640px)] border-collapse text-left text-sm">
+    <thead>
+      <tr className="border-b border-indigo-200 bg-indigo-600 text-white dark:border-indigo-800 dark:bg-indigo-800">
+        <th className="w-[42%] p-3 font-semibold">Traditional system</th>
+        <th className="p-3 font-semibold">Deep learning system</th>
+      </tr>
+    </thead>
+    <tbody className="text-slate-700 dark:text-slate-300">
+      <tr className="border-b border-indigo-100 bg-indigo-50/40 dark:border-slate-800 dark:bg-indigo-950/15">
+        <td className="align-top p-3">
+          We might <strong>specify</strong> that faces have <em>eyes</em>, <em>noses</em>, and <em>mouths</em>, and cars have <em>wheels</em>, <em>headlights</em>, and <em>windshields</em>.
+        </td>
+        <td className="align-top p-3">
+          We feed <strong>thousands of labeled examples</strong> of faces and cars.
+        </td>
+      </tr>
+      <tr className="bg-white dark:bg-slate-950/30">
+        <td className="align-top p-3 text-slate-600 dark:text-slate-400">
+          Rules and pipelines are <em>designed by hand</em>.
+        </td>
+        <td className="align-top p-3">
+          The network&apos;s <strong>convolutional layers</strong> learn <strong>discriminative patterns</strong> at every level — from <em>low-level gradients</em> to <em>high-level semantic structures</em>.
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+Over time, the network builds a **hierarchy of features** tuned specifically to the **task at hand**.
+
+:::tip[Voila moment]
+
+**No manual feature engineering is involved.** The **data** drives the representations.
+
+:::
+
+---
+
+<div className="not-prose mt-10 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-6 dark:border-slate-700">
+  <a href="./feature-detection-hierarchy" className="text-sm font-medium text-slate-600 no-underline hover:text-teal-700 hover:underline dark:text-slate-400 dark:hover:text-teal-400">← Lesson 4 · Feature hierarchy</a>
+  <a href="./preserving-spatial-structure-cnns" className="text-sm font-semibold text-teal-700 no-underline hover:underline dark:text-teal-400">Next: Lesson 6 — Spatial structure & CNNs →</a>
+</div>

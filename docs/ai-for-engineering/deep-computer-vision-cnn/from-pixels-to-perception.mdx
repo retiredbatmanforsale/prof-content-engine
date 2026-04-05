@@ -1,0 +1,179 @@
+---
+sidebar_label: '3 · Pixels to perception'
+title: 'Lesson 3 — From pixels to perception'
+description: How images become tensors, regression vs classification in vision, and why learned features lead to convolutional networks.
+---
+
+# From pixels to perception: how computers interpret images
+
+## Bridging human intuition and machine perception
+
+The central question is both **philosophical** and **technical**: *how can we take a vision based task that humans perform effortlessly and encode that capability into machines?*
+
+For example, **recognizing a face**, **distinguishing between two objects**, or **interpreting a scene** are actions we perform with *no conscious thought*. Yet each of these tasks requires a series of **complex perceptual computations**. The goal is to design models that can perform such tasks with the **same level of efficiency and accuracy**, despite the **lack of human intuition**.
+
+---
+
+## How computers represent images
+
+At the lowest level, images are **fundamentally numerical**.
+
+<div className="not-prose my-5 overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-700">
+  <table className="w-full min-w-[520px] border-collapse text-left text-sm">
+    <thead>
+      <tr className="border-b border-slate-200 bg-teal-50 dark:border-slate-600 dark:bg-teal-950/30">
+        <th className="p-3 font-semibold text-slate-900 dark:text-slate-50">Kind</th>
+        <th className="p-3 font-semibold text-slate-900 dark:text-slate-50">What each pixel is</th>
+        <th className="p-3 font-semibold text-slate-900 dark:text-slate-50">Shape</th>
+      </tr>
+    </thead>
+    <tbody className="text-slate-700 dark:text-slate-300">
+      <tr className="border-b border-slate-100 dark:border-slate-800">
+        <td className="p-3 font-medium">Grayscale</td>
+        <td className="p-3">A <strong>single intensity</strong> value</td>
+        <td className="p-3 font-mono text-xs">2D matrix <code>(height, width)</code></td>
+      </tr>
+      <tr>
+        <td className="p-3 font-medium">Color (RGB)</td>
+        <td className="p-3">A <strong>triplet</strong> of numbers — red, green, and blue intensities</td>
+        <td className="p-3 font-mono text-xs">3D tensor <code>(height, width, 3)</code></td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+This structured representation is **ideal for feeding into neural networks**. Unlike text, which must be **tokenized and embedded**, images are already in a **dense numerical format**. The challenge is not converting them into numbers, but **interpreting the numbers meaningfully**.
+
+---
+
+## Understanding the learning tasks: regression and classification
+
+Once an image is represented numerically (as pixels), we can train **deep learning models (neural networks)** to perform specific tasks. These tasks typically fall into **two broad categories**:
+
+<div className="not-prose my-5 grid gap-4 md:grid-cols-2">
+  <div className="rounded-xl border-2 border-violet-200 bg-violet-50/80 p-4 dark:border-violet-900/50 dark:bg-violet-950/25">
+    <p className="m-0 text-base font-bold text-violet-900 dark:text-violet-200">Regression</p>
+    <p className="mt-2 mb-0 text-sm text-slate-800 dark:text-slate-200">Outputs <strong>continuous values</strong>.</p>
+    <p className="mt-2 mb-0 text-xs font-semibold uppercase tracking-wide text-violet-800/80 dark:text-violet-300/90">Examples in vision</p>
+    <ul className="mt-1 mb-0 list-disc pl-5 text-sm text-slate-700 dark:text-slate-300">
+      <li>Predicting the <strong>age</strong> of a person from a face image</li>
+      <li>Estimating the <strong>depth</strong> of each pixel in a scene</li>
+      <li>Forecasting <strong>motion vectors</strong></li>
+    </ul>
+  </div>
+  <div className="rounded-xl border-2 border-amber-200 bg-amber-50/80 p-4 dark:border-amber-900/50 dark:bg-amber-950/25">
+    <p className="m-0 text-base font-bold text-amber-900 dark:text-amber-200">Classification</p>
+    <p className="mt-2 mb-0 text-sm text-slate-800 dark:text-slate-200">Outputs <strong>discrete class labels</strong>.</p>
+    <p className="mt-2 mb-0 text-sm text-slate-700 dark:text-slate-300">
+      <strong>Example:</strong> given an image of a historical figure, determine whether it is <strong>Abraham Lincoln</strong>, <strong>George Washington</strong>, or another U.S. president.
+    </p>
+    <p className="mt-2 mb-0 text-sm text-slate-700 dark:text-slate-300">
+      The output is <strong>one of K possible categories</strong>, and the model must learn to assign <strong>high probability to the correct one</strong>.
+    </p>
+  </div>
+</div>
+
+---
+
+## Feature extraction: the key to recognition
+
+### The running example
+
+Let’s ground this with an example. Consider the task of identifying whether a portrait is **Abraham Lincoln** or **George Washington**. Humans perform this by relying on **distinctive features**:
+
+### Human cues (how we read the portrait)
+
+<div className="not-prose my-4 overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-700">
+  <table className="w-full min-w-[320px] border-collapse text-left text-sm">
+    <thead>
+      <tr className="border-b border-slate-200 bg-teal-600 text-white dark:border-slate-600 dark:bg-teal-800">
+        <th className="w-28 p-3 font-semibold">Step</th>
+        <th className="p-3 font-semibold">Cue</th>
+      </tr>
+    </thead>
+    <tbody className="text-slate-800 dark:text-slate-200">
+      <tr className="border-b border-slate-100 bg-teal-50/40 dark:border-slate-800 dark:bg-teal-950/20">
+        <td className="p-3 font-mono text-sm font-bold text-teal-800 dark:text-teal-300">1</td>
+        <td className="p-3">
+          <strong>Facial structure</strong>
+        </td>
+      </tr>
+      <tr className="border-b border-slate-100 bg-white dark:border-slate-800 dark:bg-slate-950/30">
+        <td className="p-3 font-mono text-sm font-bold text-teal-800 dark:text-teal-300">2</td>
+        <td className="p-3">
+          <strong>Hairstyle</strong>
+        </td>
+      </tr>
+      <tr className="border-b border-slate-100 bg-teal-50/40 dark:border-slate-800 dark:bg-teal-950/20">
+        <td className="p-3 font-mono text-sm font-bold text-teal-800 dark:text-teal-300">3</td>
+        <td className="p-3">
+          <strong>Beard</strong>
+        </td>
+      </tr>
+      <tr className="bg-white dark:bg-slate-950/30">
+        <td className="p-3 font-mono text-sm font-bold text-teal-800 dark:text-teal-300">4</td>
+        <td className="p-3">
+          <strong>Historical clothing</strong>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+### What the machine must do instead
+
+For a machine to do this, it must also extract features—but unlike humans, it needs these features to be **explicitly defined (traditional neural-networks)** or **automatically learned** (*whooo, this sounds interesting..*). This brings us to the heart of deep learning for vision: **representation learning**.
+
+### Where do features come from? (before the CNN “magic”)
+
+<div className="not-prose my-5 overflow-x-auto rounded-xl border border-slate-200 shadow-sm dark:border-slate-700">
+  <table className="w-full min-w-[min(100%,640px)] border-collapse text-left text-sm">
+    <thead>
+      <tr className="border-b border-slate-200 bg-slate-800 text-white dark:border-slate-600 dark:bg-slate-900">
+        <th className="w-[38%] p-3 font-semibold tracking-tight">Approach</th>
+        <th className="p-3 font-semibold">What you actually do</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr className="border-b border-slate-100 bg-amber-50/60 dark:border-slate-800 dark:bg-amber-950/15">
+        <th scope="row" className="align-top p-3 text-left font-bold text-amber-900 dark:text-amber-200">
+          Classical ML
+        </th>
+        <td className="p-3 text-slate-700 dark:text-slate-300">
+          In classical machine learning, we have seen how <strong>image processing techniques</strong> have helped us extract features that help us understand some nuances about the images, <strong>not using raw pixels as input features</strong> for neural networks.
+        </td>
+      </tr>
+      <tr className="border-b border-slate-100 bg-blue-50/70 dark:border-slate-800 dark:bg-blue-950/20">
+        <th scope="row" className="align-top p-3 text-left font-bold text-blue-900 dark:text-blue-200">
+          Traditional neural network — option A
+        </th>
+        <td className="p-3 text-slate-700 dark:text-slate-300">
+          Feed it <strong>raw pixels</strong> of a <strong>28×28</strong> image as <strong>784 input features</strong>.
+        </td>
+      </tr>
+      <tr className="bg-blue-50/40 dark:bg-blue-950/10">
+        <th scope="row" className="align-top p-3 text-left font-bold text-blue-900 dark:text-blue-200">
+          Traditional neural network — option B
+        </th>
+        <td className="p-3 text-slate-700 dark:text-slate-300">
+          Use <strong>classical feature engineering</strong> to extract specific and precise features, acting as a <strong>domain expert</strong> or <strong>subject matter expert</strong> for computer vision problems. Concatenate those features into a <strong>vector</strong> and feed that <strong>input feature vector</strong> to the neural network.
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+:::tip[Voila moment in vision]
+
+But what would be **magical** is if I don’t have to do the **heavy lifting of extracting features**, just like I used to do in classical machine learning. On top of that, I don’t also have to treat an image **only as raw pixels**. The boilerplate is if I can possess or create the ability to **automatically learn the features** that will help me do the classification better. **That is the essence of a new invention of a neural network known as Convolutional Neural Network.**
+
+Neural networks learn to extract features from raw pixels through successive layers of **convolution**, **pooling**, and **non-linear transformation**. **Lower layers** capture **local edges and textures**. **Deeper layers** capture **higher-level abstractions** such as facial parts or spatial arrangements. By learning a **hierarchy of features**, the network becomes capable of **associating specific patterns with specific labels**.
+
+:::
+
+---
+
+<div className="not-prose mt-10 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-6 dark:border-slate-700">
+  <a href="./transformative-deep-learning-vision" className="text-sm font-medium text-slate-600 no-underline hover:text-teal-700 hover:underline dark:text-slate-400 dark:hover:text-teal-400">← Lesson 2 · Deep learning in vision</a>
+  <a href="./feature-detection-hierarchy" className="text-sm font-semibold text-teal-700 no-underline hover:underline dark:text-teal-400">Next: Lesson 4 — Feature hierarchy →</a>
+</div>

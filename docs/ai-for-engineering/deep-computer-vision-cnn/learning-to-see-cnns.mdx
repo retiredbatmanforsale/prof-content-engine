@@ -1,0 +1,345 @@
+---
+sidebar_label: '8 · Learning to see (CNNs)'
+title: 'Lesson 8 — Learning to See: Understanding the Inner Workings of CNNs'
+description: >-
+  Conv → ReLU → pooling stacks, receptive fields, feature volumes, training
+  filters, visualizations, softmax classification, and the full pipeline.
+---
+
+import nonLinearityReluLesson8 from './Non-Linearity-with-relu-lesson8.png';
+
+# Learning to See: Understanding the Inner Workings of CNNs
+
+## From Convolution to CNN: Zooming Out
+
+You already know the basic idea:
+
+<div className="not-prose my-6 grid gap-3 md:grid-cols-2">
+  <div className="rounded-xl border-2 border-teal-300 bg-teal-50/90 p-4 dark:border-teal-800 dark:bg-teal-950/30">
+    <p className="m-0 text-xs font-bold uppercase tracking-wide text-teal-800 dark:text-teal-300">Input</p>
+    <p className="mt-2 mb-0 text-sm text-slate-800 dark:text-slate-200">The <strong>image</strong> is input.</p>
+  </div>
+  <div className="rounded-xl border-2 border-indigo-300 bg-indigo-50/90 p-4 dark:border-indigo-800 dark:bg-indigo-950/30">
+    <p className="m-0 text-xs font-bold uppercase tracking-wide text-indigo-800 dark:text-indigo-300">Convolution</p>
+    <p className="mt-2 mb-0 text-sm text-slate-800 dark:text-slate-200">
+      The <strong>filters</strong> (also called <strong>kernels</strong>) are <em>slid</em> over the image to compute <strong>feature maps</strong> via convolution.
+    </p>
+  </div>
+</div>
+
+The resulting numbers capture the <strong>presence</strong> (or <strong>absence</strong>) of specific patterns (<em>edges</em>, <em>corners</em>, etc.) in the image.
+
+But so far, we <strong>assumed</strong> we had those filters. In real CNNs:
+
+<div className="not-prose my-5 rounded-xl border-2 border-dashed border-emerald-400 bg-emerald-50/70 p-4 text-center dark:border-emerald-700 dark:bg-emerald-950/30">
+  <p className="m-0 text-base font-semibold text-emerald-900 dark:text-emerald-200">We <strong>learn</strong> those filters <strong>automatically from data</strong>.</p>
+</div>
+
+---
+
+## The Core Components of a CNN
+
+There are <strong>three core operations</strong> you&apos;ll repeatedly see in CNNs:
+
+<div className="not-prose my-6 space-y-4">
+  <div className="rounded-xl border-2 border-sky-400 bg-gradient-to-br from-sky-50 to-white p-5 shadow-sm dark:border-sky-700 dark:from-sky-950/40 dark:to-slate-900/40">
+    <p className="m-0 text-sm font-bold text-sky-900 dark:text-sky-200">(i) Convolution</p>
+    <ul className="mt-3 mb-0 list-disc space-y-2 pl-5 text-sm text-slate-800 dark:text-slate-200">
+      <li>Captures <strong>local features</strong>.</li>
+      <li>Each filter learns to detect a <strong>specific pattern</strong> (edge, texture, shape).</li>
+      <li>Produces <strong>multiple feature maps</strong>, each indicating <em>where</em> that pattern appears.</li>
+    </ul>
+  </div>
+  <div className="rounded-xl border-2 border-amber-400 bg-gradient-to-br from-amber-50 to-white p-5 shadow-sm dark:border-amber-700 dark:from-amber-950/40 dark:to-slate-900/40">
+    <p className="m-0 text-sm font-bold text-amber-900 dark:text-amber-200">
+      (ii) ReLU: Nonlinearity (e.g., ReLU) Rectified Linear Unit
+    </p>
+    <ul className="mt-3 mb-0 list-disc space-y-2 pl-5 text-sm text-slate-800 dark:text-slate-200">
+      <li>Applies an <strong>activation function</strong> to the feature map output.</li>
+      <li>
+        ReLU sets all <strong>negative values to zero</strong> (like a <em>threshold gate</em>).
+      </li>
+      <li>
+        This nonlinearity makes the network <strong>expressive</strong>, i.e., capable of learning <em>complex, nonlinear</em> patterns.
+      </li>
+    </ul>
+  </div>
+  <div className="not-prose overflow-hidden rounded-xl border-2 border-amber-300 bg-white shadow-sm dark:border-amber-700 dark:bg-slate-900">
+    <img
+      src={nonLinearityReluLesson8}
+      alt="Illustration of non-linearity with ReLU on feature map values"
+      className="mx-auto block h-auto w-full max-w-2xl object-contain p-2"
+      loading="lazy"
+      decoding="async"
+    />
+  </div>
+  <div className="rounded-xl border-2 border-violet-400 bg-gradient-to-br from-violet-50 to-white p-5 shadow-sm dark:border-violet-700 dark:from-violet-950/40 dark:to-slate-900/40">
+    <p className="m-0 text-sm font-bold text-violet-900 dark:text-violet-200">(iii) Pooling (Downsampling)</p>
+    <ul className="mt-3 mb-0 list-disc space-y-2 pl-5 text-sm text-slate-800 dark:text-slate-200">
+      <li>
+        Reduces the <strong>spatial dimensions</strong> (e.g., <strong>28×28 → 14×14</strong>).
+      </li>
+      <li>Helps <strong>reduce computation</strong> and introduces <strong>invariance</strong> to small translations/rotations.</li>
+      <li>
+        <strong>Common:</strong> Max pooling, which retains only the <strong>max value</strong> in each small window.
+      </li>
+      <li>
+        <strong>Mean Pooling:</strong> averages out the whole matrix and preserves the <strong>mean/avg</strong> instead of max.
+      </li>
+    </ul>
+  </div>
+</div>
+
+These steps <strong>repeat across layers</strong>, allowing the network to learn <em>increasingly abstract</em> and <em>complex</em> representations.
+
+<div className="not-prose my-10 flex flex-col items-center">
+  <p className="mb-3 text-center text-xs font-bold uppercase tracking-wide text-slate-600 dark:text-slate-400">Typical CNN architecture</p>
+  <a
+    href="https://commons.wikimedia.org/wiki/File:Typical_cnn.png"
+    target="_blank"
+    rel="noopener noreferrer"
+    title="Aphex34, CC BY-SA 4.0, via Wikimedia Commons"
+    className="block overflow-hidden rounded-xl border-2 border-slate-300 bg-white shadow-lg transition-shadow hover:border-teal-400 dark:border-slate-600 dark:bg-slate-900 dark:hover:border-teal-600"
+  >
+    <img
+      src="https://upload.wikimedia.org/wikipedia/commons/thumb/6/63/Typical_cnn.png/960px-Typical_cnn.png"
+      alt="Fully connected convolutional neural network — convolution layers, pooling, and classifier"
+      width={960}
+      className="mx-auto block h-auto max-w-full"
+      loading="lazy"
+      decoding="async"
+    />
+  </a>
+  <p className="mt-3 max-w-2xl text-center text-xs leading-relaxed text-slate-600 dark:text-slate-400">
+    <a
+      href="https://commons.wikimedia.org/wiki/File:Typical_cnn.png"
+      target="_blank"
+      rel="noopener noreferrer"
+      className="font-medium text-teal-700 underline-offset-2 hover:underline dark:text-teal-400"
+    >
+      Typical CNN diagram
+    </a>
+    {' — '}
+    Aphex34,{' '}
+    <a
+      href="https://creativecommons.org/licenses/by-sa/4.0"
+      target="_blank"
+      rel="noopener noreferrer"
+      className="text-teal-700 underline-offset-2 hover:underline dark:text-teal-400"
+    >
+      CC BY-SA 4.0
+    </a>
+    , via Wikimedia Commons.
+  </p>
+</div>
+
+---
+
+## Local Connectivity + Hierarchical Features
+
+CNNs exploit <strong>local connectivity</strong>: each neuron only &quot;sees&quot; a <strong>small patch</strong> of the image. However, by <strong>stacking multiple convolution layers</strong>, the <strong>effective receptive field</strong> grows:
+
+<div className="not-prose my-6 flex flex-col items-stretch gap-2 md:flex-row md:items-stretch">
+  <div className="flex-1 rounded-xl border-2 border-cyan-300 bg-cyan-50/90 p-4 dark:border-cyan-800 dark:bg-cyan-950/25">
+    <p className="m-0 text-xs font-bold uppercase tracking-wide text-cyan-900 dark:text-cyan-200">Layer 1</p>
+    <p className="mt-2 mb-0 text-sm text-slate-800 dark:text-slate-200">Learns <strong>edges</strong> (horizontal, vertical, diagonal).</p>
+  </div>
+  <div className="hidden items-center justify-center text-cyan-500 md:flex" aria-hidden>
+    →
+  </div>
+  <div className="flex-1 rounded-xl border-2 border-fuchsia-300 bg-fuchsia-50/90 p-4 dark:border-fuchsia-800 dark:bg-fuchsia-950/25">
+    <p className="m-0 text-xs font-bold uppercase tracking-wide text-fuchsia-900 dark:text-fuchsia-200">Layer 2</p>
+    <p className="mt-2 mb-0 text-sm text-slate-800 dark:text-slate-200">
+      Learns <strong>combinations</strong> of those edges (<em>corners</em>, <em>curves</em>).
+    </p>
+  </div>
+  <div className="hidden items-center justify-center text-fuchsia-500 md:flex" aria-hidden>
+    →
+  </div>
+  <div className="flex-1 rounded-xl border-2 border-lime-300 bg-lime-50/90 p-4 dark:border-lime-800 dark:bg-lime-950/25">
+    <p className="m-0 text-xs font-bold uppercase tracking-wide text-lime-900 dark:text-lime-200">Layer 3+</p>
+    <p className="mt-2 mb-0 text-sm text-slate-800 dark:text-slate-200">
+      Starts recognizing more <strong>semantic</strong> features (<em>eyes</em>, <em>faces</em>, <em>objects</em>).
+    </p>
+  </div>
+</div>
+
+This is <strong>hierarchical feature extraction</strong>, a <em>key power</em> of CNNs.
+
+---
+
+## Multiple Filters per Layer = Feature Volume
+
+Each conv layer learns <strong>not one, but many filters</strong>—each producing its own <strong>feature map</strong>.
+
+Stacking all of these maps together gives a <strong>feature volume</strong> (like a <strong>3D tensor</strong>).
+
+**Example:**
+
+<div className="not-prose my-6 overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-700">
+  <table className="w-full min-w-[min(100%,520px)] border-collapse text-left text-sm">
+    <thead>
+      <tr className="border-b border-slate-200 bg-slate-800 text-white dark:border-slate-600 dark:bg-slate-900">
+        <th className="p-3 font-semibold">Stage</th>
+        <th className="p-3 font-semibold">Tensor shape (H × W × depth)</th>
+      </tr>
+    </thead>
+    <tbody className="text-slate-700 dark:text-slate-300">
+      <tr className="border-b border-slate-100 bg-teal-50/40 dark:border-slate-800 dark:bg-teal-950/15">
+        <td className="p-3 font-medium">Input</td>
+        <td className="p-3 font-mono text-xs">
+          (<strong>32×32×3</strong>) image (<em>RGB</em>)
+        </td>
+      </tr>
+      <tr className="border-b border-slate-100 dark:border-slate-800">
+        <td className="p-3 font-medium">Conv Layer 1 — 16 filters</td>
+        <td className="p-3 font-mono text-xs">
+          <strong>Output:</strong> (<strong>30×30×16</strong>)
+        </td>
+      </tr>
+      <tr className="bg-violet-50/40 dark:bg-violet-950/15">
+        <td className="p-3 font-medium">Next conv — 32 filters</td>
+        <td className="p-3 font-mono text-xs">
+          <strong>Output:</strong> (<strong>28×28×32</strong>), and so on...
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+The <strong>depth increases</strong>, but the height/width may <strong>decrease via pooling</strong>.
+
+---
+
+## Training: How Filters Are Learned
+
+Filters (i.e., <strong>weights of the convolution kernels</strong>) are learned via <strong>gradient descent</strong>.
+
+**How?**
+
+<div className="not-prose my-6 space-y-0 rounded-xl border-2 border-rose-200 overflow-hidden dark:border-rose-900/40">
+  {[
+    { n: '1', t: 'The network makes a prediction (e.g., "this is a cat").' },
+    { n: '2', t: "If it's wrong, a loss is calculated." },
+    { n: '3', t: 'The error is back-propagated through the network.' },
+    { n: '4', t: 'This updates the filters to reduce future error.' },
+  ].map((step, i) => (
+    <div
+      key={step.n}
+      className={`flex gap-3 border-b border-rose-100 p-4 text-sm text-slate-800 last:border-b-0 dark:border-rose-900/30 dark:text-slate-200 ${
+        i % 2 === 0 ? 'bg-rose-50/50 dark:bg-rose-950/15' : 'bg-white dark:bg-slate-950/30'
+      }`}
+    >
+      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-rose-600 text-xs font-bold text-white">
+        {step.n}
+      </span>
+      <span className="pt-1">{step.t}</span>
+    </div>
+  ))}
+</div>
+
+So over time, filters <strong>specialize</strong> to detect patterns <em>most useful</em> for distinguishing between the <strong>target classes</strong>.
+
+---
+
+## Visualizing Filters
+
+**After training:**
+
+<div className="not-prose my-5 grid gap-3 md:grid-cols-2">
+  <div className="rounded-xl border-2 border-blue-300 bg-blue-50/90 p-4 dark:border-blue-800 dark:bg-blue-950/25">
+    <p className="m-0 text-xs font-bold uppercase tracking-wide text-blue-900 dark:text-blue-200">First-layer filters</p>
+    <p className="mt-2 mb-0 text-sm text-slate-800 dark:text-slate-200">
+      Tend to look like <strong>oriented edges</strong> (<em>Sobel-like</em>).
+    </p>
+  </div>
+  <div className="rounded-xl border-2 border-purple-300 bg-purple-50/90 p-4 dark:border-purple-800 dark:bg-purple-950/25">
+    <p className="m-0 text-xs font-bold uppercase tracking-wide text-purple-900 dark:text-purple-200">Deeper filters</p>
+    <p className="mt-2 mb-0 text-sm text-slate-800 dark:text-slate-200">
+      May detect <strong>textures</strong>, <strong>motifs</strong>, or <strong>object parts</strong> (<em>eyes</em>, <em>wheels</em>, <em>ears</em>).
+    </p>
+  </div>
+</div>
+
+You can <strong>visualize</strong> these filters and activations to understand what the model &quot;sees&quot;.
+
+This is <strong>powerful</strong> because it gives <em>interpretable insight</em> into otherwise &quot;black-box&quot; deep models.
+
+---
+
+## Classification via Softmax
+
+Once you&apos;ve passed the image through multiple <strong>convolution + ReLU + pooling</strong> layers:
+
+You&apos;re left with <strong>abstract high-level features</strong>.
+
+<strong>Flatten</strong> them and feed them into a <strong>fully connected (dense) layer</strong>.
+
+The <strong>final layer</strong> uses <strong>Softmax</strong> to produce a <strong>probability distribution</strong> over possible classes.
+
+**Softmax formula:**
+
+$$
+\text{Softmax}(z_i) = \frac{e^{z_i}}{\sum_{j=1}^{K} e^{z_j}}
+$$
+
+<div className="not-prose my-5 rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-600 dark:bg-slate-900/50">
+  <p className="m-0 text-xs font-bold uppercase tracking-wide text-slate-600 dark:text-slate-400">Where</p>
+  <ul className="mt-2 mb-0 list-disc space-y-1 pl-5 text-sm text-slate-800 dark:text-slate-200">
+    <li>
+      <span className="font-mono font-semibold">z<sub>i</sub></span> is the score for class <em>i</em>
+    </li>
+    <li>
+      <span className="font-mono font-semibold">K</span> is the total number of classes
+    </li>
+  </ul>
+</div>
+
+**This ensures:**
+
+<div className="not-prose my-4 grid gap-3 sm:grid-cols-2">
+  <div className="rounded-lg border-2 border-emerald-300 bg-emerald-50/80 p-3 text-center text-sm font-medium text-emerald-900 dark:border-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-200">
+    Each output is in <strong>[0, 1]</strong>
+  </div>
+  <div className="rounded-lg border-2 border-emerald-300 bg-emerald-50/80 p-3 text-center text-sm font-medium text-emerald-900 dark:border-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-200">
+    All outputs <strong>sum to 1</strong> (so they form a valid <em>probability distribution</em>)
+  </div>
+</div>
+
+---
+
+## Overall Pipeline: CNN for Classification
+
+<div className="not-prose my-8 flex flex-col items-center gap-0">
+  {[
+    { label: 'Input Image', tone: 'from-teal-100 to-teal-50 border-teal-400 dark:from-teal-950/50 dark:to-teal-950/20 dark:border-teal-700' },
+    { label: 'Convolution Layer(s) → ReLU → Pooling', tone: 'from-sky-100 to-sky-50 border-sky-400 dark:from-sky-950/50 dark:to-sky-950/20 dark:border-sky-700' },
+    { label: 'More Conv Layers → ReLU → Pooling', tone: 'from-indigo-100 to-indigo-50 border-indigo-400 dark:from-indigo-950/50 dark:to-indigo-950/20 dark:border-indigo-700' },
+    { label: 'Flatten', tone: 'from-amber-100 to-amber-50 border-amber-400 dark:from-amber-950/50 dark:to-amber-950/20 dark:border-amber-700' },
+    { label: 'Fully Connected Layer', tone: 'from-violet-100 to-violet-50 border-violet-400 dark:from-violet-950/50 dark:to-violet-950/20 dark:border-violet-700' },
+    { label: 'Softmax', tone: 'from-rose-100 to-rose-50 border-rose-400 dark:from-rose-950/50 dark:to-rose-950/20 dark:border-rose-700' },
+    { label: 'Predicted Class Probabilities', tone: 'from-emerald-100 to-emerald-50 border-emerald-400 dark:from-emerald-950/50 dark:to-emerald-950/20 dark:border-emerald-700' },
+  ].map((step, idx) => (
+    <div key={step.label} className="flex w-full max-w-lg flex-col items-center">
+      <div
+        className={`w-full rounded-xl border-2 bg-gradient-to-b px-4 py-3 text-center text-sm font-semibold text-slate-900 shadow-sm dark:text-slate-100 ${step.tone}`}
+      >
+        {step.label}
+      </div>
+      {idx < 6 && (
+        <span className="py-1 text-lg font-bold text-slate-400 dark:text-slate-500" aria-hidden>
+          ↓
+        </span>
+      )}
+    </div>
+  ))}
+</div>
+
+The CNN learns to extract patterns that are <strong>invariant</strong>, <strong>informative</strong>, and <strong>interpretable</strong>, and then uses those to <strong>classify</strong> the input.
+
+---
+
+<div className="not-prose mt-10 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-6 dark:border-slate-700">
+  <a href="./filters-features-convolutions" className="text-sm font-medium text-slate-600 no-underline hover:text-teal-700 hover:underline dark:text-slate-400 dark:hover:text-teal-400">← Lesson 7 · Filters & feature maps</a>
+  <a href="./intro" className="text-sm font-semibold text-teal-700 no-underline hover:underline dark:text-teal-400">Course overview →</a>
+</div>

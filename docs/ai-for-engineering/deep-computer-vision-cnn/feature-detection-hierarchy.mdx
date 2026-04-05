@@ -1,0 +1,193 @@
+---
+sidebar_label: '4 · Feature hierarchy'
+title: 'Lesson 4 — Feature detection & hierarchical structure'
+description: Why detecting features is hard, why raw pixels are not enough, and how deep learning shifts the paradigm toward learned hierarchy.
+---
+
+# Feature detection, spatial structure, and hierarchy
+
+In this chapter, we will talk about essentially **feature extraction** and **feature detection**. Why this feature detection is harder, and what are the main reasons that understanding images in **raw pixel space** is not enough and we need to understand the **spatial relationship** and the **hierarchical features** hidden inside an image.
+
+---
+
+## Visual classification
+
+At the heart of any image classification problem lies the task of **feature detection**.
+
+For instance, if you are trying to classify an image as a **human face**, you might define the necessary features as **eyes**, a **nose**, and a **mouth**. Once these components are detected in the image, you gain confidence that the object is indeed a face. Similarly, if you are trying to detect a **house**, you might define features such as **doors**, **windows**, and **rooftops**. The more of these features the system detects, the more confident it becomes in its classification.
+
+This process may appear intuitive, but building a system that performs it reliably across diverse inputs is **highly nontrivial**.
+
+<div className="not-prose my-6 overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-700">
+  <table className="w-full min-w-[480px] border-collapse text-left text-sm">
+    <thead>
+      <tr className="border-b border-slate-200 bg-indigo-600 text-white dark:border-slate-600 dark:bg-indigo-800">
+        <th className="p-3 font-semibold">You want to detect…</th>
+        <th className="p-3 font-semibold">Typical features you might check for</th>
+      </tr>
+    </thead>
+    <tbody className="text-slate-700 dark:text-slate-300">
+      <tr className="border-b border-slate-100 bg-indigo-50/50 dark:border-slate-800 dark:bg-indigo-950/20">
+        <td className="p-3 font-medium">Human face</td>
+        <td className="p-3">Eyes, nose, mouth</td>
+      </tr>
+      <tr className="bg-white dark:bg-slate-950/30">
+        <td className="p-3 font-medium">House</td>
+        <td className="p-3">Doors, windows, rooftops</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+---
+
+## Why feature detection is harder than it looks
+
+The difficulty arises from **two core challenges**:
+
+<div className="not-prose my-5 grid gap-4 md:grid-cols-2">
+  <div className="rounded-xl border-2 border-rose-300 bg-rose-50/90 p-4 dark:border-rose-900/50 dark:bg-rose-950/25">
+    <p className="m-0 text-base font-bold text-rose-900 dark:text-rose-200">1. Feature hierarchy and recursion</p>
+  </div>
+  <div className="rounded-xl border-2 border-amber-300 bg-amber-50/90 p-4 dark:border-amber-900/50 dark:bg-amber-950/25">
+    <p className="m-0 text-base font-bold text-amber-900 dark:text-amber-200">2. High variability in input space</p>
+  </div>
+</div>
+
+### Feature hierarchy and recursion
+
+To detect a face, you must detect eyes. (face → depends on eyes → depends on the eye ball → a dark black or brown dot → so on… )
+
+But to detect eyes, you now have a **subproblem that is structurally identical to the original problem**.
+
+Each feature itself requires its own **sub-feature detection process**.
+
+This introduces a **hierarchical structure** where higher-level features are composed of lower-level ones.
+
+<div className="not-prose my-5 rounded-xl border border-slate-300 bg-gradient-to-b from-slate-50 to-slate-100 p-4 text-center dark:border-slate-600 dark:from-slate-900 dark:to-slate-950">
+  <p className="m-0 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Idea: nested detection</p>
+  <div className="mt-3 flex flex-col items-center gap-2 text-sm font-medium text-slate-800 dark:text-slate-200">
+    <span className="rounded-lg border-2 border-slate-400 bg-white px-4 py-2 shadow-sm dark:border-slate-500 dark:bg-slate-800">Face</span>
+    <span className="text-slate-400" aria-hidden>
+      ↓ depends on
+    </span>
+    <span className="rounded-lg border-2 border-slate-400 bg-white px-4 py-2 shadow-sm dark:border-slate-500 dark:bg-slate-800">Eyes</span>
+    <span className="text-slate-400" aria-hidden>
+      ↓ depends on
+    </span>
+    <span className="rounded-lg border-2 border-slate-400 bg-white px-4 py-2 shadow-sm dark:border-slate-500 dark:bg-slate-800">Eye ball → dot-like region → …</span>
+  </div>
+  <p className="mt-3 mb-0 text-xs text-slate-600 dark:text-slate-400">Same pattern repeats: each level needs its own detector.</p>
+</div>
+
+### High variability in input space
+
+A single object class, such as a face, can appear vastly different depending on:
+
+<div className="not-prose my-4 overflow-x-auto rounded-xl border border-amber-200 dark:border-amber-900/40">
+  <table className="w-full min-w-[280px] border-collapse text-sm">
+    <thead>
+      <tr className="border-b border-amber-200 bg-amber-100 dark:border-amber-900/50 dark:bg-amber-950/40">
+        <th className="p-3 text-left font-semibold text-amber-950 dark:text-amber-100">
+          A single class (e.g. a face) can vary because of…
+        </th>
+      </tr>
+    </thead>
+    <tbody className="text-slate-700 dark:text-slate-300">
+      <tr className="border-b border-amber-100 dark:border-slate-800">
+        <td className="p-3">Lighting conditions</td>
+      </tr>
+      <tr className="border-b border-amber-100 dark:border-slate-800">
+        <td className="p-3">Pose and orientation</td>
+      </tr>
+      <tr className="border-b border-amber-100 dark:border-slate-800">
+        <td className="p-3">Occlusion (e.g. sunglasses, hats, shadows)</td>
+      </tr>
+      <tr className="border-b border-amber-100 dark:border-slate-800">
+        <td className="p-3">Camera sensor differences</td>
+      </tr>
+      <tr>
+        <td className="p-3">Scale and resolution</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+In **raw pixel space**, even **small transformations** can lead to **large changes** in numerical values.
+
+This makes it hard for **classical machine learning** models to generalize, as they are sensitive to **exact pixel patterns**.
+
+---
+
+## The limitations of classical machine learning
+
+In traditional machine learning, **feature engineering is a manual process**.
+
+Domain experts are responsible for defining what to look for in the data. For image tasks, this means designing filters or extracting geometric and statistical descriptors like **SIFT**, **HOG**, or **edge detectors**.
+
+While effective in **constrained settings**, this approach **fails under real-world variation**. It lacks **adaptability** and requires **constant tweaking** for new tasks or domains.
+
+Most importantly, these **hand-engineered pipelines are brittle**. If the features are poorly chosen or do not generalize, the **performance collapses**. The system’s success depends entirely on **human insight and intuition**.
+
+---
+
+## Deep learning as the paradigm shift
+
+Deep learning with CNN offers a **different philosophy**. Instead of explicitly defining features, **we learn them from data**. We have built a network, a **magical neural network** that has the capability to **learn the features on the go dynamically** while it is in its training phase. The features that it learns are learned in such a way that those are the **best features for classifying an image**. They are not some random features. The neural network itself decides what kind of features it is going to learn during the training phase, and that is how it **eliminates the need for a subject matter expert** to do feature engineering on images.
+
+Convolutional neural networks (**CNNs**), the backbone of modern computer vision, are structured to **automatically learn hierarchical features** from raw pixels. **Lower layers** learn edges and textures. **Middle layers** capture parts and shapes. **Higher layers** learn object-level abstractions.
+
+<div className="not-prose my-6 overflow-x-auto rounded-xl border border-emerald-200 dark:border-emerald-900/40">
+  <table className="w-full min-w-[520px] border-collapse text-sm">
+    <thead>
+      <tr className="border-b border-emerald-200 bg-emerald-700 text-white dark:border-emerald-800 dark:bg-emerald-900">
+        <th className="p-3 font-semibold">Layer depth (typical)</th>
+        <th className="p-3 font-semibold">What CNNs often learn</th>
+      </tr>
+    </thead>
+    <tbody className="text-slate-700 dark:text-slate-300">
+      <tr className="border-b border-emerald-100 bg-emerald-50/50 dark:border-slate-800 dark:bg-emerald-950/15">
+        <td className="p-3 font-medium">Lower</td>
+        <td className="p-3">Edges and textures</td>
+      </tr>
+      <tr className="border-b border-emerald-100 dark:border-slate-800">
+        <td className="p-3 font-medium">Middle</td>
+        <td className="p-3">Parts and shapes</td>
+      </tr>
+      <tr className="bg-emerald-50/30 dark:bg-emerald-950/10">
+        <td className="p-3 font-medium">Higher</td>
+        <td className="p-3">Object-level abstractions</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+This **automatic feature learning** solves both core problems outlined earlier:
+
+<div className="not-prose my-5 grid gap-3 md:grid-cols-2">
+  <div className="rounded-lg border border-emerald-200 bg-white p-3 dark:border-emerald-900/40 dark:bg-slate-900">
+    <p className="m-0 text-sm font-bold text-emerald-800 dark:text-emerald-300">Hierarchy</p>
+    <p className="mt-1 mb-0 text-sm text-slate-700 dark:text-slate-300">Built into the model architecture through <strong>stacked layers</strong>.</p>
+  </div>
+  <div className="rounded-lg border border-emerald-200 bg-white p-3 dark:border-emerald-900/40 dark:bg-slate-900">
+    <p className="m-0 text-sm font-bold text-emerald-800 dark:text-emerald-300">Invariance (practical)</p>
+    <p className="mt-1 mb-0 text-sm text-slate-700 dark:text-slate-300">Pursued by training on <strong>diverse data</strong> and learning filters that <strong>generalize</strong> across scale, rotation, brightness, and more.</p>
+  </div>
+</div>
+
+What was previously a **manual, error-prone, and brittle** process is now a **scalable, data-driven, and highly robust** pipeline.
+
+:::tip[Voila moment]
+
+**Feature detection** is the bottleneck in classical machine learning for computer vision. **We solved it by using CNNs.**
+
+**Deep learning with CNN** replaces hand-crafted feature engineering with **automatic representation learning**.
+
+:::
+
+---
+
+<div className="not-prose mt-10 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-6 dark:border-slate-700">
+  <a href="./from-pixels-to-perception" className="text-sm font-medium text-slate-600 no-underline hover:text-teal-700 hover:underline dark:text-slate-400 dark:hover:text-teal-400">← Lesson 3 · Pixels to perception</a>
+  <a href="./learning-features-from-data" className="text-sm font-semibold text-teal-700 no-underline hover:underline dark:text-teal-400">Next: Lesson 5 — Learned features →</a>
+</div>

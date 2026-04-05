@@ -27,7 +27,24 @@ const sidebars: SidebarsConfig = {
       type: 'category',
       label: 'AI for Engineering',
       items: [
-        'ai-for-engineering/deep-computer-vision-cnn/intro',
+        {
+          type: 'category',
+          label: 'Deep Computer Vision (CNN)',
+          link: {
+            type: 'doc',
+            id: 'ai-for-engineering/deep-computer-vision-cnn/intro',
+          },
+          items: [
+            'ai-for-engineering/deep-computer-vision-cnn/visual-revolution',
+            'ai-for-engineering/deep-computer-vision-cnn/transformative-deep-learning-vision',
+            'ai-for-engineering/deep-computer-vision-cnn/from-pixels-to-perception',
+            'ai-for-engineering/deep-computer-vision-cnn/feature-detection-hierarchy',
+            'ai-for-engineering/deep-computer-vision-cnn/learning-features-from-data',
+            'ai-for-engineering/deep-computer-vision-cnn/preserving-spatial-structure-cnns',
+            'ai-for-engineering/deep-computer-vision-cnn/filters-features-convolutions',
+            'ai-for-engineering/deep-computer-vision-cnn/learning-to-see-cnns',
+          ],
+        },
         'ai-for-engineering/deep-sequence-modelling-rnn/intro',
         'ai-for-engineering/attention-is-all-you-need/intro',
         {

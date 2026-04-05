@@ -1,0 +1,97 @@
+---
+sidebar_label: '2 · Deep learning in vision'
+title: "Lesson 2 — Deep learning's role in computer vision"
+description: How deep learning reshaped visual AI—from handcrafted pipelines to end-to-end models, cloud to edge, and key application areas.
+---
+
+# Deep learning's transformative role in computer vision
+
+Over the last decade, **deep learning** turned computer vision from **hand-tuned features and brittle rules** into **models that learn straight from pixels**. That change is not a small tweak; it is a different way to think about **perception**.
+
+| | **Earlier mainstream approach** | **Deep learning–centric approach** |
+| --- | --- | --- |
+| **Features** | Handcrafted (edges, corners, histograms, heuristics) | Learned layers that build their own representations |
+| **Pipeline** | Many separate stages, lots of manual design | Often **end-to-end**: pixels (or tensors) in, predictions out |
+| **Where it shines** | Constrained, stable setups | Large data, varied scenes, many industries |
+
+Neural networks are now the **default engine** for serious vision work—from **datacenter training** down to **phones and wearables**.
+
+---
+
+## Real-world applications: cloud to edge
+
+Vision is not only in labs. It runs **in the cloud** and **on the device**, with different budgets for **latency** and **power**.
+
+<div className="not-prose my-6 grid gap-4 md:grid-cols-2">
+  <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-900/40">
+    <p className="m-0 text-sm font-semibold text-slate-800 dark:text-slate-100">In your pocket (edge)</p>
+    <ul className="mt-2 mb-0 list-disc pl-5 text-sm text-slate-700 dark:text-slate-300">
+      <li>Face unlock and authentication</li>
+      <li>Scene / portrait enhancement</li>
+      <li>Depth for AR</li>
+    </ul>
+    <p className="mt-3 mb-0 text-xs text-slate-500 dark:text-slate-400">Models are usually **small**, **quantized**, and often **distilled or fine-tuned** from bigger teachers.</p>
+  </div>
+  <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-900/40">
+    <p className="m-0 text-sm font-semibold text-slate-800 dark:text-slate-100">Beyond the phone</p>
+    <ul className="mt-2 mb-0 list-disc pl-5 text-sm text-slate-700 dark:text-slate-300">
+      <li>Drones and robots</li>
+      <li>Smart glasses and wearables</li>
+      <li>Industrial cameras on the line</li>
+    </ul>
+    <p className="mt-3 mb-0 text-xs text-slate-500 dark:text-slate-400">Same idea: **tight compute**, **real-time** needs, **heavy optimization**.</p>
+  </div>
+</div>
+
+---
+
+## Vision in healthcare and biology
+
+Deep learning is used where images already carry life-critical signal: **find the abnormality**, **classify tissue**, **triage workload**.
+
+| **Setting** | **What vision models often do** |
+| --- | --- |
+| **Radiology / CT / MRI** | Flag suspicious regions, rank cases for urgent read |
+| **Pathology slides** | Assist tissue and cell-level patterns |
+| **Retina (e.g. diabetic retinopathy)** | Screening support for eye specialists |
+
+They can surface **subtle, repeatable cues** across many cases—always as **tools next to clinicians**, not a wholesale replacement of judgment.
+
+---
+
+## Self-driving: a hard test for vision
+
+Driving stacks **perception**, **prediction**, and **planning** under **safety pressure**. One famous research direction (including work at **MIT**) asked: can a model map **camera pixels → driving commands** **end-to-end**, without a classic chain of hand-designed perception + map + planner modules?
+
+| | **Idea in one line** |
+| --- | --- |
+| **Input** | Raw video from forward cameras |
+| **Output** | Steering / drive commands |
+| **Appeal** | One network; can **generalize to new roads** without a handcrafted HD map in the loop |
+| **Reality check** | Elegant, but **very hard**: rules, rare events, and safety need more than a single loss on pixels |
+
+So this story is less “problem solved” and more “**why industrial autonomy still mixes learned vision with systems engineering**."
+
+---
+
+## Facial recognition: from “face or not” to rich signals
+
+| **Phase** | **Typical goal** |
+| --- | --- |
+| **Classical / early CV** | **Detect** a face: is there a face in the image? |
+| **Modern deep learning** | **Detect** + **align** + **embed**: landmarks, pose, identity under occlusion, gaze, expressions, attention |
+
+Same camera stream; **much richer outputs**—and stricter needs for **privacy**, **bias**, and **consent** in real products.
+
+---
+
+## Takeaway
+
+Deep learning did not just **improve** accuracy charts; it made **one flexible toolkit** for vision across **cloud, edge, medicine, mobility, and interfaces**. The rest of this track builds the **core ideas** behind those models; the next lessons dig into **how** they work—not only **where** they ship.
+
+---
+
+<div className="not-prose mt-10 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-6 dark:border-slate-700">
+  <a href="./visual-revolution" className="text-sm font-medium text-slate-600 no-underline hover:text-teal-700 hover:underline dark:text-slate-400 dark:hover:text-teal-400">← Lesson 1 · Visual revolution</a>
+  <a href="./from-pixels-to-perception" className="text-sm font-semibold text-teal-700 no-underline hover:underline dark:text-teal-400">Next: Lesson 3 — Pixels to perception →</a>
+</div>

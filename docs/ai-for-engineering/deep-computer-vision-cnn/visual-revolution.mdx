@@ -1,0 +1,101 @@
+---
+sidebar_label: '1 · Visual revolution'
+title: 'Lesson 1 — The Visual Revolution'
+description: A short intro to human and machine vision—why it matters and how deep learning fits in.
+---
+
+# Lesson 1: The Visual Revolution
+
+:::tip[Start here: vision & CNNs]
+
+**Computer vision** is machine learning on **images or video**: you take a grid of pixels (often with extra sensors or metadata) and produce **outputs a product can use**—class labels, bounding boxes, segmentation masks, depth maps, poses, tracks, or signals for control. In production, that almost always means coping with **noise, lighting, motion blur, occlusion, and data that doesn’t match your training set**. Your job as an engineer is to design and train models that stay **correct and robust enough** when the world refuses to look like the benchmark.
+
+:::
+
+## Introduction to vision as a human and machine capability
+
+For humans, sight is one of the main ways we understand the world—reading faces, streets, and traffic lights, often **without thinking hard about each step**. This lesson is about the same idea for **machines**: using **raw images or video** so computers can **see** (in a useful, engineered sense). Deep learning is the usual tool today for turning pixels into predictions.
+
+<div className="not-prose my-8 mx-auto flex w-full max-w-2xl flex-col items-center">
+  <p className="mb-2 text-center text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+    Color and gray pixels of an image
+  </p>
+  <a
+    href="https://commons.wikimedia.org/wiki/File:Pixels_of_an_image.gif"
+    target="_blank"
+    rel="noopener noreferrer"
+    title="Purufromlexai, CC0, via Wikimedia Commons"
+    className="block overflow-hidden rounded-xl border-2 border-teal-300 bg-white shadow-md transition-shadow hover:border-teal-500 hover:shadow-lg dark:border-teal-700 dark:bg-slate-900 dark:hover:border-teal-500"
+  >
+    <img
+      src="https://upload.wikimedia.org/wikipedia/commons/d/d7/Pixels_of_an_image.gif"
+      alt="Animation: color and grayscale pixels making up an image"
+      width={800}
+      height={676}
+      className="mx-auto block h-auto max-w-full"
+      loading="lazy"
+      decoding="async"
+    />
+  </a>
+  <p className="mt-3 max-w-md text-center text-xs leading-relaxed text-slate-600 dark:text-slate-400">
+    <a
+      href="https://commons.wikimedia.org/wiki/File:Pixels_of_an_image.gif"
+      target="_blank"
+      rel="noopener noreferrer"
+      className="font-medium text-teal-700 underline-offset-2 hover:underline dark:text-teal-400"
+    >
+      Pixels of an image
+    </a>
+    {' — '}
+    Purufromlexai,{' '}
+    <a
+      href="https://creativecommons.org/publicdomain/zero/1.0/"
+      target="_blank"
+      rel="noopener noreferrer"
+      className="text-teal-700 underline-offset-2 hover:underline dark:text-teal-400"
+    >
+      CC0 1.0
+    </a>{' '}
+    (public domain dedication), via Wikimedia Commons.
+  </p>
+</div>
+
+## What is vision, conceptually?
+
+A compact definition: **vision is figuring out what is where, from what you see.** One image still forces you to settle many questions at once:
+
+- **What** objects or regions matter?
+- **Where** are they, and how big are they?
+- Are things **moving** or still?
+- How do parts of the scene **relate** to each other?
+- What might **happen next**?
+
+So perception is not only “paint the right label on each pixel.” It blends **space** (layout), **time** (motion and change), and **prediction** (what the scene suggests will happen).
+
+## Static vs. dynamic perception
+
+We don’t only recognize **things**; we read **situations**. Same street, different story:
+
+- A **parked van** reads as static; a **moving sedan** reads as motion—even if both are “cars.”
+- **Pedestrians on the sidewalk** vs. **stepping into the road** change how you interpret risk and intent.
+- A **red light** isn’t just a color; it cues **how traffic should behave next.**
+
+**Takeaway:** useful vision often needs **how the world changes over time**, not a single frozen frame. Building systems with that in mind is a big part of modern computer vision.
+
+## Why computer vision matters
+
+You’ll see the same pattern in many industries: **sense the scene → decide or act**, often under **latency** pressure.
+
+- **Driving & mobility** — lanes, people, signs, obstacles  
+- **Healthcare** — findings in scans and images  
+- **AR & robotics** — maps, poses, object and scene understanding  
+- **Manufacturing** — scratches, dents, assembly mistakes  
+
+These problems usually need more than a single **class label**; they need **where**, **what**, **how it’s changing**, and sometimes **what to do next**—often in **real time**.
+
+---
+
+<div className="not-prose mt-10 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-6 dark:border-slate-700">
+  <a href="./intro" className="text-sm font-medium text-slate-600 no-underline hover:text-teal-700 hover:underline dark:text-slate-400 dark:hover:text-teal-400">← Course overview</a>
+  <a href="./transformative-deep-learning-vision" className="text-sm font-semibold text-teal-700 no-underline hover:underline dark:text-teal-400">Next: Lesson 2 — Deep learning’s role →</a>
+</div>

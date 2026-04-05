@@ -1,10 +1,89 @@
 ---
-title: "Deep Computer Vision: CNN"
+title: 'Deep Computer Vision — CNN'
+description: >-
+  Convolutional neural networks and modern vision systems—from pixels and tasks
+  to hierarchical features and production constraints.
 ---
 
 # Deep Computer Vision: CNN
 
-This course will cover convolutional neural networks and modern computer vision systems.
+This track builds intuition for **convolutional neural networks (CNNs)** and how they power real **computer vision** systems: class labels, boxes, masks, depth, tracking, and more—often under **noise, drift, and latency** that benchmarks leave out.
 
-Course content coming soon.
+Work through the lessons **in order**; each one sets up vocabulary and motivation for the next.
 
+---
+
+## Series overview
+
+<div className="not-prose my-6 space-y-3">
+  <a
+    href="./visual-revolution"
+    className="flex flex-col gap-1 rounded-xl border border-slate-200 bg-white p-4 no-underline transition-colors hover:border-teal-400 hover:bg-teal-50/50 dark:border-slate-700 dark:bg-slate-900/40 dark:hover:border-teal-600 dark:hover:bg-teal-950/30"
+  >
+    <span className="text-xs font-bold uppercase tracking-wide text-teal-700 dark:text-teal-400">Lesson 1</span>
+    <span className="text-base font-semibold text-slate-900 dark:text-slate-100">The visual revolution</span>
+    <span className="text-sm text-slate-600 dark:text-slate-400">What “vision” means for products, static vs dynamic scenes, and why robustness matters.</span>
+  </a>
+  <a
+    href="./transformative-deep-learning-vision"
+    className="flex flex-col gap-1 rounded-xl border border-slate-200 bg-white p-4 no-underline transition-colors hover:border-teal-400 hover:bg-teal-50/50 dark:border-slate-700 dark:bg-slate-900/40 dark:hover:border-teal-600 dark:hover:bg-teal-950/30"
+  >
+    <span className="text-xs font-bold uppercase tracking-wide text-teal-700 dark:text-teal-400">Lesson 2</span>
+    <span className="text-base font-semibold text-slate-900 dark:text-slate-100">Deep learning’s role in computer vision</span>
+    <span className="text-sm text-slate-600 dark:text-slate-400">From handcrafted features to end-to-end models—cloud, edge, healthcare, and autonomy.</span>
+  </a>
+  <a
+    href="./from-pixels-to-perception"
+    className="flex flex-col gap-1 rounded-xl border border-slate-200 bg-white p-4 no-underline transition-colors hover:border-teal-400 hover:bg-teal-50/50 dark:border-slate-700 dark:bg-slate-900/40 dark:hover:border-teal-600 dark:hover:bg-teal-950/30"
+  >
+    <span className="text-xs font-bold uppercase tracking-wide text-teal-700 dark:text-teal-400">Lesson 3</span>
+    <span className="text-base font-semibold text-slate-900 dark:text-slate-100">From pixels to perception</span>
+    <span className="text-sm text-slate-600 dark:text-slate-400">Tensors, regression vs classification in vision, and the path toward learned features.</span>
+  </a>
+  <a
+    href="./feature-detection-hierarchy"
+    className="flex flex-col gap-1 rounded-xl border border-slate-200 bg-white p-4 no-underline transition-colors hover:border-teal-400 hover:bg-teal-50/50 dark:border-slate-700 dark:bg-slate-900/40 dark:hover:border-teal-600 dark:hover:bg-teal-950/30"
+  >
+    <span className="text-xs font-bold uppercase tracking-wide text-teal-700 dark:text-teal-400">Lesson 4</span>
+    <span className="text-base font-semibold text-slate-900 dark:text-slate-100">Feature detection & hierarchy</span>
+    <span className="text-sm text-slate-600 dark:text-slate-400">Why raw pixels are not enough, nested detection, and how deep nets learn a feature hierarchy.</span>
+  </a>
+  <a
+    href="./learning-features-from-data"
+    className="flex flex-col gap-1 rounded-xl border border-slate-200 bg-white p-4 no-underline transition-colors hover:border-teal-400 hover:bg-teal-50/50 dark:border-slate-700 dark:bg-slate-900/40 dark:hover:border-teal-600 dark:hover:bg-teal-950/30"
+  >
+    <span className="text-xs font-bold uppercase tracking-wide text-teal-700 dark:text-teal-400">Lesson 5</span>
+    <span className="text-base font-semibold text-slate-900 dark:text-slate-100">Learning features from data</span>
+    <span className="text-sm text-slate-600 dark:text-slate-400">Depth, distributed & compositional representations, and data-driven hierarchy vs hand-written rules.</span>
+  </a>
+  <a
+    href="./preserving-spatial-structure-cnns"
+    className="flex flex-col gap-1 rounded-xl border border-slate-200 bg-white p-4 no-underline transition-colors hover:border-teal-400 hover:bg-teal-50/50 dark:border-slate-700 dark:bg-slate-900/40 dark:hover:border-teal-600 dark:hover:bg-teal-950/30"
+  >
+    <span className="text-xs font-bold uppercase tracking-wide text-teal-700 dark:text-teal-400">Lesson 6</span>
+    <span className="text-base font-semibold text-slate-900 dark:text-slate-100">Spatial structure & CNNs</span>
+    <span className="text-sm text-slate-600 dark:text-slate-400">Why FC layers break images, convolutions, locality, weight sharing, and feature maps.</span>
+  </a>
+  <a
+    href="./filters-features-convolutions"
+    className="flex flex-col gap-1 rounded-xl border border-slate-200 bg-white p-4 no-underline transition-colors hover:border-teal-400 hover:bg-teal-50/50 dark:border-slate-700 dark:bg-slate-900/40 dark:hover:border-teal-600 dark:hover:bg-teal-950/30"
+  >
+    <span className="text-xs font-bold uppercase tracking-wide text-teal-700 dark:text-teal-400">Lesson 7</span>
+    <span className="text-base font-semibold text-slate-900 dark:text-slate-100">Filters, features & convolutions</span>
+    <span className="text-sm text-slate-600 dark:text-slate-400">Shape detection, convolution math, Sobel kernels, and learnable filters.</span>
+  </a>
+  <a
+    href="./learning-to-see-cnns"
+    className="flex flex-col gap-1 rounded-xl border border-slate-200 bg-white p-4 no-underline transition-colors hover:border-teal-400 hover:bg-teal-50/50 dark:border-slate-700 dark:bg-slate-900/40 dark:hover:border-teal-600 dark:hover:bg-teal-950/30"
+  >
+    <span className="text-xs font-bold uppercase tracking-wide text-teal-700 dark:text-teal-400">Lesson 8</span>
+    <span className="text-base font-semibold text-slate-900 dark:text-slate-100">Learning to see (CNN internals)</span>
+    <span className="text-sm text-slate-600 dark:text-slate-400">Conv–ReLU–pool stacks, volumes, training, softmax, and the full classification pipeline.</span>
+  </a>
+</div>
+
+:::note[After this series]
+
+Later modules in this course spell out **convolution**, **pooling**, architectures, and training practice. The lessons above are the **conceptual spine**—read them once before diving into the math-heavy pages.
+
+:::
