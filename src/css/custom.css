@@ -296,6 +296,12 @@ pre {
   display: contents;
 }
 
+/* Homepage track cards */
+.track-card:hover {
+  border-color: #bfdbfe !important;
+  box-shadow: 0 4px 24px rgba(59, 130, 246, 0.08) !important;
+}
+
 /* Focus styles for accessibility */
 :focus-visible {
   outline: 2px solid var(--ifm-color-primary);

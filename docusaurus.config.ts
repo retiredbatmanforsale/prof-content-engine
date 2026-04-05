@@ -4,12 +4,14 @@ import type * as Preset from '@docusaurus/preset-classic';
 const remarkMath = require('remark-math');
 const rehypeKatex = require('rehype-katex');
 
+const isProd = process.env.NODE_ENV === 'production';
+
 const config: Config = {
   title: 'Prof',
   tagline: 'Prof by Lex AI – community-driven platform for Machine Learning, Deep Learning, and Language Models',
   favicon: 'img/lexailogo.svg',
 
-  url: process.env.SITE_URL || 'https://docusaurus-lexailabs.vercel.app',
+  url: process.env.SITE_URL || (isProd ? 'https://prof-lexai.vercel.app' : 'http://localhost:3001'),
   baseUrl: '/',
 
   organizationName: 'rachit-k12',
@@ -20,7 +22,8 @@ const config: Config = {
 
   customFields: {
     apiUrl: process.env.API_URL || 'https://lexai-auth-service-747134511273.asia-south2.run.app',
-    mainPlatformUrl: process.env.MAIN_PLATFORM_URL || 'https://learn.lexailabs.com',
+    mainPlatformUrl: process.env.MAIN_PLATFORM_URL || 'https://prof-lexai.vercel.app',
+    skipAuth: !isProd,
   },
 
   i18n: {
@@ -62,7 +65,7 @@ const config: Config = {
       logo: {
         alt: 'Prof by Lex AI',
         src: 'img/lexailogo.svg',
-        href: 'https://prof-lexai.vercel.app/',
+        href: isProd ? 'https://prof-lexai.vercel.app/' : '/',
         target: '_self',
       },
       items: [],
