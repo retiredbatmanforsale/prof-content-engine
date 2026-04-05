@@ -11,36 +11,36 @@ const curriculumData = {
       progress: 80,
       topics: [
         { 
-          id: "ml-fundamentals", 
-          title: "Machine Learning Fundamentals", 
+          id: "llms-101", 
+          title: "Large Language Models 101", 
           status: "completed", 
-          description: "Core ML concepts with business analogies",
-          links: ["/docs/ai-for-leaders/machine-learning-fundamentals"],
-          businessValue: "Foundation for all AI decisions"
+          description: "What LLMs can and can't do, and how leaders should evaluate them",
+          links: ["/courses/ai-for-leaders/llms-101/intro"],
+          businessValue: "Foundation for LLM-related decisions"
         },
         { 
-          id: "problem-types", 
-          title: "ML Problem Types & Learning Approaches", 
+          id: "genai-for-everyone", 
+          title: "Generative AI for Everyone", 
           status: "completed",
-          description: "Classification, regression, supervised vs unsupervised",
-          links: ["/docs/ai-for-leaders/classification-regression-supervised-unsupervised"],
-          businessValue: "Choose the right AI approach for your problem"
+          description: "GenAI landscape and practical applications for leaders",
+          links: ["/courses/ai-for-leaders/genai-for-everyone/intro"],
+          businessValue: "Strategic understanding of generative AI"
         },
         { 
-          id: "algorithms-overview", 
-          title: "Classical ML Algorithms Overview", 
+          id: "prompt-engineering", 
+          title: "Prompt Engineering", 
           status: "completed",
-          description: "Linear regression, decision trees, clustering, neural networks",
-          links: ["/docs/ai-for-leaders/algorithms-high-level-overview"],
-          businessValue: "Understand which algorithms solve which business problems"
+          description: "Effective prompting for business and product workflows",
+          links: ["/courses/ai-for-leaders/prompt-engineering/intro"],
+          businessValue: "Get reliable outputs from AI tools"
         },
         { 
-          id: "market-applications", 
-          title: "Market Applications of Classical ML", 
+          id: "ai-literacy", 
+          title: "AI Literacy", 
           status: "completed",
-          description: "Real-world industry applications and use cases",
-          links: ["/docs/ai-for-leaders/classical-ml-in-market"],
-          businessValue: "Strategic insight into AI market positioning"
+          description: "Core concepts and vocabulary for AI-savvy leadership",
+          links: ["/courses/ai-for-leaders/ai-literacy/intro"],
+          businessValue: "Communicate clearly about AI across your organization"
         },
         { 
           id: "model-complexity", 
@@ -404,8 +404,8 @@ const CurriculumTree = () => {
         
         <div className="next-steps">
           <h4>Ready to Start Learning?</h4>
-          <a href="/docs/ai-for-leaders/machine-learning-fundamentals" className="start-learning-btn">
-            Begin with ML Fundamentals →
+          <a href="/courses/ai-for-leaders/llms-101/intro" className="start-learning-btn">
+            Begin with LLMs 101 →
           </a>
         </div>
       </div>

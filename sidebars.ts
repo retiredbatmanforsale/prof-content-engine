@@ -17,17 +17,10 @@ const sidebars: SidebarsConfig = {
       type: 'category',
       label: 'AI for Leaders',
       items: [
-        'ai-for-leaders/intro',
         'ai-for-leaders/llms-101/intro',
         'ai-for-leaders/genai-for-everyone/intro',
         'ai-for-leaders/prompt-engineering/intro',
         'ai-for-leaders/ai-literacy/intro',
-        'ai-for-leaders/curriculum-tree',
-        'ai-for-leaders/curriculum-overview',
-        'ai-for-leaders/machine-learning-fundamentals',
-        'ai-for-leaders/classification-regression-supervised-unsupervised',
-        'ai-for-leaders/algorithms-high-level-overview',
-        'ai-for-leaders/classical-ml-in-market',
       ],
     },
     {
