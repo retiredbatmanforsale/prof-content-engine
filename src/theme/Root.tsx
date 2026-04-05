@@ -28,13 +28,14 @@ function AuthGate({children}: {children: React.ReactNode}) {
   const {siteConfig} = useDocusaurusContext();
   const apiUrl = (siteConfig.customFields?.apiUrl as string) || '';
   const mainPlatformUrl = (siteConfig.customFields?.mainPlatformUrl as string) || '';
-  const skipAuth = Boolean(siteConfig.customFields?.skipAuth);
+  const isLocal = typeof window !== 'undefined' &&
+    (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
 
-  const [authed, setAuthed] = useState(skipAuth);
-  const [checking, setChecking] = useState(!skipAuth);
+  const [authed, setAuthed] = useState(isLocal);
+  const [checking, setChecking] = useState(!isLocal);
 
   useEffect(() => {
-    if (skipAuth) return;
+    if (isLocal) return;
     // 1. Extract tokens from URL if present
     const params = new URLSearchParams(window.location.search);
     const urlToken = params.get('token');

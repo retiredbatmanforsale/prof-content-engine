@@ -23,7 +23,6 @@ const config: Config = {
   customFields: {
     apiUrl: process.env.API_URL || 'https://lexai-auth-service-747134511273.asia-south2.run.app',
     mainPlatformUrl: process.env.MAIN_PLATFORM_URL || 'https://prof-lexai.vercel.app',
-    skipAuth: !isProd,
   },
 
   i18n: {
