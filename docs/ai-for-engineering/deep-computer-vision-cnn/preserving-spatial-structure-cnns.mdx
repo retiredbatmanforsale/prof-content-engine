@@ -257,26 +257,47 @@ Here&apos;s how it works:
   </p>
 </div>
 
-<div className="not-prose my-8 mx-auto w-full max-w-2xl">
-  <p className="mb-2 text-center text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">Short video — convolution in action</p>
-  <div className="aspect-video w-full overflow-hidden rounded-xl border-2 border-sky-300 shadow-md dark:border-sky-700">
-    <iframe
-      className="h-full w-full"
-      src="https://www.youtube.com/embed/j6htPRAPwQ8"
-      title="YouTube Shorts — convolution"
-      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-      allowFullScreen
+<div className="not-prose my-8 mx-auto flex w-full max-w-2xl flex-col items-center">
+  <p className="mb-2 text-center text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+    Hierarchical &amp; deeper features in CNNs
+  </p>
+  <a
+    href="https://commons.wikimedia.org/wiki/File:Hierarchical_Features_in_CNNs.gif"
+    target="_blank"
+    rel="noopener noreferrer"
+    title="Purufromlexai, CC BY 4.0, via Wikimedia Commons"
+    className="block overflow-hidden rounded-xl border-2 border-indigo-300 bg-white shadow-md transition-shadow hover:border-indigo-500 hover:shadow-lg dark:border-indigo-700 dark:bg-slate-900 dark:hover:border-indigo-500"
+  >
+    <img
+      src="https://upload.wikimedia.org/wikipedia/commons/c/c9/Hierarchical_Features_in_CNNs.gif"
+      alt="Animation: hierarchical and deeper features learned across CNN layers"
+      width={800}
+      height={867}
+      className="mx-auto block h-auto max-w-full"
+      loading="lazy"
+      decoding="async"
     />
-  </div>
-  <p className="mt-2 text-center text-xs text-slate-500 dark:text-slate-400">
+  </a>
+  <p className="mt-3 max-w-md text-center text-xs leading-relaxed text-slate-600 dark:text-slate-400">
     <a
-      href="https://youtube.com/shorts/j6htPRAPwQ8?feature=share"
+      href="https://commons.wikimedia.org/wiki/File:Hierarchical_Features_in_CNNs.gif"
       target="_blank"
       rel="noopener noreferrer"
-      className="text-sky-700 underline-offset-2 hover:underline dark:text-sky-400"
+      className="font-medium text-indigo-700 underline-offset-2 hover:underline dark:text-indigo-400"
     >
-      Open on YouTube
+      Hierarchical Features in CNNs
     </a>
+    {' — '}
+    Purufromlexai,{' '}
+    <a
+      href="https://creativecommons.org/licenses/by/4.0"
+      target="_blank"
+      rel="noopener noreferrer"
+      className="text-indigo-700 underline-offset-2 hover:underline dark:text-indigo-400"
+    >
+      CC BY 4.0
+    </a>
+    , via Wikimedia Commons.
   </p>
 </div>
 

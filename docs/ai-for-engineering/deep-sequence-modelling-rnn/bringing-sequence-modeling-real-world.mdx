@@ -1,0 +1,251 @@
+---
+sidebar_label: '4 · Sequences in the real world'
+title: 'Lesson 4 — Bringing Sequence Modeling to the Real World'
+description: >-
+  Why sequences differ from fixed inputs, next-word prediction, tokenization
+  and embeddings, remaining challenges, and links to LSTMs, GRUs, and Transformers.
+---
+
+# Bringing Sequence Modeling to the Real World
+
+Now that we&apos;ve laid a foundation for understanding recurrent neural networks (RNNs) — how they <strong>carry memory</strong> across time steps, how they <strong>update internal states</strong>, and how they <strong>generate outputs</strong> — let&apos;s consider what it means to <strong>operationalize</strong> this framework in the real world.
+
+---
+
+## Why Are Sequences Different?
+
+Sequences especially in domains like <strong>natural language</strong> are <strong>rich</strong>, <strong>diverse</strong>, and <strong>challenging</strong>. Unlike images, which usually have <strong>fixed dimensions</strong> (like <strong>224×224</strong> pixels), sequences <em>vary</em>:
+
+<div className="not-prose my-6 grid gap-3 md:grid-cols-3">
+  <div className="rounded-xl border-2 border-sky-300 bg-sky-50/90 p-4 text-sm text-slate-800 dark:border-sky-800 dark:bg-sky-950/25 dark:text-slate-200">
+    <p className="m-0 text-xs font-bold uppercase text-sky-800 dark:text-sky-300">Short</p>
+    <p className="mt-2 mb-0 italic">&quot;Hi.&quot;</p>
+  </div>
+  <div className="rounded-xl border-2 border-violet-300 bg-violet-50/90 p-4 text-sm text-slate-800 dark:border-violet-800 dark:bg-violet-950/25 dark:text-slate-200">
+    <p className="m-0 text-xs font-bold uppercase text-violet-800 dark:text-violet-300">Long</p>
+    <p className="mt-2 mb-0 italic">
+      &quot;This morning I took my cat for a walk because the weather was finally good.&quot;
+    </p>
+  </div>
+  <div className="rounded-xl border-2 border-amber-300 bg-amber-50/90 p-4 text-sm text-slate-800 dark:border-amber-800 dark:bg-amber-950/25 dark:text-slate-200">
+    <p className="m-0 text-xs font-bold uppercase text-amber-800 dark:text-amber-300">In between</p>
+    <p className="mt-2 mb-0">Many sequences lie <strong>somewhere in the middle</strong>.</p>
+  </div>
+</div>
+
+But <strong>length</strong> isn&apos;t the only complexity. The <strong>meaning</strong> of an element in a sequence is often <strong>highly contextual</strong>. Consider:
+
+<div className="not-prose my-5 rounded-xl border-l-4 border-indigo-500 bg-indigo-50/70 py-4 pl-4 pr-3 dark:bg-indigo-950/25">
+  <p className="m-0 text-sm font-medium text-slate-800 dark:text-slate-200">
+    &quot;This morning I took my cat for a walk…&quot;
+  </p>
+  <p className="mt-3 mb-0 text-sm text-slate-700 dark:text-slate-300">
+    The choice of the next word (<strong>&quot;outside&quot;</strong>, <strong>&quot;again&quot;</strong>, or even <strong>&quot;reluctantly&quot;</strong>) could depend on information at the <strong>very beginning</strong> of the sentence. This is the <strong>long-range dependency problem</strong> — a core reason why modeling sequences is more complex than modeling fixed-size inputs.
+  </p>
+</div>
+
+This makes <strong>order</strong> and <strong>context</strong> essential properties that any good sequence model must capture. And that&apos;s precisely the role of models like <strong>RNNs</strong>.
+
+---
+
+## A Real-World Use Case: Next Word Prediction
+
+To understand how RNNs apply in practice, let&apos;s take a classic problem: <strong>predicting the next word</strong> in a sentence.
+
+<strong>Why this task?</strong> Because it&apos;s not just intuitive — <strong>it&apos;s also foundational</strong>. Modern language models, including the ones that power tools like <strong>ChatGPT</strong>, are built upon the ability to predict the <strong>next word</strong> given a sequence of <strong>previous words</strong>.
+
+<div className="not-prose my-6 rounded-xl border-2 border-emerald-300 bg-emerald-50/80 p-4 dark:border-emerald-800 dark:bg-emerald-950/25">
+  <p className="m-0 text-xs font-bold uppercase tracking-wide text-emerald-800 dark:text-emerald-300">Example sentence</p>
+  <p className="mt-2 mb-0 text-center font-mono text-sm font-semibold text-emerald-950 dark:text-emerald-100">
+    &quot;This morning I took my cat for a walk&quot;
+  </p>
+</div>
+
+We want our model to take this sequence and predict what comes next. Is it <strong>&quot;outside&quot;</strong>? <strong>&quot;to the park&quot;</strong>? <strong>&quot;again&quot;</strong>? That prediction depends on both the <strong>input words</strong> and their <strong>order</strong>.
+
+But before any model can process this sequence, we need to address a very important question:
+
+<div className="not-prose my-5 rounded-xl border-2 border-dashed border-rose-400 bg-rose-50/50 p-4 text-center dark:border-rose-700 dark:bg-rose-950/20">
+  <p className="m-0 text-base font-bold text-rose-900 dark:text-rose-200">How Do We Feed Words into a Neural Network?</p>
+</div>
+
+---
+
+## Vectorizing the Input: From Words to Numbers
+
+Neural networks don&apos;t understand <strong>raw text</strong>. They only operate on <strong>numbers</strong> specifically, <strong>vectors</strong>. So, the first step in sequence modeling is:
+
+<div className="not-prose my-4 text-center">
+  <span className="inline-block rounded-full border-2 border-indigo-400 bg-indigo-50 px-4 py-2 text-sm font-bold text-indigo-900 dark:border-indigo-600 dark:bg-indigo-950/40 dark:text-indigo-100">
+    Vectorizing the input: from words → numbers
+  </span>
+</div>
+
+Here&apos;s how that happens:
+
+<div className="not-prose my-6 space-y-4">
+  <div className="rounded-xl border-2 border-teal-300 bg-teal-50/80 p-4 dark:border-teal-800 dark:bg-teal-950/25">
+    <p className="m-0 text-sm font-bold text-teal-900 dark:text-teal-200">
+      <span className="mr-2 inline-flex h-6 w-6 items-center justify-center rounded-full bg-teal-600 text-xs text-white">1</span>
+      Define a vocabulary
+    </p>
+    <p className="mt-2 mb-0 text-sm text-slate-800 dark:text-slate-200">
+      All possible words the model might encounter are placed in a <strong>finite vocabulary</strong>, say,{' '}
+      <strong>V</strong> = &#123;&quot;I&quot;, &quot;cat&quot;, &quot;walk&quot;, ...&#125;.
+    </p>
+    $$
+    \mathcal{V} = \{\text{``I''},\, \text{``cat''},\, \text{``walk''},\, \ldots\}
+    $$
+  </div>
+  <div className="rounded-xl border-2 border-cyan-300 bg-cyan-50/80 p-4 dark:border-cyan-800 dark:bg-cyan-950/25">
+    <p className="m-0 text-sm font-bold text-cyan-900 dark:text-cyan-200">
+      <span className="mr-2 inline-flex h-6 w-6 items-center justify-center rounded-full bg-cyan-600 text-xs text-white">2</span>
+      Assign indices
+    </p>
+    <p className="mt-2 mb-0 text-sm text-slate-800 dark:text-slate-200">
+      Each word is mapped to a <strong>unique index</strong>. For instance,
+    </p>
+    <div className="not-prose mt-3 overflow-x-auto rounded-lg border border-cyan-200 dark:border-cyan-900/40">
+      <table className="w-full min-w-[280px] border-collapse text-left text-sm">
+        <thead>
+          <tr className="bg-cyan-600 text-white">
+            <th className="p-2 font-semibold">Word</th>
+            <th className="p-2 font-semibold">Index</th>
+          </tr>
+        </thead>
+        <tbody className="text-slate-800 dark:text-slate-200">
+          <tr className="border-b border-cyan-100 dark:border-slate-700">
+            <td className="p-2 font-mono">&quot;I&quot;</td>
+            <td className="p-2 font-mono">→ 1</td>
+          </tr>
+          <tr className="border-b border-cyan-100 dark:border-slate-700">
+            <td className="p-2 font-mono">&quot;cat&quot;</td>
+            <td className="p-2 font-mono">→ 2</td>
+          </tr>
+          <tr>
+            <td className="p-2 font-mono">&quot;walk&quot;</td>
+            <td className="p-2 font-mono">→ 3</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p className="mt-2 mb-0 text-xs text-slate-600 dark:text-slate-400">…and so on.</p>
+  </div>
+  <div className="rounded-xl border-2 border-violet-300 bg-violet-50/80 p-4 dark:border-violet-800 dark:bg-violet-950/25">
+    <p className="m-0 text-sm font-bold text-violet-900 dark:text-violet-200">
+      <span className="mr-2 inline-flex h-6 w-6 items-center justify-center rounded-full bg-violet-600 text-xs text-white">3</span>
+      Convert indices to vectors (embeddings)
+    </p>
+    <p className="mt-2 mb-0 text-sm text-slate-800 dark:text-slate-200">
+      We transform each index into a <strong>fixed-length vector</strong>, either by:
+    </p>
+    <div className="not-prose mt-3 grid gap-3 sm:grid-cols-2">
+      <div className="rounded-lg border border-violet-200 bg-white/90 p-3 text-sm text-slate-800 dark:border-violet-900/40 dark:bg-slate-900/60 dark:text-slate-200">
+        <strong>One-hot encoding</strong> — a binary vector where only <em>one</em> index is <strong>1</strong>.
+      </div>
+      <div className="rounded-lg border border-violet-200 bg-white/90 p-3 text-sm text-slate-800 dark:border-violet-900/40 dark:bg-slate-900/60 dark:text-slate-200">
+        <strong>Learned embedding</strong> — a dense, low-dimensional vector so similar words (like <em>&quot;cat&quot;</em> and <em>&quot;dog&quot;</em>) have <strong>similar</strong> representations.
+      </div>
+    </div>
+  </div>
+</div>
+
+This transformation gives us a <strong>numerical representation of language</strong> that RNNs can operate on.
+
+---
+
+## Why Modeling Sequences is Still Hard
+
+Even with well-structured vector inputs, sequence modeling remains <strong>challenging</strong> due to:
+
+<div className="not-prose my-6 grid gap-4 md:grid-cols-3">
+  <div className="rounded-xl border-2 border-rose-300 bg-rose-50/90 p-4 dark:border-rose-800 dark:bg-rose-950/25">
+    <p className="m-0 text-sm font-bold text-rose-900 dark:text-rose-200">Variable lengths</p>
+    <p className="mt-2 mb-0 text-sm text-slate-800 dark:text-slate-200">
+      Our model must handle inputs of <strong>all sizes</strong> — from a 3-word sentence to a 30-word one — without losing context or performance.
+    </p>
+  </div>
+  <div className="rounded-xl border-2 border-orange-300 bg-orange-50/90 p-4 dark:border-orange-800 dark:bg-orange-950/25">
+    <p className="m-0 text-sm font-bold text-orange-900 dark:text-orange-200">Long-term dependencies</p>
+    <p className="mt-2 mb-0 text-sm text-slate-800 dark:text-slate-200">
+      Information at the <strong>start</strong> may be critical for predicting something at the <strong>end</strong>. Basic RNNs often struggle due to issues like <em>vanishing gradients</em>.
+    </p>
+  </div>
+  <div className="rounded-xl border-2 border-indigo-300 bg-indigo-50/90 p-4 dark:border-indigo-800 dark:bg-indigo-950/25">
+    <p className="m-0 text-sm font-bold text-indigo-900 dark:text-indigo-200">Order sensitivity</p>
+    <p className="mt-2 mb-0 text-sm text-slate-800 dark:text-slate-200">
+      Unlike bag-of-words models, RNNs need the <strong>exact ordering</strong> of words.
+    </p>
+  </div>
+</div>
+
+<div className="not-prose my-6 grid gap-3 md:grid-cols-2">
+  <div className="rounded-xl border-2 border-amber-400 bg-amber-100/80 p-4 text-center dark:border-amber-600 dark:bg-amber-950/30">
+    <p className="m-0 text-sm font-bold text-amber-950 dark:text-amber-100">&quot;dog bites man&quot;</p>
+  </div>
+  <div className="rounded-xl border-2 border-slate-500 bg-slate-200/80 p-4 text-center dark:border-slate-400 dark:bg-slate-800/80">
+    <p className="m-0 text-sm font-bold text-slate-900 dark:text-slate-100">&quot;man bites dog&quot;</p>
+  </div>
+</div>
+
+<p className="text-center text-sm text-slate-700 dark:text-slate-300">
+  <strong>Same words</strong>, <em>completely different meaning</em>.
+</p>
+
+This is why architectures like <strong>LSTMs</strong> and <strong>GRUs</strong> were developed to improve upon standard RNNs by better capturing <strong>long-range dependencies</strong>.
+
+---
+
+## Why This Matters
+
+Understanding sequence modeling isn&apos;t just about RNNs. It&apos;s the foundation for models that do:
+
+<div className="not-prose my-6 grid gap-3 sm:grid-cols-2">
+  <div className="flex items-start gap-3 rounded-xl border border-emerald-200 bg-emerald-50/70 p-4 dark:border-emerald-900/40 dark:bg-emerald-950/20">
+    <span className="text-xl" aria-hidden>
+      🌐
+    </span>
+    <div>
+      <p className="m-0 text-sm font-bold text-emerald-900 dark:text-emerald-200">Machine translation</p>
+      <p className="mt-1 mb-0 text-sm text-slate-800 dark:text-slate-200">Translating one sentence to another.</p>
+    </div>
+  </div>
+  <div className="flex items-start gap-3 rounded-xl border border-sky-200 bg-sky-50/70 p-4 dark:border-sky-900/40 dark:bg-sky-950/20">
+    <span className="text-xl" aria-hidden>
+      🎙️
+    </span>
+    <div>
+      <p className="m-0 text-sm font-bold text-sky-900 dark:text-sky-200">Speech recognition</p>
+      <p className="mt-1 mb-0 text-sm text-slate-800 dark:text-slate-200">Converting audio waves into words.</p>
+    </div>
+  </div>
+  <div className="flex items-start gap-3 rounded-xl border border-violet-200 bg-violet-50/70 p-4 dark:border-violet-900/40 dark:bg-violet-950/20">
+    <span className="text-xl" aria-hidden>
+      ✍️
+    </span>
+    <div>
+      <p className="m-0 text-sm font-bold text-violet-900 dark:text-violet-200">Text generation</p>
+      <p className="mt-1 mb-0 text-sm text-slate-800 dark:text-slate-200">Autocompleting sentences or generating articles.</p>
+    </div>
+  </div>
+  <div className="flex items-start gap-3 rounded-xl border border-fuchsia-200 bg-fuchsia-50/70 p-4 dark:border-fuchsia-900/40 dark:bg-fuchsia-950/20">
+    <span className="text-xl" aria-hidden>
+      💬
+    </span>
+    <div>
+      <p className="m-0 text-sm font-bold text-fuchsia-900 dark:text-fuchsia-200">Dialogue modeling</p>
+      <p className="mt-1 mb-0 text-sm text-slate-800 dark:text-slate-200">Powering assistants that respond to questions coherently.</p>
+    </div>
+  </div>
+</div>
+
+And while RNNs are a start, you&apos;ll soon see why their limitations pushed the community toward <strong>attention-based models</strong> and <strong>transformers</strong> — architectures that address many of the pain points we&apos;ve just discussed.
+
+In our <strong>next step</strong>, we&apos;ll dive deeper into those limitations and begin exploring how models like <strong>LSTMs</strong> and <strong>GRUs</strong> tackle long-term dependencies more effectively — setting the stage for even more powerful sequence modeling paradigms.
+
+---
+
+<div className="not-prose mt-10 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-6 dark:border-slate-700">
+  <a href="./rnn-internal-mechanics" className="text-sm font-medium text-slate-600 no-underline hover:text-indigo-700 hover:underline dark:text-slate-400 dark:hover:text-indigo-400">← Lesson 3 · RNN mechanics</a>
+  <a href="./training-rnn-backprop-through-time" className="text-sm font-semibold text-indigo-700 no-underline hover:underline dark:text-indigo-400">Lesson 5 · BPTT →</a>
+</div>

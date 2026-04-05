@@ -1,10 +1,65 @@
 ---
-title: "Deep Sequence Modelling: RNN"
+title: 'Deep Sequence Modelling: RNN'
+description: >-
+  Recurrent neural networks and sequence modelling—temporal structure, problem
+  types, and architectures from RNNs to Transformers.
 ---
 
 # Deep Sequence Modelling: RNN
 
-This course will introduce recurrent neural networks and practical sequence modelling techniques.
+This track introduces **recurrent neural networks** and **practical sequence modelling**: when order matters, how real data forms sequences, and which **input→output** patterns show up in NLP, speech, video, and time series.
 
-Course content coming soon.
+---
 
+## Lessons
+
+<div className="not-prose my-6 space-y-3">
+  <a
+    href="./foundations-of-deep-sequence-modeling"
+    className="flex flex-col gap-1 rounded-xl border border-slate-200 bg-white p-4 no-underline transition-colors hover:border-indigo-400 hover:bg-indigo-50/50 dark:border-slate-700 dark:bg-slate-900/40 dark:hover:border-indigo-600 dark:hover:bg-indigo-950/30"
+  >
+    <span className="text-xs font-bold uppercase tracking-wide text-indigo-700 dark:text-indigo-400">Lesson 1</span>
+    <span className="text-base font-semibold text-slate-900 dark:text-slate-100">Foundations of deep sequence modeling</span>
+    <span className="text-sm text-slate-600 dark:text-slate-400">Motivation, domains, problem types, and temporal dependencies vs i.i.d. assumptions.</span>
+  </a>
+  <a
+    href="./from-static-networks-to-time-aware"
+    className="flex flex-col gap-1 rounded-xl border border-slate-200 bg-white p-4 no-underline transition-colors hover:border-indigo-400 hover:bg-indigo-50/50 dark:border-slate-700 dark:bg-slate-900/40 dark:hover:border-indigo-600 dark:hover:bg-indigo-950/30"
+  >
+    <span className="text-xs font-bold uppercase tracking-wide text-indigo-700 dark:text-indigo-400">Lesson 2</span>
+    <span className="text-base font-semibold text-slate-900 dark:text-slate-100">From static networks to time-aware models</span>
+    <span className="text-sm text-slate-600 dark:text-slate-400">Perceptron vs time, naive feedforward on sequences, recurrence, RNN equations, unrolled vs cyclic views.</span>
+  </a>
+  <a
+    href="./rnn-internal-mechanics"
+    className="flex flex-col gap-1 rounded-xl border border-slate-200 bg-white p-4 no-underline transition-colors hover:border-indigo-400 hover:bg-indigo-50/50 dark:border-slate-700 dark:bg-slate-900/40 dark:hover:border-indigo-600 dark:hover:bg-indigo-950/30"
+  >
+    <span className="text-xs font-bold uppercase tracking-wide text-indigo-700 dark:text-indigo-400">Lesson 3</span>
+    <span className="text-base font-semibold text-slate-900 dark:text-slate-100">RNN internal mechanics &amp; formal structure</span>
+    <span className="text-sm text-slate-600 dark:text-slate-400">Matrices W_xh, W_hh, W_hy, pseudocode, unrolling, loss over time, SimpleRNN class, frameworks.</span>
+  </a>
+  <a
+    href="./bringing-sequence-modeling-real-world"
+    className="flex flex-col gap-1 rounded-xl border border-slate-200 bg-white p-4 no-underline transition-colors hover:border-indigo-400 hover:bg-indigo-50/50 dark:border-slate-700 dark:bg-slate-900/40 dark:hover:border-indigo-600 dark:hover:bg-indigo-950/30"
+  >
+    <span className="text-xs font-bold uppercase tracking-wide text-indigo-700 dark:text-indigo-400">Lesson 4</span>
+    <span className="text-base font-semibold text-slate-900 dark:text-slate-100">Bringing sequence modeling to the real world</span>
+    <span className="text-sm text-slate-600 dark:text-slate-400">Variable-length text, long-range dependencies, next-word prediction, vocabulary and embeddings, applications, bridge to LSTMs/GRUs/Transformers.</span>
+  </a>
+  <a
+    href="./training-rnn-backprop-through-time"
+    className="flex flex-col gap-1 rounded-xl border border-slate-200 bg-white p-4 no-underline transition-colors hover:border-indigo-400 hover:bg-indigo-50/50 dark:border-slate-700 dark:bg-slate-900/40 dark:hover:border-indigo-600 dark:hover:bg-indigo-950/30"
+  >
+    <span className="text-xs font-bold uppercase tracking-wide text-indigo-700 dark:text-indigo-400">Lesson 5</span>
+    <span className="text-base font-semibold text-slate-900 dark:text-slate-100">Training RNNs: backpropagation to BPTT</span>
+    <span className="text-sm text-slate-600 dark:text-slate-400">Feedforward training loop, temporal backprop, BPTT, vanishing/exploding gradients, and LSTM as a remedy.</span>
+  </a>
+  <a
+    href="./training-an-rnn-in-pytorch"
+    className="flex flex-col gap-1 rounded-xl border border-slate-200 bg-white p-4 no-underline transition-colors hover:border-indigo-400 hover:bg-indigo-50/50 dark:border-slate-700 dark:bg-slate-900/40 dark:hover:border-indigo-600 dark:hover:bg-indigo-950/30"
+  >
+    <span className="text-xs font-bold uppercase tracking-wide text-indigo-700 dark:text-indigo-400">Lesson 6</span>
+    <span className="text-base font-semibold text-slate-900 dark:text-slate-100">Training an RNN in PyTorch</span>
+    <span className="text-sm text-slate-600 dark:text-slate-400">StockRNN, sliding windows, batch_first tensors, h0, many-to-one head, DataLoader, MSE, and BPTT via autograd.</span>
+  </a>
+</div>

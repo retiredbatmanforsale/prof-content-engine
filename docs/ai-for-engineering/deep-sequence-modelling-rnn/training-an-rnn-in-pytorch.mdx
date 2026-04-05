@@ -1,0 +1,571 @@
+---
+sidebar_label: '6 · PyTorch RNN lab'
+title: 'Lesson 6 — Training an RNN in PyTorch'
+description: >-
+  End-to-end stock price example: nn.RNN, hidden state shape, many-to-one
+  heads, sliding windows, DataLoader, and automatic BPTT via loss.backward().
+---
+
+# Training an RNN in PyTorch
+
+This lesson is a <strong>hands-on bridge</strong> from the math of recurrence and BPTT to a real <strong>PyTorch</strong> training loop. You will see how <code>nn.RNN</code> expects tensors, how the <strong>initial hidden state</strong> <code>h0</code> is shaped, why we often read <code>out[:, -1, :]</code> for <em>many-to-one</em> prediction, and how <code>loss.backward()</code> triggers <strong>backpropagation through time</strong> on the unrolled graph—without you writing the chain rule by hand.
+
+:::tip Dependencies
+
+Run this script in an environment with <strong>PyTorch</strong>, <strong>yfinance</strong>, <strong>scikit-learn</strong>, <strong>pandas</strong>, <strong>NumPy</strong>, and <strong>matplotlib</strong>. For example:
+
+```bash
+pip install torch yfinance scikit-learn pandas numpy matplotlib
+```
+
+:::
+
+---
+
+## RNN lens: what each part of the code is doing
+
+<div className="not-prose my-6 overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-700">
+  <table className="w-full min-w-[320px] border-collapse text-left text-sm">
+    <thead>
+      <tr className="bg-indigo-600 text-white dark:bg-indigo-800">
+        <th className="p-3 font-semibold">Code region</th>
+        <th className="p-3 font-semibold">RNN idea</th>
+      </tr>
+    </thead>
+    <tbody className="text-slate-800 dark:text-slate-200">
+      <tr className="border-b border-slate-200 dark:border-slate-700">
+        <td className="p-3 font-mono text-xs">nn.RNN(..., batch_first=True)</td>
+        <td className="p-3">Each batch item is a <strong>sequence</strong> of vectors; time is the middle dimension.</td>
+      </tr>
+      <tr className="border-b border-slate-200 bg-indigo-50/40 dark:border-slate-700 dark:bg-indigo-950/20">
+        <td className="p-3 font-mono text-xs">h0 = zeros(num_layers, B, H)</td>
+        <td className="p-3">
+          <strong>Initial hidden state</strong> before the first input; same recurrence is applied from here forward.
+        </td>
+      </tr>
+      <tr className="border-b border-slate-200 dark:border-slate-700">
+        <td className="p-3 font-mono text-xs">out[:, -1, :]</td>
+        <td className="p-3">
+          <strong>Many-to-one</strong>: use the representation after the <em>last</em> time step to predict the next scalar (here, next scaled price).
+        </td>
+      </tr>
+      <tr className="border-b border-slate-200 bg-indigo-50/40 dark:border-slate-700 dark:bg-indigo-950/20">
+        <td className="p-3 font-mono text-xs">sliding window X, y</td>
+        <td className="p-3">Turns a 1D series into <strong>(sequence → next value)</strong> pairs—the supervision target is one step ahead.</td>
+      </tr>
+      <tr className="border-b border-slate-200 dark:border-slate-700">
+        <td className="p-3 font-mono text-xs">loss.backward()</td>
+        <td className="p-3">
+          Autograd flows gradients <strong>backward through time</strong> across all unfolded steps in the batch (BPTT).
+        </td>
+      </tr>
+      <tr>
+        <td className="p-3 font-mono text-xs">optimizer.step()</td>
+        <td className="p-3">Updates shared weights (<strong>W<sub>xh</sub></strong>, <strong>W<sub>hh</sub></strong>, etc.) that are reused at every time step.</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+---
+
+## Tensor story: one batch item
+
+With <code>batch_first=True</code>, a batch of sequences has shape <strong>(B, T, F)</strong>: batch size <strong>B</strong>, sequence length <strong>T</strong>, feature size <strong>F</strong> (here <strong>F = 1</strong> closing price).
+
+<div className="not-prose my-5 rounded-xl border-2 border-teal-300 bg-teal-50/80 p-4 text-center font-mono text-sm dark:border-teal-800 dark:bg-teal-950/25 dark:text-teal-100">
+  <span className="text-teal-900 dark:text-teal-200">x.shape = </span>
+  <strong>(B, T, 1)</strong>
+  <span className="mx-2 text-slate-500">→</span>
+  <span className="text-teal-900 dark:text-teal-200">RNN → out.shape = </span>
+  <strong>(B, T, H)</strong>
+  <span className="mx-2 text-slate-500">→</span>
+  <span className="text-teal-900 dark:text-teal-200">fc(last step) → </span>
+  <strong>(B, 1)</strong>
+</div>
+
+The <strong>initial hidden state</strong> <code>h0</code> has shape <strong>(num_layers, B, H)</strong>: one slice per <strong>stacked</strong> RNN layer, broadcast across the batch.
+
+---
+
+## Imports, seeds, and the `StockRNN` module
+
+```python
+import torch
+import torch.nn as nn
+import torch.optim as optim  # optimization algorithm (e.g. Adam)
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+from sklearn.preprocessing import MinMaxScaler
+from sklearn.metrics import mean_squared_error, mean_absolute_error
+import yfinance as yf
+from torch.utils.data import DataLoader, TensorDataset
+
+# Set random seeds for reproducibility
+torch.manual_seed(42)
+np.random.seed(42)
+
+
+class StockRNN(nn.Module):
+    def __init__(self, input_size=1, hidden_size=64, num_layers=2, output_size=1, dropout=0.2):
+        super(StockRNN, self).__init__()
+        self.hidden_size = hidden_size
+        self.num_layers = num_layers
+
+        # RNN layer: shared weights applied at each time step (recurrence)
+        self.rnn = nn.RNN(
+            input_size, hidden_size, num_layers,
+            batch_first=True, dropout=dropout,
+        )
+
+        # Map last hidden vector to scalar prediction
+        self.fc = nn.Linear(hidden_size, output_size)
+
+    def forward(self, x):
+        # Initial hidden state h0: zeros before we see the sequence
+        h0 = torch.zeros(self.num_layers, x.size(0), self.hidden_size, device=x.device)
+
+        # out: all time-step hidden projections; we use the last one for many-to-one prediction
+        out, _ = self.rnn(x, h0)
+
+        # Last time index: [-1] = "what the RNN knows after reading the full window"
+        out = self.fc(out[:, -1, :])
+
+        return out
+```
+
+<div className="not-prose my-4 rounded-xl border-l-4 border-violet-500 bg-violet-50/70 py-3 pl-4 pr-3 dark:bg-violet-950/25">
+  <p className="m-0 text-sm text-slate-800 dark:text-slate-200">
+    <strong>Why <code>h0</code> on <code>x.device</code>?</strong> On GPU, every tensor in the forward pass—including the hidden state—must live on the same device as the input batch.
+  </p>
+</div>
+
+---
+
+## `StockDataset`: from raw prices to supervised sequences
+
+Each training example stacks <code>sequence_length</code> past scaled prices as input; the target is the <strong>next</strong> price. That is exactly the <em>one-step-ahead</em> framing RNNs often use on series data.
+
+```python
+class StockDataset:
+    def __init__(self, symbol='AAPL', period='2y', sequence_length=60):
+        self.symbol = symbol
+        self.period = period
+        self.sequence_length = sequence_length
+        self.scaler = MinMaxScaler()
+
+    def download_data(self):
+        """Download stock data using yfinance"""
+        print(f"Downloading {self.symbol} data...")
+        stock = yf.Ticker(self.symbol)
+        data = stock.history(period=self.period)
+
+        # Use closing prices
+        self.raw_data = data['Close'].values.reshape(-1, 1)
+        print(f"Downloaded {len(self.raw_data)} data points")
+
+        return data
+
+    def prepare_data(self, train_ratio=0.8):
+        """Prepare data for training"""
+        scaled_data = self.scaler.fit_transform(self.raw_data)
+
+        X, y = [], []
+        for i in range(self.sequence_length, len(scaled_data)):
+            X.append(scaled_data[i - self.sequence_length : i])
+            y.append(scaled_data[i])
+
+        X, y = np.array(X), np.array(y)
+
+        train_size = int(len(X) * train_ratio)
+
+        self.X_train = torch.FloatTensor(X[:train_size])
+        self.y_train = torch.FloatTensor(y[:train_size])
+        self.X_test = torch.FloatTensor(X[train_size:])
+        self.y_test = torch.FloatTensor(y[train_size:])
+
+        print(f"Training samples: {len(self.X_train)}")
+        print(f"Test samples: {len(self.X_test)}")
+
+        return self.X_train, self.y_train, self.X_test, self.y_test
+```
+
+---
+
+## `train_model`: loop order = autograd + BPTT
+
+The training step should follow: <strong>zero gradients → forward → loss → backward → step</strong>. <code>loss.backward()</code> accumulates gradients through the entire recurrent graph (BPTT); <code>optimizer.step()</code> then applies them to <code>W<sub>xh</sub></code>, <code>W<sub>hh</sub></code>, biases, and the linear head.
+
+```python
+def train_model(model, X_train, y_train, X_test, y_test, epochs=100, batch_size=32, learning_rate=0.001):
+    """Train the RNN model"""
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    model = model.to(device)
+
+    criterion = nn.MSELoss()
+    optimizer = optim.Adam(model.parameters(), lr=learning_rate)
+
+    train_dataset = TensorDataset(X_train, y_train)
+    train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
+
+    train_losses = []
+    test_losses = []
+    X_test_device = X_test.to(device)
+    y_test_device = y_test.to(device)
+
+    print(f"Training on {device}")
+    print("-" * 50)
+
+    for epoch in range(epochs):
+        model.train()
+        total_loss = 0
+
+        for batch_X, batch_y in train_loader:
+            batch_X = batch_X.to(device)
+            batch_y = batch_y.to(device)
+
+            optimizer.zero_grad()
+            outputs = model(batch_X)  # ŷ for this batch
+            loss = criterion(outputs, batch_y)  # y_true
+
+            loss.backward()  # backprop through time; fills .grad on shared RNN weights
+            optimizer.step()
+
+            total_loss += loss.item()
+
+        avg_train_loss = total_loss / len(train_loader)
+        train_losses.append(avg_train_loss)
+
+        model.eval()
+        with torch.no_grad():
+            test_outputs = model(X_test_device)
+            test_loss = criterion(test_outputs, y_test_device).item()
+            test_losses.append(test_loss)
+
+        if (epoch + 1) % 10 == 0:
+            print(
+                f'Epoch [{epoch+1}/{epochs}], Train Loss: {avg_train_loss:.6f}, Test Loss: {test_loss:.6f}'
+            )
+
+    return train_losses, test_losses
+```
+
+<div className="not-prose my-4 grid gap-3 md:grid-cols-2">
+  <div className="rounded-lg border border-emerald-300 bg-emerald-50/80 p-3 text-sm dark:border-emerald-800 dark:bg-emerald-950/25">
+    <strong className="text-emerald-900 dark:text-emerald-200">outputs = model(batch_X)</strong>
+    <p className="mt-1 mb-0 text-slate-800 dark:text-slate-200">Forward pass unrolls the RNN over <strong>T</strong> steps inside PyTorch.</p>
+  </div>
+  <div className="rounded-lg border border-rose-300 bg-rose-50/80 p-3 text-sm dark:border-rose-800 dark:bg-rose-950/25">
+    <strong className="text-rose-900 dark:text-rose-200">loss.backward()</strong>
+    <p className="mt-1 mb-0 text-slate-800 dark:text-slate-200">Gradients flow backward across <em>all</em> those steps—this is BPTT in practice.</p>
+  </div>
+</div>
+
+---
+
+## `evaluate_model`: metrics, inverse scaling, plots
+
+We pass <code>train_losses</code> and <code>test_losses</code> in so the training-curve subplot has data to plot.
+
+```python
+def evaluate_model(model, X_test, y_test, scaler, dataset, train_losses, test_losses):
+    """Evaluate the model and create visualizations"""
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    model = model.to(device)
+    model.eval()
+
+    with torch.no_grad():
+        X_test_device = X_test.to(device)
+        predictions = model(X_test_device).cpu().numpy()
+        actual = y_test.numpy()
+
+        predictions_scaled = scaler.inverse_transform(predictions)
+        actual_scaled = scaler.inverse_transform(actual)
+
+        mse = mean_squared_error(actual_scaled, predictions_scaled)
+        mae = mean_absolute_error(actual_scaled, predictions_scaled)
+        rmse = np.sqrt(mse)
+
+        print(f"\nModel Performance:")
+        print(f"RMSE: ${rmse:.2f}")
+        print(f"MAE: ${mae:.2f}")
+        print(f"MSE: {mse:.2f}")
+
+        plt.figure(figsize=(15, 5))
+
+        plt.subplot(1, 2, 1)
+        plt.plot(train_losses, label='Training Loss')
+        plt.plot(test_losses, label='Test Loss')
+        plt.title('Training History')
+        plt.xlabel('Epoch')
+        plt.ylabel('Loss')
+        plt.legend()
+        plt.grid(True)
+
+        plt.subplot(1, 2, 2)
+        plt.plot(actual_scaled[-200:], label='Actual', alpha=0.7)
+        plt.plot(predictions_scaled[-200:], label='Predicted', alpha=0.7)
+        plt.title(f'{dataset.symbol} Price Prediction (Last 200 days)')
+        plt.xlabel('Time')
+        plt.ylabel('Price ($)')
+        plt.legend()
+        plt.grid(True)
+
+        plt.tight_layout()
+        plt.show()
+
+        return predictions_scaled, actual_scaled
+```
+
+---
+
+## `__main__`: wire it together
+
+<code>BATCH_SIZE</code> shards long training tensors into smaller recurrent jobs; for huge series it stabilizes optimization and memory. <code>SEQUENCE_LENGTH</code> is your <strong>context window</strong>—how many past days the RNN sees before predicting the next point (here set to <strong>3</strong> for a quick demo; try <strong>60</strong> to match the class default).
+
+```python
+if __name__ == "__main__":
+    STOCK_SYMBOL = 'AAPL'
+    SEQUENCE_LENGTH = 3  # past days in each input window (try 60 for a longer memory)
+    HIDDEN_SIZE = 64
+    NUM_LAYERS = 2
+    EPOCHS = 100
+    BATCH_SIZE = 32  # especially useful when data are huge (millions of points)
+    LEARNING_RATE = 0.001
+
+    print("=== Simple RNN for Stock Price Prediction ===")
+    print(f"Stock: {STOCK_SYMBOL}")
+    print(f"Sequence Length: {SEQUENCE_LENGTH}")
+    print(f"Hidden Size: {HIDDEN_SIZE}")
+    print(f"Layers: {NUM_LAYERS}")
+    print("=" * 50)
+
+    dataset = StockDataset(symbol=STOCK_SYMBOL, sequence_length=SEQUENCE_LENGTH)
+    stock_data = dataset.download_data()
+    X_train, y_train, X_test, y_test = dataset.prepare_data()
+
+    model = StockRNN(
+        input_size=1,
+        hidden_size=HIDDEN_SIZE,
+        num_layers=NUM_LAYERS,
+        output_size=1,
+    )
+
+    print(f"\nModel Architecture:")
+    print(model)
+    print(f"Total parameters: {sum(p.numel() for p in model.parameters()):,}")
+
+    print(f"\nStarting training...")
+    train_losses, test_losses = train_model(
+        model, X_train, y_train, X_test, y_test,
+        epochs=EPOCHS, batch_size=BATCH_SIZE, learning_rate=LEARNING_RATE,
+    )
+
+    print(f"\nEvaluating model...")
+    predictions, actual = evaluate_model(
+        model, X_test, y_test, dataset.scaler, dataset, train_losses, test_losses,
+    )
+
+    torch.save(model.state_dict(), f'{STOCK_SYMBOL}_rnn_model.pth')
+    print(f"\nModel saved as '{STOCK_SYMBOL}_rnn_model.pth'")
+
+    print("\n=== Training Complete ===")
+    print("Key learnings about RNNs:")
+    print("1. RNNs process sequences step by step")
+    print("2. Hidden states carry information across time steps")
+    print("3. Sequence length affects how far back the model can 'remember'")
+    print("4. Scaling data is crucial for neural network performance")
+    print("5. Stock prediction is challenging due to market complexity!")
+```
+
+---
+
+## Complete runnable script (copy-paste)
+
+The block below merges every piece into <strong>one file</strong> so you can save it as e.g. <code>stock_rnn.py</code> and run it locally.
+
+```python
+import torch
+import torch.nn as nn
+import torch.optim as optim
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+from sklearn.preprocessing import MinMaxScaler
+from sklearn.metrics import mean_squared_error, mean_absolute_error
+import yfinance as yf
+from torch.utils.data import DataLoader, TensorDataset
+
+torch.manual_seed(42)
+np.random.seed(42)
+
+
+class StockRNN(nn.Module):
+    def __init__(self, input_size=1, hidden_size=64, num_layers=2, output_size=1, dropout=0.2):
+        super(StockRNN, self).__init__()
+        self.hidden_size = hidden_size
+        self.num_layers = num_layers
+        self.rnn = nn.RNN(
+            input_size, hidden_size, num_layers,
+            batch_first=True, dropout=dropout,
+        )
+        self.fc = nn.Linear(hidden_size, output_size)
+
+    def forward(self, x):
+        h0 = torch.zeros(self.num_layers, x.size(0), self.hidden_size, device=x.device)
+        out, _ = self.rnn(x, h0)
+        out = self.fc(out[:, -1, :])
+        return out
+
+
+class StockDataset:
+    def __init__(self, symbol='AAPL', period='2y', sequence_length=60):
+        self.symbol = symbol
+        self.period = period
+        self.sequence_length = sequence_length
+        self.scaler = MinMaxScaler()
+
+    def download_data(self):
+        print(f"Downloading {self.symbol} data...")
+        stock = yf.Ticker(self.symbol)
+        data = stock.history(period=self.period)
+        self.raw_data = data['Close'].values.reshape(-1, 1)
+        print(f"Downloaded {len(self.raw_data)} data points")
+        return data
+
+    def prepare_data(self, train_ratio=0.8):
+        scaled_data = self.scaler.fit_transform(self.raw_data)
+        X, y = [], []
+        for i in range(self.sequence_length, len(scaled_data)):
+            X.append(scaled_data[i - self.sequence_length : i])
+            y.append(scaled_data[i])
+        X, y = np.array(X), np.array(y)
+        train_size = int(len(X) * train_ratio)
+        self.X_train = torch.FloatTensor(X[:train_size])
+        self.y_train = torch.FloatTensor(y[:train_size])
+        self.X_test = torch.FloatTensor(X[train_size:])
+        self.y_test = torch.FloatTensor(y[train_size:])
+        print(f"Training samples: {len(self.X_train)}")
+        print(f"Test samples: {len(self.X_test)}")
+        return self.X_train, self.y_train, self.X_test, self.y_test
+
+
+def train_model(model, X_train, y_train, X_test, y_test, epochs=100, batch_size=32, learning_rate=0.001):
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    model = model.to(device)
+    criterion = nn.MSELoss()
+    optimizer = optim.Adam(model.parameters(), lr=learning_rate)
+    train_loader = DataLoader(TensorDataset(X_train, y_train), batch_size=batch_size, shuffle=True)
+    train_losses, test_losses = [], []
+    X_test_device = X_test.to(device)
+    y_test_device = y_test.to(device)
+    print(f"Training on {device}")
+    print("-" * 50)
+    for epoch in range(epochs):
+        model.train()
+        total_loss = 0
+        for batch_X, batch_y in train_loader:
+            batch_X, batch_y = batch_X.to(device), batch_y.to(device)
+            optimizer.zero_grad()
+            outputs = model(batch_X)
+            loss = criterion(outputs, batch_y)
+            loss.backward()
+            optimizer.step()
+            total_loss += loss.item()
+        avg_train_loss = total_loss / len(train_loader)
+        train_losses.append(avg_train_loss)
+        model.eval()
+        with torch.no_grad():
+            test_loss = criterion(model(X_test_device), y_test_device).item()
+            test_losses.append(test_loss)
+        if (epoch + 1) % 10 == 0:
+            print(f'Epoch [{epoch+1}/{epochs}], Train Loss: {avg_train_loss:.6f}, Test Loss: {test_loss:.6f}')
+    return train_losses, test_losses
+
+
+def evaluate_model(model, X_test, y_test, scaler, dataset, train_losses, test_losses):
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    model = model.to(device)
+    model.eval()
+    with torch.no_grad():
+        predictions = model(X_test.to(device)).cpu().numpy()
+        actual = y_test.numpy()
+        predictions_scaled = scaler.inverse_transform(predictions)
+        actual_scaled = scaler.inverse_transform(actual)
+        mse = mean_squared_error(actual_scaled, predictions_scaled)
+        mae = mean_absolute_error(actual_scaled, predictions_scaled)
+        rmse = np.sqrt(mse)
+        print(f"\nModel Performance:")
+        print(f"RMSE: ${rmse:.2f}")
+        print(f"MAE: ${mae:.2f}")
+        print(f"MSE: {mse:.2f}")
+        plt.figure(figsize=(15, 5))
+        plt.subplot(1, 2, 1)
+        plt.plot(train_losses, label='Training Loss')
+        plt.plot(test_losses, label='Test Loss')
+        plt.title('Training History')
+        plt.xlabel('Epoch')
+        plt.ylabel('Loss')
+        plt.legend()
+        plt.grid(True)
+        plt.subplot(1, 2, 2)
+        plt.plot(actual_scaled[-200:], label='Actual', alpha=0.7)
+        plt.plot(predictions_scaled[-200:], label='Predicted', alpha=0.7)
+        plt.title(f'{dataset.symbol} Price Prediction (Last 200 days)')
+        plt.xlabel('Time')
+        plt.ylabel('Price ($)')
+        plt.legend()
+        plt.grid(True)
+        plt.tight_layout()
+        plt.show()
+        return predictions_scaled, actual_scaled
+
+
+if __name__ == "__main__":
+    STOCK_SYMBOL = 'AAPL'
+    SEQUENCE_LENGTH = 3
+    HIDDEN_SIZE = 64
+    NUM_LAYERS = 2
+    EPOCHS = 100
+    BATCH_SIZE = 32
+    LEARNING_RATE = 0.001
+    print("=== Simple RNN for Stock Price Prediction ===")
+    print(f"Stock: {STOCK_SYMBOL}")
+    print(f"Sequence Length: {SEQUENCE_LENGTH}")
+    print(f"Hidden Size: {HIDDEN_SIZE}")
+    print(f"Layers: {NUM_LAYERS}")
+    print("=" * 50)
+    dataset = StockDataset(symbol=STOCK_SYMBOL, sequence_length=SEQUENCE_LENGTH)
+    dataset.download_data()
+    X_train, y_train, X_test, y_test = dataset.prepare_data()
+    model = StockRNN(input_size=1, hidden_size=HIDDEN_SIZE, num_layers=NUM_LAYERS, output_size=1)
+    print(f"\nModel Architecture:")
+    print(model)
+    print(f"Total parameters: {sum(p.numel() for p in model.parameters()):,}")
+    print(f"\nStarting training...")
+    train_losses, test_losses = train_model(
+        model, X_train, y_train, X_test, y_test,
+        epochs=EPOCHS, batch_size=BATCH_SIZE, learning_rate=LEARNING_RATE,
+    )
+    print(f"\nEvaluating model...")
+    predictions, actual = evaluate_model(
+        model, X_test, y_test, dataset.scaler, dataset, train_losses, test_losses,
+    )
+    torch.save(model.state_dict(), f'{STOCK_SYMBOL}_rnn_model.pth')
+    print(f"\nModel saved as '{STOCK_SYMBOL}_rnn_model.pth'")
+    print("\n=== Training Complete ===")
+    print("Key learnings about RNNs:")
+    print("1. RNNs process sequences step by step")
+    print("2. Hidden states carry information across time steps")
+    print("3. Sequence length affects how far back the model can 'remember'")
+    print("4. Scaling data is crucial for neural network performance")
+    print("5. Stock prediction is challenging due to market complexity!")
+```
+
+---
+
+<div className="not-prose mt-10 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-6 dark:border-slate-700">
+  <a href="./training-rnn-backprop-through-time" className="text-sm font-medium text-slate-600 no-underline hover:text-indigo-700 hover:underline dark:text-slate-400 dark:hover:text-indigo-400">← Lesson 5 · BPTT</a>
+  <a href="./intro" className="text-sm font-semibold text-indigo-700 no-underline hover:underline dark:text-indigo-400">Course overview →</a>
+</div>

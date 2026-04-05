@@ -1,0 +1,239 @@
+---
+sidebar_label: '1 · Foundations of sequence modeling'
+title: 'Lesson 1 — Foundations of Deep Sequence Modeling'
+description: >-
+  Why order matters, real-world sequence data, canonical problem types, and why
+  feedforward i.i.d. assumptions break for temporal dependencies.
+---
+
+# Foundations of Deep Sequence Modeling
+
+## Why sequence modeling? A motivating example
+
+Let&apos;s begin with an <strong>intuitive motivation</strong>. Imagine a ball moving in <strong>2D space</strong>. You&apos;re asked to predict its <strong>next location</strong>.
+
+<div className="not-prose my-6 grid gap-4 md:grid-cols-2">
+  <div className="rounded-xl border-2 border-rose-300 bg-gradient-to-b from-rose-50 to-white p-5 dark:border-rose-800 dark:from-rose-950/35 dark:to-slate-900/40">
+    <p className="m-0 text-xs font-bold uppercase tracking-wide text-rose-800 dark:text-rose-300">Case 1</p>
+    <p className="mt-3 mb-0 text-sm text-slate-800 dark:text-slate-200">
+      You only have access to the ball&apos;s <strong>current position</strong>. Any prediction you make will essentially be a <em>guess</em> the problem is <strong>underdetermined</strong>.
+    </p>
+  </div>
+  <div className="rounded-xl border-2 border-emerald-300 bg-gradient-to-b from-emerald-50 to-white p-5 dark:border-emerald-800 dark:from-emerald-950/35 dark:to-slate-900/40">
+    <p className="m-0 text-xs font-bold uppercase tracking-wide text-emerald-800 dark:text-emerald-300">Case 2</p>
+    <p className="mt-3 mb-0 text-sm text-slate-800 dark:text-slate-200">
+      You&apos;re also given the ball&apos;s <strong>prior trajectory</strong> and its <strong>historical positions</strong>. With this <em>sequence of past states</em>, you can now model its motion and <strong>reasonably estimate</strong> its future position.
+    </p>
+  </div>
+</div>
+
+This illustrates the <strong>crux of sequence modeling</strong>: incorporating <strong>historical context</strong> to improve <em>predictive accuracy</em>.
+
+---
+
+## Sequence data in the real world
+
+While the example above is simple, the <strong>relevance of sequence modeling</strong> extends across <em>diverse domains</em>:
+
+<div className="not-prose my-8 flex flex-col items-center">
+  <a
+    href="https://commons.wikimedia.org/wiki/File:Two_repetitions_of_a_walking_sequence_of_an_individual_recorded_using_a_motion-capture_system.gif"
+    target="_blank"
+    rel="noopener noreferrer"
+    title="Lars Lau Raket, CC BY-SA 4.0, via Wikimedia Commons"
+    className="block overflow-hidden rounded-xl border-2 border-indigo-300 bg-white shadow-md transition-shadow hover:border-indigo-500 hover:shadow-lg dark:border-indigo-700 dark:bg-slate-900 dark:hover:border-indigo-500"
+  >
+    <img
+      src="https://upload.wikimedia.org/wikipedia/commons/9/97/Two_repetitions_of_a_walking_sequence_of_an_individual_recorded_using_a_motion-capture_system.gif"
+      alt="Two repetitions of a walking sequence of an individual recorded using a motion-capture system"
+      width={300}
+      className="mx-auto block h-auto max-w-full"
+      loading="lazy"
+      decoding="async"
+    />
+  </a>
+  <p className="mt-3 max-w-md text-center text-xs leading-relaxed text-slate-600 dark:text-slate-400">
+    <a
+      href="https://commons.wikimedia.org/wiki/File:Two_repetitions_of_a_walking_sequence_of_an_individual_recorded_using_a_motion-capture_system.gif"
+      target="_blank"
+      rel="noopener noreferrer"
+      className="font-medium text-indigo-700 underline-offset-2 hover:underline dark:text-indigo-400"
+    >
+      Walking sequence (motion capture)
+    </a>
+    {' — '}
+    Lars Lau Raket,{' '}
+    <a
+      href="https://creativecommons.org/licenses/by-sa/4.0"
+      target="_blank"
+      rel="noopener noreferrer"
+      className="text-indigo-700 underline-offset-2 hover:underline dark:text-indigo-400"
+    >
+      CC BY-SA 4.0
+    </a>
+    , via Wikimedia Commons.
+  </p>
+</div>
+
+<div className="not-prose my-6 overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-700">
+  <table className="w-full min-w-[min(100%,640px)] border-collapse text-left text-sm">
+    <thead>
+      <tr className="border-b border-slate-200 bg-indigo-600 text-white dark:border-slate-600 dark:bg-indigo-800">
+        <th className="p-3 font-semibold">Domain</th>
+        <th className="p-3 font-semibold">How it shows up as a sequence</th>
+      </tr>
+    </thead>
+    <tbody className="text-slate-700 dark:text-slate-300">
+      <tr className="border-b border-slate-100 bg-indigo-50/40 dark:border-slate-800 dark:bg-indigo-950/15">
+        <td className="p-3 font-bold text-indigo-900 dark:text-indigo-200">Speech and Audio</td>
+        <td className="p-3">Voice signals can be decomposed into sequences of <strong>sound wave chunks</strong> over time.</td>
+      </tr>
+      <tr className="border-b border-slate-100 dark:border-slate-800">
+        <td className="p-3 font-bold text-indigo-900 dark:text-indigo-200">Natural Language</td>
+        <td className="p-3">Sentences are sequences of <strong>words</strong> or <strong>characters</strong>.</td>
+      </tr>
+      <tr className="border-b border-slate-100 bg-indigo-50/40 dark:border-slate-800 dark:bg-indigo-950/15">
+        <td className="p-3 font-bold text-indigo-900 dark:text-indigo-200">Medical Signals</td>
+        <td className="p-3">
+          <strong>ECGs</strong> and <strong>EEGs</strong> are temporal sequences of voltage measurements.
+        </td>
+      </tr>
+      <tr className="border-b border-slate-100 dark:border-slate-800">
+        <td className="p-3 font-bold text-indigo-900 dark:text-indigo-200">Finance</td>
+        <td className="p-3">Stock prices and market indicators evolve as <strong>time-series</strong> data.</td>
+      </tr>
+      <tr className="border-b border-slate-100 bg-indigo-50/40 dark:border-slate-800 dark:bg-indigo-950/15">
+        <td className="p-3 font-bold text-indigo-900 dark:text-indigo-200">Biology</td>
+        <td className="p-3">
+          <strong>DNA</strong> and <strong>protein</strong> sequences are naturally sequential.
+        </td>
+      </tr>
+      <tr className="border-b border-slate-100 dark:border-slate-800">
+        <td className="p-3 font-bold text-indigo-900 dark:text-indigo-200">Video</td>
+        <td className="p-3">Frame-by-frame temporal evolution can be modeled as sequences.</td>
+      </tr>
+      <tr className="bg-white dark:bg-slate-950/30">
+        <td className="p-3 font-bold text-indigo-900 dark:text-indigo-200">Weather Forecasting</td>
+        <td className="p-3">Historical weather patterns provide sequential structure for future prediction.</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+In each case, the <strong>temporal or positional ordering</strong> of data points is <em>essential</em>. Ignoring that order risks discarding <strong>key patterns</strong>.
+
+---
+
+## Types of sequence modeling problems
+
+Unlike traditional <strong>classification</strong> tasks where inputs and outputs are <strong>fixed-length</strong> and often tabular, sequence modeling introduces <strong>structured</strong> and <strong>variable-length</strong> data. Let&apos;s look at some <em>canonical problem types</em>:
+
+<div className="not-prose my-6 space-y-4">
+  <div className="rounded-xl border-2 border-teal-300 bg-teal-50/80 p-4 dark:border-teal-800 dark:bg-teal-950/25">
+    <p className="m-0 text-sm font-bold text-teal-900 dark:text-teal-200">Sequence Classification</p>
+    <p className="mt-2 mb-0 text-sm text-slate-800 dark:text-slate-200">
+      <strong>Input:</strong> A sequence of tokens (e.g., words in a sentence)
+    </p>
+    <p className="mt-1 mb-0 text-sm text-slate-800 dark:text-slate-200">
+      <strong>Output:</strong> A fixed label (e.g., sentiment classification: positive vs negative)
+    </p>
+    <p className="mt-2 mb-0 text-sm text-slate-800 dark:text-slate-200">
+      <strong>Example:</strong> Text classification, intent recognition.
+    </p>
+  </div>
+
+  <div className="rounded-xl border-2 border-violet-300 bg-violet-50/80 p-4 dark:border-violet-800 dark:bg-violet-950/25">
+    <p className="m-0 text-sm font-bold text-violet-900 dark:text-violet-200">Sequence-to-Sequence (Seq2Seq) Generation</p>
+    <p className="mt-2 mb-0 text-sm text-slate-800 dark:text-slate-200">
+      <strong>Input:</strong> A sequence
+    </p>
+    <p className="mt-1 mb-0 text-sm text-slate-800 dark:text-slate-200">
+      <strong>Output:</strong> Another sequence
+    </p>
+    <p className="mt-2 mb-0 text-xs font-semibold uppercase tracking-wide text-violet-800 dark:text-violet-300">Examples</p>
+    <ul className="mt-1 mb-0 list-disc pl-5 text-sm text-slate-800 dark:text-slate-200">
+      <li>
+        <strong>Translation:</strong> English → French
+      </li>
+      <li>
+        <strong>Speech Recognition:</strong> Audio → Text
+      </li>
+      <li>
+        <strong>Image Captioning:</strong> Visual features → Sentence
+      </li>
+    </ul>
+  </div>
+
+  <div className="grid gap-4 md:grid-cols-3 md:items-start">
+    <div className="rounded-xl border-2 border-amber-300 bg-amber-50/80 p-4 dark:border-amber-800 dark:bg-amber-950/25">
+      <p className="m-0 text-sm font-bold text-amber-900 dark:text-amber-200">Many-to-One</p>
+      <p className="mt-2 mb-0 text-sm text-slate-800 dark:text-slate-200">
+        <strong>Input:</strong> A sequence
+      </p>
+      <p className="mt-1 mb-0 text-sm text-slate-800 dark:text-slate-200">
+        <strong>Output:</strong> A single label
+      </p>
+      <p className="mt-2 mb-0 text-sm text-slate-800 dark:text-slate-200">
+        <strong>Example:</strong> Predicting stock trend direction based on previous N time steps.
+      </p>
+    </div>
+    <div className="rounded-xl border-2 border-sky-300 bg-sky-50/80 p-4 dark:border-sky-800 dark:bg-sky-950/25">
+      <p className="m-0 text-sm font-bold text-sky-900 dark:text-sky-200">One-to-Many</p>
+      <p className="mt-2 mb-0 text-sm text-slate-800 dark:text-slate-200">
+        <strong>Input:</strong> A single state
+      </p>
+      <p className="mt-1 mb-0 text-sm text-slate-800 dark:text-slate-200">
+        <strong>Output:</strong> A sequence
+      </p>
+      <p className="mt-2 mb-0 text-sm text-slate-800 dark:text-slate-200">
+        <strong>Example:</strong> Image → Description (caption generation).
+      </p>
+    </div>
+    <div className="rounded-xl border-2 border-fuchsia-300 bg-fuchsia-50/80 p-4 dark:border-fuchsia-800 dark:bg-fuchsia-950/25">
+      <p className="m-0 text-sm font-bold text-fuchsia-900 dark:text-fuchsia-200">Many-to-Many</p>
+      <p className="mt-2 mb-0 text-sm text-slate-800 dark:text-slate-200">
+        <strong>Input:</strong> Sequence A
+      </p>
+      <p className="mt-1 mb-0 text-sm text-slate-800 dark:text-slate-200">
+        <strong>Output:</strong> Sequence B
+      </p>
+      <p className="mt-2 mb-0 text-sm text-slate-800 dark:text-slate-200">
+        <strong>Example:</strong> Video frame → Text transcript; or language translation tasks.
+      </p>
+    </div>
+  </div>
+</div>
+
+These problem types are <strong>foundational</strong> to real-world applications of <em>NLP</em>, <em>speech</em>, <em>vision</em>, and <em>decision modeling</em> systems.
+
+---
+
+## Core challenge: capturing temporal dependencies
+
+A <strong>feedforward neural network</strong> as discussed in the previous lecture assumes that all input features are <strong>independent and identically distributed (i.i.d.)</strong>. This assumption <strong>breaks down</strong> in sequential settings.
+
+<div className="not-prose my-6 rounded-xl border border-slate-300 bg-gradient-to-r from-rose-50/80 via-white to-emerald-50/80 p-5 dark:border-slate-600 dark:from-rose-950/20 dark:via-slate-900/40 dark:to-emerald-950/20">
+  <p className="m-0 text-center text-xs font-bold uppercase tracking-wide text-slate-600 dark:text-slate-400">In sequence modeling:</p>
+  <div className="mt-4 grid gap-3 sm:grid-cols-3">
+    <div className="rounded-lg border border-slate-200 bg-white/90 p-3 text-center text-sm font-medium text-slate-800 dark:border-slate-700 dark:bg-slate-800/80 dark:text-slate-200">
+      Inputs are <strong>ordered</strong>.
+    </div>
+    <div className="rounded-lg border border-slate-200 bg-white/90 p-3 text-center text-sm font-medium text-slate-800 dark:border-slate-700 dark:bg-slate-800/80 dark:text-slate-200">
+      Future predictions must <strong>respect and leverage</strong> past observations.
+    </div>
+    <div className="rounded-lg border border-slate-200 bg-white/90 p-3 text-center text-sm font-medium text-slate-800 dark:border-slate-700 dark:bg-slate-800/80 dark:text-slate-200">
+      The <strong>same model</strong> must be applied across time steps or positions.
+    </div>
+  </div>
+</div>
+
+To handle this, we need architectures that are <strong>designed to process sequences</strong>, capable of learning representations where <strong>current predictions</strong> are functions of both <em>present</em> and <em>past</em> information.
+
+This sets the stage for understanding <strong>Recurrent Neural Networks (RNNs)</strong>, <strong>Long Short-Term Memory (LSTM)</strong> networks, and eventually, <strong>Transformers</strong>.
+
+---
+
+<div className="not-prose mt-10 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-6 dark:border-slate-700">
+  <a href="./intro" className="text-sm font-medium text-slate-600 no-underline hover:text-indigo-700 hover:underline dark:text-slate-400 dark:hover:text-indigo-400">← Course overview</a>
+  <a href="./from-static-networks-to-time-aware" className="text-sm font-semibold text-indigo-700 no-underline hover:underline dark:text-indigo-400">Next: Lesson 2 — Static → time-aware →</a>
+</div>

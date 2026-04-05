@@ -1,0 +1,279 @@
+---
+sidebar_label: '3 · RNN mechanics & code'
+title: 'Lesson 3 — Recurrent Neural Networks: Internal Mechanics and Formal Structure'
+description: >-
+  Affine state updates, shared weights, pseudocode and NumPy-style RNN class,
+  unrolling, loss over time, BPTT, and path to frameworks.
+---
+
+import rnnArchLesson3 from './RNN-arch-lesson3.png';
+import rnnStateUpdateOutputLesson3 from './RNN-stateupdate-and-output-lesson3.png';
+
+# Recurrent Neural Networks: Internal Mechanics and Formal Structure
+
+Now that we have an <strong>intuitive foundation</strong> for recurrent neural networks (RNNs), let us <strong>formalize</strong> their internal structure and operational semantics. This section builds upon our understanding of the <strong>perceptron</strong>, the idea of <strong>recurrence</strong>, and the motivation behind modeling sequences through <em>memory-aware</em> architectures.
+
+---
+
+## Recurrence relations in RNNs
+
+At the heart of an RNN lies the <strong>internal state</strong> <strong>h<sub>t</sub></strong>, which is updated as the network processes the input sequence <strong>step by step</strong>. The update to this state is defined by a <strong>recurrence relation</strong>, which incorporates both the current input <strong>x<sub>t</sub></strong> and the prior hidden state <strong>h<sub>t−1</sub></strong>. This recurrence relation enables the model to <strong>retain and evolve a memory</strong> of the sequence it has observed so far.
+
+<div className="not-prose my-6 flex flex-col items-center">
+  <p className="mb-2 text-center text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">RNN cell &amp; recurrence relation</p>
+  <div className="overflow-hidden rounded-xl border-2 border-emerald-200 bg-white shadow-md dark:border-emerald-800 dark:bg-slate-900/60">
+    <img
+      src={rnnArchLesson3}
+      alt="RNN diagram with input x sub t, output y-hat sub t, hidden state loop h sub t, and recurrence h sub t equals f_W of x sub t and h sub t minus 1; same weights each step"
+      className="mx-auto block h-auto max-w-full object-contain"
+      loading="lazy"
+      decoding="async"
+    />
+  </div>
+</div>
+
+The state update can be formally described as:
+
+$$
+\mathbf{h}_t = \sigma\!\left( \mathbf{W}_{xh}\mathbf{x}_t + \mathbf{W}_{hh}\mathbf{h}_{t-1} + \mathbf{b}_h \right)
+$$
+
+$$
+\mathbf{y}_t = \mathbf{W}_{hy}\mathbf{h}_t + \mathbf{b}_y
+$$
+
+<div className="not-prose my-6 flex flex-col items-center">
+  <p className="mb-2 text-center text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">RNN state update and output</p>
+  <div className="overflow-hidden rounded-xl border-2 border-indigo-200 bg-white shadow-md dark:border-indigo-800 dark:bg-slate-900/60">
+    <img
+      src={rnnStateUpdateOutputLesson3}
+      alt="Diagram: RNN block with x sub t input, y-hat sub t output, h sub t feedback; equations for y-hat sub t and tanh of weighted h sub t minus 1 and x sub t"
+      className="mx-auto block h-auto max-w-full object-contain"
+      loading="lazy"
+      decoding="async"
+    />
+  </div>
+</div>
+
+<div className="not-prose my-6 overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-700">
+  <table className="w-full min-w-[min(100%,640px)] border-collapse text-left text-sm">
+    <thead>
+      <tr className="border-b border-slate-200 bg-indigo-600 text-white dark:border-slate-600 dark:bg-indigo-800">
+        <th className="p-3 font-semibold">Symbol</th>
+        <th className="p-3 font-semibold">Role</th>
+      </tr>
+    </thead>
+    <tbody className="text-slate-700 dark:text-slate-300">
+      <tr className="border-b border-slate-100 bg-teal-50/40 dark:border-slate-800 dark:bg-teal-950/15">
+        <td className="p-3 font-mono font-bold text-teal-900 dark:text-teal-200">W<sub>xh</sub></td>
+        <td className="p-3">weight matrix mapping <strong>input</strong> to <strong>hidden state</strong></td>
+      </tr>
+      <tr className="border-b border-slate-100 dark:border-slate-800">
+        <td className="p-3 font-mono font-bold text-teal-900 dark:text-teal-200">W<sub>hh</sub></td>
+        <td className="p-3">recurrent weight matrix mapping <strong>previous state</strong> to <strong>current state</strong></td>
+      </tr>
+      <tr className="border-b border-slate-100 bg-teal-50/40 dark:border-slate-800 dark:bg-teal-950/15">
+        <td className="p-3 font-mono font-bold text-teal-900 dark:text-teal-200">W<sub>hy</sub></td>
+        <td className="p-3">output weight matrix mapping <strong>hidden state</strong> to <strong>predicted output</strong></td>
+      </tr>
+      <tr className="border-b border-slate-100 dark:border-slate-800">
+        <td className="p-3 font-mono font-bold text-violet-900 dark:text-violet-200">σ</td>
+        <td className="p-3">
+          element-wise <strong>nonlinearity</strong> (e.g., <em>tanh</em> or <em>sigmoid</em>) — <strong>tanh</strong> outputs values between <strong>−1</strong> and <strong>1</strong>, while <strong>sigmoid</strong> outputs between <strong>0</strong> and <strong>1</strong>.
+        </td>
+      </tr>
+      <tr className="bg-white dark:bg-slate-950/30">
+        <td className="p-3 font-mono font-bold text-slate-800 dark:text-slate-200">b<sub>h</sub>, b<sub>y</sub></td>
+        <td className="p-3">bias terms</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<div className="not-prose my-5 rounded-xl border-2 border-amber-300 bg-amber-50/80 p-4 dark:border-amber-800 dark:bg-amber-950/25">
+  <p className="m-0 text-sm font-bold text-amber-900 dark:text-amber-200">Weight sharing</p>
+  <p className="mt-2 mb-0 text-sm text-slate-800 dark:text-slate-200">
+    These <strong>same weight matrices</strong> are shared across <strong>all time steps</strong>, which enforces <em>temporal consistency</em> and greatly <strong>reduces</strong> the number of trainable parameters.
+  </p>
+</div>
+
+---
+
+## RNN logic through pseudocode
+
+To further solidify this idea, consider a simple pseudocode example that illustrates how an RNN operates over a sequence:
+
+```python
+# Initialize RNN hidden state
+h = 0
+# Input sequence of words
+sentence = ["I", "love", "recurrent", "neural"]
+# RNN loop over time
+for word in sentence:
+    h = update_hidden_state(x=word, h_prev=h)
+    y_hat = predict_output(h)
+```
+
+In this code snippet, each word in the input sequence is processed <strong>one at a time</strong>. The RNN uses the <strong>current word</strong> and the <strong>previously computed hidden state</strong> to compute a new hidden state. This new state is then used to produce an <strong>output prediction</strong>. The process is <em>iterative</em> and maintains a <strong>memory of the sequence</strong> through the hidden state updates.
+
+<div className="not-prose my-6 flex flex-wrap items-center justify-center gap-2 text-xs font-medium text-slate-700 dark:text-slate-300">
+  <span className="rounded-lg border border-cyan-300 bg-cyan-50 px-2 py-1 dark:border-cyan-700 dark:bg-cyan-950/30">word</span>
+  <span>+</span>
+  <span className="rounded-lg border border-violet-300 bg-violet-50 px-2 py-1 dark:border-violet-700 dark:bg-violet-950/30">h_prev</span>
+  <span>→</span>
+  <span className="rounded-lg border border-emerald-300 bg-emerald-50 px-2 py-1 dark:border-emerald-700 dark:bg-emerald-950/30">update → h</span>
+  <span>→</span>
+  <span className="rounded-lg border border-rose-300 bg-rose-50 px-2 py-1 dark:border-rose-700 dark:bg-rose-950/30">ŷ</span>
+</div>
+
+---
+
+## Unrolled representation and weight sharing
+
+We can visualize the RNN in two <strong>complementary</strong> ways:
+
+<div className="not-prose my-6 grid gap-4 md:grid-cols-2">
+  <div className="rounded-xl border-2 border-fuchsia-300 bg-fuchsia-50/90 p-4 dark:border-fuchsia-800 dark:bg-fuchsia-950/25">
+    <p className="m-0 text-sm font-bold text-fuchsia-900 dark:text-fuchsia-200">Cyclic form</p>
+    <p className="mt-2 mb-0 text-sm text-slate-800 dark:text-slate-200">A <strong>looped</strong> computation graph where the hidden state is fed <strong>back into itself</strong>.</p>
+  </div>
+  <div className="rounded-xl border-2 border-sky-300 bg-sky-50/90 p-4 dark:border-sky-800 dark:bg-sky-950/25">
+    <p className="m-0 text-sm font-bold text-sky-900 dark:text-sky-200">Unrolled form</p>
+    <p className="mt-2 mb-0 text-sm text-slate-800 dark:text-slate-200">A <strong>sequence of computations</strong> unwrapped across time — the <strong>same operations</strong> applied at each time step.</p>
+  </div>
+</div>
+
+In the <strong>unrolled representation</strong>:
+
+<div className="not-prose my-5 overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-700">
+  <table className="w-full min-w-[400px] border-collapse text-sm">
+    <thead>
+      <tr className="border-b border-slate-200 bg-slate-800 text-white dark:border-slate-600">
+        <th className="p-3 text-left font-semibold">Aspect</th>
+        <th className="p-3 text-left font-semibold">What happens</th>
+      </tr>
+    </thead>
+    <tbody className="text-slate-700 dark:text-slate-300">
+      <tr className="border-b border-slate-100 dark:border-slate-800">
+        <td className="p-3 font-medium">Inputs</td>
+        <td className="p-3">
+          The sequence <strong>x₁, x₂, …, x<sub>T</sub></strong> flows across time steps.
+        </td>
+      </tr>
+      <tr className="border-b border-slate-100 bg-slate-50/50 dark:border-slate-800 dark:bg-slate-900/30">
+        <td className="p-3 font-medium">Hidden state</td>
+        <td className="p-3">
+          <strong>h<sub>t</sub></strong> at each time is <strong>passed forward</strong>.
+        </td>
+      </tr>
+      <tr className="border-b border-slate-100 dark:border-slate-800">
+        <td className="p-3 font-medium">Outputs</td>
+        <td className="p-3">
+          <strong>y<sub>t</sub></strong> is generated <strong>at each step</strong>.
+        </td>
+      </tr>
+      <tr className="bg-indigo-50/40 dark:bg-indigo-950/15">
+        <td className="p-3 font-medium">Parameters</td>
+        <td className="p-3">
+          The <strong>same</strong> <span className="font-mono text-xs">W<sub>xh</sub>, W<sub>hh</sub>, W<sub>hy</sub></span> at <strong>every</strong> time step — <em>weight sharing</em> for variable length and fewer parameters.
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+---
+
+## Defining loss over time
+
+Training an RNN requires defining a <strong>loss function</strong> that quantifies the error between <strong>predicted</strong> and <strong>actual</strong> outputs. Unlike static models, where a <strong>single</strong> loss is computed, RNNs compute a loss <strong>at each time step</strong>. The <strong>total loss</strong> across a sequence is then the <strong>sum</strong> of the losses at individual steps:
+
+$$
+\mathcal{L}_{\text{total}} = \sum_{t=1}^{T} \mathcal{L}(\hat{\mathbf{y}}_t, \mathbf{y}_t)
+$$
+
+<div className="not-prose my-5 rounded-xl border-2 border-rose-200 bg-rose-50/60 p-4 dark:border-rose-900/40 dark:bg-rose-950/20">
+  <p className="m-0 text-sm text-slate-800 dark:text-slate-200">
+    This loss drives learning through <strong>Backpropagation Through Time (BPTT)</strong>, where gradients are computed not only over <em>network layers</em> but also <strong>across time steps</strong>.
+  </p>
+</div>
+
+---
+
+## Implementation in code
+
+Let us now translate this conceptual understanding into a more explicit <strong>code-level</strong> implementation.
+
+Consider defining an RNN from scratch using an <strong>object-oriented</strong> approach:
+
+```python
+class SimpleRNN:
+    def __init__(self, input_dim, hidden_dim, output_dim):
+        self.W_xh = initialize_weights(input_dim, hidden_dim)
+        self.W_hh = initialize_weights(hidden_dim, hidden_dim)
+        self.W_hy = initialize_weights(hidden_dim, output_dim)
+        self.b_h = initialize_bias(hidden_dim)
+        self.b_y = initialize_bias(output_dim)
+    def forward(self, input_sequence):
+        h = np.zeros(self.hidden_dim)
+        outputs = []
+        for x_t in input_sequence:
+            h = activation(np.dot(x_t, self.W_xh) + np.dot(h, self.W_hh) + self.b_h)
+            y_hat = np.dot(h, self.W_hy) + self.b_y
+            outputs.append(y_hat)
+        return outputs
+```
+
+This class encapsulates:
+
+<div className="not-prose my-6 grid gap-3 sm:grid-cols-3">
+  <div className="rounded-lg border border-emerald-300 bg-emerald-50/80 p-3 text-sm text-slate-800 dark:border-emerald-800 dark:bg-emerald-950/25 dark:text-slate-200">
+    <strong>Initialization</strong> of weights and biases
+  </div>
+  <div className="rounded-lg border border-sky-300 bg-sky-50/80 p-3 text-sm text-slate-800 dark:border-sky-800 dark:bg-sky-950/25 dark:text-slate-200">
+    <strong>Forward pass</strong> through the sequence, updating hidden states
+  </div>
+  <div className="rounded-lg border border-violet-300 bg-violet-50/80 p-3 text-sm text-slate-800 dark:border-violet-800 dark:bg-violet-950/25 dark:text-slate-200">
+    <strong>Prediction</strong> generation at each step
+  </div>
+</div>
+
+This procedural design <strong>closely mirrors</strong> the theoretical recurrence structure discussed earlier. It also forms the basis for understanding more complex implementations in <strong>TensorFlow</strong> or <strong>PyTorch</strong>.
+
+---
+
+## From scratch to frameworks
+
+Once you understand the fundamentals of how an RNN functions internally, you can transition to using <strong>high-level abstractions</strong> in frameworks such as <strong>TensorFlow</strong> and <strong>PyTorch</strong>. Both offer RNN modules and layers that encapsulate the forward pass, weight sharing, and even support for <em>batching</em> and <em>sequence padding</em>.
+
+You will practice this in the <strong>upcoming lab</strong>, where you will implement RNNs for <strong>next-word prediction</strong>, <strong>character generation</strong>, and <strong>many-to-many sequence classification</strong> tasks.
+
+---
+
+## Applications and broader impact
+
+Understanding and building RNNs from scratch equips you to solve a wide range of <strong>sequence modeling</strong> problems:
+
+<div className="not-prose my-6 space-y-3">
+  <div className="flex flex-col gap-2 rounded-xl border-l-4 border-teal-500 bg-teal-50/70 py-3 pl-4 pr-3 dark:bg-teal-950/20">
+    <p className="m-0 text-sm font-bold text-teal-900 dark:text-teal-200">Many-to-one</p>
+    <p className="m-0 text-sm text-slate-800 dark:text-slate-200">Sentiment classification from a sequence of words</p>
+  </div>
+  <div className="flex flex-col gap-2 rounded-xl border-l-4 border-amber-500 bg-amber-50/70 py-3 pl-4 pr-3 dark:bg-amber-950/20">
+    <p className="m-0 text-sm font-bold text-amber-900 dark:text-amber-200">One-to-many</p>
+    <p className="m-0 text-sm text-slate-800 dark:text-slate-200">Caption generation from an image embedding</p>
+  </div>
+  <div className="flex flex-col gap-2 rounded-xl border-l-4 border-indigo-500 bg-indigo-50/70 py-3 pl-4 pr-3 dark:bg-indigo-950/20">
+    <p className="m-0 text-sm font-bold text-indigo-900 dark:text-indigo-200">Many-to-many</p>
+    <p className="m-0 text-sm text-slate-800 dark:text-slate-200">Next-word prediction or sequence-to-sequence translation</p>
+  </div>
+</div>
+
+This last setting, <strong>many-to-many modeling</strong>, is foundational to how <strong>large language models</strong> function today. Although modern architectures such as <strong>Transformers</strong> have largely replaced vanilla RNNs due to their <em>scalability</em> and <em>parallelism</em>, the core concepts of <strong>sequence modeling</strong>, <strong>memory</strong>, and <strong>recurrence</strong> remain <em>essential</em>.
+
+---
+
+<div className="not-prose mt-10 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-6 dark:border-slate-700">
+  <a href="./from-static-networks-to-time-aware" className="text-sm font-medium text-slate-600 no-underline hover:text-indigo-700 hover:underline dark:text-slate-400 dark:hover:text-indigo-400">← Lesson 2 · Static → time-aware</a>
+  <a href="./bringing-sequence-modeling-real-world" className="text-sm font-semibold text-indigo-700 no-underline hover:underline dark:text-indigo-400">Lesson 4 · Real world →</a>
+</div>

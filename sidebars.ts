@@ -45,7 +45,22 @@ const sidebars: SidebarsConfig = {
             'ai-for-engineering/deep-computer-vision-cnn/learning-to-see-cnns',
           ],
         },
-        'ai-for-engineering/deep-sequence-modelling-rnn/intro',
+        {
+          type: 'category',
+          label: 'Deep Sequence Modelling (RNN)',
+          link: {
+            type: 'doc',
+            id: 'ai-for-engineering/deep-sequence-modelling-rnn/intro',
+          },
+          items: [
+            'ai-for-engineering/deep-sequence-modelling-rnn/foundations-of-deep-sequence-modeling',
+            'ai-for-engineering/deep-sequence-modelling-rnn/from-static-networks-to-time-aware',
+            'ai-for-engineering/deep-sequence-modelling-rnn/rnn-internal-mechanics',
+            'ai-for-engineering/deep-sequence-modelling-rnn/bringing-sequence-modeling-real-world',
+            'ai-for-engineering/deep-sequence-modelling-rnn/training-rnn-backprop-through-time',
+            'ai-for-engineering/deep-sequence-modelling-rnn/training-an-rnn-in-pytorch',
+          ],
+        },
         'ai-for-engineering/attention-is-all-you-need/intro',
         {
           type: 'category',

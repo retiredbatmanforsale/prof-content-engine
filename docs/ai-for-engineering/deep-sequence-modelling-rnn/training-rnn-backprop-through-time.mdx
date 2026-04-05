@@ -1,0 +1,257 @@
+---
+sidebar_label: '5 · BPTT & training'
+title: 'Lesson 5 — Training RNNs: From Backpropagation to Backpropagation Through Time'
+description: >-
+  Backpropagation recap, temporal dependencies, BPTT, vanishing and exploding
+  gradients, and how LSTMs address training stability.
+---
+
+# Training RNNs: From Backpropagation to Backpropagation Through Time
+
+Even though sequence models like RNNs require <strong>special considerations</strong>, they&apos;re still trained using the same <strong>fundamental algorithm</strong> that underpins most of modern deep learning: <strong>backpropagation</strong>.
+
+Let&apos;s revisit that core idea and then see how it extends to <strong>recurrent models</strong>.
+
+---
+
+## Backpropagation in Feedforward Networks: A Recap
+
+In <strong>feedforward neural networks</strong>, training follows a simple loop:
+
+<div className="not-prose my-6 space-y-3">
+  <div className="flex gap-3 rounded-xl border-2 border-sky-300 bg-sky-50/90 p-4 dark:border-sky-800 dark:bg-sky-950/25">
+    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-sky-600 text-sm font-bold text-white">1</span>
+    <div>
+      <p className="m-0 text-sm font-bold text-sky-900 dark:text-sky-200">Forward Pass</p>
+      <p className="mt-1 mb-0 text-sm text-slate-800 dark:text-slate-200">
+        <strong>Input data</strong> flows through the network to produce an <strong>output</strong>.
+      </p>
+    </div>
+  </div>
+  <div className="flex gap-3 rounded-xl border-2 border-violet-300 bg-violet-50/90 p-4 dark:border-violet-800 dark:bg-violet-950/25">
+    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-violet-600 text-sm font-bold text-white">2</span>
+    <div>
+      <p className="m-0 text-sm font-bold text-violet-900 dark:text-violet-200">Loss Computation</p>
+      <p className="mt-1 mb-0 text-sm text-slate-800 dark:text-slate-200">
+        A <strong>loss function</strong> measures the error between the <em>predicted output</em> and the <em>true target</em>.
+      </p>
+    </div>
+  </div>
+  <div className="flex gap-3 rounded-xl border-2 border-amber-300 bg-amber-50/90 p-4 dark:border-amber-800 dark:bg-amber-950/25">
+    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-amber-600 text-sm font-bold text-white">3</span>
+    <div>
+      <p className="m-0 text-sm font-bold text-amber-900 dark:text-amber-200">Backward Pass (Backpropagation)</p>
+      <p className="mt-1 mb-0 text-sm text-slate-800 dark:text-slate-200">
+        The loss is differentiated with respect to the model&apos;s <strong>parameters</strong> — <em>layer by layer</em> — using the <strong>chain rule</strong>.
+      </p>
+    </div>
+  </div>
+  <div className="flex gap-3 rounded-xl border-2 border-emerald-300 bg-emerald-50/90 p-4 dark:border-emerald-800 dark:bg-emerald-950/25">
+    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-emerald-600 text-sm font-bold text-white">4</span>
+    <div>
+      <p className="m-0 text-sm font-bold text-emerald-900 dark:text-emerald-200">Parameter Update</p>
+      <p className="mt-1 mb-0 text-sm text-slate-800 dark:text-slate-200">
+        <strong>Weights</strong> are updated using the <strong>gradient descent</strong> rule to <em>minimize</em> the loss.
+      </p>
+    </div>
+  </div>
+</div>
+
+<div className="not-prose my-6 rounded-xl border border-indigo-200 bg-indigo-50/60 p-4 text-center dark:border-indigo-900/40 dark:bg-indigo-950/20">
+  <p className="m-0 text-sm text-slate-800 dark:text-slate-200">
+    Core update idea (schematic):
+  </p>
+  $$
+  \theta \leftarrow \theta - \eta \, \frac{\partial \mathcal{L}}{\partial \theta}
+  $$
+  <p className="mt-2 mb-0 text-xs text-slate-600 dark:text-slate-400">
+    <strong>θ</strong> = parameters, <strong>η</strong> = learning rate, <strong>ℒ</strong> = loss.
+  </p>
+</div>
+
+This process is repeated across <strong>batches</strong> of data until <strong>convergence</strong>.
+
+---
+
+## Extending to RNNs: The Need for Temporal Backpropagation
+
+In the case of <strong>recurrent neural networks</strong>, we face an added challenge: <strong>temporal dependencies</strong>.
+
+Rather than a single forward pass through a <em>static</em> network, an RNN <strong>unfolds over time</strong>. At each time step:
+
+<div className="not-prose my-6 grid gap-3 sm:grid-cols-2">
+  <div className="rounded-lg border-2 border-teal-200 bg-teal-50/80 p-3 text-sm text-slate-800 dark:border-teal-900/50 dark:bg-teal-950/25 dark:text-slate-200">
+    It takes in a <strong>new input</strong>,
+  </div>
+  <div className="rounded-lg border-2 border-teal-200 bg-teal-50/80 p-3 text-sm text-slate-800 dark:border-teal-900/50 dark:bg-teal-950/25 dark:text-slate-200">
+    Updates its <strong>hidden state</strong>,
+  </div>
+  <div className="rounded-lg border-2 border-teal-200 bg-teal-50/80 p-3 text-sm text-slate-800 dark:border-teal-900/50 dark:bg-teal-950/25 dark:text-slate-200">
+    Produces an <strong>output</strong>,
+  </div>
+  <div className="rounded-lg border-2 border-teal-200 bg-teal-50/80 p-3 text-sm text-slate-800 dark:border-teal-900/50 dark:bg-teal-950/25 dark:text-slate-200">
+    And contributes to the <strong>total loss</strong>.
+  </div>
+</div>
+
+This means the total loss is <strong>not</strong> just from one output, but is the <strong>sum of losses across time steps</strong>.
+
+$$
+\mathcal{L}_{\text{total}} = \sum_{t=1}^{T} \mathcal{L}_t
+$$
+
+To train such a model, we need to backpropagate not only through the <strong>layers</strong> of the network, but also <strong>backward through time</strong> across each time step where the hidden state was <strong>reused</strong>.
+
+This is the motivation for a specific training algorithm:
+
+<div className="not-prose my-5 rounded-xl border-2 border-dashed border-indigo-400 bg-indigo-50/50 p-4 text-center dark:border-indigo-600 dark:bg-indigo-950/20">
+  <p className="m-0 text-base font-bold text-indigo-900 dark:text-indigo-200">Backpropagation Through Time (BPTT)</p>
+</div>
+
+---
+
+## Backpropagation Through Time (BPTT)
+
+<strong>Backpropagation Through Time (BPTT)</strong> is the extension of backpropagation to recurrent structures. Here&apos;s what it involves:
+
+<div className="not-prose my-6 space-y-4">
+  <div className="rounded-xl border-l-4 border-indigo-500 bg-white py-3 pl-4 pr-3 shadow-sm dark:bg-slate-900/40">
+    <p className="m-0 text-sm text-slate-800 dark:text-slate-200">
+      <strong>Unroll</strong> the RNN across the sequence length, treating each time step as a <em>separate layer</em> (<strong>sharing weights</strong>).
+    </p>
+  </div>
+  <div className="rounded-xl border-l-4 border-violet-500 bg-white py-3 pl-4 pr-3 shadow-sm dark:bg-slate-900/40">
+    <p className="m-0 text-sm text-slate-800 dark:text-slate-200">
+      Compute the <strong>total loss</strong> as the <strong>sum</strong> over all time steps (as above).
+    </p>
+  </div>
+  <div className="rounded-xl border-l-4 border-rose-500 bg-white py-3 pl-4 pr-3 shadow-sm dark:bg-slate-900/40">
+    <p className="m-0 text-sm text-slate-800 dark:text-slate-200">
+      <strong>Backpropagate gradients</strong> from the <em>final</em> time step back to the <em>initial</em> one, flowing errors backward through both <strong>layers</strong> and <strong>time</strong>.
+    </p>
+  </div>
+</div>
+
+<div className="not-prose my-6 overflow-x-auto rounded-xl border border-slate-200 bg-slate-50/90 p-4 dark:border-slate-700 dark:bg-slate-900/50">
+  <p className="m-0 mb-3 text-center text-xs font-bold uppercase tracking-wide text-slate-600 dark:text-slate-400">
+    Time unrolling (conceptual)
+  </p>
+  <div className="flex flex-wrap items-center justify-center gap-2 text-center font-mono text-xs sm:text-sm">
+    <span className="rounded border border-slate-300 bg-white px-2 py-1 dark:border-slate-600 dark:bg-slate-800">t = 1</span>
+    <span className="text-slate-400">→</span>
+    <span className="rounded border border-slate-300 bg-white px-2 py-1 dark:border-slate-600 dark:bg-slate-800">t = 2</span>
+    <span className="text-slate-400">→</span>
+    <span className="rounded border border-slate-300 bg-white px-2 py-1 dark:border-slate-600 dark:bg-slate-800">⋯</span>
+    <span className="text-slate-400">→</span>
+    <span className="rounded border-2 border-indigo-400 bg-indigo-50 px-2 py-1 font-semibold dark:border-indigo-600 dark:bg-indigo-950/40">t = T</span>
+  </div>
+  <p className="mt-3 mb-0 text-center text-xs text-slate-600 dark:text-slate-400">
+    Same <strong>W</strong> at every step — gradients flow <em>backward</em> through the whole chain.
+  </p>
+</div>
+
+This backward flow must propagate through a chain of <strong>repeated computations</strong> — the same <strong>weight matrices</strong> and <strong>activation functions</strong> applied again and again at each step.
+
+Gradients w.r.t. an early hidden state involve a <strong>product</strong> of many Jacobian factors along the trajectory:
+
+$$
+\frac{\partial \mathcal{L}}{\partial \mathbf{h}_1}
+\;\propto\;
+\frac{\partial \mathcal{L}}{\partial \mathbf{h}_T}
+\prod_{t=2}^{T}
+\frac{\partial \mathbf{h}_t}{\partial \mathbf{h}_{t-1}}
+$$
+
+---
+
+## Practical Challenge: Vanishing and Exploding Gradients
+
+This <strong>repeated multiplication</strong> creates a major numerical challenge:
+
+<div className="not-prose my-6 grid gap-4 md:grid-cols-2">
+  <div className="rounded-xl border-2 border-orange-400 bg-orange-50/90 p-4 dark:border-orange-700 dark:bg-orange-950/30">
+    <p className="m-0 text-sm font-bold text-orange-900 dark:text-orange-200">Exploding</p>
+    <p className="mt-2 mb-0 text-sm text-slate-800 dark:text-slate-200">
+      If the derivatives at each step are <strong>slightly greater than one</strong>, the gradients can <strong>explode</strong> <em>exponentially</em>.
+    </p>
+    <p className="mt-3 mb-0 text-center text-xs font-mono text-orange-800 dark:text-orange-300">|g| &gt; 1 → g<sup>T</sup> grows fast</p>
+  </div>
+  <div className="rounded-xl border-2 border-slate-400 bg-slate-100/90 p-4 dark:border-slate-600 dark:bg-slate-800/60">
+    <p className="m-0 text-sm font-bold text-slate-900 dark:text-slate-100">Vanishing</p>
+    <p className="mt-2 mb-0 text-sm text-slate-800 dark:text-slate-200">
+      If they&apos;re <strong>less than one</strong>, the gradients can <strong>vanish</strong> — shrinking toward <strong>zero</strong>.
+    </p>
+    <p className="mt-3 mb-0 text-center text-xs font-mono text-slate-700 dark:text-slate-300">|g| &lt; 1 → g<sup>T</sup> → 0</p>
+  </div>
+</div>
+
+This problem is particularly damaging in sequence modeling because it prevents the model from learning <strong>long-term dependencies</strong>. If gradients either <strong>blow up</strong> or <strong>vanish</strong>, the model can&apos;t effectively use <strong>early sequence information</strong> to make <strong>late predictions</strong>.
+
+---
+
+## Why This Matters
+
+This issue isn&apos;t just <em>theoretical</em>. In practice, it severely limits the capacity of <strong>vanilla RNNs</strong> to:
+
+<div className="not-prose my-6 space-y-3">
+  <div className="flex gap-3 rounded-lg border border-rose-200 bg-rose-50/70 p-4 dark:border-rose-900/40 dark:bg-rose-950/20">
+    <span className="text-lg" aria-hidden>
+      📏
+    </span>
+    <p className="m-0 text-sm text-slate-800 dark:text-slate-200">
+      <strong>Learn from long sequences</strong>, where important information might occur <em>far</em> from the prediction target,
+    </p>
+  </div>
+  <div className="flex gap-3 rounded-lg border border-amber-200 bg-amber-50/70 p-4 dark:border-amber-900/40 dark:bg-amber-950/20">
+    <span className="text-lg" aria-hidden>
+      ⚖️
+    </span>
+    <p className="m-0 text-sm text-slate-800 dark:text-slate-200">
+      <strong>Retain stable training dynamics</strong>, which are essential for <strong>convergence</strong>,
+    </p>
+  </div>
+  <div className="flex gap-3 rounded-lg border border-indigo-200 bg-indigo-50/70 p-4 dark:border-indigo-900/40 dark:bg-indigo-950/20">
+    <span className="text-lg" aria-hidden>
+      🕸️
+    </span>
+    <p className="m-0 text-sm text-slate-800 dark:text-slate-200">
+      <strong>Capture meaningful temporal patterns</strong> over <em>extended contexts</em>.
+    </p>
+  </div>
+</div>
+
+---
+
+## A Solution: Long Short-Term Memory (LSTM)
+
+To address this, the deep learning community proposed <strong>enhanced RNN architectures</strong> — ones that modify the <strong>recurrent unit itself</strong> to better regulate the flow of <strong>information</strong> and <strong>gradients</strong>.
+
+The most well-known of these is the <strong>Long Short-Term Memory (LSTM)</strong> network.
+
+### What LSTMs Do Differently
+
+<strong>LSTMs</strong> introduce <strong>gates</strong> — <em>learned mechanisms</em> that selectively control what information to <strong>keep</strong>, <strong>forget</strong>, and <strong>expose</strong> at each time step. This makes them far more robust to the <strong>vanishing and exploding gradient</strong> problems.
+
+By introducing <strong>explicit memory cells</strong> and <strong>gating functions</strong>, LSTMs can:
+
+<div className="not-prose my-6 grid gap-3 md:grid-cols-3">
+  <div className="rounded-xl border-2 border-emerald-300 bg-emerald-50/90 p-4 text-center dark:border-emerald-800 dark:bg-emerald-950/25">
+    <p className="m-0 text-sm font-bold text-emerald-900 dark:text-emerald-200">Retain</p>
+    <p className="mt-2 mb-0 text-sm text-slate-800 dark:text-slate-200">Information across <strong>long time spans</strong>,</p>
+  </div>
+  <div className="rounded-xl border-2 border-cyan-300 bg-cyan-50/90 p-4 text-center dark:border-cyan-800 dark:bg-cyan-950/25">
+    <p className="m-0 text-sm font-bold text-cyan-900 dark:text-cyan-200">Learn</p>
+    <p className="mt-2 mb-0 text-sm text-slate-800 dark:text-slate-200">What to <strong>forget</strong> and what to <strong>remember</strong>,</p>
+  </div>
+  <div className="rounded-xl border-2 border-violet-300 bg-violet-50/90 p-4 text-center dark:border-violet-800 dark:bg-violet-950/25">
+    <p className="m-0 text-sm font-bold text-violet-900 dark:text-violet-200">Stabilize</p>
+    <p className="mt-2 mb-0 text-sm text-slate-800 dark:text-slate-200"><strong>Gradients</strong> during training.</p>
+  </div>
+</div>
+
+---
+
+<div className="not-prose mt-10 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-6 dark:border-slate-700">
+  <a href="./bringing-sequence-modeling-real-world" className="text-sm font-medium text-slate-600 no-underline hover:text-indigo-700 hover:underline dark:text-slate-400 dark:hover:text-indigo-400">← Lesson 4 · Real world</a>
+  <a href="./training-an-rnn-in-pytorch" className="text-sm font-semibold text-indigo-700 no-underline hover:underline dark:text-indigo-400">Lesson 6 · PyTorch lab →</a>
+</div>

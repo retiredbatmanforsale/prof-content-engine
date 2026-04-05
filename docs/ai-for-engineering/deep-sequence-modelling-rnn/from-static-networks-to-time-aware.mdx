@@ -1,0 +1,288 @@
+---
+sidebar_label: '2 · Static → time-aware'
+title: 'Lesson 2 — From Static Networks to Time-Aware Models'
+description: >-
+  Perceptrons without time, naive per-timestep feedforward, recurrence with
+  hidden state, RNN equations, unrolled vs cyclic views, and why recurrence mattered.
+---
+
+import perceptronLesson2 from './perceptron-lesson-2.png';
+import neuronsRecurrenceLesson2 from './neurons-recurrence-lesson2.png';
+
+# From Static Networks to Time-Aware Models
+
+In the previous section, we established the <strong>importance of modeling sequential dependencies</strong>. We now turn to how the field historically addressed this problem, beginning with a shift from traditional <strong>feedforward architectures</strong> to networks capable of handling <em>temporal dynamics</em>.
+
+---
+
+## Revisiting the perceptron
+
+Let us return briefly to the basic building block introduced in <strong>Lecture 1</strong>: the <strong>perceptron</strong>. Each perceptron takes a vector of inputs <strong>x₁, x₂, …, x<sub>m</sub></strong>, applies a <strong>weighted sum</strong>, and passes the result through a <strong>non-linear activation function</strong> to produce an output <strong>y</strong>. This output can then feed into further layers to construct deep networks.
+
+<div className="not-prose my-6 flex flex-col items-center">
+  <p className="mb-2 text-center text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">The perceptron revisited</p>
+  <div className="overflow-hidden rounded-xl border-2 border-slate-200 bg-slate-50/90 shadow-md dark:border-slate-600 dark:bg-slate-900/60">
+    <img
+      src={perceptronLesson2}
+      alt="Diagram: inputs x^(1) through x^(m) with weights w_1 to w_m feed into summation node z, then y equals g of z, output node y-hat"
+      className="mx-auto block h-auto max-w-full object-contain"
+      loading="lazy"
+      decoding="async"
+    />
+  </div>
+</div>
+
+<div className="not-prose my-6 rounded-xl border-2 border-slate-300 bg-gradient-to-br from-slate-50 to-indigo-50/40 p-5 dark:border-slate-600 dark:from-slate-900 dark:to-indigo-950/30">
+  <p className="m-0 text-center text-xs font-bold uppercase tracking-wide text-slate-600 dark:text-slate-400">Vector form</p>
+  $$
+  y = \phi\left( \sum_{i=1}^{m} w_i x_i + b \right) = \phi(\mathbf{w}^\top \mathbf{x} + b)
+  $$
+  <p className="mb-0 mt-2 text-center text-xs text-slate-600 dark:text-slate-400">
+    <strong>ϕ</strong> — activation · <strong>w<sub>i</sub></strong>, <strong>b</strong> — learnable parameters
+  </p>
+</div>
+
+In its basic form, the perceptron operates on a <strong>fixed-length vector</strong> with <strong>no awareness</strong> of any sequential structure. All inputs are assumed to belong to a <strong>single time slice</strong>{' '}
+<span className="whitespace-nowrap rounded-md border border-amber-400 bg-amber-100 px-2 py-0.5 text-xs font-bold text-amber-950 dark:border-amber-600 dark:bg-amber-950/50 dark:text-amber-100">
+  STATIC SINGLE STEP
+</span>
+. There is <strong>no notion of TIME</strong> or temporal ordering or dependence on previous data points. This limitation makes such architectures <em>insufficient</em> for handling sequential data.
+
+---
+
+## Applying feedforward networks to time series: a naive attempt
+
+One <strong>naive</strong> way to apply a static neural network to sequence data is to treat <strong>each time step independently</strong>. Imagine rotating our input-output diagram vertically, where each input <strong>x<sub>t</sub></strong> is processed by the <strong>same network</strong> <strong>f</strong> to yield an output <strong>y<sub>t</sub></strong>. We repeat this process across all time steps <strong>t = 0, 1, 2, …</strong>
+
+<div className="not-prose my-6 flex flex-wrap items-end justify-center gap-2 md:gap-3">
+  {['0', '1', '2', '…'].map((t) => (
+    <div key={t} className="flex flex-col items-center gap-1">
+      <span className="rounded-lg border-2 border-cyan-400 bg-cyan-50 px-3 py-2 font-mono text-xs font-bold text-cyan-900 dark:border-cyan-700 dark:bg-cyan-950/40 dark:text-cyan-100">
+        x<sub>{t === '…' ? 't' : t}</sub>
+      </span>
+      <span className="text-slate-400" aria-hidden>
+        ↓
+      </span>
+      <span className="rounded-md border border-slate-400 bg-slate-100 px-2 py-1 text-xs font-semibold dark:border-slate-500 dark:bg-slate-800">f</span>
+      <span className="text-slate-400" aria-hidden>
+        ↓
+      </span>
+      <span className="rounded-lg border-2 border-violet-400 bg-violet-50 px-3 py-2 font-mono text-xs font-bold text-violet-900 dark:border-violet-700 dark:bg-violet-950/40 dark:text-violet-100">
+        y<sub>{t === '…' ? 't' : t}</sub>
+      </span>
+    </div>
+  ))}
+</div>
+
+While this allows us to handle <strong>sequences of inputs</strong>, each prediction <strong>y<sub>t</sub></strong> is based <strong>only</strong> on the corresponding <strong>x<sub>t</sub></strong>. There is <strong>no memory</strong> of what happened at earlier time steps. This <strong>independence assumption</strong> contradicts the very premise of sequential modeling, which relies on the idea that <em>prior context informs future states</em>.
+
+<div className="not-prose my-5 grid gap-3 md:grid-cols-2">
+  <div className="rounded-xl border-2 border-rose-300 bg-rose-50/90 p-4 dark:border-rose-800 dark:bg-rose-950/25">
+    <p className="m-0 text-xs font-bold uppercase text-rose-800 dark:text-rose-300">What this setup lacks</p>
+    <p className="mt-2 mb-0 text-sm text-slate-800 dark:text-slate-200">
+      The ability to model <strong>dependencies across time</strong>.
+    </p>
+  </div>
+  <div className="rounded-xl border-2 border-emerald-300 bg-emerald-50/90 p-4 dark:border-emerald-800 dark:bg-emerald-950/25">
+    <p className="m-0 text-xs font-bold uppercase text-emerald-800 dark:text-emerald-300">Why that hurts</p>
+    <p className="mt-2 mb-0 text-sm text-slate-800 dark:text-slate-200">
+      e.g. predicting a word — <em>words that came before</em> are crucial. Ignoring previous steps → poor capacity.
+    </p>
+  </div>
+</div>
+
+---
+
+## Introducing recurrence: capturing temporal dependencies
+
+To solve this problem, we introduce a core idea: <strong>maintain and update an internal state</strong> as the network processes each time step. Let us define this hidden or internal state as <strong>h<sub>t</sub></strong>. At each time step <strong>t</strong>, we compute:
+
+<div className="not-prose my-5 space-y-3 rounded-xl border border-indigo-200 bg-indigo-50/40 p-4 dark:border-indigo-900/40 dark:bg-indigo-950/20">
+  <div className="flex flex-wrap items-start gap-2 text-sm text-slate-800 dark:text-slate-200">
+    <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-indigo-600 text-xs font-bold text-white">1</span>
+    <span>
+      An updated internal state <strong>h<sub>t</sub></strong>, which is a <strong>function of both</strong> the current input <strong>x<sub>t</sub></strong> and the previous state <strong>h<sub>t−1</sub></strong>.
+    </span>
+  </div>
+  <div className="flex flex-wrap items-start gap-2 text-sm text-slate-800 dark:text-slate-200">
+    <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-indigo-600 text-xs font-bold text-white">2</span>
+    <span>
+      An output prediction <strong>y<sub>t</sub></strong>, which now depends on <strong>h<sub>t</sub></strong> rather than directly on <strong>x<sub>t</sub></strong> alone.
+    </span>
+  </div>
+</div>
+
+<strong>Formally:</strong>
+
+$$
+\mathbf{h}_t = f(\mathbf{x}_t, \mathbf{h}_{t-1})
+$$
+
+$$
+\mathbf{y}_t = g(\mathbf{h}_t)
+$$
+
+This represents how the output at time step <strong>t</strong> is computed. The output is computed using the <strong>current hidden state</strong>.
+
+<div className="not-prose my-6 overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-700">
+  <table className="w-full min-w-[min(100%,560px)] border-collapse text-left text-sm">
+    <thead>
+      <tr className="border-b border-slate-200 bg-slate-800 text-white dark:border-slate-600 dark:bg-slate-900">
+        <th className="p-3 font-semibold">Symbol</th>
+        <th className="p-3 font-semibold">Meaning</th>
+      </tr>
+    </thead>
+    <tbody className="text-slate-700 dark:text-slate-300">
+      <tr className="border-b border-slate-100 bg-teal-50/40 dark:border-slate-800 dark:bg-teal-950/15">
+        <td className="p-3 font-mono font-bold text-teal-900 dark:text-teal-200">x<sub>t</sub></td>
+        <td className="p-3">
+          The input at time step <em>t</em>. For example, a word in a sentence or a stock price at time <em>t</em>.
+        </td>
+      </tr>
+      <tr className="border-b border-slate-100 dark:border-slate-800">
+        <td className="p-3 font-mono font-bold text-teal-900 dark:text-teal-200">h<sub>t−1</sub></td>
+        <td className="p-3">
+          The hidden state from the previous time step (<em>t</em>−1). Think of this as the <strong>memory</strong> of the RNN.
+        </td>
+      </tr>
+      <tr className="border-b border-slate-100 bg-teal-50/40 dark:border-slate-800 dark:bg-teal-950/15">
+        <td className="p-3 font-mono font-bold text-teal-900 dark:text-teal-200">h<sub>t</sub></td>
+        <td className="p-3">
+          The updated hidden state at time <em>t</em>.
+        </td>
+      </tr>
+      <tr className="border-b border-slate-100 dark:border-slate-800">
+        <td className="p-3 font-mono font-bold text-teal-900 dark:text-teal-200">f</td>
+        <td className="p-3">
+          A function that combines <strong>x<sub>t</sub></strong> and <strong>h<sub>t−1</sub></strong>. This is usually a neural network layer with non-linearity (like <em>tanh</em> or <em>ReLU</em>).
+        </td>
+      </tr>
+      <tr className="border-b border-slate-100 bg-violet-50/40 dark:border-slate-800 dark:bg-violet-950/15">
+        <td className="p-3 font-mono font-bold text-violet-900 dark:text-violet-200">y<sub>t</sub></td>
+        <td className="p-3">
+          The output at time <em>t</em> — computed using the <strong>current hidden state</strong>.
+        </td>
+      </tr>
+      <tr className="bg-white dark:bg-slate-950/30">
+        <td className="p-3 font-mono font-bold text-violet-900 dark:text-violet-200">g</td>
+        <td className="p-3">
+          A function (often a linear layer followed by <em>softmax</em>, <em>sigmoid</em>, or <em>identity</em> depending on task).
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<div className="not-prose my-5 rounded-lg border border-violet-200 bg-violet-50/60 p-3 text-sm text-slate-800 dark:border-violet-900/40 dark:bg-violet-950/20 dark:text-slate-200">
+  <p className="m-0">
+    <strong>y<sub>t</sub> = g(h<sub>t</sub>)</strong> — the output at step <em>t</em> is produced from what the RNN &quot;knows&quot; at <em>t</em> (<strong>h<sub>t</sub></strong>), not from <strong>x<sub>t</sub></strong> in isolation.
+  </p>
+</div>
+
+This setup provides a <strong>recurrence relation</strong>. The internal state acts as a form of <strong>memory</strong>, encoding information from past inputs and making it available to influence future computations. Crucially, this creates a <strong>dependency chain over time</strong>. The prediction at time step <strong>t</strong> indirectly depends on all inputs <strong>x₀, x₁, …, x<sub>t</sub></strong> seen so far.
+
+This structure defines a <strong>Recurrent Neural Network (RNN)</strong>.
+
+---
+
+## Visualizing recurrence
+
+There are <strong>two primary ways</strong> to visualize an RNN:
+
+<div className="not-prose my-6 flex flex-col items-center">
+  <p className="mb-2 text-center text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">Neurons with recurrence</p>
+  <div className="overflow-hidden rounded-xl border-2 border-slate-200 bg-slate-50/90 shadow-md dark:border-slate-600 dark:bg-slate-900/60">
+    <img
+      src={neuronsRecurrenceLesson2}
+      alt="Folded RNN cell with recurrence loop beside unfolded chain over time steps t=0,1,2 with inputs, outputs, and hidden flow; summary equation y-hat sub t equals f of x sub t and h sub t minus 1"
+      className="mx-auto block h-auto max-w-full object-contain"
+      loading="lazy"
+      decoding="async"
+    />
+  </div>
+</div>
+
+<div className="not-prose my-6 grid gap-5 lg:grid-cols-2">
+  <div className="rounded-xl border-2 border-sky-400 bg-gradient-to-b from-sky-50 to-white p-5 dark:border-sky-700 dark:from-sky-950/35 dark:to-slate-900/40">
+    <p className="m-0 text-sm font-bold text-sky-900 dark:text-sky-200">Unrolled view</p>
+    <p className="mt-1 mb-3 text-xs font-semibold uppercase tracking-wide text-sky-700 dark:text-sky-400">
+      [Breakdown the RNN into simple blocks of states]
+    </p>
+    <p className="mb-4 text-sm text-slate-800 dark:text-slate-200">
+      We <strong>unroll</strong> the recurrence over time. Each time step is shown as a separate copy of the same neural unit, connected to the previous and next states via the hidden variable <strong>h</strong>.
+    </p>
+    <div className="flex flex-wrap items-center justify-center gap-1 text-xs font-mono text-slate-700 dark:text-slate-300">
+      <span className="rounded border border-slate-300 bg-white px-2 py-1 dark:border-slate-600 dark:bg-slate-800">h₀</span>
+      <span>→</span>
+      <span className="rounded border-2 border-sky-500 bg-sky-100 px-2 py-2 dark:border-sky-600 dark:bg-sky-950/50">cell</span>
+      <span>→</span>
+      <span className="rounded border border-slate-300 bg-white px-2 py-1 dark:border-slate-600 dark:bg-slate-800">h₁</span>
+      <span>→</span>
+      <span className="rounded border-2 border-sky-500 bg-sky-100 px-2 py-2 dark:border-sky-600 dark:bg-sky-950/50">cell</span>
+      <span>→</span>
+      <span className="rounded border border-slate-300 bg-white px-2 py-1 dark:border-slate-600 dark:bg-slate-800">h₂</span>
+      <span>→</span>
+      <span className="text-slate-500">…</span>
+    </div>
+    <p className="mt-3 mb-0 text-xs text-slate-600 dark:text-slate-400">
+      Useful for <strong>backpropagation through time</strong> and dependencies between states.
+    </p>
+  </div>
+  <div className="rounded-xl border-2 border-fuchsia-400 bg-gradient-to-b from-fuchsia-50 to-white p-5 dark:border-fuchsia-700 dark:from-fuchsia-950/35 dark:to-slate-900/40">
+    <p className="m-0 text-sm font-bold text-fuchsia-900 dark:text-fuchsia-200">Cyclic view</p>
+    <p className="mt-1 mb-3 text-xs font-semibold uppercase tracking-wide text-fuchsia-700 dark:text-fuchsia-400">
+      [Recurrence Relation just like a simple fibonacci function]
+    </p>
+    <p className="mb-4 text-sm text-slate-800 dark:text-slate-200">
+      We represent the recurrent computation as a <strong>loop</strong> in the computational graph — the hidden state <strong>feeds back into itself</strong> over time.
+    </p>
+    <div className="flex flex-col items-center gap-2 rounded-lg border border-dashed border-fuchsia-400 bg-white/80 p-4 dark:border-fuchsia-700 dark:bg-slate-800/60">
+      <span className="rounded-full border-2 border-fuchsia-600 bg-fuchsia-100 px-4 py-2 text-sm font-bold text-fuchsia-900 dark:border-fuchsia-500 dark:bg-fuchsia-950/50 dark:text-fuchsia-100">
+        h<sub>t−1</sub> → f → h<sub>t</sub>
+      </span>
+      <span className="text-2xl text-fuchsia-500" aria-hidden>
+        ↺
+      </span>
+      <span className="text-xs text-slate-600 dark:text-slate-400">feedback along time</span>
+    </div>
+    <p className="mt-3 mb-0 text-xs text-slate-600 dark:text-slate-400">
+      Emphasizes <strong>structural recurrence</strong>, not the full timeline at once.
+    </p>
+  </div>
+</div>
+
+Both views are <strong>functionally equivalent</strong> but offer different insights. The unrolled view emphasizes <em>temporal flow</em>. The cyclic view emphasizes <em>structural recurrence</em>.
+
+---
+
+## Why this matters
+
+The introduction of <strong>recurrence</strong> was a <strong>turning point</strong> in sequence modeling. It allowed neural networks to:
+
+<div className="not-prose my-5 grid gap-3 sm:grid-cols-3">
+  <div className="rounded-xl border-2 border-emerald-300 bg-emerald-50/90 p-4 text-sm text-slate-800 dark:border-emerald-800 dark:bg-emerald-950/25 dark:text-slate-200">
+    <strong>Learn patterns</strong> that span <em>multiple time steps</em>.
+  </div>
+  <div className="rounded-xl border-2 border-amber-300 bg-amber-50/90 p-4 text-sm text-slate-800 dark:border-amber-800 dark:bg-amber-950/25 dark:text-slate-200">
+    Maintain a form of <strong>short-term memory</strong>.
+  </div>
+  <div className="rounded-xl border-2 border-indigo-300 bg-indigo-50/90 p-4 text-sm text-slate-800 dark:border-indigo-800 dark:bg-indigo-950/25 dark:text-slate-200">
+    <strong>Generalize</strong> across sequences of <em>different lengths</em> using a <strong>shared</strong> set of parameters.
+  </div>
+</div>
+
+Although <strong>vanilla RNNs</strong> are limited in their ability to capture <strong>long-term dependencies</strong> due to issues like <em>vanishing gradients</em>, they laid the foundation for more advanced architectures such as <strong>LSTMs</strong>, <strong>GRUs</strong>, and eventually <strong>Transformers</strong>.
+
+<div className="not-prose my-8 rounded-xl border-2 border-dashed border-indigo-400 bg-indigo-50/50 p-5 text-center dark:border-indigo-600 dark:bg-indigo-950/30">
+  <p className="m-0 text-xs font-bold uppercase tracking-wide text-indigo-800 dark:text-indigo-300">[Static to Time Aware]</p>
+  <p className="mt-3 mb-0 text-base font-semibold text-slate-900 dark:text-slate-100">
+    This transition from <strong>static</strong> to <strong>dynamic</strong>, <em>time-aware</em> models marked the beginning of deep learning&apos;s foray into <strong>language</strong>, <strong>speech</strong>, and many other <em>sequence-intensive</em> domains.
+  </p>
+</div>
+
+---
+
+<div className="not-prose mt-10 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-6 dark:border-slate-700">
+  <a href="./foundations-of-deep-sequence-modeling" className="text-sm font-medium text-slate-600 no-underline hover:text-indigo-700 hover:underline dark:text-slate-400 dark:hover:text-indigo-400">← Lesson 1 · Foundations</a>
+  <a href="./rnn-internal-mechanics" className="text-sm font-semibold text-indigo-700 no-underline hover:underline dark:text-indigo-400">Next: Lesson 3 — RNN mechanics →</a>
+</div>
