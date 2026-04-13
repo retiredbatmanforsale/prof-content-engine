@@ -1,0 +1,165 @@
+---
+sidebar_label: '12 · Encoder stack'
+title: 'Lesson 12 — The encoder stack'
+description: >-
+  End-to-end encoder flow: embeddings, then N identical layers of multi-head
+  self-attention and FFN each wrapped in Add & Norm—as in Vaswani et al. 2017.
+---
+
+# The encoder stack
+
+The **encoder** is where the **source** sentence (or any input sequence) is turned into a **stack of contextual vectors**—one row per token—that the **decoder** will later **read** through **cross-attention**. Every lesson so far was a **piece** of this machine; this page **wires them in the exact order** used in [Vaswani et al. (2017), *Attention Is All You Need*](https://arxiv.org/abs/1706.03762). The [Lex AI interactive diagram](https://aiayn.aiseekhegaindia.com/) follows the same stacking.
+
+<div className="not-prose my-6 rounded-xl border-2 border-amber-400 bg-amber-50/90 p-4 dark:border-amber-700 dark:bg-amber-950/30">
+  <p className="m-0 text-sm font-semibold text-amber-900 dark:text-amber-200">Order matters (paper)</p>
+  <p className="mt-2 mb-0 text-sm text-slate-800 dark:text-slate-200">
+    In the **original** Transformer, each encoder layer runs: <strong>(1) Multi-Head Self-Attention</strong> → <strong>Add &amp; Norm</strong> → <strong>(2) Feed-Forward Network</strong> → <strong>Add &amp; Norm</strong>. That block is repeated <strong>N</strong> times ( <strong>N = 6</strong> in the base model in the paper ).
+  </p>
+</div>
+
+---
+
+## Before layer 1: input to the encoder
+
+1. **Token embeddings** + **positional encodings** → one vector per source position (**d_model**).
+2. No **causal** mask: every token may attend to every other token (**bidirectional** encoder self-attention).
+
+The result is the tensor that enters **encoder layer 1**.
+
+---
+
+## One encoder layer (exact paper rhythm)
+
+The diagram in the paper labels each wrap-up **“Add &amp; Norm”**: **add** a **residual** connection, then apply **LayerNorm**. In **post-norm** form (what the paper’s picture encodes):
+
+$$
+\begin{aligned}
+x_1 &= \text{LayerNorm}\bigl( x + \text{MultiHeadSelfAttention}(x) \bigr) \\
+x_{\text{out}} &= \text{LayerNorm}\bigl( x_1 + \text{FFN}(x_1) \bigr)
+\end{aligned}
+$$
+
+So **inside one layer**:
+
+<div className="not-prose my-8 flex flex-col items-center gap-0">
+  <div className="w-full max-w-md rounded-xl border-2 border-violet-400 bg-violet-50 px-4 py-3 text-center dark:border-violet-600 dark:bg-violet-950/40">
+    <p className="m-0 text-xs font-bold uppercase tracking-wide text-violet-800 dark:text-violet-200">Step 1</p>
+    <p className="mt-1 mb-0 text-sm font-semibold text-slate-900 dark:text-slate-100">Multi-Head Self-Attention</p>
+    <p className="mt-1 mb-0 text-xs text-slate-600 dark:text-slate-400">Q, K, V from the same layer input · all positions see all positions</p>
+  </div>
+  <div className="flex h-8 flex-col items-center justify-center text-slate-400" aria-hidden>
+    <span className="text-xl">↓</span>
+  </div>
+  <div className="w-full max-w-md rounded-xl border-2 border-slate-400 bg-slate-100 px-4 py-3 text-center dark:border-slate-500 dark:bg-slate-800">
+    <p className="m-0 text-xs font-bold uppercase tracking-wide text-slate-700 dark:text-slate-300">Add &amp; Norm</p>
+    <p className="mt-1 mb-0 text-sm text-slate-800 dark:text-slate-200">Residual + **LayerNorm**</p>
+  </div>
+  <div className="flex h-8 flex-col items-center justify-center text-slate-400" aria-hidden>
+    <span className="text-xl">↓</span>
+  </div>
+  <div className="w-full max-w-md rounded-xl border-2 border-emerald-400 bg-emerald-50 px-4 py-3 text-center dark:border-emerald-600 dark:bg-emerald-950/40">
+    <p className="m-0 text-xs font-bold uppercase tracking-wide text-emerald-800 dark:text-emerald-200">Step 2</p>
+    <p className="mt-1 mb-0 text-sm font-semibold text-slate-900 dark:text-slate-100">Feed-Forward Network</p>
+    <p className="mt-1 mb-0 text-xs text-slate-600 dark:text-slate-400">Position-wise · e.g. **FFN(x) = max(0, xW₁+b₁)W₂+b₂**</p>
+  </div>
+  <div className="flex h-8 flex-col items-center justify-center text-slate-400" aria-hidden>
+    <span className="text-xl">↓</span>
+  </div>
+  <div className="w-full max-w-md rounded-xl border-2 border-slate-400 bg-slate-100 px-4 py-3 text-center dark:border-slate-500 dark:bg-slate-800">
+    <p className="m-0 text-xs font-bold uppercase tracking-wide text-slate-700 dark:text-slate-300">Add &amp; Norm</p>
+    <p className="mt-1 mb-0 text-sm text-slate-800 dark:text-slate-200">Residual + **LayerNorm**</p>
+  </div>
+</div>
+
+---
+
+## Repeat **N** times: **× 6** in the base model
+
+The **base** Transformer in the paper uses **N = 6** **identical** encoder layers (same pattern, **different learned weights** per layer). The output of layer **ℓ** feeds layer **ℓ + 1**.
+
+<div className="not-prose my-8 flex flex-col items-center rounded-2xl border-2 border-dashed border-indigo-300 bg-indigo-50/50 p-6 dark:border-indigo-700 dark:bg-indigo-950/30">
+  <p className="m-0 text-center text-sm font-semibold text-indigo-900 dark:text-indigo-200">Encoder layer block</p>
+  <p className="mt-2 mb-0 text-center font-mono text-xs text-slate-700 dark:text-slate-300 sm:text-sm">MHSA → Add&amp;Norm → FFN → Add&amp;Norm</p>
+  <div className="my-4 flex items-center gap-3 text-2xl font-bold text-indigo-600 dark:text-indigo-400" aria-hidden>
+    <span>×</span>
+    <span className="rounded-lg bg-white px-4 py-2 shadow dark:bg-slate-900">6</span>
+  </div>
+  <p className="m-0 text-center text-xs text-slate-600 dark:text-slate-400">Six stacked layers in the **base** config [Vaswani et al.](https://arxiv.org/abs/1706.03762) — other hyperparameter tables use different **N**.</p>
+</div>
+
+---
+
+## Flow chart (end-to-end)
+
+<div className="not-prose my-6 overflow-x-auto rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-700 dark:bg-slate-900/50">
+  <pre className="m-0 min-w-[280px] whitespace-pre-wrap font-mono text-xs leading-relaxed text-slate-800 dark:text-slate-200 sm:text-sm">{`Source tokens
+      │
+      ▼
+┌─────────────────────┐
+│ Token emb + pos enc │
+└─────────────────────┘
+      │
+      ▼
+┌──────────────────────────────────────────────────────────┐
+│  ENCODER LAYER 1 … ENCODER LAYER 6 (same structure)       │
+│  ┌────────────────────────────────────────────────────┐  │
+│  │ Multi-Head Self-Attention                          │  │
+│  │        → Add & Norm                                │  │
+│  │ Feed-Forward Network                               │  │
+│  │        → Add & Norm                                │  │
+│  └────────────────────────────────────────────────────┘  │
+└──────────────────────────────────────────────────────────┘
+      │
+      ▼
+ Encoder output  (batch, src_len, d_model)
+      │
+      └──► supplies K, V to every decoder cross-attention layer`}</pre>
+</div>
+
+---
+
+## Checklist: order vs “optional variants”
+
+<div className="not-prose my-6 overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-700">
+  <table className="w-full min-w-[300px] border-collapse text-left text-sm">
+    <thead>
+      <tr className="bg-slate-700 text-white dark:bg-slate-900">
+        <th className="p-3 font-semibold">Paper (2017) encoder</th>
+        <th className="p-3 font-semibold">Note</th>
+      </tr>
+    </thead>
+    <tbody className="text-slate-800 dark:text-slate-200">
+      <tr className="border-b border-slate-200 dark:border-slate-700">
+        <td className="p-3">**Attention first**, then **FFN**</td>
+        <td className="p-3">Do **not** swap; this is how the block is defined in the paper.</td>
+      </tr>
+      <tr className="border-b border-slate-200 dark:border-slate-700">
+        <td className="p-3">**Add &amp; Norm** after **each** sublayer</td>
+        <td className="p-3">Residual around MHSA, then residual around FFN—**two** adds per layer.</td>
+      </tr>
+      <tr className="border-b border-slate-200 dark:border-slate-700">
+        <td className="p-3">**Post-norm** (norm **after** add)</td>
+        <td className="p-3">Many later models use **pre-norm**; when reading the **original** figure, use this order.</td>
+      </tr>
+      <tr className="bg-emerald-50/50 dark:bg-emerald-950/20">
+        <td className="p-3">**No** causal mask</td>
+        <td className="p-3">Encoder self-attention is **bidirectional** on the source (padding masks only).</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+---
+
+## Output of the encoder
+
+The final tensor has shape **(batch, source_length, d_model)**. For the full **encoder–decoder** Transformer, this sequence is projected to **K** and **V** for **each** **encoder–decoder (cross-)attention** sublayer in the decoder—so the **source** is **re-read** at every decoder depth with **updated** decoder queries.
+
+**Next:** the **decoder stack**—where **masked** self-attention and **cross-attention** appear.
+
+---
+
+<div className="not-prose mt-10 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-6 dark:border-slate-700">
+  <a href="./cross-attention" className="text-sm font-medium text-slate-600 no-underline hover:text-emerald-700 hover:underline dark:text-slate-400 dark:hover:text-emerald-400">← Lesson 11 · Cross-attention</a>
+  <a href="./decoder-stack" className="text-sm font-semibold text-emerald-700 no-underline hover:underline dark:text-emerald-400">Lesson 13 · Decoder stack →</a>
+</div>

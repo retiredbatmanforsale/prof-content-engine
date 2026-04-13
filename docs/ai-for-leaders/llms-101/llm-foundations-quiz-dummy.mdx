@@ -1,0 +1,227 @@
+---
+sidebar_label: 'Quiz · LLM foundations (dummy)'
+title: 'LLM foundations — practice quiz (dummy)'
+description: >-
+  A nicely formatted placeholder quiz on LLM basics: coherence, autoregression,
+  transformers, tokenization, softmax, inference, and training.
+---
+
+# LLM foundations — practice quiz
+
+<div className="not-prose my-6 rounded-2xl border-2 border-violet-200 bg-gradient-to-br from-violet-50 via-white to-sky-50 p-5 shadow-sm dark:border-violet-900/50 dark:from-violet-950/40 dark:via-slate-950 dark:to-sky-950/30">
+  <p className="m-0 text-xs font-bold uppercase tracking-widest text-violet-700 dark:text-violet-300">Dummy placement doc</p>
+  <p className="mt-2 mb-0 text-sm text-slate-700 dark:text-slate-300">
+    This page is a <strong>formatting sample</strong> only—use it as a template for future quizzes. Try each question, then open the <strong>answer key</strong> at the bottom.
+  </p>
+</div>
+
+<div className="not-prose my-8 flex flex-wrap items-center justify-center gap-4 text-center">
+  <div className="rounded-xl border border-slate-200 bg-white px-5 py-3 dark:border-slate-700 dark:bg-slate-900/60">
+    <p className="m-0 text-2xl font-bold text-slate-900 dark:text-slate-100">10</p>
+    <p className="m-0 text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">Questions</p>
+  </div>
+  <div className="rounded-xl border border-slate-200 bg-white px-5 py-3 dark:border-slate-700 dark:bg-slate-900/60">
+    <p className="m-0 text-2xl font-bold text-emerald-700 dark:text-emerald-400">MCQ</p>
+    <p className="m-0 text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">4 choices each</p>
+  </div>
+  <div className="rounded-xl border border-slate-200 bg-white px-5 py-3 dark:border-slate-700 dark:bg-slate-900/60">
+    <p className="m-0 text-2xl font-bold text-sky-700 dark:text-sky-400">~5 min</p>
+    <p className="m-0 text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">Quick review</p>
+  </div>
+</div>
+
+---
+
+## Questions
+
+export const Q = ({ n, children }) => (
+  <div className="not-prose my-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-900/50">
+    <div className="mb-4 flex items-start gap-3">
+      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-violet-600 text-sm font-bold text-white dark:bg-violet-500">
+        {n}
+      </span>
+      <p className="m-0 flex-1 text-base font-semibold leading-snug text-slate-900 dark:text-slate-100">{children}</p>
+    </div>
+  </div>
+);
+
+export const Opt = ({ letter, children }) => (
+  <li className="flex gap-3 rounded-lg border border-slate-100 bg-slate-50/80 py-2.5 pr-3 pl-3 text-sm text-slate-800 dark:border-slate-700/80 dark:bg-slate-800/40 dark:text-slate-200">
+    <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-white text-xs font-bold text-violet-700 shadow-sm dark:bg-slate-900 dark:text-violet-300">
+      {letter}
+    </span>
+    <span className="pt-0.5 leading-relaxed">{children}</span>
+  </li>
+);
+
+<Q n={1}>
+  What are the two primary characteristics of the text produced by a Large Language Model (LLM)?
+</Q>
+
+<ul className="not-prose m-0 -mt-2 mb-8 list-none space-y-2 pl-0">
+  <Opt letter="A">Factually accurate and truth-seeking</Opt>
+  <Opt letter="B">Coherent and contextually relevant</Opt>
+  <Opt letter="C">Independent and non-sequential</Opt>
+  <Opt letter="D">Deterministic and non-probabilistic</Opt>
+</ul>
+
+<Q n={2}>What is the &quot;auto-regressive&quot; nature of an LLM?</Q>
+
+<div className="not-prose -mt-2 mb-6 rounded-xl border border-sky-200 bg-sky-50/80 p-4 dark:border-sky-900/40 dark:bg-sky-950/25">
+  <p className="m-0 mb-3 text-center text-xs font-semibold uppercase tracking-wide text-sky-800 dark:text-sky-200">Visual hint</p>
+  <div className="flex flex-col items-center gap-2 text-sm text-slate-700 dark:text-slate-300">
+    <div className="flex flex-wrap items-center justify-center gap-2">
+      <span className="rounded-md bg-white px-2 py-1 font-mono text-xs shadow dark:bg-slate-900">past tokens</span>
+      <span aria-hidden className="text-slate-400">
+        →
+      </span>
+      <span className="rounded-md bg-violet-100 px-2 py-1 font-mono text-xs text-violet-900 dark:bg-violet-950 dark:text-violet-200">model</span>
+      <span aria-hidden className="text-slate-400">
+        →
+      </span>
+      <span className="rounded-md bg-white px-2 py-1 font-mono text-xs shadow dark:bg-slate-900">next token</span>
+    </div>
+    <p className="m-0 text-center text-xs text-slate-500 dark:text-slate-400">Repeat: append the prediction and predict again.</p>
+  </div>
+</div>
+
+<ul className="not-prose m-0 mb-8 list-none space-y-2 pl-0">
+  <Opt letter="A">It processes all words in a sentence simultaneously.</Opt>
+  <Opt letter="B">It predicts the next token in a loop based on past tokens.</Opt>
+  <Opt letter="C">It automatically corrects factual errors in its training data.</Opt>
+  <Opt letter="D">It uses a fixed database to retrieve pre-written answers.</Opt>
+</ul>
+
+<Q n={3}>Which specific neural network architecture is the &quot;heart&quot; of models like ChatGPT?</Q>
+
+<ul className="not-prose m-0 -mt-2 mb-8 list-none space-y-2 pl-0">
+  <Opt letter="A">Encoder-only transformer</Opt>
+  <Opt letter="B">Recurrent Neural Network (RNN)</Opt>
+  <Opt letter="C">Decoder-only transformer</Opt>
+  <Opt letter="D">Convolutional Neural Network (CNN)</Opt>
+</ul>
+
+<Q n={4}>What is the purpose of &quot;tokenization&quot; in the LLM pipeline?</Q>
+
+<ul className="not-prose m-0 -mt-2 mb-8 list-none space-y-2 pl-0">
+  <Opt letter="A">To check the truthfulness of the input text.</Opt>
+  <Opt letter="B">To filter out URLs and adult content from the internet.</Opt>
+  <Opt letter="C">To break down text into smaller units (tokens) with unique IDs.</Opt>
+  <Opt letter="D">To increase the parameter count of the model.</Opt>
+</ul>
+
+<Q n={5}>What do &quot;token embeddings&quot; represent?</Q>
+
+<ul className="not-prose m-0 -mt-2 mb-8 list-none space-y-2 pl-0">
+  <Opt letter="A">The relative position of a token in a sentence.</Opt>
+  <Opt letter="B">The numerical ID assigned to a word.</Opt>
+  <Opt letter="C">The semantic meaning and relationship of a token in a vector space.</Opt>
+  <Opt letter="D">The total number of parameters in the neural network.</Opt>
+</ul>
+
+<Q n={6}>Why is &quot;softmax&quot; used in the final layer of the LLM?</Q>
+
+<ul className="not-prose m-0 -mt-2 mb-8 list-none space-y-2 pl-0">
+  <Opt letter="A">To decrease the model&apos;s training time on GPUs.</Opt>
+  <Opt letter="B">To convert raw numerical outputs (logits) into probabilities.</Opt>
+  <Opt letter="C">To filter out biased language from the training set.</Opt>
+  <Opt letter="D">To update the weights during the backward pass.</Opt>
+</ul>
+
+<Q n={7}>What is the &quot;inference&quot; process in the context of LLMs?</Q>
+
+<ul className="not-prose m-0 -mt-2 mb-8 list-none space-y-2 pl-0">
+  <Opt letter="A">Updating weights through back-propagation.</Opt>
+  <Opt letter="B">Filtering the 44 terabytes of &quot;FineWeb&quot; text.</Opt>
+  <Opt letter="C">Running the trained, frozen model to generate a response for a user.</Opt>
+  <Opt letter="D">Measuring the loss function during thousands of iterations.</Opt>
+</ul>
+
+<Q n={8}>What is the main drawback mentioned regarding a raw LLM&apos;s relationship with truth?</Q>
+
+<ul className="not-prose m-0 -mt-2 mb-8 list-none space-y-2 pl-0">
+  <Opt letter="A">They are too slow to provide real-time facts.</Opt>
+  <Opt letter="B">They are not inherently truth-seeking and can hallucinate or make things up.</Opt>
+  <Opt letter="C">They can only understand English and no other languages.</Opt>
+  <Opt letter="D">They cannot be trained on internet data.</Opt>
+</ul>
+
+<Q n={9}>How was GPT transformed into &quot;Chat GPT&quot;?</Q>
+
+<ul className="not-prose m-0 -mt-2 mb-8 list-none space-y-2 pl-0">
+  <Opt letter="A">By increasing the parameter count to one trillion.</Opt>
+  <Opt letter="B">By fine-tuning the model on human-like conversational data sets.</Opt>
+  <Opt letter="C">By connecting it to a live truth-seeking agentic interface.</Opt>
+  <Opt letter="D">By removing the self-attention matrix from the decoder block.</Opt>
+</ul>
+
+<Q n={10}>What describes the training loop of a transformer-based neural network?</Q>
+
+<div className="not-prose -mt-2 mb-6 flex justify-center overflow-x-auto rounded-xl border border-emerald-200 bg-emerald-50/60 p-4 dark:border-emerald-900/40 dark:bg-emerald-950/20">
+  <pre className="m-0 text-center font-mono text-xs leading-relaxed text-emerald-900 dark:text-emerald-200 sm:text-sm">
+    {`┌─────────────┐    ┌──────────┐    ┌─────────────┐
+│   Forward   │ →  │   Loss   │ →  │  Backward   │
+│    pass     │    │  (compare│    │  (update    │
+│             │    │  to data)│    │   weights)  │
+└─────────────┘    └──────────┘    └─────────────┘
+        ↑                                 │
+        └────────── repeat ───────────────┘`}
+  </pre>
+</div>
+
+<ul className="not-prose m-0 mb-8 list-none space-y-2 pl-0">
+  <Opt letter="A">A single forward pass with no feedback.</Opt>
+  <Opt letter="B">Forward pass, computing loss, and a backward pass to update weights.</Opt>
+  <Opt letter="C">Manually editing one trillion weights one by one.</Opt>
+  <Opt letter="D">Randomly selecting tokens without using probabilities.</Opt>
+</ul>
+
+---
+
+## Answer key
+
+<details className="not-prose my-6 rounded-xl border border-amber-200 bg-amber-50/50 dark:border-amber-800/50 dark:bg-amber-950/20">
+  <summary className="cursor-pointer list-none px-4 py-3 text-sm font-semibold text-amber-900 dark:text-amber-200 [&::-webkit-details-marker]:hidden">
+    Reveal answers (spoilers)
+  </summary>
+  <div className="border-t border-amber-200/80 px-4 py-4 dark:border-amber-800/40">
+    <ol className="m-0 space-y-2 text-sm text-slate-800 dark:text-slate-200">
+      <li>
+        <strong>1.</strong> B — LLMs are trained to produce fluent, context-fitting continuations; factual accuracy is not guaranteed.
+      </li>
+      <li>
+        <strong>2.</strong> B — Autoregressive = one token at a time, conditioned on everything generated so far.
+      </li>
+      <li>
+        <strong>3.</strong> C — ChatGPT-style assistants are built around a <strong>decoder-only</strong> transformer.
+      </li>
+      <li>
+        <strong>4.</strong> C — Tokenization splits text into model-specific units and maps them to vocabulary IDs.
+      </li>
+      <li>
+        <strong>5.</strong> C — Embeddings are dense vectors capturing meaning and usage; IDs and position are separate mechanisms.
+      </li>
+      <li>
+        <strong>6.</strong> B — Softmax turns logits over the vocabulary into a probability distribution for the next token.
+      </li>
+      <li>
+        <strong>7.</strong> C — Inference = forward passes through a fixed (trained) model to produce outputs for users.
+      </li>
+      <li>
+        <strong>8.</strong> B — Models optimize for likelihood of training text, not for verified truth; hallucinations are a known issue.
+      </li>
+      <li>
+        <strong>9.</strong> B — Conversational behavior comes largely from fine-tuning (and related alignment) on dialogue-style data.
+      </li>
+      <li>
+        <strong>10.</strong> B — Standard supervised training: forward → loss → backward (gradient) → weight update, repeated.
+      </li>
+    </ol>
+  </div>
+</details>
+
+<div className="not-prose mt-10 flex flex-wrap justify-between gap-3 border-t border-slate-200 pt-6 dark:border-slate-700">
+  <a href="./intro" className="text-sm font-medium text-emerald-700 no-underline hover:underline dark:text-emerald-400">
+    ← LLMs 101 overview
+  </a>
+</div>

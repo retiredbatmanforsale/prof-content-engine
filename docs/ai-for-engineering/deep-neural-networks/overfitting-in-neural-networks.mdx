@@ -1,0 +1,128 @@
+---
+sidebar_label: '8 · Overfitting'
+title: 'Lesson 8 — Overfitting in neural networks'
+description: >-
+  What overfitting is; mitigations on the data, model, training, pre-training,
+  and post-training sides of the workflow.
+---
+
+# **Overfitting** in neural networks
+
+**Overfitting** means the network fits the **training set** too closely—including **noise** and quirks—so **validation** or **test** performance stalls or worsens while **training loss** keeps dropping. You often see a **widening gap** between **train** and **val** metrics. Lesson 7 linked **capacity** and parameter count **n** to this risk: high capacity plus limited data makes overfitting easy.
+
+This lesson groups **mitigations** by **where** in the workflow you act: **data**, **model**, **training**, **pre-training**, and **post-training**. The vocabulary overlaps (**regularization**, **generalization**); the useful question is **what you change** and **when**.
+
+---
+
+## What you are trying to preserve
+
+You want **low error on held-out data**, not just on examples the optimizer has seen many times. Everything below steers learning toward **patterns that transfer** instead of **memorization**.
+
+---
+
+## 1. **Data** side (before and during the project)
+
+**When:** collecting, cleaning, and feeding examples.
+
+- **More diverse, representative data** — often the strongest lever: the model has less reason to memorize a thin slice of reality if coverage grows and matches how the system will be used.  
+- **Train / validation / test splits** — hold **validation** out for tuning; reserve **test** for a final honest check so you do not accidentally tune to the test set.  
+- **Data augmentation** — for images: crops, flips, color jitter; for text: paraphrases or light noise where it makes sense. Augmentation expands effective coverage without new labels.
+
+These levers do not shrink **n**; they change what the model is encouraged to treat as equivalent supervision.
+
+---
+
+## 2. **Model** side (architecture and inductive bias)
+
+**When:** designing the network before or between training runs.
+
+- **Reduce capacity** — smaller width, fewer layers, or fewer parameters **n** when data is scarce (Lesson 7). Simpler hypothesis classes often generalize better when the signal is weak.  
+- **Weight decay** (L2 regularization) — penalize large weights in the objective so solutions stay smoother; implemented as an extra loss term or a decoupled optimizer rule.  
+- **Dropout** (and related stochastic-depth ideas) — randomly zero units during training so the network cannot rely on fixed pathways; at inference you typically use the full network with rescaling. A standard model-side regularizer for dense layers.
+
+You can combine several of these; they target different failure modes (raw capacity vs weight magnitude vs co-adaptation of units).
+
+---
+
+## 3. **Training** procedure (the optimization loop)
+
+**When:** every epoch or step, and while reading learning curves.
+
+- **Early stopping** — track **validation** loss or a task metric; stop training when validation stops improving (with a patience window). Cuts off extra epochs that mostly bake in training-set noise.  
+- **Learning rate** and **schedule** — the step size shapes exploration vs convergence; warmup and decay are common ways to avoid unstable or wasteful optimization.  
+- **Batch size** — smaller batches add gradient noise that sometimes helps generalization; it is one of several training knobs, not a cure-all.
+
+**Label smoothing**, **Mixup**, and similar target or input mixing tricks also live here: they soften hard targets or synthetic combinations so the model is less tempted to memorize exact training pairs.
+
+---
+
+## 4. **Pre-training** (before your task-specific fit)
+
+**When:** initialization or an upstream stage—before or above your final fine-tune.
+
+- **Transfer learning** — start from weights trained on a large source task (e.g. ImageNet, broad text corpora). A small labeled downstream set may be enough to adapt a head if generic features are already learned.  
+- **Freeze early layers at first** — train only the top layers (or blocks), then optionally unfreeze more with a smaller learning rate. That limits how many parameters move freely when data is tiny.
+
+**Self-supervised** pre-training (contrastive learning, masked modeling, etc.) fills the same role: learn representations with less reliance on your full label budget.
+
+---
+
+## 5. **Post-training** (after the main training run)
+
+**When:** you already have a trained checkpoint—ensembling, deployment, or inference-time refinements.
+
+- **Ensembling** — average or vote over several models (different seeds, architectures, or cross-validation folds). Reduces variance; costs more compute at inference.  
+- **Test-time augmentation (TTA)** — average predictions over augmented views of the same input; common in vision.  
+- **Production monitoring** — watch for **distribution shift**; retrain or roll back when live traffic no longer matches training. That is not textbook overfitting, but the symptom is the same: poor fit to new conditions.
+
+Post-training tricks rarely replace good data, model, and training choices; they polish what you already learned.
+
+---
+
+## Map: where you pull which lever
+
+<div className="not-prose my-6 overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-700">
+  <table className="w-full min-w-[300px] border-collapse text-left text-sm">
+    <thead>
+      <tr className="bg-slate-700 text-white dark:bg-slate-900">
+        <th className="p-3 font-semibold">Stage</th>
+        <th className="p-3 font-semibold">Example mitigations</th>
+      </tr>
+    </thead>
+    <tbody className="text-slate-800 dark:text-slate-200">
+      <tr className="border-b border-slate-200 dark:border-slate-700">
+        <td className="p-3 font-medium">Data</td>
+        <td className="p-3">More data, clean splits, augmentation</td>
+      </tr>
+      <tr className="border-b border-slate-200 dark:border-slate-700">
+        <td className="p-3 font-medium">Model</td>
+        <td className="p-3">Smaller architecture, weight decay, dropout</td>
+      </tr>
+      <tr className="border-b border-slate-200 dark:border-slate-700">
+        <td className="p-3 font-medium">Training</td>
+        <td className="p-3">Early stopping, schedules, label smoothing / Mixup</td>
+      </tr>
+      <tr className="border-b border-slate-200 dark:border-slate-700">
+        <td className="p-3 font-medium">Pre-training</td>
+        <td className="p-3">Transfer weights, freeze then unfreeze</td>
+      </tr>
+      <tr className="bg-emerald-50/50 dark:bg-emerald-950/20">
+        <td className="p-3 font-medium">Post-training</td>
+        <td className="p-3">Ensembles, TTA, production monitoring</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+---
+
+## One-line story
+
+Overfitting is great on the training set but weak on new data; you respond with **data**, **smaller or regularized models**, **smarter training**, **pre-trained starts**, and sometimes **post-hoc ensembling**.
+
+---
+
+<div className="not-prose mt-10 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-6 dark:border-slate-700">
+  <a href="./trainable-parameters-and-hyperparameters" className="text-sm font-medium text-slate-600 no-underline hover:text-emerald-700 hover:underline dark:text-slate-400 dark:hover:text-emerald-400">← Lesson 7 · Parameters &amp; hyperparameters</a>
+  <a href="./neural-network-architecture" className="text-sm font-semibold text-emerald-700 no-underline hover:underline dark:text-emerald-400">Lesson 9 · Architecture recap →</a>
+</div>

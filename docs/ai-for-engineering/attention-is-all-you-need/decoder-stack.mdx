@@ -1,0 +1,188 @@
+---
+sidebar_label: '13 · Decoder stack'
+title: 'Lesson 13 — The decoder stack'
+description: >-
+  Paper order: masked self-attention, cross-attention to the encoder, FFN—each
+  with Add & Norm—× N layers; contrast with GPT-style decoder-only stacks.
+---
+
+# The decoder stack
+
+The **decoder** generates the **target** sequence (e.g. the translation) **one token at a time**. Unlike the **encoder**, it must **not** see future target tokens when computing representations—that is the job of **causal (masked) self-attention**. It must also **read** the **source** that the encoder produced—that is **cross-attention**. Finally, each position still runs a **feed-forward** block. [Vaswani et al. (2017)](https://arxiv.org/abs/1706.03762) stack **three** sublayers per decoder layer, each wrapped in **Add &amp; Norm**, in a **fixed order**. The [Lex AI walkthrough](https://aiayn.aiseekhegaindia.com/) mirrors this decoder diagram.
+
+<div className="not-prose my-6 rounded-xl border-2 border-amber-400 bg-amber-50/90 p-4 dark:border-amber-700 dark:bg-amber-950/30">
+  <p className="m-0 text-sm font-semibold text-amber-900 dark:text-amber-200">Order in *Attention Is All You Need*</p>
+  <p className="mt-2 mb-0 text-sm text-slate-800 dark:text-slate-200">
+    Each decoder layer: <strong>(1) Masked Multi-Head Self-Attention</strong> → <strong>Add &amp; Norm</strong> → <strong>(2) Encoder–Decoder (cross-) Attention</strong> → <strong>Add &amp; Norm</strong> → <strong>(3) Feed-Forward Network</strong> → <strong>Add &amp; Norm</strong>. Repeat <strong>N = 6</strong> times in the <strong>base</strong> model.
+  </p>
+</div>
+
+---
+
+## Before layer 1: target input
+
+The decoder receives **target token embeddings** + **positional encodings** (in training, often **shifted right** so position **t** predicts token **t**). **Causal masking** is applied in **every** masked self-attention layer so position **i** cannot attend to keys **j &gt; i**.
+
+---
+
+## One decoder layer (exact paper rhythm, post-norm)
+
+Let **x** be the input to the layer. **Masked** self-attention uses the **same** Q/K/V projections but with an **upper-triangular** mask on attention logits (see **Lesson 7**). **Cross-attention** uses **Q** from the decoder and **K, V** from the **encoder output** (see **Lesson 11**).
+
+$$
+\begin{aligned}
+x_1 &= \text{LayerNorm}\bigl( x + \text{MaskedMultiHeadSelfAttention}(x) \bigr) \\
+x_2 &= \text{LayerNorm}\bigl( x_1 + \text{CrossAttention}(x_1;\, K_{\text{enc}}, V_{\text{enc}}) \bigr) \\
+x_{\text{out}} &= \text{LayerNorm}\bigl( x_2 + \text{FFN}(x_2) \bigr)
+\end{aligned}
+$$
+
+### Visual flow (one layer)
+
+<div className="not-prose my-8 flex flex-col items-center gap-0">
+  <div className="w-full max-w-lg rounded-xl border-2 border-rose-400 bg-rose-50 px-4 py-3 text-center dark:border-rose-600 dark:bg-rose-950/40">
+    <p className="m-0 text-xs font-bold uppercase tracking-wide text-rose-800 dark:text-rose-200">1 · Masked multi-head self-attention</p>
+    <p className="mt-1 mb-0 text-sm text-slate-800 dark:text-slate-200">Target attends to **past + current** only · **causal mask**</p>
+  </div>
+  <div className="flex h-7 items-center text-slate-400" aria-hidden>
+    <span className="text-xl">↓</span>
+  </div>
+  <div className="w-full max-w-lg rounded-xl border-2 border-slate-400 bg-slate-100 px-4 py-2 text-center dark:border-slate-500 dark:bg-slate-800">
+    <p className="m-0 text-xs font-bold uppercase text-slate-700 dark:text-slate-300">Add &amp; Norm</p>
+  </div>
+  <div className="flex h-7 items-center text-slate-400" aria-hidden>
+    <span className="text-xl">↓</span>
+  </div>
+  <div className="w-full max-w-lg rounded-xl border-2 border-violet-400 bg-violet-50 px-4 py-3 text-center dark:border-violet-600 dark:bg-violet-950/40">
+    <p className="m-0 text-xs font-bold uppercase tracking-wide text-violet-800 dark:text-violet-200">2 · Cross-attention (to encoder)</p>
+    <p className="mt-1 mb-0 text-sm text-slate-800 dark:text-slate-200"><strong>Q</strong> = decoder · <strong>K, V</strong> = encoder memory</p>
+  </div>
+  <div className="flex h-7 items-center text-slate-400" aria-hidden>
+    <span className="text-xl">↓</span>
+  </div>
+  <div className="w-full max-w-lg rounded-xl border-2 border-slate-400 bg-slate-100 px-4 py-2 text-center dark:border-slate-500 dark:bg-slate-800">
+    <p className="m-0 text-xs font-bold uppercase text-slate-700 dark:text-slate-300">Add &amp; Norm</p>
+  </div>
+  <div className="flex h-7 items-center text-slate-400" aria-hidden>
+    <span className="text-xl">↓</span>
+  </div>
+  <div className="w-full max-w-lg rounded-xl border-2 border-emerald-400 bg-emerald-50 px-4 py-3 text-center dark:border-emerald-600 dark:bg-emerald-950/40">
+    <p className="m-0 text-xs font-bold uppercase tracking-wide text-emerald-800 dark:text-emerald-200">3 · Feed-forward network</p>
+    <p className="mt-1 mb-0 text-sm text-slate-800 dark:text-slate-200">Position-wise MLP (same form as encoder)</p>
+  </div>
+  <div className="flex h-7 items-center text-slate-400" aria-hidden>
+    <span className="text-xl">↓</span>
+  </div>
+  <div className="w-full max-w-lg rounded-xl border-2 border-slate-400 bg-slate-100 px-4 py-2 text-center dark:border-slate-500 dark:bg-slate-800">
+    <p className="m-0 text-xs font-bold uppercase text-slate-700 dark:text-slate-300">Add &amp; Norm</p>
+  </div>
+</div>
+
+---
+
+## × **6** layers (base Transformer)
+
+As in the **encoder**, the **base** configuration stacks **six** such decoder layers. Deeper variants scale **N**; the **pattern** (masked self → cross → FFN) stays the same in the **original** architecture.
+
+<div className="not-prose my-6 flex flex-col items-center rounded-2xl border-2 border-dashed border-indigo-300 bg-indigo-50/50 p-6 dark:border-indigo-700 dark:bg-indigo-950/30">
+  <p className="m-0 text-center text-sm font-semibold text-indigo-900 dark:text-indigo-200">Decoder layer block</p>
+  <p className="mt-2 mb-0 text-center font-mono text-xs text-slate-700 dark:text-slate-300 sm:text-sm">Masked MHSA → A&amp;N → Cross-Attn → A&amp;N → FFN → A&amp;N</p>
+  <div className="my-4 flex items-center gap-3 text-2xl font-bold text-indigo-600 dark:text-indigo-400" aria-hidden>
+    <span>×</span>
+    <span className="rounded-lg bg-white px-4 py-2 shadow dark:bg-slate-900">6</span>
+  </div>
+</div>
+
+---
+
+## End-to-end flow chart (encoder–decoder)
+
+<div className="not-prose my-6 overflow-x-auto rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-700 dark:bg-slate-900/50">
+  <pre className="m-0 min-w-[300px] whitespace-pre-wrap font-mono text-[11px] leading-relaxed text-slate-800 dark:text-slate-200 sm:text-xs">{`Encoder output (K, V) ─────────────────────────────┐
+                                                     │
+Target emb + pos (shifted right)                     │
+        │                                            │
+        ▼                                            │
+┌───────────────────────────────────────────────────┴──────┐
+│  DECODER LAYER 1 … 6                                      │
+│  ┌────────────────────────────────────────────────────┐   │
+│  │ Masked Multi-Head Self-Attention  →  Add & Norm     │   │
+│  │ Encoder–Decoder Cross-Attention  →  Add & Norm ◄───┼───┘
+│  │ Feed-Forward                     →  Add & Norm     │
+│  └────────────────────────────────────────────────────┘
+└──────────────────────────────────────────────────────────┘
+        │
+        ▼
+ Linear + softmax  →  P(next token | prefix, source)`}</pre>
+</div>
+
+---
+
+## Why **masking** defines the decoder’s job
+
+Without **causal** masking, the decoder could **peek** at future target tokens during training and would **not** implement the correct conditional **P**(next token | **prefix** of target, **source**). **Masking** is what makes the decoder stack suitable for **autoregressive** generation—the same logic that powers **decoder-only** language models, which apply **masked self-attention in every layer** (see below).
+
+---
+
+## Decoder-only models (**GPT** family): what changes?
+
+[Radford et al. (2019), *Language Models are Unsupervised Multitask Learners*](https://cdn.openai.com/better-language-models/language_models_are_unsupervised_multitask_learners.pdf) (**GPT-2**) popularized **large decoder-only** transformers: **no encoder**, therefore **no cross-attention**. Each layer is:
+
+**Masked self-attention → Add &amp; Norm → FFN → Add &amp; Norm** (again **× N** layers).
+
+<div className="not-prose my-6 overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-700">
+  <table className="w-full min-w-[300px] border-collapse text-left text-sm">
+    <thead>
+      <tr className="bg-slate-700 text-white dark:bg-slate-900">
+        <th className="p-3 font-semibold">Component</th>
+        <th className="p-3 font-semibold">Encoder–decoder (2017)</th>
+        <th className="p-3 font-semibold">Decoder-only (e.g. GPT)</th>
+      </tr>
+    </thead>
+    <tbody className="text-slate-800 dark:text-slate-200">
+      <tr className="border-b border-slate-200 dark:border-slate-700">
+        <td className="p-3 font-medium">Masked self-attention</td>
+        <td className="p-3"><strong>Yes</strong> · on target</td>
+        <td className="p-3"><strong>Yes</strong> · on context (only sublayer type)</td>
+      </tr>
+      <tr className="border-b border-slate-200 dark:border-slate-700">
+        <td className="p-3 font-medium">Cross-attention</td>
+        <td className="p-3"><strong>Yes</strong> · to encoder **K, V**</td>
+        <td className="p-3"><strong>Removed</strong></td>
+      </tr>
+      <tr className="bg-emerald-50/50 dark:bg-emerald-950/20">
+        <td className="p-3 font-medium">FFN</td>
+        <td className="p-3"><strong>Yes</strong></td>
+        <td className="p-3"><strong>Yes</strong></td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+So **masking** remains **central** to the **GPT** line: it enforces **left-to-right** (or more generally **causal**) **language modeling**. **Cross-attention** is what you add when there is a **separate encoded input** (translation, summarization with an encoder, etc.).
+
+---
+
+## After the stack: output projection
+
+The top of the decoder passes **d_model** vectors through a **linear** map to **vocabulary size** and **softmax** (or sampling) for **next-token** prediction during training and inference.
+
+---
+
+## Checklist (paper decoder)
+
+| Rule | Detail |
+| ---- | ------ |
+| **Sublayer order** | Masked self-attn → **then** cross-attn → **then** FFN |
+| **Add &amp; Norm** | After **each** of the three sublayers (**post-norm** in the figure) |
+| **Mask** | **Every** masked self-attention layer; **never** on encoder–decoder read of source |
+| **× 6** | **Base** **N = 6** decoder layers |
+
+**Next:** encoder + decoder as one system—**Lesson 14**.
+
+---
+
+<div className="not-prose mt-10 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-6 dark:border-slate-700">
+  <a href="./encoder-stack" className="text-sm font-medium text-slate-600 no-underline hover:text-emerald-700 hover:underline dark:text-slate-400 dark:hover:text-emerald-400">← Lesson 12 · Encoder stack</a>
+  <a href="./encoder-decoder-transformer" className="text-sm font-semibold text-emerald-700 no-underline hover:underline dark:text-emerald-400">Lesson 14 · Encoder–decoder transformer →</a>
+</div>

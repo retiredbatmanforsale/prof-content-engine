@@ -1,0 +1,130 @@
+---
+sidebar_label: '7 · Parameters vs hyperparameters'
+title: 'Lesson 7 — Trainable parameters and hyperparameters'
+description: >-
+  Weights and biases updated by backprop; hyperparameters that configure the
+  model; model complexity; parameter count; scaling laws and quality vs size.
+---
+
+# Trainable parameters and **hyperparameters**
+
+Lessons 5–6 followed **one** small network: **W₁**, **b₁**, **W₂**, **b₂**. Those symbols are **trainable parameters**—numbers **learned** from data via **gradient-based updates**. This lesson separates them from **hyperparameters**: **settings** you (or a tuner) choose **outside** the gradient loop. That distinction drives **model complexity**, **capacity**, and how we think about **scaling** **quality** with **parameter count** **n**.
+
+---
+
+## Trainable parameters (what backprop updates)
+
+**Trainable parameters** are every scalar **θ** that appears in the forward map and gets a **partial derivative** **∂L/∂θ** in the backward pass, then moves in **gradient descent** (Lesson 6).
+
+In our **3 → 4 → 2** example:
+
+- **W₁** (input → hidden): **4 × 3** matrix → **12** weights  
+- **b₁**: **4** biases (one per hidden neuron)  
+- **W₂** (hidden → output): **2 × 4** matrix → **8** weights  
+- **b₂**: **2** biases (one per output neuron)
+
+**Total trainable parameters:** **12 + 4 + 8 + 2 = 26**.
+
+### Where they “live” in the picture
+
+- **Weights** sit on **edges** (connections): each link from an input or hidden unit to the next layer has one **multiplicative** weight.  
+- **Biases** sit on **neurons** (units): they **shift** the **pre-activation** before the nonlinearity, like an extra **always-on** input with weight **1**.
+
+So **all** trainable parameters are either **edge weights** or **neuron biases** in a fully connected stack.
+
+### Backprop and history (one sentence)
+
+**Backpropagation** is the **efficient** way to compute **∂L/∂θ** for **all** those weights and biases. The procedure **widely used today** was **popularized** by **Rumelhart**, **Hinton**, and **Williams** in **[Learning representations by back-propagating errors](https://www.nature.com/articles/323533a0)** (**1986**, *Nature*); **earlier related work** (e.g. **Werbos**) also developed **similar ideas**. **Hinton** remains a **central figure** in that **story** and in **deep learning** more broadly.
+
+---
+
+## Hyperparameters (configuration, not learned by ∂L/∂θ on the net)
+
+**Hyperparameters** **configure** **how** the network is **built** and **trained**. They are **not** the **weights** or **biases** updated by **backprop** on the **same** loss (though **meta-learning** blurs this at advanced levels).
+
+Typical examples:
+
+- **Learning rate** **η** (Lesson 6)  
+- **Batch size**, number of **epochs**  
+- **Architecture**: **width** (units per layer), **depth** (number of layers), **choice** of **activation** functions  
+- **Regularization** strength (**weight decay** / **L2** **λ**, **dropout** **rate**)  
+- **Loss** **choice** when you **commit** to a **task** (e.g. **MSE** vs **cross-entropy**)
+
+You **pick** them from **experience**, **search**, or **validation** performance—not from **∂L/∂η** inside the **standard** training loop.
+
+---
+
+## Side-by-side
+
+<div className="not-prose my-6 overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-700">
+  <table className="w-full min-w-[320px] border-collapse text-left text-sm">
+    <thead>
+      <tr className="bg-slate-700 text-white dark:bg-slate-900">
+        <th className="p-3 font-semibold">Trainable parameters</th>
+        <th className="p-3 font-semibold">Hyperparameters</th>
+      </tr>
+    </thead>
+    <tbody className="text-slate-800 dark:text-slate-200">
+      <tr className="border-b border-slate-200 dark:border-slate-700">
+        <td className="p-3">
+          <strong>W₁</strong>, <strong>b₁</strong>, <strong>W₂</strong>, <strong>b₂</strong> (every weight and bias)
+        </td>
+        <td className="p-3">
+          <strong>η</strong>, batch size, layer sizes, depth, <strong>λ</strong>, …
+        </td>
+      </tr>
+      <tr className="border-b border-slate-200 dark:border-slate-700">
+        <td className="p-3">Updated by backprop + gradient descent</td>
+        <td className="p-3">Set before or between runs (or by a search procedure)</td>
+      </tr>
+      <tr className="bg-emerald-50/50 dark:bg-emerald-950/20">
+        <td className="p-3">
+          Count <strong>n</strong> grows with edges + biases
+        </td>
+        <td className="p-3">
+          Small list compared to <strong>n</strong> in large models, but huge effect on outcome
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+---
+
+## Model complexity and **parameter count** **n**
+
+**Model complexity** (informally, **capacity**) tracks **how rich** the family of functions your architecture can represent. For a fixed **hyperparameter** blueprint—**layer sizes**, **depth**, **connectivity**—**raising** **n** (more weights and biases) generally **increases** **capacity**: the net can **fit** **more** **intricate** **patterns**.
+
+That is a **double-edged** fact:
+
+- With **enough** **data** and **good** **optimization**, **larger** **n** often **improves** **validation** **quality** up to a point.  
+- With **too little** **data** or **weak** **regularization**, a **very** **large** **n** can **memorize** **noise** (**overfitting**).
+
+So **complexity** is **tied** to **n**, but **good** **generalization** also depends on **data**, **hyperparameters**, and **training** **procedure**.
+
+---
+
+## **Scaling laws**: quality and **n** (and not only **n**)
+
+In **large-scale** training (especially **language** and **vision** **foundation** models), **empirical** **scaling** **laws** describe how **metrics** such as **test** **loss** improve as **power laws** in **quantities** like **parameter count** **n**, **dataset** **size**, and **compute** used for training. A **rough** **intuition**:
+
+$$
+\text{quality} \;\longleftrightarrow\; f(n,\ \text{data},\ \text{compute})
+$$
+
+So **quality** of the model’s output **does depend on** **n**: larger models **can** be better when trained well. It is **not only** **n**—you need enough **data** and **compute** to use extra parameters effectively, plus sensible **hyperparameters**. **Scaling-law** curves (often **loss** vs **n** on **log–log** axes) make that relationship easy to see in large-model research.
+
+Our **3 → 4 → 2** example has **n = 26**, which is tiny. The same split—**trainable** weights and biases **vs** **hyperparameters** that define the run—applies when **n** reaches **millions** or **billions**.
+
+---
+
+## One-line story
+
+**Trainable** parameters (**weights** on **edges**, **biases** on **neurons**) update with **backprop**; **hyperparameters** set the **configuration**. Larger **n** raises **capacity** and, when **data** and **compute** scale too, often improves what the model can deliver.
+
+---
+
+<div className="not-prose mt-10 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-6 dark:border-slate-700">
+  <a href="./backward-pass" className="text-sm font-medium text-slate-600 no-underline hover:text-emerald-700 hover:underline dark:text-slate-400 dark:hover:text-emerald-400">← Lesson 6 · Backward pass</a>
+  <a href="./overfitting-in-neural-networks" className="text-sm font-semibold text-emerald-700 no-underline hover:underline dark:text-emerald-400">Lesson 8 · Overfitting →</a>
+</div>

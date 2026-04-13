@@ -1,0 +1,150 @@
+---
+sidebar_label: '3 · Positional embeddings'
+title: 'Lesson 3 — Positional embeddings & positional encodings'
+description: >-
+  Why attention is order-blind without position, sinusoidal vs learned continuous
+  vectors, addition with token embeddings, and why PE is not Q, K, or V.
+---
+
+# Positional embeddings & positional encodings
+
+**Self-attention** compares tokens using inner products and softmax—it treats the sequence as a **set of vectors** unless you tell it otherwise. Swap two rows of embeddings and, without position information, the attention pattern can be **the same**: the mechanism is **permutation-invariant** over positions. Real language is **not**—*cat sat the* is not *the cat sat*.
+
+So we inject **where** each token lives in the sequence using **positional encodings** or **positional embeddings**: **continuous vectors** in **ℝᵈ** (same **d = d_model** as token embeddings), **element-wise added** to token embeddings. That sum is what flows into the **first** transformer block and, after layer updates, into **attention**—but the position signal itself is **not** query, key, or value.
+
+<div className="not-prose my-6 rounded-xl border border-violet-200 bg-violet-50/70 p-4 dark:border-violet-900/40 dark:bg-violet-950/25">
+  <p className="m-0 text-sm text-slate-800 dark:text-slate-200">
+    The Lex AI walkthrough at{' '}
+    <a href="https://aiayn.aiseekhegaindia.com/" className="font-semibold text-violet-800 underline hover:no-underline dark:text-violet-200">
+      Attention is All You Need — Lex AI
+    </a>{' '}
+    shows the same pipeline: <strong>token embeddings</strong> + <strong>positional information</strong> → a matrix <strong>Z</strong> that is the true input to the stack—then <strong>separate</strong> projections build <strong>Q, K, V</strong>.
+  </p>
+</div>
+
+---
+
+## Not token IDs — continuous vectors for “place”
+
+**Token embeddings** answer *which symbol* (lookup row **i** in the vocabulary table). **Positional** vectors answer *which slot in the sequence* (0, 1, 2, …).
+
+- You could imagine a **discrete** position index, but what the network consumes is still a **vector**: either a **fixed** formula (sin/cos per dimension) or a **learned** row from a position table.
+- Every component of that vector is a **real number**—so position is represented in **continuous space**, not as a single categorical ID passed through the model the same way as a token ID before embedding.
+
+That matters for **relative** structure: with **sinusoidal** encodings especially, the same wave pattern at different **pos** shifts phase; linear layers can form combinations that behave like **offsets** between positions (the original paper motivated this). So “position” is not just a one-hot slot—it is a **dense code** the model can **rotate and mix**.
+
+---
+
+## What positional encodings are **not**
+
+<div className="not-prose my-6 overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-700">
+  <table className="w-full min-w-[320px] border-collapse text-left text-sm">
+    <thead>
+      <tr className="bg-slate-700 text-white dark:bg-slate-900">
+        <th className="p-3 font-semibold">Object</th>
+        <th className="p-3 font-semibold">Role</th>
+      </tr>
+    </thead>
+    <tbody className="text-slate-800 dark:text-slate-200">
+      <tr className="border-b border-slate-200 dark:border-slate-700">
+        <td className="p-3 font-medium">Token embedding</td>
+        <td className="p-3">Meaning of the <strong>vocabulary item</strong> (learned lookup <strong>E</strong>).</td>
+      </tr>
+      <tr className="border-b border-slate-200 dark:border-slate-700">
+        <td className="p-3 font-medium">Positional encoding / embedding</td>
+        <td className="p-3"><strong>Place in the sequence</strong>—sinusoidal or learned vector, same length <strong>d_model</strong>.</td>
+      </tr>
+      <tr className="border-b border-slate-200 dark:border-slate-700">
+        <td className="p-3 font-medium">Q, K, V</td>
+        <td className="p-3"><strong>Later</strong>: linear projections of the <strong>current layer input</strong> for attention—recomputed every layer and head.</td>
+      </tr>
+      <tr className="bg-rose-50/50 dark:bg-rose-950/20">
+        <td className="p-3 font-medium" colSpan={2}>
+          Positional vectors are <strong>not</strong> Q, K, or V. They are <strong>added into the residual stream</strong> (at least at the bottom); Q/K/V are <strong>derived</strong> from that stream when attention runs.
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+---
+
+## The fusion step: add, then attend
+
+For each position **pos**:
+
+$$
+\mathbf{z}_{\text{pos}} = \mathbf{x}_{\text{pos}} + \mathbf{p}_{\text{pos}}
+$$
+
+- **x_pos** — token embedding (from **E**).
+- **p_pos** — positional encoding vector (sinusoidal or learned).
+- **z_pos** — **input** to the first sublayer; after layer norm / blocks, later tensors still carry **mixed** semantic + positional information.
+
+<div className="not-prose my-6 rounded-2xl border-2 border-sky-200 bg-sky-50/70 p-5 dark:border-sky-900/40 dark:bg-sky-950/25">
+  <p className="m-0 text-center text-xs font-bold uppercase tracking-wide text-sky-800 dark:text-sky-200">Before the first attention layer</p>
+  <p className="mt-3 mb-0 text-center font-mono text-sm leading-relaxed text-slate-800 dark:text-slate-200">
+    <strong>Z</strong> = token embeddings <strong>+</strong> positional encodings → then <strong>Linear</strong> maps produce <strong>Q, K, V</strong>
+  </p>
+</div>
+
+So positional information **enters before** Q/K/V exist. The attention sublayer sees a representation that already encodes **both** “what token” and “where.”
+
+---
+
+## Sinusoidal positional encoding (sine & cosine waves)
+
+[Vaswani et al. (2017)](https://arxiv.org/abs/1706.03762) defined **fixed** (non-learned) encodings using **sines and cosines** at **different frequencies** across dimensions. For position **pos** and dimension index **i** (paired into even/odd channels):
+
+$$
+\begin{aligned}
+PE_{(\text{pos},\,2i)} &= \sin\left(\frac{\text{pos}}{10000^{\,2i/d_{\text{model}}}}\right) \\
+PE_{(\text{pos},\,2i+1)} &= \cos\left(\frac{\text{pos}}{10000^{\,2i/d_{\text{model}}}}\right)
+\end{aligned}
+$$
+
+**Intuition (high level):**
+
+- **Low** indices **i** → **slow** waves along position (smooth across long spans).
+- **High** **i** → **fast** waves (finer local distinction between nearby positions).
+- Each position gets a **unique** **d_model**-dimensional **pattern** of sines and cosines—a **continuous** “fingerprint” of place.
+- Because **sin** and **cos** satisfy shift identities, the model can **linearly** recover **relative** relationships (e.g. differences in **pos**) from these features—without storing position as a single discrete number inside the vector.
+
+These values are **precomputed** from **pos** and **i**; they are **not** token weights from the vocabulary table. The [Lex AI](https://aiayn.aiseekhegaindia.com/) material describes the same idea: **mathematical waves** of different **frequencies** **added** to each embedding dimension so the model gains **order awareness** without giving up **parallel** attention over positions.
+
+---
+
+## Learned positional embeddings
+
+Many models (e.g. GPT-2/3/4, BERT-style) use **learned** vectors **P** with shape **(L_max, d_model)**: position **pos** selects row **pos**—still a **continuous** vector, still **added** to **x_pos**, but **trained** end-to-end instead of fixed sines/cosines.
+
+| | **Sinusoidal (fixed)** | **Learned** |
+| --- | --- | --- |
+| **Parameters** | None (formula only) | **L_max × d_model** trainable |
+| **Length generalization** | Often better **beyond** train length (relative structure) | Strong when inference length ≤ **L_max** |
+| **Implementation** | Slightly more code | Simple `Embedding(max_len, d_model)` |
+
+Whether fixed or learned, the **interface** is the same: **same width** as token embeddings, **addition**, then the stack.
+
+---
+
+## Why addition (not concatenation in the classic design)?
+
+The original design **adds** so the dimension stays **d_model** and a single stream carries **semantics + place**. (Other architectures **concatenate** or **fuse** differently; **RoPE**, **ALiBi**, etc. change *how* position is injected—same underlying problem: **break permutation symmetry** of attention.)
+
+---
+
+## Takeaway
+
+1. **Attention** is **order-blind** without position; **positional encodings** fix that.
+2. They are **continuous d_model vectors** (waves or learned rows)—**not** token IDs, **not** the embedding matrix **E**, **not** Q/K/V.
+3. **Token embedding + positional vector → Z**, and **Z** is what the transformer **starts from** before projections build **Q, K, V** for the attention sublayer.
+
+**Next:** how **Q, K, V** mix information—<strong>attention</strong>.
+
+---
+
+<div className="not-prose mt-10 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-6 dark:border-slate-700">
+  <a href="./token-embeddings" className="text-sm font-medium text-slate-600 no-underline hover:text-emerald-700 hover:underline dark:text-slate-400 dark:hover:text-emerald-400">← Lesson 2 · Token embeddings</a>
+  <a href="./attention" className="text-sm font-semibold text-emerald-700 no-underline hover:underline dark:text-emerald-400">Lesson 4 · Attention →</a>
+</div>

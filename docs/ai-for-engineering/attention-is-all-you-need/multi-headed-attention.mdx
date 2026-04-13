@@ -1,0 +1,234 @@
+---
+sidebar_label: '6 · Multi-head attention'
+title: 'Lesson 6 — Multi-headed attention'
+description: >-
+  Paper-accurate multi-head formulas, per-head attention maps, why several
+  heads beat one self-attention, and links to language structure.
+---
+
+# Multi-headed attention
+
+A **single** self-attention head computes **one** matrix of pairwise weights: for each position, **how much to read** from every other position. That is powerful—but **one** softmax competition can only shape **one** pattern at a time. **Multi-head attention** runs **h** attentions **in parallel** on **different learned projections**, then **merges** them so the model can hold **several relationship hypotheses** at once—syntax near the word, agreement far away, coreference, and more.
+
+<div className="not-prose my-6 rounded-xl border border-violet-200 bg-violet-50/70 p-4 dark:border-violet-900/40 dark:bg-violet-950/25">
+  <p className="m-0 text-sm text-slate-800 dark:text-slate-200">
+    The Lex AI walkthrough at{' '}
+    <a href="https://aiayn.aiseekhegaindia.com/" className="font-semibold text-violet-800 underline hover:no-underline dark:text-violet-200">
+      Attention is All You Need — Lex AI
+    </a>{' '}
+    illustrates the same idea: <strong>multiple parallel attentions</strong>, each with its own <strong>Q, K, V</strong> projections, then a final output projection—matching [Vaswani et al. (2017)](https://arxiv.org/abs/1706.03762).
+  </p>
+</div>
+
+---
+
+## Recall: one head (scaled dot-product self-attention)
+
+Given projected matrices **Q, K, V** (same sequence length **n**, dimension **d_k** for **Q** and **K**, **d_v** for **V**):
+
+$$
+\text{Attention}(Q, K, V) = \text{softmax}\left(\frac{QK^\top}{\sqrt{d_k}}\right) V
+$$
+
+The **softmax** is applied **row-wise**: for each query row **i**, you get **n** nonnegative weights summing to **1**—a **distribution** over positions. Stacking those rows gives the **attention matrix** **A** ∈ ℝⁿˣⁿ (conceptually; batching adds a batch dimension).
+
+**Interpretation:** row **i** of **A** is a **heatmap** over keys: “from position **i**, how strongly am I looking at each **j**?”
+
+---
+
+## What changes with **multiple** heads?
+
+**Idea:** instead of **one** triple **(Q, K, V)** in ℝⁿˣᵈ, use **h** **independent** linear maps from the **same** layer input **X** ∈ ℝⁿˣᵈᵐᵒᵈᵉˡ:
+
+$$
+Q_i = X W_i^Q,\quad K_i = X W_i^K,\quad V_i = X W_i^V
+\quad\text{for } i = 1,\ldots,h
+$$
+
+Typically **d_k = d_v = d_model / h** so that concatenating heads restores width **h · d_v = d_model**.
+
+Each head applies **Attention** with its **own** **Q_i, K_i, V_i**:
+
+$$
+\text{head}_i = \text{Attention}(Q_i, K_i, V_i)
+$$
+
+**Each head has its own attention matrix** **A_i** = row-softmax(**Q_i K_iᵀ / √d_k**): **h** different **n × n** **heatmaps** for the **same** sentence—different **match rules** (different **W_i^Q, W_i^K**), so different **patterns** light up.
+
+### Merge heads (paper definition)
+
+$$
+\text{MultiHead}(Q, K, V) = \text{Concat}(\text{head}_1,\ldots,\text{head}_h)\, W^O
+$$
+
+Here **Q, K, V** in the paper’s boxed notation are often the **inputs from which** heads build their projections; in practice **MultiHead** takes the **layer input** **X** and learns all **W_i^Q, W_i^K, W_i^V** and **W^O**. The output has shape **(n, d_model)** after **W^O** ∈ ℝᵈᵐᵒᵈᵉˡˣᵈᵐᵒᵈᵉˡ.
+
+(Exact wiring matches the **Transformer** figure in the original paper.)
+
+---
+
+## Visual: one head = one heatmap
+
+Below, each cell is **darker** = **higher** attention weight **(illustrative, not real data)**. **Head A** might emphasize **next-token** locality; **Head B** a **distant** dependency—both **valid** for different linguistic jobs.
+
+<div className="not-prose my-6">
+  <p className="mb-3 text-center text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+    Illustrative 5 × 5 attention weights (rows = query position, cols = key position)
+  </p>
+  <div className="flex flex-wrap items-start justify-center gap-8">
+    <div>
+      <p className="mb-2 text-center text-sm font-semibold text-slate-700 dark:text-slate-300">Head A — local focus</p>
+      <div className="grid grid-cols-5 gap-1">
+        <div className="h-7 w-7 rounded-sm bg-sky-900 dark:bg-sky-100" title="high" />
+        <div className="h-7 w-7 rounded-sm bg-sky-200 dark:bg-sky-800" />
+        <div className="h-7 w-7 rounded-sm bg-slate-100 dark:bg-slate-800" />
+        <div className="h-7 w-7 rounded-sm bg-slate-100 dark:bg-slate-800" />
+        <div className="h-7 w-7 rounded-sm bg-slate-100 dark:bg-slate-800" />
+        <div className="h-7 w-7 rounded-sm bg-sky-300 dark:bg-sky-700" />
+        <div className="h-7 w-7 rounded-sm bg-sky-900 dark:bg-sky-100" />
+        <div className="h-7 w-7 rounded-sm bg-sky-200 dark:bg-sky-800" />
+        <div className="h-7 w-7 rounded-sm bg-slate-100 dark:bg-slate-800" />
+        <div className="h-7 w-7 rounded-sm bg-slate-100 dark:bg-slate-800" />
+        <div className="h-7 w-7 rounded-sm bg-slate-100 dark:bg-slate-800" />
+        <div className="h-7 w-7 rounded-sm bg-sky-300 dark:bg-sky-700" />
+        <div className="h-7 w-7 rounded-sm bg-sky-900 dark:bg-sky-100" />
+        <div className="h-7 w-7 rounded-sm bg-sky-200 dark:bg-sky-800" />
+        <div className="h-7 w-7 rounded-sm bg-slate-100 dark:bg-slate-800" />
+        <div className="h-7 w-7 rounded-sm bg-slate-100 dark:bg-slate-800" />
+        <div className="h-7 w-7 rounded-sm bg-slate-100 dark:bg-slate-800" />
+        <div className="h-7 w-7 rounded-sm bg-sky-300 dark:bg-sky-700" />
+        <div className="h-7 w-7 rounded-sm bg-sky-900 dark:bg-sky-100" />
+        <div className="h-7 w-7 rounded-sm bg-sky-200 dark:bg-sky-800" />
+        <div className="h-7 w-7 rounded-sm bg-slate-100 dark:bg-slate-800" />
+        <div className="h-7 w-7 rounded-sm bg-slate-100 dark:bg-slate-800" />
+        <div className="h-7 w-7 rounded-sm bg-sky-300 dark:bg-sky-700" />
+        <div className="h-7 w-7 rounded-sm bg-sky-900 dark:bg-sky-100" />
+        <div className="h-7 w-7 rounded-sm bg-sky-200 dark:bg-sky-800" />
+      </div>
+    </div>
+    <div>
+      <p className="mb-2 text-center text-sm font-semibold text-slate-700 dark:text-slate-300">Head B — long link</p>
+      <div className="grid grid-cols-5 gap-1">
+        <div className="h-7 w-7 rounded-sm bg-sky-900 dark:bg-sky-100" />
+        <div className="h-7 w-7 rounded-sm bg-slate-100 dark:bg-slate-800" />
+        <div className="h-7 w-7 rounded-sm bg-slate-100 dark:bg-slate-800" />
+        <div className="h-7 w-7 rounded-sm bg-slate-100 dark:bg-slate-800" />
+        <div className="h-7 w-7 rounded-sm bg-sky-400 dark:bg-sky-600" />
+        <div className="h-7 w-7 rounded-sm bg-sky-200 dark:bg-sky-800" />
+        <div className="h-7 w-7 rounded-sm bg-sky-900 dark:bg-sky-100" />
+        <div className="h-7 w-7 rounded-sm bg-slate-100 dark:bg-slate-800" />
+        <div className="h-7 w-7 rounded-sm bg-slate-100 dark:bg-slate-800" />
+        <div className="h-7 w-7 rounded-sm bg-slate-100 dark:bg-slate-800" />
+        <div className="h-7 w-7 rounded-sm bg-slate-100 dark:bg-slate-800" />
+        <div className="h-7 w-7 rounded-sm bg-sky-200 dark:bg-sky-800" />
+        <div className="h-7 w-7 rounded-sm bg-sky-900 dark:bg-sky-100" />
+        <div className="h-7 w-7 rounded-sm bg-slate-100 dark:bg-slate-800" />
+        <div className="h-7 w-7 rounded-sm bg-slate-100 dark:bg-slate-800" />
+        <div className="h-7 w-7 rounded-sm bg-slate-100 dark:bg-slate-800" />
+        <div className="h-7 w-7 rounded-sm bg-slate-100 dark:bg-slate-800" />
+        <div className="h-7 w-7 rounded-sm bg-sky-200 dark:bg-sky-800" />
+        <div className="h-7 w-7 rounded-sm bg-sky-900 dark:bg-sky-100" />
+        <div className="h-7 w-7 rounded-sm bg-slate-100 dark:bg-slate-800" />
+        <div className="h-7 w-7 rounded-sm bg-slate-100 dark:bg-slate-800" />
+        <div className="h-7 w-7 rounded-sm bg-slate-100 dark:bg-slate-800" />
+        <div className="h-7 w-7 rounded-sm bg-slate-100 dark:bg-slate-800" />
+        <div className="h-7 w-7 rounded-sm bg-sky-200 dark:bg-sky-800" />
+        <div className="h-7 w-7 rounded-sm bg-sky-900 dark:bg-sky-100" />
+      </div>
+    </div>
+  </div>
+  <p className="mt-3 mb-0 text-center text-xs text-slate-500 dark:text-slate-400">
+    In trained models, visualizing **A_i** per head often shows heads specializing (roughly) for **local** context, **syntax**, or **long-distance** links—empirically, not by hand design.
+  </p>
+</div>
+
+---
+
+## Why not one fat head? (The “debate”)
+
+| | **Single head** (large **d_k**) | **Multi-head** (**h** heads, **d_k = d_model / h**) |
+| --- | --- | --- |
+| **Attention matrix** | One **n × n** map | **h** maps **A_1 … A_h**—**different subspaces** for matching |
+| **Capacity** | One softmax “opinion” per query | **h** opinions, then **W^O** **mixes** channels |
+| **Optimization** | Can be harder to train one entangled pattern | **Factorization** often **trains more reliably** (paper & practice) |
+| **Interpretability** | One heatmap | **Several** heatmaps—easier to see **structure** in analysis |
+
+**Intuition:** language **stack**s **patterns**—**words → phrases → clauses → discourse**. One head must **squeeze** all useful relations into **one** weight distribution per row; **multi-head** lets the network **allocate** different heads to **different** regularities, then **recombine** with **W^O**.
+
+**Parameter count (conceptual):** you still spend parameters on **W_i^Q, W_i^K, W_i^V** and **W^O**; multi-head is not “free,” but it **restructures** the same **d_model** budget into **parallel** attention **experts**.
+
+---
+
+## Shape cheat sheet (matches the paper)
+
+<div className="not-prose my-6 overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-700">
+  <table className="w-full min-w-[320px] border-collapse text-left text-sm">
+    <thead>
+      <tr className="bg-slate-700 text-white dark:bg-slate-900">
+        <th className="p-3 font-semibold">Tensor</th>
+        <th className="p-3 font-semibold">Typical shape</th>
+      </tr>
+    </thead>
+    <tbody className="text-slate-800 dark:text-slate-200">
+      <tr className="border-b border-slate-200 dark:border-slate-700">
+        <td className="p-3 font-medium">Layer input **X**</td>
+        <td className="p-3">(batch, **n**, **d_model**)</td>
+      </tr>
+      <tr className="border-b border-slate-200 dark:border-slate-700">
+        <td className="p-3 font-medium">Per head **Q_i, K_i**</td>
+        <td className="p-3">(batch, **n**, **d_k**), **d_k = d_model / h**</td>
+      </tr>
+      <tr className="border-b border-slate-200 dark:border-slate-700">
+        <td className="p-3 font-medium">Per head **V_i**</td>
+        <td className="p-3">(batch, **n**, **d_v**), often **d_v = d_k**</td>
+      </tr>
+      <tr className="border-b border-slate-200 dark:border-slate-700">
+        <td className="p-3 font-medium">Attention weights **A_i**</td>
+        <td className="p-3">(batch, **n**, **n**) — the **heatmap** for head **i**</td>
+      </tr>
+      <tr className="border-b border-slate-200 dark:border-slate-700">
+        <td className="p-3 font-medium">**head_i** output</td>
+        <td className="p-3">(batch, **n**, **d_v**)</td>
+      </tr>
+      <tr className="bg-emerald-50/50 dark:bg-emerald-950/20">
+        <td className="p-3 font-medium">**MultiHead** output</td>
+        <td className="p-3">(batch, **n**, **d_model**) after **Concat** + **W^O**</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+**Example:** **d_model = 512**, **h = 8** → **d_k = d_v = 64**. Eight **n × n** heatmaps, eight **mixes** of **V_i**, then **concat** to 512 dims and **W^O**.
+
+---
+
+## Pipeline strip
+
+<div className="not-prose my-6 flex flex-wrap items-center justify-center gap-2 rounded-xl border-2 border-slate-200 bg-slate-50/90 p-4 text-xs font-mono dark:border-slate-700 dark:bg-slate-900/50 sm:text-sm">
+  <span className="rounded-md bg-white px-2 py-1 shadow dark:bg-slate-800">X</span>
+  <span className="text-slate-400">→</span>
+  <span className="rounded-md bg-sky-100 px-2 py-1 dark:bg-sky-950/50">h × (Q_i,K_i,V_i)</span>
+  <span className="text-slate-400">→</span>
+  <span className="rounded-md bg-violet-100 px-2 py-1 dark:bg-violet-950/50">h × softmax(Q_i K_iᵀ/√d_k)</span>
+  <span className="text-slate-400">→</span>
+  <span className="rounded-md bg-emerald-100 px-2 py-1 dark:bg-emerald-950/50">h × head_i</span>
+  <span className="text-slate-400">→</span>
+  <span className="rounded-md bg-amber-100 px-2 py-1 dark:bg-amber-950/50">Concat + W^O</span>
+</div>
+
+---
+
+## Takeaway
+
+- **Multi-head attention** = **h** scaled dot-product attentions in **parallel** on **learned projections**, **Concat**, then **W^O**.
+- **Each head** has its **own attention matrix** (**heatmap**) over tokens.
+- Compared to **one** self-attention head, multi-head gives **multiple simultaneous relationship views**, which aligns better with **layered structure** in language and **trains well** at scale.
+
+**Next:** **causal masking** so decoders cannot peek at the future.
+
+---
+
+<div className="not-prose mt-10 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-6 dark:border-slate-700">
+  <a href="./self-attention" className="text-sm font-medium text-slate-600 no-underline hover:text-emerald-700 hover:underline dark:text-slate-400 dark:hover:text-emerald-400">← Lesson 5 · Self-attention</a>
+  <a href="./causal-masking" className="text-sm font-semibold text-emerald-700 no-underline hover:underline dark:text-emerald-400">Lesson 7 · Causal masking →</a>
+</div>

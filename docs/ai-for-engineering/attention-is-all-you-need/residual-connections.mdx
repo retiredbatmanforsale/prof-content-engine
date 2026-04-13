@@ -1,0 +1,175 @@
+---
+sidebar_label: '8 · Residual connections'
+title: 'Lesson 8 — Residual connections'
+description: >-
+  Skip connections around attention and FFN: identity paths, gradient flow,
+  easier optimization, and post-norm vs pre-norm in deep transformers.
+---
+
+# Residual connections
+
+A **residual connection** ( **skip connection** ) wraps each transformer **sublayer**: the block’s output is **input plus whatever the sublayer learned to add**, not “replace input entirely.” That simple **+** is what lets **very deep** stacks of attention and feed-forward layers **train** without signals dying out—it gives gradients a **direct highway** and makes **optimization** far more **stable**.
+
+<div className="not-prose my-6 rounded-xl border border-violet-200 bg-violet-50/70 p-4 dark:border-violet-900/40 dark:bg-violet-950/25">
+  <p className="m-0 text-sm text-slate-800 dark:text-slate-200">
+    The original **encoder** and **decoder** stacks in [Vaswani et al. (2017)](https://arxiv.org/abs/1706.03762) wrap both **multi-head attention** and **position-wise FFN** with **Add &amp; Norm** (residual **add**, then **layer normalization**). The same picture appears in the interactive stack on [Attention is All You Need — Lex AI](https://aiayn.aiseekhegaindia.com/).
+  </p>
+</div>
+
+---
+
+## The core idea (identity + residual)
+
+Let **x** be the input to a sublayer (tensor of shape **(batch, seq, d_model)**). A **residual block** computes:
+
+$$
+\text{output} = x + \text{Sublayer}(x)
+$$
+
+**Sublayer** is either **multi-head self-attention** (possibly masked), **cross-attention**, or the **feed-forward network**. The **Sublayer** is encouraged to learn a **correction** or **refinement** **Δ(x)** on top of **x**, instead of having to **re-encode** everything from scratch.
+
+<div className="not-prose my-6 flex flex-col items-center gap-3 rounded-2xl border-2 border-emerald-200 bg-emerald-50/70 p-6 dark:border-emerald-900/40 dark:bg-emerald-950/25">
+  <p className="m-0 text-xs font-bold uppercase tracking-wide text-emerald-800 dark:text-emerald-300">One sublayer, schematically</p>
+  <div className="flex flex-wrap items-center justify-center gap-2 font-mono text-sm text-slate-800 dark:text-slate-200">
+    <span className="rounded-lg bg-white px-3 py-2 shadow dark:bg-slate-900">x</span>
+    <span className="text-slate-400">──┬──→</span>
+    <span className="rounded-lg border border-sky-300 bg-sky-50 px-3 py-2 dark:border-sky-700 dark:bg-sky-950/40">Sublayer</span>
+    <span className="text-slate-400">──→</span>
+    <span className="rounded-lg bg-violet-100 px-3 py-2 dark:bg-violet-950/40">Δ</span>
+    <span className="text-slate-400">──┐</span>
+  </div>
+  <div className="flex flex-wrap items-center justify-center gap-2 font-mono text-sm text-slate-800 dark:text-slate-200">
+    <span className="rounded-lg bg-white px-3 py-2 shadow dark:bg-slate-900">x</span>
+    <span className="text-slate-400">──┘──→</span>
+    <span className="rounded-lg border-2 border-emerald-500 bg-emerald-100 px-3 py-2 dark:border-emerald-600 dark:bg-emerald-900/50">x + Δ</span>
+  </div>
+</div>
+
+---
+
+## 1 · Gradient flow
+
+During **backpropagation**, the loss derivative with respect to **x** receives contributions from **both** paths:
+
+- Through **Sublayer(x)** (the usual deep path through weights).
+- Through the **skip** that adds **x** unchanged—an **identity** with derivative **1** with respect to **x**.
+
+So even if the sublayer’s Jacobian is sometimes **small** or **ill-conditioned**, part of the gradient can still **bypass** that block. In **deep** transformers (many layers, each with **two** sublayers), that **repeated** “+1 highway” makes **vanishing** gradients **less severe** than in a plain stack of layers with **no** skip.
+
+<div className="not-prose my-6 grid gap-3 sm:grid-cols-2">
+  <div className="rounded-xl border border-rose-200 bg-rose-50/80 p-4 dark:border-rose-900/40 dark:bg-rose-950/20">
+    <p className="m-0 text-xs font-bold uppercase text-rose-800 dark:text-rose-200">Without skip</p>
+    <p className="mt-2 mb-0 text-sm text-slate-800 dark:text-slate-200">
+      Gradients pass only through every nonlinear block in sequence—**long** product chains, easy to **shrink** or **blow up**.
+    </p>
+  </div>
+  <div className="rounded-xl border border-emerald-200 bg-emerald-50/80 p-4 dark:border-emerald-900/40 dark:bg-emerald-950/25">
+    <p className="m-0 text-xs font-bold uppercase text-emerald-800 dark:text-emerald-200">With residual</p>
+    <p className="mt-2 mb-0 text-sm text-slate-800 dark:text-slate-200">
+      Each block adds a **direct** route for ∂L/∂x—**shorter** effective paths and **healthier** signal in deep nets.
+    </p>
+  </div>
+</div>
+
+---
+
+## 2 · Identity mapping
+
+If **Sublayer** outputs **zero** (or is ignored early in training), **output = x**: the layer acts as the **identity**. The network does **not have to learn** “copy input” from scratch; it only learns **how much** to **deviate**. That matches the **ResNet** insight: **residuals** approximate **identity mappings** plus small **perturbations**, which is a **simpler** optimization landscape than learning arbitrary maps layer by layer.
+
+---
+
+## 3 · Easier optimization
+
+Training is **easier** when:
+
+- The model can **start** near **identity** and **grow** useful structure in **Δ**.
+- **Attention** and **FFN** can focus on **what to change** rather than **rebuilding** the full representation every time.
+
+Empirically, **transformer** training without residuals (or with broken skips) degrades badly—residuals are not optional decoration for deep stacks.
+
+---
+
+## 4 · Stability
+
+**Layer normalization** (next lesson) is usually applied **around** the residual path (**Add &amp; Norm**). Together, **residual + norm** keeps activations in a **controlled range** across depth and makes **large** models **trainable**. Residuals address **gradient** path length; **norm** addresses **scale**—both matter for **stability**.
+
+---
+
+## Where residuals appear in the Transformer
+
+<div className="not-prose my-6 overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-700">
+  <table className="w-full min-w-[280px] border-collapse text-left text-sm">
+    <thead>
+      <tr className="bg-slate-700 text-white dark:bg-slate-900">
+        <th className="p-3 font-semibold">Sublayer</th>
+        <th className="p-3 font-semibold">Residual form (conceptual)</th>
+      </tr>
+    </thead>
+    <tbody className="text-slate-800 dark:text-slate-200">
+      <tr className="border-b border-slate-200 dark:border-slate-700">
+        <td className="p-3 font-medium">Self-attention (encoder / decoder)</td>
+        <td className="p-3">**x** + **Attention(LN(x))** or **LN(x + Attention(x))** depending on variant</td>
+      </tr>
+      <tr className="border-b border-slate-200 dark:border-slate-700">
+        <td className="p-3 font-medium">Cross-attention (decoder)</td>
+        <td className="p-3">Same **add** pattern around the cross-attention block</td>
+      </tr>
+      <tr className="bg-sky-50/50 dark:bg-sky-950/20">
+        <td className="p-3 font-medium">Feed-forward</td>
+        <td className="p-3">**x** + **FFN(·)** with norm as in the paper’s **Add &amp; Norm**</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+Each **transformer layer** contains **two** residual blocks (attention, then FFN)—so depth **L** means **2L** residual adds along the main path.
+
+---
+
+## Post-norm vs pre-norm
+
+[Vaswani et al.](https://arxiv.org/abs/1706.03762) use **post-norm**: normalize **after** the residual add. Many later models use **pre-norm**: normalize **before** the sublayer, then add—often **more stable** when training **very deep** or **wide** models.
+
+<div className="not-prose my-6 overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-700">
+  <table className="w-full min-w-[300px] border-collapse text-left text-sm">
+    <thead>
+      <tr className="bg-slate-700 text-white dark:bg-slate-900">
+        <th className="p-3 font-semibold">Variant</th>
+        <th className="p-3 font-semibold">Update (schematic)</th>
+      </tr>
+    </thead>
+    <tbody className="text-slate-800 dark:text-slate-200">
+      <tr className="border-b border-slate-200 dark:border-slate-700">
+        <td className="p-3 font-medium">Post-norm (original)</td>
+        <td className="p-3 font-mono text-xs sm:text-sm">x ← LayerNorm( x + Sublayer(x) )</td>
+      </tr>
+      <tr className="bg-emerald-50/50 dark:bg-emerald-950/20">
+        <td className="p-3 font-medium">Pre-norm (common now)</td>
+        <td className="p-3 font-mono text-xs sm:text-sm">x ← x + Sublayer( LayerNorm(x) )</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+In **both** cases the **residual add** is what creates the **identity** path; **norm placement** changes **where** scaling happens in the block.
+
+---
+
+## Takeaway
+
+| Theme | Role of residuals |
+| ----- | ----------------- |
+| **Gradient flow** | **Bypass** sublayers so signals survive **many** blocks |
+| **Identity mapping** | **x + Δ** lets layers **refine** instead of **replace** |
+| **Optimization** | **Simpler** learning dynamics in **deep** stacks |
+| **Stability** | Works with **LayerNorm** to train **large** transformers |
+
+**Next:** **Layer normalization** in detail.
+
+---
+
+<div className="not-prose mt-10 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-6 dark:border-slate-700">
+  <a href="./causal-masking" className="text-sm font-medium text-slate-600 no-underline hover:text-emerald-700 hover:underline dark:text-slate-400 dark:hover:text-emerald-400">← Lesson 7 · Causal masking</a>
+  <a href="./layer-normalization" className="text-sm font-semibold text-emerald-700 no-underline hover:underline dark:text-emerald-400">Lesson 9 · Layer normalization →</a>
+</div>

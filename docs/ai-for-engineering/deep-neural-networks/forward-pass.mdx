@@ -1,0 +1,190 @@
+---
+sidebar_label: '5 · Forward pass'
+title: 'Lesson 5 — How neural networks make predictions (forward pass)'
+description: >-
+  A concrete 3→4→2 network: matrix forms, nested sigmoid equations, and why
+  forward pass = model.predict in code.
+---
+
+# How neural networks make predictions: the **forward pass**
+
+After **loss** (Lesson 4), the natural question is: **where** do the predictions **ŷ** come from? The **forward pass** is the answer: start from **input** **x**, apply each layer in order (**linear** → **activation**), and end with **outputs**. In libraries, the same computation is what runs inside **`model.predict(...)`** (or **`forward`** in training mode without dropout noise)—**no weight updates**, just **math** from **input** to **output**.
+
+This lesson uses one tiny architecture so you can **read** every symbol:
+
+- **Input layer:** **3** neurons → feature vector **(x₁, x₂, x₃)**
+- **One hidden layer:** **4** neurons → after sigmoid **(a₁, a₂, a₃, a₄)**
+- **Output layer:** **2** neurons → after sigmoid **(y₁, y₂)**
+
+**Parameters:** **W₁**, **b₁** (input → hidden), **W₂**, **b₂** (hidden → output). Activations use **sigmoid** **σ** everywhere here so each value stays in **(0, 1)**—good for **probability-style** heads (you could swap **ReLU** in the hidden layer in practice; the **forward** **recipe** stays the same).
+
+---
+
+## Picture of the stack
+
+<div className="not-prose my-8 flex flex-wrap items-end justify-center gap-6 rounded-2xl border-2 border-slate-200 bg-gradient-to-b from-slate-50 to-white p-6 dark:border-slate-700 dark:from-slate-900 dark:to-slate-950 sm:gap-10">
+  <div className="flex flex-col items-center gap-2">
+    <p className="m-0 text-xs font-bold uppercase text-sky-700 dark:text-sky-300">Input</p>
+    <div className="flex flex-col gap-2">
+      <span className="flex h-9 w-9 items-center justify-center rounded-full border-2 border-sky-400 bg-sky-100 text-xs font-mono dark:border-sky-600 dark:bg-sky-900/50">x₁</span>
+      <span className="flex h-9 w-9 items-center justify-center rounded-full border-2 border-sky-400 bg-sky-100 text-xs font-mono dark:border-sky-600 dark:bg-sky-900/50">x₂</span>
+      <span className="flex h-9 w-9 items-center justify-center rounded-full border-2 border-sky-400 bg-sky-100 text-xs font-mono dark:border-sky-600 dark:bg-sky-900/50">x₃</span>
+    </div>
+  </div>
+  <div className="mb-10 hidden text-sm font-semibold text-slate-400 sm:block" aria-hidden>
+    W₁, b₁ → σ
+  </div>
+  <div className="flex flex-col items-center gap-2">
+    <p className="m-0 text-xs font-bold uppercase text-violet-700 dark:text-violet-300">Hidden</p>
+    <div className="flex flex-col gap-1.5">
+      <span className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-violet-400 bg-violet-100 text-[10px] font-mono dark:border-violet-600 dark:bg-violet-900/50">a₁</span>
+      <span className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-violet-400 bg-violet-100 text-[10px] font-mono dark:border-violet-600 dark:bg-violet-900/50">a₂</span>
+      <span className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-violet-400 bg-violet-100 text-[10px] font-mono dark:border-violet-600 dark:bg-violet-900/50">a₃</span>
+      <span className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-violet-400 bg-violet-100 text-[10px] font-mono dark:border-violet-600 dark:bg-violet-900/50">a₄</span>
+    </div>
+  </div>
+  <div className="mb-10 hidden text-sm font-semibold text-slate-400 sm:block" aria-hidden>
+    W₂, b₂ → σ
+  </div>
+  <div className="flex flex-col items-center gap-2">
+    <p className="m-0 text-xs font-bold uppercase text-emerald-700 dark:text-emerald-300">Output</p>
+    <div className="flex flex-col gap-2">
+      <span className="flex h-9 w-9 items-center justify-center rounded-full border-2 border-emerald-400 bg-emerald-100 text-xs font-mono dark:border-emerald-600 dark:bg-emerald-900/50">y₁</span>
+      <span className="flex h-9 w-9 items-center justify-center rounded-full border-2 border-emerald-400 bg-emerald-100 text-xs font-mono dark:border-emerald-600 dark:bg-emerald-900/50">y₂</span>
+    </div>
+  </div>
+</div>
+
+---
+
+## Shapes (so the matrices make sense)
+
+<div className="not-prose my-6 overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-700">
+  <table className="w-full min-w-[300px] border-collapse text-left text-sm">
+    <thead>
+      <tr className="bg-slate-700 text-white dark:bg-slate-900">
+        <th className="p-3 font-semibold">Object</th>
+        <th className="p-3 font-semibold">Shape / size</th>
+      </tr>
+    </thead>
+    <tbody className="text-slate-800 dark:text-slate-200">
+      <tr className="border-b border-slate-200 dark:border-slate-700">
+        <td className="p-3 font-medium">Input <strong>x</strong></td>
+        <td className="p-3 font-mono">3 × 1</td>
+      </tr>
+      <tr className="border-b border-slate-200 dark:border-slate-700">
+        <td className="p-3 font-medium">
+          <strong>W₁</strong>, <strong>b₁</strong>
+        </td>
+        <td className="p-3 font-mono">
+          <strong>W₁</strong> is 4 × 3, <strong>b₁</strong> is 4 × 1
+        </td>
+      </tr>
+      <tr className="border-b border-slate-200 dark:border-slate-700">
+        <td className="p-3 font-medium">
+          <strong>W₂</strong>, <strong>b₂</strong>
+        </td>
+        <td className="p-3 font-mono">
+          <strong>W₂</strong> is 2 × 4, <strong>b₂</strong> is 2 × 1
+        </td>
+      </tr>
+      <tr className="bg-emerald-50/50 dark:bg-emerald-950/20">
+        <td className="p-3 font-medium">
+          Hidden <strong>a</strong>, output <strong>y</strong>
+        </td>
+        <td className="p-3 font-mono">
+          <strong>a</strong> is 4 × 1, <strong>y</strong> is 2 × 1
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+Row **j** of **W₁** mixes **x** into pre-activation **z₁ⱼ**; row **k** of **W₂** mixes **a** into **z₂ₖ**.
+
+---
+
+## Step 1 — Hidden layer (linear, then sigmoid)
+
+**Pre-activations** (one number per hidden neuron):
+
+$$
+\mathbf{z}^{(1)} = W_1 \mathbf{x} + \mathbf{b}_1
+$$
+
+**Activations** (apply **σ** to **each** component):
+
+$$
+a_j = \sigma\bigl(z^{(1)}_j\bigr), \quad j = 1,2,3,4
+$$
+
+**Expanded** (nested in the inputs)—neuron **j** of the hidden layer:
+
+$$
+a_j = \sigma\Bigl( (W_1)_{j1}\, x_1 + (W_1)_{j2}\, x_2 + (W_1)_{j3}\, x_3 + (b_1)_j \Bigr)
+$$
+
+So **a₁, a₂, a₃, a₄** are **four** separate sigmoids of **four** weighted sums of **x₁, x₂, x₃**.
+
+---
+
+## Step 2 — Output layer (linear on **a**, then sigmoid)
+
+$$
+\mathbf{z}^{(2)} = W_2 \mathbf{a} + \mathbf{b}_2, \qquad
+y_k = \sigma\bigl(z^{(2)}_k\bigr), \quad k = 1, 2
+$$
+
+**Fully nested** through **x** (substitute each **aⱼ**):
+
+$$
+y_1 = \sigma\Biggl(
+\sum_{j=1}^{4} (W_2)_{1j}\,
+\sigma\Bigl( \sum_{i=1}^{3} (W_1)_{ji}\, x_i + (b_1)_j \Bigr)
++ (b_2)_1
+\Biggr)
+$$
+
+$$
+y_2 = \sigma\Biggl(
+\sum_{j=1}^{4} (W_2)_{2j}\,
+\sigma\Bigl( \sum_{i=1}^{3} (W_1)_{ji}\, x_i + (b_1)_j \Bigr)
++ (b_2)_2
+\Biggr)
+$$
+
+That is the **whole** forward map **(x₁, x₂, x₃) ↦ (y₁, y₂)** in one glance: **nested** **σ** of **affine** functions—**composition** is what makes the net **nonlinear**.
+
+---
+
+## What **σ** does here
+
+$$
+\sigma(z) = \frac{1}{1 + e^{-z}}
+$$
+
+So **y₁** and **y₂** each live in **(0, 1)**. If this head is **binary** or **multi-label** **probability**, you might pair them with **BCE** (Lesson 4); if you need **two** logits that **compete** (single class out of two), you would often use **one** linear layer + **softmax** instead—same **forward** **recipe**, different **last** nonlinearity.
+
+---
+
+## Forward pass = **`predict`** in code
+
+| Phase | What runs |
+| ----- | --------- |
+| **Training** | Forward pass → **loss** → **backward** → **weight** update |
+| **Inference** | Forward pass **only** → return **y** |
+
+So **`model.predict(x)`** (or **`forward`** with **no_grad**) is **exactly** the chain above: **multiply**, **add**, **σ**, repeat. **No** gradients required to **use** a trained model—only to **learn** **W₁, b₁, W₂, b₂**.
+
+---
+
+## One-line story
+
+**Input** → **W₁x + b₁** → **σ** → **a** → **W₂a + b₂** → **σ** → **y**. That is **prediction**.
+
+---
+
+<div className="not-prose mt-10 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-6 dark:border-slate-700">
+  <a href="./loss-functions" className="text-sm font-medium text-slate-600 no-underline hover:text-emerald-700 hover:underline dark:text-slate-400 dark:hover:text-emerald-400">← Lesson 4 · Loss functions</a>
+  <a href="./backward-pass" className="text-sm font-semibold text-emerald-700 no-underline hover:underline dark:text-emerald-400">Lesson 6 · Backward pass →</a>
+</div>

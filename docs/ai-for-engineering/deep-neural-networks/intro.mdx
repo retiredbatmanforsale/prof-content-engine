@@ -1,10 +1,117 @@
 ---
 title: Deep Neural Networks
+description: >-
+  From the perceptron and single neurons to deep stacks: linear models,
+  activations, training, and building blocks for dense networks.
 ---
 
 # Deep Neural Networks
 
-This course will cover core deep learning building blocks, training dynamics, and best practices for dense networks.
+This course builds **deep neural networks** from the ground up: the **smallest mathematical units** (**neurons**), how they relate to **linear** and **logistic regression**, then **layers**, **depth**, **training** with gradients, practical patterns for **dense** architectures, and a **NumPy** **from-scratch** capstone tied to the **[lexai-fellowship](https://github.com/retiredbatmanforsale/lexai-fellowship)** notebook.
 
-Course content coming soon.
+---
 
+## Lessons
+
+<div className="not-prose my-6 space-y-3">
+  <a
+    href="./perceptron-and-neuron"
+    className="flex flex-col gap-1 rounded-xl border border-slate-200 bg-white p-4 no-underline transition-colors hover:border-emerald-400 hover:bg-emerald-50/50 dark:border-slate-700 dark:bg-slate-900/40 dark:hover:border-emerald-600 dark:hover:bg-emerald-950/30"
+  >
+    <span className="text-xs font-bold uppercase tracking-wide text-emerald-700 dark:text-emerald-400">Lesson 1</span>
+    <span className="text-base font-semibold text-slate-900 dark:text-slate-100">Perceptron &amp; the neuron</span>
+    <span className="text-sm text-slate-600 dark:text-slate-400">
+      Linear regression → logistic regression → perceptron; z = wᵀx + b; activations; perceptron vs modern neuron; connectionist view.
+    </span>
+  </a>
+  <a
+    href="./layers-in-deep-neural-networks"
+    className="flex flex-col gap-1 rounded-xl border border-slate-200 bg-white p-4 no-underline transition-colors hover:border-emerald-400 hover:bg-emerald-50/50 dark:border-slate-700 dark:bg-slate-900/40 dark:hover:border-emerald-600 dark:hover:bg-emerald-950/30"
+  >
+    <span className="text-xs font-bold uppercase tracking-wide text-emerald-700 dark:text-emerald-400">Lesson 2</span>
+    <span className="text-base font-semibold text-slate-900 dark:text-slate-100">Layers in a deep neural network</span>
+    <span className="text-sm text-slate-600 dark:text-slate-400">
+      Input, hidden, output; fully connected stacks; weights and biases; parameters; nonlinearities; hyperparameters vs learned weights.
+    </span>
+  </a>
+  <a
+    href="./activation-functions"
+    className="flex flex-col gap-1 rounded-xl border border-slate-200 bg-white p-4 no-underline transition-colors hover:border-emerald-400 hover:bg-emerald-50/50 dark:border-slate-700 dark:bg-slate-900/40 dark:hover:border-emerald-600 dark:hover:bg-emerald-950/30"
+  >
+    <span className="text-xs font-bold uppercase tracking-wide text-emerald-700 dark:text-emerald-400">Lesson 3</span>
+    <span className="text-base font-semibold text-slate-900 dark:text-slate-100">Activation functions</span>
+    <span className="text-sm text-slate-600 dark:text-slate-400">
+      ReLU, sigmoid, softmax; why depth needs nonlinearity; vanishing gradients; mixing activations per layer.
+    </span>
+  </a>
+  <a
+    href="./loss-functions"
+    className="flex flex-col gap-1 rounded-xl border border-slate-200 bg-white p-4 no-underline transition-colors hover:border-emerald-400 hover:bg-emerald-50/50 dark:border-slate-700 dark:bg-slate-900/40 dark:hover:border-emerald-600 dark:hover:bg-emerald-950/30"
+  >
+    <span className="text-xs font-bold uppercase tracking-wide text-emerald-700 dark:text-emerald-400">Lesson 4</span>
+    <span className="text-base font-semibold text-slate-900 dark:text-slate-100">Loss functions</span>
+    <span className="text-sm text-slate-600 dark:text-slate-400">
+      Why loss exists; MSE intuition; limits for probabilities; binary cross-entropy; sigmoid + BCE pairing; path to backprop.
+    </span>
+  </a>
+  <a
+    href="./forward-pass"
+    className="flex flex-col gap-1 rounded-xl border border-slate-200 bg-white p-4 no-underline transition-colors hover:border-emerald-400 hover:bg-emerald-50/50 dark:border-slate-700 dark:bg-slate-900/40 dark:hover:border-emerald-600 dark:hover:bg-emerald-950/30"
+  >
+    <span className="text-xs font-bold uppercase tracking-wide text-emerald-700 dark:text-emerald-400">Lesson 5</span>
+    <span className="text-base font-semibold text-slate-900 dark:text-slate-100">Forward pass &amp; prediction</span>
+    <span className="text-sm text-slate-600 dark:text-slate-400">
+      3→4→2 example; W₁, b₁, W₂, b₂; nested sigmoid equations; forward pass equals predict / forward at inference.
+    </span>
+  </a>
+  <a
+    href="./backward-pass"
+    className="flex flex-col gap-1 rounded-xl border border-slate-200 bg-white p-4 no-underline transition-colors hover:border-emerald-400 hover:bg-emerald-50/50 dark:border-slate-700 dark:bg-slate-900/40 dark:hover:border-emerald-600 dark:hover:bg-emerald-950/30"
+  >
+    <span className="text-xs font-bold uppercase tracking-wide text-emerald-700 dark:text-emerald-400">Lesson 6</span>
+    <span className="text-base font-semibold text-slate-900 dark:text-slate-100">Backward pass &amp; learning</span>
+    <span className="text-sm text-slate-600 dark:text-slate-400">
+      Forward → loss → backprop → update; variable hierarchy and chain rule; gradient vector; θ ← θ − η∇L; learning rate and loss curves.
+    </span>
+  </a>
+  <a
+    href="./trainable-parameters-and-hyperparameters"
+    className="flex flex-col gap-1 rounded-xl border border-slate-200 bg-white p-4 no-underline transition-colors hover:border-emerald-400 hover:bg-emerald-50/50 dark:border-slate-700 dark:bg-slate-900/40 dark:hover:border-emerald-600 dark:hover:bg-emerald-950/30"
+  >
+    <span className="text-xs font-bold uppercase tracking-wide text-emerald-700 dark:text-emerald-400">Lesson 7</span>
+    <span className="text-base font-semibold text-slate-900 dark:text-slate-100">Trainable parameters &amp; hyperparameters</span>
+    <span className="text-sm text-slate-600 dark:text-slate-400">
+      W₁, b₁, W₂, b₂ vs η, architecture, regularization; model complexity; parameter count n; scaling laws and quality.
+    </span>
+  </a>
+  <a
+    href="./overfitting-in-neural-networks"
+    className="flex flex-col gap-1 rounded-xl border border-slate-200 bg-white p-4 no-underline transition-colors hover:border-emerald-400 hover:bg-emerald-50/50 dark:border-slate-700 dark:bg-slate-900/40 dark:hover:border-emerald-600 dark:hover:bg-emerald-950/30"
+  >
+    <span className="text-xs font-bold uppercase tracking-wide text-emerald-700 dark:text-emerald-400">Lesson 8</span>
+    <span className="text-base font-semibold text-slate-900 dark:text-slate-100">Overfitting in neural networks</span>
+    <span className="text-sm text-slate-600 dark:text-slate-400">
+      Train vs val gap; mitigations on data, model, training, pre-training, and post-training.
+    </span>
+  </a>
+  <a
+    href="./neural-network-architecture"
+    className="flex flex-col gap-1 rounded-xl border border-slate-200 bg-white p-4 no-underline transition-colors hover:border-emerald-400 hover:bg-emerald-50/50 dark:border-slate-700 dark:bg-slate-900/40 dark:hover:border-emerald-600 dark:hover:bg-emerald-950/30"
+  >
+    <span className="text-xs font-bold uppercase tracking-wide text-emerald-700 dark:text-emerald-400">Lesson 9</span>
+    <span className="text-base font-semibold text-slate-900 dark:text-slate-100">Neural network architecture</span>
+    <span className="text-sm text-slate-600 dark:text-slate-400">
+      Input → hidden → output for binary classification; end-to-end recap of the course story.
+    </span>
+  </a>
+  <a
+    href="./neural-network-from-scratch"
+    className="flex flex-col gap-1 rounded-xl border border-slate-200 bg-white p-4 no-underline transition-colors hover:border-emerald-400 hover:bg-emerald-50/50 dark:border-slate-700 dark:bg-slate-900/40 dark:hover:border-emerald-600 dark:hover:bg-emerald-950/30"
+  >
+    <span className="text-xs font-bold uppercase tracking-wide text-emerald-700 dark:text-emerald-400">Lesson 10</span>
+    <span className="text-base font-semibold text-slate-900 dark:text-slate-100">Neural network from scratch (NumPy)</span>
+    <span className="text-sm text-slate-600 dark:text-slate-400">
+      Init, forward, sigmoid, MSE, backprop, gradient updates, training loop, predict—aligned with the fellowship notebook.
+    </span>
+  </a>
+</div>

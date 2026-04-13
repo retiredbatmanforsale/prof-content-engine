@@ -1,10 +1,77 @@
 ---
 title: Foundations of Regression
+description: >-
+  Linear and logistic regression, sigmoid, decision boundaries, and MLE vs SSE
+  intuition.
 ---
 
 # Foundations of Regression
 
-This course will cover regression fundamentals, evaluation, and how to choose the right model for prediction tasks.
+This course covers **linear regression**, **logistic regression**, the **sigmoid**, **decision boundaries**, and **MLE** (why not SSE for probabilities).
 
-Course content coming soon.
+---
 
+## Lessons
+
+<div className="not-prose my-6 space-y-3">
+  <a
+    href="./linear-regression-line-ssr-gradient-descent"
+    className="flex flex-col gap-1 rounded-xl border border-slate-200 bg-white p-4 no-underline transition-colors hover:border-emerald-400 hover:bg-emerald-50/50 dark:border-slate-700 dark:bg-slate-900/40 dark:hover:border-emerald-600 dark:hover:bg-emerald-950/30"
+  >
+    <span className="text-xs font-bold uppercase tracking-wide text-emerald-700 dark:text-emerald-400">Lesson 1</span>
+    <span className="text-base font-semibold text-slate-900 dark:text-slate-100">Linear regression</span>
+    <span className="text-sm text-slate-600 dark:text-slate-400">
+      Lines and hyperplanes, y = wx + b, residuals, SSR / cost J(m, c), gradient descent steps, intuition, normal equation.
+    </span>
+  </a>
+  <a
+    href="./why-logistic-regression"
+    className="flex flex-col gap-1 rounded-xl border border-slate-200 bg-white p-4 no-underline transition-colors hover:border-emerald-400 hover:bg-emerald-50/50 dark:border-slate-700 dark:bg-slate-900/40 dark:hover:border-emerald-600 dark:hover:bg-emerald-950/30"
+  >
+    <span className="text-xs font-bold uppercase tracking-wide text-emerald-700 dark:text-emerald-400">Lesson 2</span>
+    <span className="text-base font-semibold text-slate-900 dark:text-slate-100">Why do we need logistic regression?</span>
+    <span className="text-sm text-slate-600 dark:text-slate-400">
+      Unbounded linear outputs vs probabilities, non-linearity and decision boundaries, sigmoid and P(y|x).
+    </span>
+  </a>
+  <a
+    href="./sigmoid-function-logistic-regression"
+    className="flex flex-col gap-1 rounded-xl border border-slate-200 bg-white p-4 no-underline transition-colors hover:border-emerald-400 hover:bg-emerald-50/50 dark:border-slate-700 dark:bg-slate-900/40 dark:hover:border-emerald-600 dark:hover:bg-emerald-950/30"
+  >
+    <span className="text-xs font-bold uppercase tracking-wide text-emerald-700 dark:text-emerald-400">Lesson 3</span>
+    <span className="text-base font-semibold text-slate-900 dark:text-slate-100">The sigmoid function</span>
+    <span className="text-sm text-slate-600 dark:text-slate-400">
+      σ(z) = 1/(1+e⁻ᶻ), z = wx + b / wᵀx + b, limits, properties, numeric examples, squashing intuition.
+    </span>
+  </a>
+  <a
+    href="./logistic-regression-decision-boundaries"
+    className="flex flex-col gap-1 rounded-xl border border-slate-200 bg-white p-4 no-underline transition-colors hover:border-emerald-400 hover:bg-emerald-50/50 dark:border-slate-700 dark:bg-slate-900/40 dark:hover:border-emerald-600 dark:hover:bg-emerald-950/30"
+  >
+    <span className="text-xs font-bold uppercase tracking-wide text-emerald-700 dark:text-emerald-400">Lesson 4</span>
+    <span className="text-base font-semibold text-slate-900 dark:text-slate-100">Decision boundaries</span>
+    <span className="text-sm text-slate-600 dark:text-slate-400">
+      P(y|x), class 1 vs class 2, threshold 0.5, σ(wx+b)=0.5 → wx+b=0, line / plane / hyperplane, numeric 2x₁+3x₂−5=0.
+    </span>
+  </a>
+  <a
+    href="./intuition-behind-logistic-regression"
+    className="flex flex-col gap-1 rounded-xl border border-slate-200 bg-white p-4 no-underline transition-colors hover:border-emerald-400 hover:bg-emerald-50/50 dark:border-slate-700 dark:bg-slate-900/40 dark:hover:border-emerald-600 dark:hover:bg-emerald-950/30"
+  >
+    <span className="text-xs font-bold uppercase tracking-wide text-emerald-700 dark:text-emerald-400">Lesson 5</span>
+    <span className="text-base font-semibold text-slate-900 dark:text-slate-100">Intuition behind logistic regression</span>
+    <span className="text-sm text-slate-600 dark:text-slate-400">
+      Probabilities vs raw y, SSE vs MLE, non-convexity, NLL convexity, and why σ squashes linear scores.
+    </span>
+  </a>
+  <a
+    href="./log-likelihood-instead-of-squared-error"
+    className="flex flex-col gap-1 rounded-xl border border-slate-200 bg-white p-4 no-underline transition-colors hover:border-emerald-400 hover:bg-emerald-50/50 dark:border-slate-700 dark:bg-slate-900/40 dark:hover:border-emerald-600 dark:hover:bg-emerald-950/30"
+  >
+    <span className="text-xs font-bold uppercase tracking-wide text-emerald-700 dark:text-emerald-400">Lesson 6</span>
+    <span className="text-base font-semibold text-slate-900 dark:text-slate-100">Log likelihood instead of squared error</span>
+    <span className="text-sm text-slate-600 dark:text-slate-400">
+      Bernoulli likelihood, joint L as a product, log-likelihood, and binary cross-entropy (mean NLL) as the cost.
+    </span>
+  </a>
+</div>

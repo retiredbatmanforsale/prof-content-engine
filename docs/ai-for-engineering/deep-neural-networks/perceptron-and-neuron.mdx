@@ -1,0 +1,195 @@
+---
+sidebar_label: '1 · Perceptron & neuron'
+title: 'Lesson 1 — From linear regression to the perceptron'
+description: >-
+  The smallest computational unit: linear score, activation, and how logistic
+  regression and the perceptron relate to a modern “neuron.”
+---
+
+# From linear regression to the perceptron
+
+**Deep neural networks** are built from **layers** of **simple units**. Before depth or convolutions, it pays to understand the **smallest** piece: one **weighted sum of inputs**, plus **bias**, optionally passed through an **activation**. This lesson walks from **linear regression** → **logistic regression** → **perceptron**, then clarifies what people mean by a **neuron** today—and how that story fits the **connectionist** view researchers like **Geoffrey Hinton** championed: **intelligence from many adjustable units** learning from **data**, not hand-written rules alone.
+
+<div className="not-prose my-6 rounded-2xl border-2 border-indigo-200 bg-gradient-to-r from-indigo-50 via-white to-violet-50 p-5 dark:border-indigo-900/50 dark:from-indigo-950/30 dark:via-slate-950 dark:to-violet-950/30">
+  <p className="m-0 text-center text-xs font-bold uppercase tracking-widest text-indigo-700 dark:text-indigo-300">One picture for the whole lesson</p>
+  <p className="mt-3 mb-0 text-center text-sm leading-relaxed text-slate-800 dark:text-slate-200">
+    <strong>Features</strong> <strong>x</strong> → <strong>linear part</strong> <strong>z = wᵀx + b</strong> → <strong>activation</strong> <strong>f(z)</strong> → <strong>output</strong>
+  </p>
+  <p className="mt-2 mb-0 text-center text-xs text-slate-600 dark:text-slate-400">Change only <strong>f</strong> and the <strong>loss</strong>—you move from regression to classification to a modern building block.</p>
+</div>
+
+---
+
+## Step 0 — Features and a linear **score**
+
+Given input vector **x** (features) and weights **w** plus bias **b**, the **affine** (linear-with-bias) map is:
+
+$$
+z = \mathbf{w}^\top \mathbf{x} + b
+$$
+
+This **z** is a **score**: a single number summarizing the input in a direction learned from data. Everything below **reuses** this same **z**; only what happens **after** **z** changes.
+
+---
+
+## 1 · Linear regression (no activation on the prediction)
+
+**Goal:** predict a **real** value **ŷ**.
+
+$$
+\hat{y} = z = \mathbf{w}^\top \mathbf{x} + b
+$$
+
+**Loss:** squared error (and friends). **Output** is **unbounded**—fine for prices, temperatures, etc.
+
+<div className="not-prose my-5 rounded-xl border border-sky-200 bg-sky-50/80 p-4 dark:border-sky-800 dark:bg-sky-950/25">
+  <p className="m-0 text-sm text-slate-800 dark:text-slate-200">
+    <strong>Neuron view:</strong> a “neuron” with <strong>identity</strong> activation <strong>f(z) = z</strong>. No squashing—pure linear model.
+  </p>
+</div>
+
+---
+
+## 2 · Logistic regression (one neuron with sigmoid)
+
+**Goal:** predict **probability** for binary class **y ∈ {0, 1}**.
+
+Same **z**, then **squash** with the **sigmoid**:
+
+$$
+\hat{y} = \sigma(z) = \frac{1}{1 + e^{-z}} \in (0, 1)
+$$
+
+**Loss:** log loss / cross-entropy. You already have **one computational unit**: linear + **nonlinear** **σ**—the template for a **classification neuron**.
+
+<div className="not-prose my-6 overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-700">
+  <table className="w-full min-w-[280px] border-collapse text-left text-sm">
+    <thead>
+      <tr className="bg-slate-700 text-white dark:bg-slate-900">
+        <th className="p-3 font-semibold">Model</th>
+        <th className="p-3 font-semibold">After z = wᵀx + b</th>
+        <th className="p-3 font-semibold">Typical loss</th>
+      </tr>
+    </thead>
+    <tbody className="text-slate-800 dark:text-slate-200">
+      <tr className="border-b border-slate-200 dark:border-slate-700">
+        <td className="p-3 font-medium">Linear regression</td>
+        <td className="p-3">**ŷ = z** (identity)</td>
+        <td className="p-3">Squared error</td>
+      </tr>
+      <tr className="bg-emerald-50/50 dark:bg-emerald-950/20">
+        <td className="p-3 font-medium">Logistic regression</td>
+        <td className="p-3">**ŷ = σ(z)**</td>
+        <td className="p-3">Binary cross-entropy</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+---
+
+## 3 · The **perceptron** (Rosenblatt, 1958)
+
+Historically, the **perceptron** is a **binary linear classifier** with a **hard** decision:
+
+$$
+\hat{y} = \operatorname{sign}(z) \quad\text{or}\quad \mathbb{1}[z \ge 0]
+$$
+
+Weights were updated with the **perceptron learning rule** (mistake-driven). The **geometry** is the same **linear boundary** as logistic regression; the **activation** is **not** smooth—it **jumps** at zero.
+
+<div className="not-prose my-6 grid gap-3 sm:grid-cols-3">
+  <div className="rounded-xl border-2 border-amber-300 bg-amber-50/90 p-3 text-center text-sm dark:border-amber-700 dark:bg-amber-950/30">
+    <p className="m-0 font-bold text-amber-900 dark:text-amber-200">Linear</p>
+    <p className="mt-2 mb-0 text-slate-700 dark:text-slate-300">Continuous **ŷ**</p>
+  </div>
+  <div className="rounded-xl border-2 border-violet-300 bg-violet-50/90 p-3 text-center text-sm dark:border-violet-700 dark:bg-violet-950/30">
+    <p className="m-0 font-bold text-violet-900 dark:text-violet-200">Logistic</p>
+    <p className="mt-2 mb-0 text-slate-700 dark:text-slate-300">Smooth **σ(z)**</p>
+  </div>
+  <div className="rounded-xl border-2 border-rose-300 bg-rose-50/90 p-3 text-center text-sm dark:border-rose-700 dark:bg-rose-950/30">
+    <p className="m-0 font-bold text-rose-900 dark:text-rose-200">Perceptron</p>
+    <p className="mt-2 mb-0 text-slate-700 dark:text-slate-300">Hard **sign(z)**</p>
+  </div>
+</div>
+
+**Limitation (famous):** a **single** perceptron only learns **linearly separable** patterns—**no XOR** without **multiple** units / **hidden** layers (the start of the story for **deep** networks).
+
+---
+
+## Perceptron vs **“neuron”** in modern deep learning
+
+People use **“neuron”** loosely. In **current** frameworks, a **neuron** almost always means:
+
+**affine map + differentiable activation** (ReLU, GELU, sigmoid, tanh, …) so **gradients** can flow in **backpropagation**.
+
+<div className="not-prose my-6 overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-700">
+  <table className="w-full min-w-[300px] border-collapse text-left text-sm">
+    <thead>
+      <tr className="bg-slate-700 text-white dark:bg-slate-900">
+        <th className="p-3 font-semibold">Aspect</th>
+        <th className="p-3 font-semibold">Classic perceptron</th>
+        <th className="p-3 font-semibold">Typical “neuron” today</th>
+      </tr>
+    </thead>
+    <tbody className="text-slate-800 dark:text-slate-200">
+      <tr className="border-b border-slate-200 dark:border-slate-700">
+        <td className="p-3 font-medium">Nonlinearity</td>
+        <td className="p-3">**Step / sign** (not differentiable at 0)</td>
+        <td className="p-3">**ReLU, GELU, σ**, … (piecewise smooth)</td>
+      </tr>
+      <tr className="border-b border-slate-200 dark:border-slate-700">
+        <td className="p-3 font-medium">Training</td>
+        <td className="p-3">Perceptron rule, mistake updates</td>
+        <td className="p-3">**Gradient descent** on a loss (backprop)</td>
+      </tr>
+      <tr className="border-b border-slate-200 dark:border-slate-700">
+        <td className="p-3 font-medium">Output role</td>
+        <td className="p-3">Often **hard** class label</td>
+        <td className="p-3">Real-valued **activation** feeding **next** layer</td>
+      </tr>
+      <tr className="bg-indigo-50/50 dark:bg-indigo-950/20">
+        <td className="p-3 font-medium">Summary</td>
+        <td className="p-3" colSpan={2}>
+          **Logistic regression** is closer to a **modern classification neuron** (smooth **σ**) than the **original** perceptron **sign**—but **all three** share the same **linear core** **z = wᵀx + b**.
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+---
+
+## Hinton and the **idea** of neural computation
+
+**Geoffrey Hinton** did not invent the perceptron; his influence is in treating **networks of simple units** as the right **substrate** for **learning representations**: adjust **many** **w**’s and **b**’s from **examples** so **hierarchical** features emerge. **Backpropagation** through **smooth** activations made **deep** stacks practical—so the **“neuron”** in today’s **deep nets** is the **differentiable** building block you will **stack** in the rest of this course.
+
+<div className="not-prose my-6 rounded-xl border-l-4 border-cyan-500 bg-cyan-50/70 py-3 pl-4 pr-3 dark:bg-cyan-950/20">
+  <p className="m-0 text-sm text-slate-800 dark:text-slate-200">
+    <strong>Takeaway:</strong> linear regression = linear neuron; logistic = sigmoid neuron; perceptron = historical **threshold** unit on the same **z**. **Deep** networks = **many** such units + **depth** and **composition**—next lessons.
+  </p>
+</div>
+
+---
+
+## Flow chart (conceptual)
+
+<div className="not-prose my-6 rounded-xl border border-slate-200 bg-slate-900 p-4 dark:border-slate-600">
+  <pre className="m-0 overflow-x-auto whitespace-pre-wrap font-mono text-[11px] leading-relaxed text-slate-100 sm:text-xs">{`  Features x
+      │
+      ▼
+  z = wᵀx + b     ← same in all three stories
+      │
+      ├──────────────────┬──────────────────┐
+      ▼                  ▼                  ▼
+   ŷ = z            ŷ = σ(z)          ŷ = sign(z)
+ linear reg.      logistic reg.       perceptron
+ (identity)       (smooth, prob.)      (hard class)`}</pre>
+</div>
+
+---
+
+<div className="not-prose mt-10 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-6 dark:border-slate-700">
+  <a href="./intro" className="text-sm font-medium text-slate-600 no-underline hover:text-emerald-700 hover:underline dark:text-slate-400 dark:hover:text-emerald-400">← Course overview</a>
+  <a href="./layers-in-deep-neural-networks" className="text-sm font-semibold text-emerald-700 no-underline hover:underline dark:text-emerald-400">Lesson 2 · Layers in a DNN →</a>
+</div>

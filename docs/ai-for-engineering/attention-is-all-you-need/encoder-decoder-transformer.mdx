@@ -1,0 +1,206 @@
+---
+sidebar_label: '14 · Encoder–decoder transformer'
+title: 'Lesson 14 — Encoder–decoder transformer (conclusion)'
+description: >-
+  Full architecture recap, where enc-dec is used, and how it differs from
+  encoder-only and decoder-only stacks—with visuals and real-world relevance.
+---
+
+# Encoder–decoder transformer — conclusion
+
+This course ends where [Vaswani et al. (2017), *Attention Is All You Need*](https://arxiv.org/abs/1706.03762) presented the **full** model: an **encoder** that **reads** an **input** sequence in one representation, and a **decoder** that **writes** an **output** sequence while **querying** that representation through **cross-attention**. The [Lex AI interactive tour](https://aiayn.aiseekhegaindia.com/) shows the same **two-tower** picture: **source → encoder memory (K, V)** feeding **every** decoder layer.
+
+The encoder–decoder design is **not** the only transformer layout—but it is the canonical choice when the **input** and **output** are **different** sequences and you want a **dedicated, bidirectional** encoding pass **before** autoregressive generation.
+
+---
+
+## Visual: the two stacks and the bridge
+
+<div className="not-prose my-8 rounded-2xl border-2 border-slate-300 bg-gradient-to-b from-slate-50 to-white p-4 dark:border-slate-600 dark:from-slate-900 dark:to-slate-950 sm:p-8">
+  <p className="mb-6 text-center text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">Transformer (encoder–decoder) — conceptual</p>
+  <div className="flex flex-col gap-6 xl:flex-row xl:items-stretch xl:justify-center xl:gap-4">
+    <div className="flex flex-1 flex-col rounded-xl border-2 border-sky-400 bg-sky-50/90 p-4 dark:border-sky-600 dark:bg-sky-950/40">
+      <p className="m-0 text-center text-sm font-bold text-sky-900 dark:text-sky-100">Encoder stack (× N)</p>
+      <p className="mt-2 mb-0 text-center text-xs text-slate-600 dark:text-slate-400">Source tokens + positions</p>
+      <div className="mt-3 flex flex-1 flex-col justify-center gap-2 rounded-lg border border-sky-200 bg-white/80 p-3 text-xs dark:border-sky-800 dark:bg-slate-900/60">
+        <p className="m-0 font-mono text-slate-800 dark:text-slate-200">Multi-Head Self-Attention</p>
+        <p className="m-0 text-center text-slate-400">↓</p>
+        <p className="m-0 font-mono text-slate-800 dark:text-slate-200">Add &amp; Norm</p>
+        <p className="m-0 text-center text-slate-400">↓</p>
+        <p className="m-0 font-mono text-slate-800 dark:text-slate-200">FFN → Add &amp; Norm</p>
+        <p className="m-0 mt-2 text-center text-[10px] text-sky-700 dark:text-sky-300">… repeat N layers · **no causal mask**</p>
+      </div>
+      <p className="mt-3 mb-0 text-center text-xs font-semibold text-sky-800 dark:text-sky-200">Output = memory for **K, V**</p>
+    </div>
+    <div className="flex flex-col items-center justify-center gap-2 py-2 xl:w-36">
+      <span className="rounded-full bg-violet-200 px-3 py-1 text-xs font-bold text-violet-900 dark:bg-violet-900 dark:text-violet-100">K, V</span>
+      <span className="hidden text-3xl text-violet-400 xl:block" aria-hidden>
+        →
+      </span>
+      <span className="text-xs font-semibold text-violet-700 dark:text-violet-300">Cross-attn</span>
+      <span className="block text-2xl text-violet-400 xl:hidden" aria-hidden>
+        ↓
+      </span>
+    </div>
+    <div className="flex flex-1 flex-col rounded-xl border-2 border-emerald-400 bg-emerald-50/90 p-4 dark:border-emerald-600 dark:bg-emerald-950/40">
+      <p className="m-0 text-center text-sm font-bold text-emerald-900 dark:text-emerald-100">Decoder stack (× N)</p>
+      <p className="mt-2 mb-0 text-center text-xs text-slate-600 dark:text-slate-400">Target tokens + positions (shifted)</p>
+      <div className="mt-3 flex flex-1 flex-col justify-center gap-2 rounded-lg border border-emerald-200 bg-white/80 p-3 text-xs dark:border-emerald-800 dark:bg-slate-900/60">
+        <p className="m-0 font-mono text-slate-800 dark:text-slate-200">Masked Multi-Head Self-Attention</p>
+        <p className="m-0 text-center text-slate-400">↓</p>
+        <p className="m-0 font-mono text-slate-800 dark:text-slate-200">Add &amp; Norm</p>
+        <p className="m-0 text-center text-slate-400">↓</p>
+        <p className="m-0 font-mono text-violet-800 dark:text-violet-200">Cross-Attention ← encoder</p>
+        <p className="m-0 text-center text-slate-400">↓</p>
+        <p className="m-0 font-mono text-slate-800 dark:text-slate-200">Add &amp; Norm · FFN · Add &amp; Norm</p>
+        <p className="m-0 mt-2 text-center text-[10px] text-emerald-700 dark:text-emerald-300">… repeat N layers</p>
+      </div>
+      <p className="mt-3 mb-0 text-center text-xs font-semibold text-emerald-800 dark:text-emerald-200">Linear + softmax → next token</p>
+    </div>
+  </div>
+</div>
+
+<div className="not-prose my-6 overflow-x-auto rounded-xl border border-slate-200 bg-slate-900 p-4 dark:border-slate-700">
+  <pre className="m-0 min-w-[320px] whitespace-pre-wrap font-mono text-[11px] leading-relaxed text-slate-100 sm:text-xs">{`     SOURCE                          TARGET (e.g. translation)
+        │                                    │
+        ▼                                    ▼
+ ┌──────────────┐                    ┌──────────────┐
+ │   ENCODER    │     K, V ─────────►│   DECODER    │
+ │  (bidirect.) │      (every         │  masked self │
+ │              │       layer)       │  + cross     │
+ └──────────────┘                    │  + FFN       │
+                                     └──────┬───────┘
+                                            ▼
+                                     P(next | prefix, source)`}</pre>
+</div>
+
+---
+
+## Where is the encoder–decoder transformer used?
+
+Typical **real-world** settings when **input** and **output** are **both** sequences and you want a **clear split** between **understanding the input** and **generating the output**:
+
+- **Machine translation** (the paper’s headline task)
+- **Abstractive summarization** (document → summary) in **seq2seq** setups
+- **T5**-style **text-to-text** frameworks (treat many tasks as **input text → output text**)
+- **Speech recognition** and similar pipelines where an **encoder** ingests audio frames and a **decoder** emits text
+- **Multimodal** systems where one **tower** encodes images or video and a **decoder** generates captions or answers
+
+In all of these, the **encoder** is doing **work the decoder does not repeat**: building a **fixed** (per forward pass) **memory** of the **whole** input for the decoder to **consult** at **every** step via **cross-attention**.
+
+---
+
+## Three families side by side
+
+<div className="not-prose my-6 overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-700">
+  <table className="w-full min-w-[320px] border-collapse text-left text-sm">
+    <thead>
+      <tr className="bg-slate-700 text-white dark:bg-slate-900">
+        <th className="p-3 font-semibold">Aspect</th>
+        <th className="p-3 font-semibold">Encoder–decoder</th>
+        <th className="p-3 font-semibold">Encoder-only (e.g. BERT)</th>
+        <th className="p-3 font-semibold">Decoder-only (e.g. GPT)</th>
+      </tr>
+    </thead>
+    <tbody className="text-slate-800 dark:text-slate-200">
+      <tr className="border-b border-slate-200 dark:border-slate-700">
+        <td className="p-3 font-medium">Stacks</td>
+        <td className="p-3">**Encoder** + **decoder**</td>
+        <td className="p-3">**Encoder** only</td>
+        <td className="p-3">**Decoder** only</td>
+      </tr>
+      <tr className="border-b border-slate-200 dark:border-slate-700">
+        <td className="p-3 font-medium">Self-attention on input</td>
+        <td className="p-3">Bidirectional **encoder**</td>
+        <td className="p-3">Bidirectional</td>
+        <td className="p-3">**Causal** on one token stream</td>
+      </tr>
+      <tr className="border-b border-slate-200 dark:border-slate-700">
+        <td className="p-3 font-medium">Cross-attention</td>
+        <td className="p-3"><strong>Yes</strong> · decoder → encoder memory</td>
+        <td className="p-3">**No**</td>
+        <td className="p-3">**No**</td>
+      </tr>
+      <tr className="border-b border-slate-200 dark:border-slate-700">
+        <td className="p-3 font-medium">Native output</td>
+        <td className="p-3">**Another** sequence (generation)</td>
+        <td className="p-3">**Per-token** predictions (MLM, classification)</td>
+        <td className="p-3">**Next-token** LM / chat</td>
+      </tr>
+      <tr className="bg-violet-50/50 dark:bg-violet-950/20">
+        <td className="p-3 font-medium">Typical “shape” of task</td>
+        <td className="p-3">**A → B** (two sequences)</td>
+        <td className="p-3">**Understand** or **fill** one sequence</td>
+        <td className="p-3">**Continue** one sequence (or long **prompt**)</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+---
+
+## Why have an **encoder** at all?
+
+The **encoder** answers: “What does the **entire input** mean in context, **before** we commit to output words?”
+
+- It runs **bidirectional** self-attention over the **source**—every token sees every other **source** token.
+- It produces a **sequence of vectors** that become **K** and **V** for **cross-attention**. The **decoder** then issues **queries** (**Q**) that **select** and **blend** those vectors **per** generation step.
+
+That **separation** is powerful: **one** deep pass to **compress and contextualize** the input; **many** decoder steps that **reuse** the same memory instead of re-encoding the source inside a single causal stream.
+
+---
+
+## Why can’t the **GPT** family “just do the same thing”?
+
+**GPT-style** models are **decoder-only**: there is **no** second stack whose sole job is **bidirectional** encoding of a **fixed** source, and there is **no** **cross-attention** to dedicated **K, V** from that stack.
+
+You can **simulate** some tasks by **stuffing** the source into the **prompt** and letting the causal model attend **only leftward**—that often works remarkably well—but it is **not** the same architecture:
+
+- The model does **not** get a **full bidirectional** view of the source in a **separate** encoder; everything lives in **one** causal context window.
+- **Long inputs** compete for **context length**; an **encoder** can be sized and trained for **rich input encoding** while the **decoder** focuses on **generation**.
+
+So: **GPT** can **approximate** many **A → B** tasks **in software** (prompting, instruction tuning), but the **native** **encoder–decoder** design is built **exactly** for **input sequence → different output sequence** with **explicit** **encoder memory** and **cross-attention**.
+
+---
+
+## Why can’t the **encoder-only** “BERT family” do the same natively?
+
+**BERT-style** models lack an **autoregressive decoder** stack. They excel at **understanding** or **scoring** text (classification, **MLM**, embeddings) but they are **not** trained as **standard** **seq2seq** generators that emit a **new** sequence **token by token** with **causal** self-attention and a **linear + softmax** head for **open-ended** generation.
+
+You can **bolt on** decoders or use **task-specific** heads, but the **classic** **BERT** architecture alone does not implement the **full** **encoder–decoder** loop from the **original** Transformer paper.
+
+---
+
+## Significance in the real world
+
+- **Encoder–decoder** remains the **natural** blueprint when teams want **explicit** **input encoding** + **conditional** **generation** (translation, T5-like unification, many **ASR** and **multimodal** designs).
+- **Decoder-only** scaled to **massive** **general** LMs because a **single** stream simplifies **training** and **product** (chat, completion).
+- **Encoder-only** dominates when you need **rich bidirectional** **representations** without generating long text.
+
+No single variant “replaces” the others; they **optimize** for **different** **interfaces** between **input**, **representation**, and **output**.
+
+---
+
+## Training objective (recap)
+
+The decoder is trained with **teacher forcing** and **cross-entropy** on **next target tokens**, conditioned on **previous** target tokens (via **masked** self-attention) and on the **encoder** (via **cross-attention**). The encoder is trained **end-to-end** with the decoder so **K, V** are useful for the **downstream** prediction task.
+
+---
+
+## You have the full map
+
+| Lesson block | Role in encoder–decoder |
+| ------------ | ----------------------- |
+| Embeddings + position | Inputs to **both** sides |
+| Encoder self-attn + FFN × N | **Source memory** |
+| Decoder masked self-attn + cross-attn + FFN × N | **Conditional** generation |
+| Residuals + LayerNorm | **Stable** depth |
+
+Revisit any earlier lesson for **one** mechanism in isolation—or the [Lex AI site](https://aiayn.aiseekhegaindia.com/) for a **guided** pass through the same ideas.
+
+---
+
+<div className="not-prose mt-10 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-6 dark:border-slate-700">
+  <a href="./decoder-stack" className="text-sm font-medium text-slate-600 no-underline hover:text-emerald-700 hover:underline dark:text-slate-400 dark:hover:text-emerald-400">← Lesson 13 · Decoder stack</a>
+  <a href="./intro" className="text-sm font-semibold text-emerald-700 no-underline hover:underline dark:text-emerald-400">Course overview →</a>
+</div>

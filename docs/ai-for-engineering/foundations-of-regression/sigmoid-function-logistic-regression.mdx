@@ -1,0 +1,178 @@
+---
+sidebar_label: '3 · Sigmoid'
+title: 'Lesson 3 — The sigmoid: the secret sauce of logistic regression'
+description: >-
+  Definition σ(z), linear score z = wᵀx + b, limits, smoothness, examples, and
+  the squashing intuition for probabilities.
+---
+
+# The sigmoid function: the secret sauce of logistic regression
+
+The <strong>sigmoid function</strong> (also called the <strong>logistic function</strong>) is what transforms our linear model into a <strong>probability model</strong>. It has this elegant <strong>S-shaped</strong> curve:
+
+<div className="not-prose my-6 rounded-xl border-2 border-indigo-300 bg-gradient-to-b from-indigo-50 to-white p-4 dark:border-indigo-800 dark:from-indigo-950/40 dark:to-slate-900/40">
+  <p className="m-0 text-center text-xs font-bold uppercase tracking-wide text-indigo-800 dark:text-indigo-300">Shape (schematic)</p>
+  <div className="mt-4 flex h-36 items-end justify-between gap-0.5 px-1 sm:gap-1">
+    <div className="min-w-0 flex-1 rounded-t bg-indigo-400/90 dark:bg-indigo-600" style={{ height: '6%' }} />
+    <div className="min-w-0 flex-1 rounded-t bg-indigo-400/90 dark:bg-indigo-600" style={{ height: '8%' }} />
+    <div className="min-w-0 flex-1 rounded-t bg-indigo-400/90 dark:bg-indigo-600" style={{ height: '11%' }} />
+    <div className="min-w-0 flex-1 rounded-t bg-indigo-500/90 dark:bg-indigo-600" style={{ height: '16%' }} />
+    <div className="min-w-0 flex-1 rounded-t bg-indigo-500/90 dark:bg-indigo-600" style={{ height: '24%' }} />
+    <div className="min-w-0 flex-1 rounded-t bg-indigo-500/90 dark:bg-indigo-600" style={{ height: '35%' }} />
+    <div className="min-w-0 flex-1 rounded-t bg-indigo-600/90 dark:bg-indigo-500" style={{ height: '50%' }} />
+    <div className="min-w-0 flex-1 rounded-t bg-indigo-500/90 dark:bg-indigo-600" style={{ height: '65%' }} />
+    <div className="min-w-0 flex-1 rounded-t bg-indigo-500/90 dark:bg-indigo-600" style={{ height: '76%' }} />
+    <div className="min-w-0 flex-1 rounded-t bg-indigo-500/90 dark:bg-indigo-600" style={{ height: '84%' }} />
+    <div className="min-w-0 flex-1 rounded-t bg-indigo-400/90 dark:bg-indigo-600" style={{ height: '89%' }} />
+    <div className="min-w-0 flex-1 rounded-t bg-indigo-400/90 dark:bg-indigo-600" style={{ height: '92%' }} />
+    <div className="min-w-0 flex-1 rounded-t bg-indigo-400/90 dark:bg-indigo-600" style={{ height: '95%' }} />
+  </div>
+  <p className="mt-2 mb-0 text-center text-xs text-slate-600 dark:text-slate-400">Low <strong>z</strong> (left) → near 0 · mid <strong>z</strong> → ~0.5 · high <strong>z</strong> (right) → near 1</p>
+</div>
+
+---
+
+## Mathematical definition
+
+$$
+\sigma(z) = \frac{1}{1 + e^{-z}}
+$$
+
+<div className="not-prose my-6 overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-700">
+  <table className="w-full min-w-[300px] border-collapse text-left text-sm">
+    <thead>
+      <tr className="bg-slate-700 text-white dark:bg-slate-900">
+        <th className="p-3 font-semibold">Symbol</th>
+        <th className="p-3 font-semibold">Meaning</th>
+      </tr>
+    </thead>
+    <tbody className="text-slate-800 dark:text-slate-200">
+      <tr className="border-b border-slate-200 dark:border-slate-700">
+        <td className="p-3 font-mono">z</td>
+        <td className="p-3">
+          <strong>Linear score</strong> from our model: <strong>z = wx + b</strong> in one dimension. Here <strong>m</strong> has become <strong>w</strong> and <strong>c</strong> has become <strong>b</strong>; with vectors and bias, <strong>z = wᵀx + b</strong> (in matrix form often written <strong>z = WᵀX</strong> in batch notation).
+        </td>
+      </tr>
+      <tr className="border-b border-slate-200 bg-slate-50/80 dark:border-slate-700 dark:bg-slate-900/40">
+        <td className="p-3 font-mono">e</td>
+        <td className="p-3">
+          Base of the natural logarithm, <strong>e ≈ 2.718</strong>.
+        </td>
+      </tr>
+      <tr>
+        <td className="p-3 font-mono">σ(z)</td>
+        <td className="p-3">
+          The <strong>output probability</strong> (strictly between <strong>0</strong> and <strong>1</strong>) after squashing <strong>z</strong>.
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+---
+
+## Key properties of the sigmoid function
+
+### Bounds the output between 0 and 1
+
+$$
+\text{As } z \to -\infty,\quad \sigma(z) \to 0
+\qquad\text{(very large negative } z\text{)}
+$$
+
+$$
+\text{As } z \to +\infty,\quad \sigma(z) \to 1
+\qquad\text{(very large positive } z\text{)}
+$$
+
+$$
+\text{When } z = 0,\quad \sigma(z) = \frac{1}{2} = 0.5
+$$
+
+### Smooth and differentiable
+
+This makes it <strong>perfect for optimization</strong> using gradient descent.
+
+### Non-linear transformation
+
+It <strong>allows us to model non-linear relationships</strong> in the data in the sense that the <em>probability</em> in **x** is a non-linear function even when **z** is linear in **x**.
+
+### Centered at 0.5
+
+When <strong>z = 0</strong>, <strong>σ(z) = 0.5</strong> — the decision threshold between &quot;more class 0&quot; vs &quot;more class 1&quot; in the usual binary setup.
+
+---
+
+## Some other examples of z
+
+<div className="not-prose my-6 overflow-x-auto rounded-xl border border-violet-200 dark:border-violet-900/40">
+  <table className="w-full min-w-[280px] border-collapse text-left text-sm">
+    <thead>
+      <tr className="bg-violet-600 text-white dark:bg-violet-800">
+        <th className="p-3 font-semibold">z</th>
+        <th className="p-3 font-semibold">σ(z)</th>
+        <th className="p-3 font-semibold">Intuition</th>
+      </tr>
+    </thead>
+    <tbody className="text-slate-800 dark:text-slate-200">
+      <tr className="border-b border-slate-200 dark:border-slate-700">
+        <td className="p-3 font-mono">0</td>
+        <td className="p-3 font-mono font-semibold">0.5</td>
+        <td className="p-3">Neutral score — coin flip between extremes.</td>
+      </tr>
+      <tr className="border-b border-slate-200 bg-violet-50/50 dark:border-slate-700 dark:bg-violet-950/15">
+        <td className="p-3 font-mono">2</td>
+        <td className="p-3 font-mono font-semibold">≈ 0.88</td>
+        <td className="p-3">Strong push toward class 1.</td>
+      </tr>
+      <tr>
+        <td className="p-3 font-mono">−3</td>
+        <td className="p-3 font-mono font-semibold">≈ 0.047</td>
+        <td className="p-3">Strong push toward class 0.</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+---
+
+## Intuitive understanding
+
+Think of the sigmoid function as a <strong>&quot;squashing&quot;</strong> mechanism:
+
+<div className="not-prose my-6 grid gap-3 sm:grid-cols-3">
+  <div className="rounded-xl border-2 border-emerald-300 bg-emerald-50/90 p-4 dark:border-emerald-800 dark:bg-emerald-950/30">
+    <p className="m-0 text-sm font-bold text-emerald-900 dark:text-emerald-200">Large positive z</p>
+    <p className="mt-2 mb-0 text-sm text-slate-800 dark:text-slate-200">Gets <strong>squashed toward 1</strong>.</p>
+  </div>
+  <div className="rounded-xl border-2 border-slate-300 bg-slate-50/90 p-4 dark:border-slate-600 dark:bg-slate-900/40">
+    <p className="m-0 text-sm font-bold text-slate-800 dark:text-slate-200">z near 0</p>
+    <p className="mt-2 mb-0 text-sm text-slate-800 dark:text-slate-200">Outputs land <strong>near 0.5</strong>.</p>
+  </div>
+  <div className="rounded-xl border-2 border-rose-300 bg-rose-50/90 p-4 dark:border-rose-800 dark:bg-rose-950/30">
+    <p className="m-0 text-sm font-bold text-rose-900 dark:text-rose-200">Large negative z</p>
+    <p className="mt-2 mb-0 text-sm text-slate-800 dark:text-slate-200">Gets <strong>squashed toward 0</strong>.</p>
+  </div>
+</div>
+
+This means that even if our linear model produces a value like <strong>27</strong> or <strong>−15</strong>, the sigmoid function will convert it to a <strong>probability between 0 and 1</strong>.
+
+<div className="not-prose my-5 flex flex-wrap items-center justify-center gap-4 rounded-xl border border-dashed border-indigo-400 bg-indigo-50/50 p-4 dark:border-indigo-600 dark:bg-indigo-950/20">
+  <span className="rounded-lg bg-white px-3 py-1 font-mono text-sm shadow-sm dark:bg-slate-800">z = 27</span>
+  <span className="text-indigo-600 dark:text-indigo-400">→</span>
+  <span className="rounded-lg bg-indigo-100 px-3 py-1 font-mono text-sm dark:bg-indigo-900/50">σ(z) ≈ 1.000 …</span>
+  <span className="hidden sm:inline text-slate-400">|</span>
+  <span className="rounded-lg bg-white px-3 py-1 font-mono text-sm shadow-sm dark:bg-slate-800">z = −15</span>
+  <span className="text-indigo-600 dark:text-indigo-400">→</span>
+  <span className="rounded-lg bg-indigo-100 px-3 py-1 font-mono text-sm dark:bg-indigo-900/50">σ(z) ≈ 0.000 …</span>
+</div>
+
+---
+
+<div className="not-prose mt-10 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-6 dark:border-slate-700">
+  <div className="flex flex-wrap gap-x-4 gap-y-2">
+    <a href="./why-logistic-regression" className="text-sm font-medium text-slate-600 no-underline hover:text-emerald-700 hover:underline dark:text-slate-400 dark:hover:text-emerald-400">← Lesson 2</a>
+    <a href="./intro" className="text-sm font-medium text-slate-600 no-underline hover:text-emerald-700 hover:underline dark:text-slate-400 dark:hover:text-emerald-400">Overview</a>
+  </div>
+  <a href="./logistic-regression-decision-boundaries" className="text-sm font-semibold text-emerald-700 no-underline hover:underline dark:text-emerald-400">Lesson 4 · Boundaries →</a>
+</div>

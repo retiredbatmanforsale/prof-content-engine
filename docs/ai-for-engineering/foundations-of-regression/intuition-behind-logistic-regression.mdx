@@ -1,0 +1,188 @@
+---
+sidebar_label: '5 · Intuition & MLE'
+title: 'Lesson 5 — Intuition behind logistic regression'
+description: >-
+  Predicting probabilities, why MLE beats SSE for logistic regression, when SSE
+  is non-convex, and why the sigmoid maps linear scores to valid probabilities.
+---
+
+# Intuition behind logistic regression
+
+Instead of directly predicting **y**, we predict the **probability that y belongs to class 1**.
+
+We use the <strong>sigmoid function</strong> to ensure the output is always between **0** and **1**.
+
+<div className="not-prose my-6 rounded-xl border-2 border-indigo-200 bg-indigo-50/60 p-4 text-center dark:border-indigo-900/40 dark:bg-indigo-950/25">
+  <p className="m-0 text-sm font-semibold text-indigo-900 dark:text-indigo-200">Core picture</p>
+  <p className="mt-2 mb-0 text-sm text-slate-800 dark:text-slate-200">
+    <strong>Linear score</strong> <span className="font-mono">z</span> → <strong>σ(z)</strong> ∈ (0, 1) → interpret as <strong>ℙ(y = 1 | x)</strong>
+  </p>
+</div>
+
+---
+
+## Why a different optimisation function like MLE (maximum likelihood estimation) instead of SSE for logistic regression?
+
+In <strong>linear regression</strong>, <strong>SSE</strong> (sum of squared errors) works well because we&apos;re directly predicting a <strong>continuous</strong> value and minimizing the squared distance between predictions and actual values.
+
+In <strong>logistic regression</strong>, we&apos;re predicting <strong>probabilities</strong> between 0 and 1, and using <strong>SSE</strong> would create a <strong>non-convex</strong> optimization problem. This means:
+
+<div className="not-prose my-6 space-y-3">
+  <div className="flex gap-3 rounded-xl border border-rose-200 bg-rose-50/80 p-3 dark:border-rose-900/40 dark:bg-rose-950/20">
+    <span className="text-xl" aria-hidden>
+      ⚠️
+    </span>
+    <p className="m-0 text-sm text-slate-800 dark:text-slate-200">
+      <strong>Multiple local minima</strong> could exist
+    </p>
+  </div>
+  <div className="flex gap-3 rounded-xl border border-rose-200 bg-rose-50/80 p-3 dark:border-rose-900/40 dark:bg-rose-950/20">
+    <span className="text-xl" aria-hidden>
+      ⚠️
+    </span>
+    <p className="m-0 text-sm text-slate-800 dark:text-slate-200">
+      <strong>Gradient descent</strong> might get stuck in these local minima
+    </p>
+  </div>
+  <div className="flex gap-3 rounded-xl border border-rose-200 bg-rose-50/80 p-3 dark:border-rose-900/40 dark:bg-rose-950/20">
+    <span className="text-xl" aria-hidden>
+      ⚠️
+    </span>
+    <p className="m-0 text-sm text-slate-800 dark:text-slate-200">
+      <strong>No guarantee</strong> of finding the global optimum
+    </p>
+  </div>
+</div>
+
+<div className="not-prose my-6 overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-700">
+  <table className="w-full min-w-[360px] border-collapse text-left text-sm">
+    <thead>
+      <tr className="bg-slate-700 text-white dark:bg-slate-900">
+        <th className="p-3 font-semibold">Setting</th>
+        <th className="p-3 font-semibold">Typical loss</th>
+        <th className="p-3 font-semibold">Why</th>
+      </tr>
+    </thead>
+    <tbody className="text-slate-800 dark:text-slate-200">
+      <tr className="border-b border-slate-200 dark:border-slate-700">
+        <td className="p-3 font-medium">Linear regression</td>
+        <td className="p-3 font-mono text-xs sm:text-sm">SSE / MSE</td>
+        <td className="p-3">Real-valued targets; squared error in parameters stays <strong>convex</strong> for linear models.</td>
+      </tr>
+      <tr className="bg-emerald-50/50 dark:border-slate-700 dark:bg-emerald-950/15">
+        <td className="p-3 font-medium">Logistic regression</td>
+        <td className="p-3 font-mono text-xs sm:text-sm">MLE → NLL / log loss</td>
+        <td className="p-3">Probabilities through <strong>σ</strong>; <strong>negative log-likelihood</strong> is <strong>convex</strong> in the usual formulation.</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+---
+
+## When can SSE be non-convex?
+
+Only in <strong>nonlinear</strong> models, like:
+
+<div className="not-prose my-5 grid gap-3 sm:grid-cols-2">
+  <div className="rounded-xl border-2 border-amber-300 bg-amber-50/90 p-4 dark:border-amber-800 dark:bg-amber-950/30">
+    <p className="m-0 text-sm font-bold text-amber-900 dark:text-amber-200">Neural networks</p>
+    <p className="mt-2 mb-0 text-sm text-slate-800 dark:text-slate-200">Composition of nonlinear activations with weights.</p>
+  </div>
+  <div className="rounded-xl border-2 border-purple-300 bg-purple-50/90 p-4 dark:border-purple-800 dark:bg-purple-950/30">
+    <p className="m-0 text-sm font-bold text-purple-900 dark:text-purple-200">Nonlinear parameterization</p>
+    <p className="mt-2 mb-0 text-sm text-slate-800 dark:text-slate-200">Models where parameters enter <em>nonlinearly</em> in the prediction.</p>
+  </div>
+</div>
+
+In those cases:
+
+- SSE <strong>can</strong> become non-convex
+- <strong>Multiple local minima</strong> can exist
+
+<div className="not-prose my-5 rounded-xl border-l-4 border-cyan-500 bg-cyan-50/70 py-3 pl-4 pr-3 dark:bg-cyan-950/20">
+  <p className="m-0 text-sm text-slate-800 dark:text-slate-200">
+    👉 But then it&apos;s not <strong>SSE itself</strong> — it&apos;s the <strong>model structure</strong> causing non-convexity.
+  </p>
+</div>
+
+---
+
+## MLE (maximum likelihood estimation)
+
+<strong>MLE</strong> instead <strong>maximizes the probability</strong> of observing our training data given our model parameters.
+
+For logistic regression, working with the <strong>negative log-likelihood</strong> (what we minimize) gives a <strong>convex</strong> problem, meaning:
+
+<div className="not-prose my-6 grid gap-3 md:grid-cols-2">
+  <div className="rounded-lg border border-emerald-300 bg-emerald-50/80 p-3 text-sm dark:border-emerald-800 dark:bg-emerald-950/25">
+    <strong className="text-emerald-900 dark:text-emerald-200">There&apos;s only one global minimum</strong> (standard convex formulation)
+  </div>
+  <div className="rounded-lg border border-emerald-300 bg-emerald-50/80 p-3 text-sm dark:border-emerald-800 dark:bg-emerald-950/25">
+    <strong className="text-emerald-900 dark:text-emerald-200">Gradient descent</strong> will converge to the optimal solution <strong>regardless of initialization</strong>
+  </div>
+  <div className="rounded-lg border border-emerald-300 bg-emerald-50/80 p-3 text-sm md:col-span-2 dark:border-emerald-800 dark:bg-emerald-950/25">
+    <strong className="text-emerald-900 dark:text-emerald-200">Efficient optimization</strong> methods apply (first-order and beyond)
+  </div>
+</div>
+
+Schematically, with labels **yᵢ ∈ {0,1}** and predictions **ŷᵢ = σ(zᵢ)**:
+
+$$
+\mathcal{L}(\boldsymbol{\theta}) = - \sum_{i} \Bigl[ y_i \log \hat{y}_i + (1 - y_i)\log(1 - \hat{y}_i) \Bigr]
+$$
+
+This is the loss equivalent to <strong>maximum likelihood</strong> for Bernoulli outcomes; it is <strong>convex in θ</strong> for standard logistic regression.
+
+---
+
+## Why do we need the sigmoid function?
+
+In linear regression, we model the target variable as:
+
+$$
+y = \theta_0 + \theta_1 x_1 + \theta_2 x_2 + \cdots + \theta_n x_n
+$$
+
+(Your note used coefficients **0, 1, 2, …, n** as subscripts — here **θ₀ … θₙ** are the same idea: intercept plus weights on each feature.)
+
+However, in <strong>classification</strong> problems, **y** is either **0** or **1** (for binary classification).
+
+If we use the linear regression equation <em>directly</em> as a prediction of &quot;probability,&quot; it could predict <strong>any real number</strong> (like **−10** or **25**), which doesn&apos;t make sense for probabilities.
+
+### Solution: use sigmoid to squash the output
+
+To ensure that our predictions are always between **0** and **1**, we apply the sigmoid to the <strong>linear score</strong> **z** (not to conflate **z** with the probability):
+
+$$
+\sigma(z) = \frac{1}{1 + e^{-z}}
+$$
+
+where **z** is the linear equation:
+
+$$
+z = mx + c \quad\text{(one feature)}
+$$
+
+or, in general,
+
+$$
+z = \theta_0 + \theta_1 x_1 + \theta_2 x_2 + \cdots + \theta_n x_n
+$$
+
+Now **σ(z)** (not **z** itself) outputs a value strictly between **0** and **1**, which we interpret as a probability:
+
+$$
+\mathbb{P}(y = 1 \mid X) = \sigma\bigl(\theta_0 + \theta_1 x_1 + \cdots + \theta_n x_n\bigr) = \frac{1}{1 + \exp\bigl(-(\theta_0 + \theta_1 x_1 + \cdots + \theta_n x_n)\bigr)}
+$$
+
+If this probability is <strong>close to 1</strong>, we classify as <strong>class 1</strong>.
+
+If it is <strong>close to 0</strong>, we classify as <strong>class 0</strong>.
+
+---
+
+<div className="not-prose mt-10 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-6 dark:border-slate-700">
+  <a href="./logistic-regression-decision-boundaries" className="text-sm font-medium text-slate-600 no-underline hover:text-emerald-700 hover:underline dark:text-slate-400 dark:hover:text-emerald-400">← Lesson 4 · Decision boundaries</a>
+  <a href="./log-likelihood-instead-of-squared-error" className="text-sm font-semibold text-emerald-700 no-underline hover:underline dark:text-emerald-400">Lesson 6 · Log likelihood &amp; BCE →</a>
+</div>

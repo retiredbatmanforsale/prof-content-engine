@@ -1,0 +1,138 @@
+---
+sidebar_label: '2 · Token embeddings'
+title: 'Lesson 2 — Token embeddings'
+description: >-
+  What a token is, why integer IDs are not enough, and how token embeddings are
+  high-dimensional vectors that encode meaning for the model.
+---
+
+# Token embeddings
+
+Neural networks need **numbers they can multiply and add**. Raw text is **symbols**; the first step is to turn it into **tokens**, then into **vectors** the transformer can process. **Token embeddings** are those vectors: they are **not** the discrete IDs the tokenizer prints—they are **learned, continuous points in a high-dimensional space** that stand in for “what this token means” inside the model.
+
+<div className="not-prose my-6 rounded-xl border border-violet-200 bg-violet-50/70 p-4 dark:border-violet-900/40 dark:bg-violet-950/25">
+  <p className="m-0 text-sm text-slate-800 dark:text-slate-200">
+    The interactive pipeline on{' '}
+    <a href="https://aiayn.aiseekhegaindia.com/" className="font-semibold text-violet-800 underline hover:no-underline dark:text-violet-200">
+      Attention is All You Need — Lex AI
+    </a>{' '}
+    walks through the same story: <strong>token IDs</strong> → <strong>embedding lookup</strong> → vectors of size <strong>d_model</strong>, before positional information and later Q/K/V projections.
+  </p>
+</div>
+
+---
+
+## What is a **token**?
+
+A **token** is whatever your **tokenizer** emits as one step in the sequence. It might be:
+
+- a **whole word**,
+- a **subword** (common in BPE / SentencePiece),
+- or a **piece of a word** (e.g. &quot;embedding&quot; → multiple tokens).
+
+So a **token** is a **unit in the model’s vocabulary**, not necessarily an English word. The sentence *The cat sat* might become three tokens—or five—depending on the tokenizer.
+
+**Important:** after tokenization, each token is stored as an **integer index** into a fixed **vocabulary** of size **|V|** (often tens of thousands of entries). That integer is the **token ID**.
+
+---
+
+## Token IDs are discrete—not “meaning vectors”
+
+A **token ID** is just **which row** of the vocabulary you mean: **14**, **982**, **4501**, … It is **categorical**:
+
+- IDs have **no useful distance**: being ID **42** does not place you “between” **41** and **43** in meaning.
+- You **cannot** feed a raw integer through a linear layer in a sensible way without turning it into a vector first.
+
+So the model does **not** “think” in IDs. IDs are **addresses** in a lookup table.
+
+<div className="not-prose my-6 overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-700">
+  <table className="w-full min-w-[300px] border-collapse text-left text-sm">
+    <thead>
+      <tr className="bg-slate-700 text-white dark:bg-slate-900">
+        <th className="p-3 font-semibold">Representation</th>
+        <th className="p-3 font-semibold">What it is</th>
+        <th className="p-3 font-semibold">Role</th>
+      </tr>
+    </thead>
+    <tbody className="text-slate-800 dark:text-slate-200">
+      <tr className="border-b border-slate-200 dark:border-slate-700">
+        <td className="p-3 font-medium">Token (symbol)</td>
+        <td className="p-3">String or subword piece (&quot;love&quot;, &quot;ing&quot;, …)</td>
+        <td className="p-3">Human-readable unit from the tokenizer</td>
+      </tr>
+      <tr className="border-b border-slate-200 dark:border-slate-700">
+        <td className="p-3 font-medium">Token ID</td>
+        <td className="p-3">Single integer in **0 … |V| − 1**</td>
+        <td className="p-3"><strong>Discrete</strong> label — which vocabulary slot</td>
+      </tr>
+      <tr className="bg-emerald-50/50 dark:bg-emerald-950/20">
+        <td className="p-3 font-medium">Token embedding</td>
+        <td className="p-3">Vector in **ℝᵈ** with **d = d_model** (e.g. 512, 768, …)</td>
+        <td className="p-3"><strong>Dense</strong> input to the network — learned &quot;meaning&quot; for optimization</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+---
+
+## Token embeddings = embedding vectors (lookup)
+
+The **token embedding layer** is a large matrix **E** with shape **(|V|, d_model)**—**|V|** rows (one per vocabulary ID), each row a **d_model**-dimensional vector.
+
+For token ID **i**, the **token embedding** is **row i** of **E** (same as multiplying a **one-hot** vector of length **|V|** by **E**).
+
+**Example** (same spirit as the Lex AI walkthrough): suppose
+
+- [&quot;I&quot;, &quot;love&quot;, &quot;mangoes&quot;] → IDs **[14, 982, 4501]**  
+- then **x₁ = E[14]**, **x₂ = E[982]**, **x₃ = E[4501]**, and each **x** is a real vector of length **d_model**.
+
+So **token embeddings are nothing mysterious**: they are **the rows of E**—**fixed-length vectors** assigned to each token type. During training, **E** updates so that predictive loss goes down; in that sense they encode **whatever statistical “meaning”** the task needs (syntax, topic, sentiment, collocations, …).
+
+<div className="not-prose my-6 rounded-2xl border-2 border-sky-200 bg-sky-50/70 p-5 dark:border-sky-900/40 dark:bg-sky-950/25">
+  <p className="m-0 text-center text-xs font-bold uppercase tracking-wide text-sky-800 dark:text-sky-200">Pipeline (conceptual)</p>
+  <p className="mt-3 mb-0 text-center font-mono text-sm leading-relaxed text-slate-800 dark:text-slate-200">
+    text → tokenizer → <strong>token IDs</strong> → <strong>lookup E</strong> → <strong>vectors</strong> (seq_len × d_model)
+  </p>
+</div>
+
+---
+
+## Why high-dimensional vectors?
+
+**d_model** is **large** (hundreds to tens of thousands) on purpose:
+
+- Many dimensions give the model **room** to represent **nuance** and **many factors** at once (not one number per token).
+- Similar tokens can end up with **nearby** directions after training if they behave similarly in context.
+- Linear layers and attention can then **mix, compare, and reshape** these vectors—operations that do not apply to bare integers.
+
+So: **token embeddings are not discrete IDs**. They are **continuous**, **high-dimensional** **embedding vectors**—the model’s first real-valued picture of each token.
+
+---
+
+## Shapes you will see everywhere
+
+| Object | Typical shape | Note |
+| ------ | ------------- | ---- |
+| **E** (embedding matrix) | **(|V|, d_model)** | e.g. 50k × 512 — [Lex AI](https://aiayn.aiseekhegaindia.com/) uses the same idea in its parameter breakdowns |
+| **Sequence of embeddings** | **(seq_len, d_model)** | One row per position after lookup |
+| **d_model** | e.g. 512, 768, 4096… | Must match the rest of the transformer |
+
+---
+
+## Not the same as Q, K, V (preview)
+
+Later layers build **queries, keys, and values** by **linear projections** of the input representation. Those **Q, K, V** are **not** the same thing as **token embeddings**: embeddings are the **initial** “meaning” vectors; **Q/K/V** are **derived views** recomputed in each layer for attention—as stressed in the full pipeline on [aiayn.aiseekhegaindia.com](https://aiayn.aiseekhegaindia.com/). You will see that split in the **attention** lessons.
+
+---
+
+## What is still missing?
+
+Embeddings say **which token** each position is, not **where** it sits in the sentence. **Order** is added by **positional encodings**—**Lesson 3**.
+
+---
+
+<div className="not-prose mt-10 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-6 dark:border-slate-700">
+  <a href="./problem-with-rnns-and-lstms" className="text-sm font-medium text-slate-600 no-underline hover:text-emerald-700 hover:underline dark:text-slate-400 dark:hover:text-emerald-400">← Lesson 1 · RNNs &amp; LSTMs</a>
+  <a href="./positional-embeddings" className="text-sm font-semibold text-emerald-700 no-underline hover:underline dark:text-emerald-400">Lesson 3 · Positional embeddings →</a>
+</div>

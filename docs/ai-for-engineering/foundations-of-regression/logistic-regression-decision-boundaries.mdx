@@ -1,0 +1,178 @@
+---
+sidebar_label: '4 · Decision boundaries'
+title: 'Lesson 4 — Logistic regression and decision boundaries'
+description: >-
+  Conditional probability P(y|x), class labels, the 0.5 threshold, and where
+  wx + b = 0 defines a line, plane, or hyperplane.
+---
+
+# Logistic regression and decision boundaries
+
+In logistic regression, we use:
+
+<strong>Conditional probability:</strong> **P(person will buy a house | age &amp; income of that person)** — the probability that a person will buy a house given their age and income is equal to what?
+
+<div className="not-prose my-5 rounded-xl border-l-4 border-violet-500 bg-violet-50/80 py-3 pl-4 pr-3 dark:bg-violet-950/25">
+  <p className="m-0 text-sm text-slate-800 dark:text-slate-200">
+    We answer that with a model that outputs a number in <strong>(0, 1)</strong>, then compare it to a cutoff (usually <strong>0.5</strong>) to choose a class.
+  </p>
+</div>
+
+Assume that there are <strong>2 classes</strong>, <strong>class 1</strong> and <strong>class 2</strong>.
+
+$$
+\mathbf{Y} = [1, 2, 1, 2, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, \ldots]
+$$
+
+<div className="not-prose my-6 grid gap-3 sm:grid-cols-2">
+  <div className="rounded-xl border-2 border-emerald-300 bg-emerald-50/90 p-4 dark:border-emerald-800 dark:bg-emerald-950/30">
+    <p className="m-0 text-xs font-bold uppercase text-emerald-800 dark:text-emerald-300">Class 1</p>
+    <p className="mt-2 mb-0 text-sm text-slate-800 dark:text-slate-200">Person <strong>will buy</strong> a house</p>
+  </div>
+  <div className="rounded-xl border-2 border-slate-300 bg-slate-50/90 p-4 dark:border-slate-600 dark:bg-slate-900/40">
+    <p className="m-0 text-xs font-bold uppercase text-slate-700 dark:text-slate-300">Class 2</p>
+    <p className="mt-2 mb-0 text-sm text-slate-800 dark:text-slate-200">Person <strong>will not buy</strong> a house</p>
+  </div>
+</div>
+
+<strong>X</strong> = [person&apos;s age; person&apos;s income]
+
+Example feature vector:
+
+$$
+\mathbf{X} = [\,\text{27 years},\; \text{100L}\,]
+$$
+
+(Here <strong>L</strong> is written as in the original note—e.g. a compact income unit your dataset uses.)
+
+If
+
+$$
+\mathbb{P}(y = \text{class 1} \mid \mathbf{X} = [27,\, 100]) > 0.5
+$$
+
+that means the point belongs to <strong>class 1</strong>, else it belongs to <strong>another class</strong>.
+
+---
+
+## From linear score to probability
+
+$$
+\mathbb{P}(y = 1 \mid \mathbf{x}) = \sigma(m\mathbf{x} + c)
+$$
+
+In vector form (same idea as <strong>wᵀx + b</strong>):
+
+$$
+\mathbb{P}(y = 1 \mid \mathbf{x}) = \sigma(\mathbf{w}^\top \mathbf{x} + b)
+$$
+
+This output is a <strong>probability that the input belongs to class 1</strong>.
+
+---
+
+## Classification rule
+
+Once we have this probability, we can make a classification decision:
+
+<div className="not-prose my-6 grid gap-3 md:grid-cols-2">
+  <div className="rounded-xl border-2 border-emerald-400 bg-emerald-100/80 p-4 text-center dark:border-emerald-700 dark:bg-emerald-950/30">
+    <p className="m-0 text-sm font-bold text-emerald-900 dark:text-emerald-200">If P &gt; 0.5</p>
+    <p className="mt-2 mb-0 text-sm text-slate-800 dark:text-slate-200">→ predict <strong>class 1</strong></p>
+  </div>
+  <div className="rounded-xl border-2 border-slate-400 bg-slate-100/80 p-4 text-center dark:border-slate-600 dark:bg-slate-800/60">
+    <p className="m-0 text-sm font-bold text-slate-900 dark:text-slate-100">If P &lt; 0.5</p>
+    <p className="mt-2 mb-0 text-sm text-slate-800 dark:text-slate-200">→ predict <strong>class 0</strong></p>
+  </div>
+</div>
+
+This creates a <strong>decision boundary</strong>: a line or curve that separates classes in the feature space.
+
+---
+
+## How decision boundaries work
+
+### Mathematical definition
+
+The decision boundary occurs where **P(y = 1) = 0.5**.
+
+This happens when
+
+$$
+\sigma(\mathbf{w}^\top \mathbf{x} + b) = 0.5
+$$
+
+Because **σ(0) = 0.5**, that simplifies to the <strong>linear</strong> equation in **x**:
+
+$$
+\mathbf{w}^\top \mathbf{x} + b = 0
+$$
+
+(In one dimension with a single feature **x**, you may write **wx + b = 0** — same idea.)
+
+---
+
+### Visual representation
+
+<div className="not-prose my-6 overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-700">
+  <table className="w-full min-w-[320px] border-collapse text-left text-sm">
+    <thead>
+      <tr className="bg-indigo-600 text-white dark:bg-indigo-800">
+        <th className="p-3 font-semibold">Feature space</th>
+        <th className="p-3 font-semibold">Decision boundary</th>
+      </tr>
+    </thead>
+    <tbody className="text-slate-800 dark:text-slate-200">
+      <tr className="border-b border-slate-200 dark:border-slate-700">
+        <td className="p-3 font-medium">2D (two features)</td>
+        <td className="p-3">A <strong>line</strong></td>
+      </tr>
+      <tr className="border-b border-slate-200 bg-slate-50/80 dark:border-slate-700 dark:bg-slate-900/40">
+        <td className="p-3 font-medium">3D (three features)</td>
+        <td className="p-3">A <strong>plane</strong></td>
+      </tr>
+      <tr>
+        <td className="p-3 font-medium">Higher dimensions</td>
+        <td className="p-3">A <strong>hyperplane</strong></td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+---
+
+### Example (two features)
+
+If we have a model with two features (**x₁** and **x₂**) and weights **w₁ = 2**, **w₂ = 3**, **b = −5**, the decision boundary equation is:
+
+$$
+2x_1 + 3x_2 - 5 = 0
+$$
+
+<div className="not-prose my-6 rounded-xl border-2 border-dashed border-indigo-400 bg-gradient-to-br from-indigo-50/90 to-white p-4 dark:border-indigo-600 dark:from-indigo-950/30 dark:to-slate-900/40">
+  <p className="m-0 text-center text-xs font-bold uppercase tracking-wide text-indigo-800 dark:text-indigo-300">2D intuition</p>
+  <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
+    <div className="rounded-lg border border-emerald-300 bg-emerald-50/90 p-3 text-center dark:border-emerald-800 dark:bg-emerald-950/25">
+      <p className="m-0 font-semibold text-emerald-900 dark:text-emerald-200">Class 1 side</p>
+      <p className="mt-1 mb-0 text-xs text-slate-700 dark:text-slate-300">Region where <strong>2x₁ + 3x₂ − 5 &gt; 0</strong> (so <strong>z &gt; 0</strong>, <strong>P &gt; 0.5</strong>)</p>
+      <p className="mt-2 mb-0 text-xs italic text-slate-600 dark:text-slate-400">(“Above” the boundary in the usual plot orientation)</p>
+    </div>
+    <div className="rounded-lg border border-slate-300 bg-slate-100/90 p-3 text-center dark:border-slate-600 dark:bg-slate-800/50">
+      <p className="m-0 font-semibold text-slate-900 dark:text-slate-100">Class 0 side</p>
+      <p className="mt-1 mb-0 text-xs text-slate-700 dark:text-slate-300">Region where <strong>2x₁ + 3x₂ − 5 &lt; 0</strong> (so <strong>z &lt; 0</strong>, <strong>P &lt; 0.5</strong>)</p>
+      <p className="mt-2 mb-0 text-xs italic text-slate-600 dark:text-slate-400">(“Below” the boundary)</p>
+    </div>
+  </div>
+</div>
+
+Points on one side of the boundary are classified as <strong>class 1</strong>; points on the other as <strong>class 0</strong> — matching the threshold rule you wrote above.
+
+---
+
+<div className="not-prose mt-10 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-6 dark:border-slate-700">
+  <div className="flex flex-wrap gap-x-4 gap-y-2">
+    <a href="./sigmoid-function-logistic-regression" className="text-sm font-medium text-slate-600 no-underline hover:text-emerald-700 hover:underline dark:text-slate-400 dark:hover:text-emerald-400">← Lesson 3</a>
+    <a href="./intro" className="text-sm font-medium text-slate-600 no-underline hover:text-emerald-700 hover:underline dark:text-slate-400 dark:hover:text-emerald-400">Overview</a>
+  </div>
+  <a href="./intuition-behind-logistic-regression" className="text-sm font-semibold text-emerald-700 no-underline hover:underline dark:text-emerald-400">Lesson 5 · Intuition &amp; MLE →</a>
+</div>

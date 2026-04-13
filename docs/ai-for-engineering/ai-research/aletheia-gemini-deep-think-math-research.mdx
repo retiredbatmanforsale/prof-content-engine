@@ -1,0 +1,306 @@
+---
+sidebar_label: '1 · Aletheia & Deep Think'
+title: 'Aletheia — Gemini Deep Think and autonomous math research'
+description: >-
+  Oracle vs symbolic solvers, the Aletheia agent loop (Generator, Verifier,
+  Reviser), benchmarks, Erdős problems, inference-time scaling, and open questions.
+---
+
+# Aletheia: when AI stops guessing and starts *proving*
+
+:::info Primary source
+
+This deep dive aligns with Google DeepMind’s write-up on **Gemini Deep Think** and the **Aletheia** math research agent: [Accelerating Mathematical and Scientific Discovery with Gemini Deep Think](https://deepmind.google/blog/accelerating-mathematical-and-scientific-discovery-with-gemini-deep-think/) (Thang Luong &amp; Vahab Mirrokni, February 2026).
+
+:::
+
+The pursuit of <strong>Artificial General Intelligence</strong> has long been haunted by a single, intractable wall: the inability of neural networks to sustain <strong>rigorous, multi-step logical consistency</strong> over the long horizons required for <em>original scientific discovery</em>. While we have seen models pass the Bar Exam or generate elegant code, the <strong>&quot;Evaluation Gap&quot;</strong>—the chasm between solving known textbook problems and uncovering novel truths—remained wide. The mathematical community has traditionally viewed Large Language Models as <strong>&quot;stochastic parrots,&quot;</strong> capable of mimicry but incapable of the deep, non-linear reasoning needed to push the frontier of human knowledge.
+
+But the release of <strong>Aletheia</strong>, a specialized math research agent developed by <strong>Google DeepMind</strong> and powered by <strong>Gemini Deep Think</strong>, has fundamentally changed the calculus of what is possible. We are no longer talking about AI solving high school geometry; we are talking about a system that <strong>autonomously generates publication-grade research papers</strong>, resolves open conjectures from the <strong>Erdős database</strong>, and bridges the gap between competition-style puzzles and professional PhD-level inquiry. This is not just an incremental update to a model; it is the debut of a <strong>new scaling law</strong>—one that prioritizes <strong>inference-time compute</strong> over sheer parameter count. In this deep dive, we will peel back the layers of the Aletheia architecture, examine the <strong>&quot;System 2&quot;</strong> thinking loops that drive its accuracy, and explore why this marks the beginning of the era of the <strong>AI Scientist</strong>.
+
+---
+
+## Context setup: the limits of the oracle
+
+Before Aletheia, the state-of-the-art in mathematical AI was dominated by two paradigms: the <strong>&quot;Oracle&quot; LLM</strong> and the <strong>&quot;Symbolic Solver&quot;</strong> like AlphaProof. The Oracle model, typified by standard GPT or Gemini iterations, works on a <strong>single-shot, next-token prediction</strong> basis. This is <strong>&quot;System 1&quot;</strong> thinking—fast, intuitive, but prone to <strong>catastrophic hallucinations</strong> when the logic chain exceeds a few steps. These models frequently fabricate citations and struggle with the <strong>&quot;superficial topic understanding&quot;</strong> caused by the scarcity of research-level training data.
+
+On the other hand, <strong>AlphaProof</strong> and <strong>AlphaGeometry</strong> represented the <strong>&quot;Symbolic&quot;</strong> camp, achieving Silver-medal performance at the International Mathematical Olympiad by combining LLMs with formal languages like <strong>Lean</strong>. However, the symbolic approach is bottlenecked by a <strong>&quot;gargantuan human scaffolding project&quot;</strong>. Every problem must be painstakingly <strong>&quot;auto-formalized&quot;</strong> into code that a compiler can understand, a process that is entirely alien to how professional mathematicians actually communicate in natural language.
+
+The evaluation gap was therefore <strong>twofold</strong>: a lack of reliability in natural language and a lack of flexibility in formal systems. Mathematicians do not work in code; they work in high-level abstractions, leveraging a vast literature that spans thousands of papers. To solve this, DeepMind realized they needed an agent that could navigate the <strong>semantic richness</strong> of natural language while maintaining the <strong>rigorous self-critique</strong> of a formal prover. This realization led to the birth of <strong>Aletheia</strong>—named after the Greek goddess of truth—designed to move beyond competition-level puzzles and into the realm of <strong>professional, open-ended research</strong>.
+
+<div className="not-prose my-6 grid gap-4 md:grid-cols-3">
+  <div className="rounded-xl border-2 border-sky-300 bg-sky-50/90 p-4 dark:border-sky-800 dark:bg-sky-950/30">
+    <p className="m-0 text-xs font-bold uppercase text-sky-800 dark:text-sky-300">Oracle LLM</p>
+    <p className="mt-2 mb-0 text-sm text-slate-800 dark:text-slate-200">
+      <strong>System 1</strong>, one-shot, fast — <em>weak</em> on long chains, citations, and depth.
+    </p>
+  </div>
+  <div className="rounded-xl border-2 border-amber-300 bg-amber-50/90 p-4 dark:border-amber-800 dark:bg-amber-950/30">
+    <p className="m-0 text-xs font-bold uppercase text-amber-800 dark:text-amber-300">Symbolic (Lean, etc.)</p>
+    <p className="mt-2 mb-0 text-sm text-slate-800 dark:text-slate-200">
+      <strong>Rigorous</strong>, but heavy <em>human formalization</em> — misaligned with how papers are written.
+    </p>
+  </div>
+  <div className="rounded-xl border-2 border-violet-300 bg-violet-50/90 p-4 dark:border-violet-800 dark:bg-violet-950/30">
+    <p className="m-0 text-xs font-bold uppercase text-violet-800 dark:text-violet-300">Aletheia</p>
+    <p className="mt-2 mb-0 text-sm text-slate-800 dark:text-slate-200">
+      <strong>Natural language</strong> + <strong>verification loops</strong> + <strong>tools</strong> — aims at research, not only contests.
+    </p>
+  </div>
+</div>
+
+---
+
+## Core concept: the Aletheia architecture
+
+Aletheia is <strong>not</strong> a single static model; it is a <strong>multi-agent system</strong> designed to manage cognitive load and verify its own reasoning chains in a recursive loop. It operates on the principle that <strong>verification is easier than generation</strong>, and that <strong>iterative revision</strong> is the key to minimizing hallucinations in complex domains.
+
+### Layer 1 — the intuition of System 2 (inference-time scaling)
+
+The core intuition behind Aletheia is the implementation of <strong>&quot;Inference-Time Scaling&quot;</strong>. While traditional models are fixed once training ends, Aletheia allows the system to <strong>&quot;think harder&quot;</strong> by allocating more compute <em>at the moment of the query</em>. This is analogous to a human mathematician spending weeks on a single proof, exploring dozens of dead ends before arriving at a robust path. The system moves away from the <strong>&quot;one-shot&quot;</strong> response and toward a <strong>&quot;multi-path&quot;</strong> exploration strategy where the model explicitly models its internal reasoning chains.
+
+Informally, answer quality $A$ depends on inference-time compute $C_{\text{inference}}$, model scale $N$, and external <strong>tools</strong>—not on $N$ alone. The relationship is captured in one place below (there is no single closed form for $f$; see also the <strong>non-monotonic</strong> caveat later):
+
+$$
+A \;=\; f\bigl(C_{\text{inference}},\, N,\, \text{tools}\bigr)
+\quad\text{with}\quad
+\frac{\partial A}{\partial C_{\text{inference}}} > 0
+\;\text{ over useful ranges.}
+$$
+
+### Layer 2 — the agentic loop (Generator, Verifier, Reviser)
+
+The architecture is composed of <strong>three primary sub-agents</strong>, each specializing in a different stage of the mathematical process. These agents interact continuously until a solution is found that passes the Verifier’s standard, or a preset computational limit is reached.
+
+<div className="not-prose my-6 overflow-x-auto rounded-xl border-2 border-indigo-200 bg-indigo-50/50 p-4 dark:border-indigo-900/40 dark:bg-indigo-950/20">
+  <p className="m-0 mb-3 text-center text-xs font-bold uppercase tracking-wide text-indigo-800 dark:text-indigo-300">Control flow (conceptual)</p>
+  <div className="flex flex-col items-center gap-2 text-sm font-mono text-slate-800 dark:text-slate-200">
+    <span className="rounded-lg border-2 border-indigo-400 bg-white px-4 py-2 dark:bg-slate-900">Problem + literature context</span>
+    <span className="text-indigo-500">↓</span>
+    <span className="rounded-lg border-2 border-emerald-500 bg-emerald-50 px-4 py-2 dark:bg-emerald-950/40">
+      <strong>Generator</strong> — candidate proof / plan
+    </span>
+    <span className="text-indigo-500">↓</span>
+    <span className="rounded-lg border-2 border-rose-500 bg-rose-50 px-4 py-2 dark:bg-rose-950/40">
+      <strong>Verifier</strong> — critique in natural language
+    </span>
+    <div className="flex flex-wrap justify-center gap-3 text-xs">
+      <span className="rounded border border-emerald-400 bg-emerald-100/80 px-2 py-1 dark:bg-emerald-900/40">OK → output</span>
+      <span className="rounded border border-amber-400 bg-amber-100/80 px-2 py-1 dark:bg-amber-900/40">Minor issues → <strong>Reviser</strong> → back to Verifier</span>
+      <span className="rounded border border-red-400 bg-red-100/80 px-2 py-1 dark:bg-red-900/40">Critically flawed → new path from Generator</span>
+    </div>
+  </div>
+</div>
+
+<div className="not-prose my-6 overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-700">
+  <table className="w-full min-w-[480px] border-collapse text-left text-sm">
+    <thead>
+      <tr className="bg-slate-700 text-white dark:bg-slate-900">
+        <th className="p-3 font-semibold">Sub-agent</th>
+        <th className="p-3 font-semibold">Technical function</th>
+        <th className="p-3 font-semibold">Role in the loop</th>
+      </tr>
+    </thead>
+    <tbody className="text-slate-800 dark:text-slate-200">
+      <tr className="border-b border-slate-200 dark:border-slate-700">
+        <td className="p-3 font-semibold text-emerald-800 dark:text-emerald-300">Generator</td>
+        <td className="p-3">Proposes initial solution plans and candidate proofs.</td>
+        <td className="p-3">Initiates the reasoning chain based on the problem and literature search.</td>
+      </tr>
+      <tr className="border-b border-slate-200 bg-slate-50/80 dark:border-slate-700 dark:bg-slate-900/40">
+        <td className="p-3 font-semibold text-rose-800 dark:text-rose-300">Verifier</td>
+        <td className="p-3">A natural language critic that identifies logical flaws.</td>
+        <td className="p-3">Rigorously checks the Generator&apos;s output for gaps, missteps, or hallucinations.</td>
+      </tr>
+      <tr>
+        <td className="p-3 font-semibold text-amber-800 dark:text-amber-300">Reviser</td>
+        <td className="p-3">An iterative refinement engine.</td>
+        <td className="p-3">Takes the Verifier&apos;s critique and the original problem to produce an improved proof.</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+If the Verifier marks a solution as <strong>&quot;critically flawed,&quot;</strong> the Generator is triggered to start an entirely new path. If the solution is <strong>&quot;technically correct but needs fixes,&quot;</strong> the Reviser steps in to refine the specific lemmas. This <strong>decoupling of generation and verification</strong> is the primary mechanism that suppresses the <strong>&quot;superficial reasoning&quot;</strong> prevalent in earlier models.
+
+### Layer 3 — breakthroughs in natural language reasoning
+
+Aletheia introduces three breakthroughs that differentiate it from the AlphaProof lineage. First, it operates <strong>entirely in natural language</strong>, avoiding the friction of formal language translation. Second, it integrates <strong>&quot;Intensive Tool Use,&quot;</strong> specifically leveraging <strong>Google Search</strong> and web browsing to navigate the complexities of mathematical literature. This capability is crucial for scientific research, as it prevents the model from <strong>&quot;hallucinating citations&quot;</strong> by grounding its claims in actual published works. Third, it utilizes an advanced version of <strong>Gemini Deep Think</strong> that generates <strong>multiple chains of reasoning in parallel</strong>, allowing it to combine the best insights from different paths into a final, unified output.
+
+---
+
+## Evidence and breakthroughs: from IMO to Erdős
+
+The performance data for Aletheia suggests that the <strong>&quot;Evaluation Gap&quot;</strong> is closing rapidly. The system has demonstrated success across a spectrum of difficulty, from high-school competitions to PhD-level research and unsolved conjectures.
+
+### Benchmark performance and scaling
+
+On the <strong>IMO-ProofBench Advanced</strong> test—a benchmark specifically designed to be more challenging than standard competition sets—Aletheia reached an unprecedented <strong>95.1% accuracy</strong>. This is a massive jump from the <strong>65.7%</strong> achieved by the <strong>&quot;IMO Gold&quot;</strong> version of Gemini Deep Think released just months prior.
+
+<div className="not-prose my-6 overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-700">
+  <table className="w-full min-w-[520px] border-collapse text-left text-sm">
+    <thead>
+      <tr className="bg-violet-600 text-white dark:bg-violet-800">
+        <th className="p-3 font-semibold">Benchmark</th>
+        <th className="p-3 font-semibold">Model / agent</th>
+        <th className="p-3 font-semibold">Success rate (accuracy)</th>
+        <th className="p-3 font-semibold">Conditional accuracy</th>
+      </tr>
+    </thead>
+    <tbody className="text-slate-800 dark:text-slate-200">
+      <tr className="border-b border-slate-200 dark:border-slate-700">
+        <td className="p-3">IMO-ProofBench Advanced</td>
+        <td className="p-3">Gemini Deep Think (July 2025)</td>
+        <td className="p-3 font-mono">65.7%</td>
+        <td className="p-3 text-slate-500">N/A</td>
+      </tr>
+      <tr className="border-b border-slate-200 bg-violet-50/60 dark:border-slate-700 dark:bg-violet-950/20">
+        <td className="p-3">IMO-ProofBench Advanced</td>
+        <td className="p-3 font-semibold">Aletheia (Jan 2026)</td>
+        <td className="p-3 font-mono font-bold text-violet-900 dark:text-violet-200">95.1%</td>
+        <td className="p-3 font-mono">98.3% <span className="text-xs text-slate-600 dark:text-slate-400">(when solution returned)</span></td>
+      </tr>
+      <tr>
+        <td className="p-3">FutureMath Basic (PhD level)</td>
+        <td className="p-3">Aletheia</td>
+        <td className="p-3 font-mono">~38% <span className="text-xs">(total)</span></td>
+        <td className="p-3 font-mono">&gt;82% <span className="text-xs text-slate-600 dark:text-slate-400">(on answered questions)</span></td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+Define $Y \in \{0,1\}$ for “returned a claimed solution” and $C$ for correctness. The conditional probability below is the same quantity as the table&apos;s conditional-accuracy column—so <strong>if Aletheia claims a solution, it is almost certainly correct</strong>. The agent&apos;s ability to <strong>&quot;admit failure&quot;</strong> matters too: it saves researchers from auditing junk outputs.
+
+$$
+\mathbb{P}(C=1 \mid Y=1) \approx 0.983
+$$
+
+### The Erdős conjectures and FirstProof success
+
+The most impressive evidence of Aletheia&apos;s capability is its performance on the <strong>Bloom&apos;s Erdős Conjectures database</strong>—a collection of nearly 1,200 problems proposed by Paul Erdős. Aletheia autonomously proposed solutions to <strong>212</strong> of the remaining <strong>700</strong> unsolved problems. Human experts confirmed that while many were incorrect, <strong>13</strong> were technically correct, and <strong>4</strong> of these were entirely novel solutions to previously open questions.
+
+Furthermore, in the <strong>&quot;FirstProof Challenge&quot;</strong>—a benchmark of 10 unpublished research-level problems—Aletheia solved <strong>6 out of 10</strong> problems with <strong>zero human intervention</strong>. Problem 7, in particular, was an <strong>&quot;atypical problem&quot;</strong> that had remained unsolved for years; Aletheia&apos;s solution was so robust that it was personally verified and lauded by the mathematician who originally proposed the conjecture.
+
+---
+
+## Insight: the paradigm shift in AI research
+
+The success of Aletheia points toward a deeper paradigm shift in the pursuit of AGI. We are moving from the <strong>&quot;Oracle&quot;</strong> era to the <strong>&quot;Agentic&quot;</strong> era, where the primary value of an AI is not its knowledge base, but its ability to <strong>manage its own reasoning budget</strong>.
+
+### The death of the one-shot oracle
+
+The traditional LLM interface—a single box where you type a question and get a single answer—is inherently limited by the <strong>&quot;Single-System&quot;</strong> architecture. Aletheia proves that for high-stakes reasoning, we must <strong>decouple the &quot;Thinking&quot; from the &quot;Output&quot;</strong>. This means that the next generation of AI development will not just be about larger datasets, but about more efficient <strong>&quot;Thinking Traces&quot;</strong> and better <strong>&quot;Verifier&quot;</strong> models.
+
+### &quot;Subconscious plagiarism&quot; and the new frontier
+
+A profound insight from the Aletheia line of work is the risk of <strong>&quot;Subconscious Plagiarism&quot;</strong>. Because these models have ingested millions of pages of mathematical literature during pretraining, they may reproduce known proofs without realizing they are not <strong>&quot;original&quot;</strong>. This forces the mathematical community to redefine what <strong>&quot;discovery&quot;</strong> means in the age of AI. Is an AI &quot;discovering&quot; a solution if it synthesizes two unrelated papers to solve a third problem? Aletheia&apos;s ability to calculate <strong>&quot;eigenweights&quot;</strong> in arithmetic geometry using techniques from algebraic combinatorics unfamiliar to human experts suggests that <strong>&quot;Discovery&quot;</strong> in the AI era may look more like <strong>&quot;Superhuman Synthesis&quot;</strong>.
+
+---
+
+## Limitations and open questions: the overthinking penalty
+
+Aletheia is not infallible. Its deployment on the Erdős problems revealed that while it can solve world-class questions, it still has a high <strong>&quot;False Positive&quot;</strong> rate in certain unsupervised contexts—out of <strong>212</strong> proposed solutions, <strong>137</strong> were ultimately incorrect.
+
+### Non-monotonic scaling of thought
+
+Research into inference-time scaling has identified a <strong>&quot;Non-monotonic trend&quot;</strong>: beyond a certain point, models can <strong>&quot;overthink&quot;</strong>—circular logic, doubting good steps—so quality need not rise forever with more compute.
+
+$$
+\exists\, C_1 < C_2 \quad \text{such that} \quad A(C_1) > A(C_2).
+$$
+
+<div className="not-prose my-6 overflow-x-auto rounded-xl border border-rose-200 dark:border-rose-900/40">
+  <table className="w-full min-w-[480px] border-collapse text-left text-sm">
+    <thead>
+      <tr className="bg-rose-700 text-white dark:bg-rose-900">
+        <th className="p-3 font-semibold">Scaling constraint</th>
+        <th className="p-3 font-semibold">Technical limitation</th>
+        <th className="p-3 font-semibold">Impact on Aletheia</th>
+      </tr>
+    </thead>
+    <tbody className="text-slate-800 dark:text-slate-200">
+      <tr className="border-b border-slate-200 dark:border-slate-700">
+        <td className="p-3 font-medium">KV cache bottleneck</td>
+        <td className="p-3">Memory grows with reasoning chain length.</td>
+        <td className="p-3">Limits depth and breadth of exploration paths.</td>
+      </tr>
+      <tr className="border-b border-slate-200 bg-rose-50/50 dark:border-slate-700 dark:bg-rose-950/15">
+        <td className="p-3 font-medium">Overthinking penalty</td>
+        <td className="p-3">Extended &quot;thinking traces&quot; increase variance.</td>
+        <td className="p-3">Precision can decline if wait/rethink loops run too long.</td>
+      </tr>
+      <tr>
+        <td className="p-3 font-medium">Tool execution order</td>
+        <td className="p-3">Wrong tool for a specific lemma.</td>
+        <td className="p-3">Ambiguity in tool-use paths can degrade reliability.</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+Furthermore, while Aletheia is <strong>&quot;hallucination-mitigated&quot;</strong> through its Verifier and Search tools, it is not <strong>&quot;hallucination-free&quot;</strong>. It can still misquote legitimate sources or fail to recognize subtle errors in complex long-horizon proofs.
+
+---
+
+## Future implications: the era of the AI scientist
+
+The trajectory from Aletheia leads directly to <strong>&quot;Autonomous Research Agents&quot;</strong> capable of producing publishable work across domains like pharma, materials science, and energy.
+
+### Impact on academia and publishing
+
+We are likely to see a standard taxonomy of <strong>&quot;Autonomous Mathematics Research Levels,&quot;</strong> similar to the SAE levels of vehicle autonomy.
+
+<div className="not-prose my-6 overflow-x-auto rounded-xl border border-emerald-200 dark:border-emerald-900/40">
+  <table className="w-full min-w-[480px] border-collapse text-left text-sm">
+    <thead>
+      <tr className="bg-emerald-700 text-white dark:bg-emerald-900">
+        <th className="p-3 font-semibold">Autonomy level</th>
+        <th className="p-3 font-semibold">Definition</th>
+        <th className="p-3 font-semibold">AI contribution</th>
+      </tr>
+    </thead>
+    <tbody className="text-slate-800 dark:text-slate-200">
+      <tr className="border-b border-slate-200 dark:border-slate-700">
+        <td className="p-3 font-mono font-bold">Level 0</td>
+        <td className="p-3">Primarily human</td>
+        <td className="p-3">Secondary AI input (explanation, literature search).</td>
+      </tr>
+      <tr className="border-b border-slate-200 bg-emerald-50/50 dark:border-slate-700 dark:bg-emerald-950/20">
+        <td className="p-3 font-mono font-bold">Level 1</td>
+        <td className="p-3">Human–AI collaboration</td>
+        <td className="p-3">AI provides strategies; human fills in technical details.</td>
+      </tr>
+      <tr>
+        <td className="p-3 font-mono font-bold">Level 2</td>
+        <td className="p-3">Essentially autonomous</td>
+        <td className="p-3">AI generates publishable-grade results without human intervention.</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+DeepMind&apos;s public materials also sketch a finer <strong>Level 0–4</strong> taxonomy for mathematics (through Level 2 publishable today; Levels 3–4 reserved for major advances). As systems like <strong>&quot;Aletheia++&quot;</strong> are integrated with laboratory automation (LIMS) and simulation tools, we will transition from AI-assisted math to <strong>AI-driven hypothesis factories</strong>.
+
+---
+
+## Creator&apos;s POV: why most people are missing the &quot;inference gap&quot;
+
+This is the most critical take: most people are focused on the <strong>&quot;Parameter War,&quot;</strong> but the real revolution is the <strong>&quot;Inference War.&quot;</strong> Aletheia represents a move away from the idea that a model <strong>&quot;knows&quot;</strong> an answer. Instead, the model <strong>&quot;searches&quot;</strong> for an answer.
+
+This is the beginning of the end for static benchmarks. If a model can spend <strong>100× more compute at test-time</strong> to solve a problem, then traditional <strong>one-shot</strong> evaluations like MMLU become incomplete as sole arbiters. We are entering an era where <strong>compute-per-token</strong> at inference is central to the <strong>effective scaling law</strong>. Most analysts are missing that Aletheia isn&apos;t just a better Gemini; it&apos;s a <strong>new way to use compute</strong>. The real winner in the AI race won&apos;t be the lab with the most data alone, but the lab with the best <strong>&quot;System 2&quot; architecture</strong>—the one that knows how to make its model <strong>&quot;think&quot;</strong> before it <strong>&quot;talks&quot;</strong>.
+
+---
+
+## Outro
+
+Aletheia is more than a math agent; it is a proof of concept for the future of human intelligence. By combining natural language flexibility with agentic rigor, DeepMind has bridged the gap from Olympiads to original research. We are moving from AI that answers questions to AI that asks them—and then spends weeks finding the proof.
+
+If you want to stay ahead of the curve as we transition from chatbots to autonomous scientists, hit subscribe. We&apos;re going to be tracking the next leap: when these agents move from the digital whiteboard to the physical lab. See you in the next deep dive.
+
+---
+
+<div className="not-prose mt-10 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-6 dark:border-slate-700">
+  <a href="./intro" className="text-sm font-medium text-slate-600 no-underline hover:text-indigo-700 hover:underline dark:text-slate-400 dark:hover:text-indigo-400">← AI Research overview</a>
+  <span className="text-sm text-slate-500 dark:text-slate-400">More lessons coming</span>
+</div>

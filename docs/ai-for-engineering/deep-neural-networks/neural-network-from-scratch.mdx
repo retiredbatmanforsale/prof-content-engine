@@ -1,0 +1,213 @@
+---
+sidebar_label: '10 · From scratch (code)'
+title: 'Lesson 10 — Neural networks from scratch (NumPy)'
+description: >-
+  Walkthrough aligned with the lexai-fellowship notebook: architecture init,
+  random weights, forward pass with sigmoid, MSE loss, backprop as gradient
+  descent, training loop, and prediction.
+---
+
+# **Neural networks from scratch** (implementation)
+
+This lesson follows the **same order** as the course notebooks: **architecture** → **parameter init** → **forward** → **loss** → **backward** → **training loop** → **prediction**. The reference implementation is **[`neural_network_scratch.ipynb`](https://github.com/retiredbatmanforsale/lexai-fellowship/blob/main/neural_network_scratch.ipynb)** in the **[lexai-fellowship](https://github.com/retiredbatmanforsale/lexai-fellowship)** repo (**NumPy** only—no autograd).
+
+---
+
+## 1. Initializing the architecture
+
+The **`SimpleNeuralNetwork`** class takes **`input_size`**, **`hidden_size`**, and **`learning_rate`**. That fixes the **story** from Lesson 9:
+
+- **Input layer:** one feature dimension per column of **X** (shape **`(n_samples, n_features)`**).  
+- **Hidden layer:** **`hidden_size`** neurons—a **hyperparameter** (Lesson 7).  
+- **Output layer:** **one** neuron for **binary** targets; **ŷ** is read as **P(class 1)** (Lesson 9).
+
+```python
+def __init__(self, input_size, hidden_size, learning_rate=0.01):
+    self.input_size = input_size
+    self.hidden_size = hidden_size
+    self.learning_rate = learning_rate
+    # weights and biases created next…
+```
+
+---
+
+## 2. Parameter initialization in the constructor
+
+**Trainable** tensors are **`W1`**, **`b1`**, **`W2`**, **`b2`** (Lessons 5–7). Shapes follow matrix multiplication **along the batch**:
+
+- **`W1`:** **`(input_size, hidden_size)`** — each column is weights into one hidden unit.  
+- **`b1`:** **`(1, hidden_size)`** — broadcast over rows of the batch.  
+- **`W2`:** **`(hidden_size, 1)`** — hidden → single output.  
+- **`b2`:** **`(1, 1)`** — output bias.
+
+---
+
+## 3. Random weights; biases start at zero
+
+**Weights** are **small random** numbers so symmetry breaks and signals flow; **`np.random.randn(...) * 0.5`** is the scale used in the notebook. **Biases** start at **zero** (`np.zeros`).
+
+```python
+self.W1 = np.random.randn(self.input_size, self.hidden_size) * 0.5
+self.b1 = np.zeros((1, self.hidden_size))
+
+self.W2 = np.random.randn(self.hidden_size, 1) * 0.5
+self.b2 = np.zeros((1, 1))
+```
+
+---
+
+## 4. Forward pass: matmul + sigmoid
+
+**Hidden** pre-activation and activation:
+
+$$
+\mathbf{Z}_1 = \mathbf{X} W_1 + \mathbf{b}_1, \qquad \mathbf{A}_1 = \sigma(\mathbf{Z}_1)
+$$
+
+**Output** (second sigmoid):
+
+$$
+\mathbf{Z}_2 = \mathbf{A}_1 W_2 + \mathbf{b}_2, \qquad \mathbf{A}_2 = \sigma(\mathbf{Z}_2)
+$$
+
+In NumPy (batch **X** has shape **`(m, input_size)`**):
+
+```python
+def forward(self, X):
+    self.z1 = X @ self.W1 + self.b1
+    self.a1 = self.sigmoid(self.z1)
+
+    self.z2 = self.a1 @ self.W2 + self.b2
+    self.a2 = self.sigmoid(self.z2)
+
+    return self.a1, self.a2
+```
+
+So **hidden** and **output** “activations” are both **σ** of an **affine** transform—same **pattern** as Lesson 5, with **real** code layout.
+
+---
+
+## 5. Sigmoid: probabilities in **(0, 1)**
+
+```python
+def sigmoid(self, x):
+    x = np.clip(x, -500, 500)  # avoid overflow in exp
+    return 1 / (1 + np.exp(-x))
+```
+
+**Clipping** **z** before **`exp`** is a **numeric** stability trick; the **math** is still **σ(z) = 1 / (1 + e⁻ᶻ)** (Lesson 3).
+
+For **backprop**, the notebook uses **`sigmoid_derivative`**. It is written to take **already-sigmoided** values **x = σ(z)** and return **σ(z)(1 − σ(z))**, which is **dσ/dz**—handy because **`forward`** stores **a1**, **a2**.
+
+```python
+def sigmoid_derivative(self, x):
+    return x * (1 - x)  # x should be sigmoid(z), not raw z
+```
+
+---
+
+## 6. Loss: mean squared error
+
+Training minimizes **MSE** over the batch:
+
+$$
+\mathcal{L} = \frac{1}{m} \sum_{i=1}^{m} (y_i - \hat{y}_i)^2
+$$
+
+```python
+loss = np.mean((y - output) ** 2)
+```
+
+**Note:** For **true probabilities** and **0/1** labels, **binary cross-entropy** is often paired with **sigmoid** (Lesson 4). This notebook **intentionally** uses **MSE** so you see **another** **loss** in code; the **backward** deltas are written to match this choice.
+
+---
+
+## 7. Backpropagation = gradient computation + descent step
+
+In code, **“backpropagation”** means: **compute gradients** of the loss w.r.t. **W1**, **b1**, **W2**, **b2** with the **chain rule** (Lesson 6), then **apply** the **gradient-based update**. The notebook folds both into **`backward`** and uses the same **learning rate** and **batch size** **m** in the update.
+
+**Output-side delta** (error times local derivative of σ):
+
+```python
+m = X.shape[0]
+output_error = y - output
+output_delta = output_error * self.sigmoid_derivative(output)
+```
+
+**Propagate** to the hidden layer and form **hidden_delta**:
+
+```python
+hidden_error = output_delta @ self.W2.T
+hidden_delta = hidden_error * self.sigmoid_derivative(self.a1)
+```
+
+These steps are the **chain rule** in **matrix** form: **sensitivity** flows **backward** through **W2**, then through **σ** at the hidden activations.
+
+---
+
+## 8. Gradients w.r.t. weights and biases
+
+From the deltas, **outer products** and **sums** over the batch implement the parameter updates in the notebook’s **`backward`** method for this **MSE** + **sigmoid** setup:
+
+```python
+self.W2 += self.a1.T @ output_delta * self.learning_rate / m
+self.b2 += np.sum(output_delta, axis=0, keepdims=True) * self.learning_rate / m
+
+self.W1 += X.T @ hidden_delta * self.learning_rate / m
+self.b1 += np.sum(hidden_delta, axis=0, keepdims=True) * self.learning_rate / m
+```
+
+So **each scalar** in **W1**, **b1**, **W2**, **b2** gets an update driven by **how** it **affected** the **loss** through **forward** **graph**—exactly the **story** of Lesson 6, **implemented** **by hand**.
+
+---
+
+## 9. Training loop and prediction
+
+**`train`** repeats **forward → loss → backward** for **`epochs`** and records **loss** (e.g. to plot **loss vs epoch**):
+
+```python
+def train(self, X, y, epochs=1000):
+    losses = []
+    for epoch in range(epochs):
+        _, output = self.forward(X)
+        loss = np.mean((y - output) ** 2)
+        losses.append(loss)
+        self.backward(X, y, output)
+    return losses
+```
+
+**`predict`** is **inference-only**: **forward** pass, return **output** probabilities—no loss, no weight change (Lesson 5).
+
+```python
+def predict(self, X):
+    _, output = self.forward(X)
+    return output
+```
+
+The notebook **demo** trains on **XOR**-style data so you can see **nonlinear** **boundary** **learning** with **one** **hidden** **layer**.
+
+---
+
+## End-to-end order (checklist)
+
+1. **Constructor** — store **sizes** and **learning rate**.  
+2. **Init** **W1**, **b1**, **W2**, **b2** — **random** **weights**, **zero** **biases**.  
+3. **`forward`** — **X @ W1 + b1** → **σ**; **a1 @ W2 + b2** → **σ**.  
+4. **Loss** — **MSE** on **ŷ** vs **y**.  
+5. **`backward`** — **deltas** via **chain rule**; **update** **all** **parameters**.  
+6. **`train`** — loop **epochs**; **`predict`** — **forward** **only**.
+
+Work through the **[notebook](https://github.com/retiredbatmanforsale/lexai-fellowship/blob/main/neural_network_scratch.ipynb)** cell by cell with this list open—you are **reifying** every **lesson** in **executable** **NumPy**.
+
+---
+
+## One-line story
+
+**Architecture** in **`__init__`**, **random** **W**, **zero** **b**, **matmul** + **σ** **forward**, **MSE** **loss**, **manual** **chain-rule** **backward**, **SGD-style** **updates**, **epochs** for **training**, **`predict`** for **inference**.
+
+---
+
+<div className="not-prose mt-10 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-6 dark:border-slate-700">
+  <a href="./neural-network-architecture" className="text-sm font-medium text-slate-600 no-underline hover:text-emerald-700 hover:underline dark:text-slate-400 dark:hover:text-emerald-400">← Lesson 9 · Architecture recap</a>
+  <a href="./intro" className="text-sm font-semibold text-emerald-700 no-underline hover:underline dark:text-emerald-400">Course overview →</a>
+</div>

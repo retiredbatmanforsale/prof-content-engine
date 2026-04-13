@@ -1,0 +1,220 @@
+---
+sidebar_label: '4 · Loss functions'
+title: 'Lesson 4 — Loss functions'
+description: >-
+  Why we need loss, MSE for intuition, its limits for probabilities, binary
+  cross-entropy, and why sigmoid + BCE are paired—setting up backprop.
+---
+
+# Loss functions
+
+You have **layers**, **activations**, and a **forward pass** that produces **ŷ**. The network is a **machine**—but **who** decides if the machine is **right**? This lesson follows a **three-act** story: why **loss** exists at all, why we **start** with **mean squared error (MSE)** for **intuition**, why that story **breaks** for **confident** **probabilities**, and why **binary cross-entropy (BCE)** is the usual **hero** for **binary** classification—**designed** to pair with a **sigmoid** output.
+
+---
+
+<div className="not-prose my-8 rounded-2xl border-2 border-violet-400 bg-gradient-to-br from-violet-50 to-indigo-50 px-5 py-4 text-center dark:border-violet-700 dark:from-violet-950/40 dark:to-indigo-950/40">
+  <p className="m-0 text-xs font-bold uppercase tracking-widest text-violet-800 dark:text-violet-200">Act 1</p>
+  <p className="mt-2 mb-0 text-lg font-bold text-slate-900 dark:text-slate-100">Why do we even need a loss function?</p>
+</div>
+
+## We’ve built a net. It produces an output. Is it **good**?
+
+Imagine showing a friend a number—**0.73**—and asking: “Is this a **good** answer?” They cannot say **yes** or **no** until they know **what** was **supposed** to happen. A **loss function** is the **ruler**: it **scores** how far the model’s **prediction** sits from **truth**.
+
+**Loss** = a single number (lower is better) that answers: **“How wrong are we?”**
+
+<div className="not-prose my-6 overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-700">
+  <table className="w-full min-w-[280px] border-collapse text-left text-sm">
+    <thead>
+      <tr className="bg-slate-700 text-white dark:bg-slate-900">
+        <th className="p-3 font-semibold">Prediction **ŷ**</th>
+        <th className="p-3 font-semibold">Actual **y**</th>
+        <th className="p-3 font-semibold">Story</th>
+      </tr>
+    </thead>
+    <tbody className="text-slate-800 dark:text-slate-200">
+      <tr className="border-b border-slate-200 dark:border-slate-700">
+        <td className="p-3 font-mono">0.8</td>
+        <td className="p-3 font-mono">1</td>
+        <td className="p-3"><strong>Small</strong> gap—feels “close enough” to start</td>
+      </tr>
+      <tr className="bg-rose-50/50 dark:bg-rose-950/20">
+        <td className="p-3 font-mono">0.2</td>
+        <td className="p-3 font-mono">1</td>
+        <td className="p-3"><strong>Big</strong> gap—clearly off</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<div className="not-prose my-6 rounded-xl border-l-4 border-emerald-500 bg-emerald-50/70 py-3 pl-4 pr-3 dark:bg-emerald-950/25">
+  <p className="m-0 text-sm font-semibold text-emerald-900 dark:text-emerald-200">Key idea (carry this forward)</p>
+  <p className="mt-2 mb-0 text-sm text-slate-800 dark:text-slate-200">
+    **Loss** measures a kind of **distance** (not always Euclidean—depends on the formula) between **prediction** and **truth**. **Training** = adjust weights so that distance **shrinks**.
+  </p>
+</div>
+
+**Mental model (preview):**
+
+- **Neural network** ≈ **function approximator**
+- **Loss** ≈ **objective** (“what we want small”)
+- **Training** ≈ **repeatedly** **minimize** that objective
+
+---
+
+<div className="not-prose my-8 rounded-2xl border-2 border-sky-400 bg-gradient-to-br from-sky-50 to-cyan-50 px-5 py-4 text-center dark:border-sky-700 dark:from-sky-950/40 dark:to-cyan-950/40">
+  <p className="m-0 text-xs font-bold uppercase tracking-widest text-sky-800 dark:text-sky-200">Act 2</p>
+  <p className="mt-2 mb-0 text-lg font-bold text-slate-900 dark:text-slate-100">Mean squared error — intuition first</p>
+  <p className="mt-1 mb-0 text-xs text-slate-600 dark:text-slate-400">We start here on purpose: geometry you can **see**, smooth curves you can **optimize**.</p>
+</div>
+
+## MSE: the friendly default for **regression**
+
+For **n** examples, compare scalar **y** and **ŷ**:
+
+$$
+L_{\text{MSE}} = \frac{1}{n} \sum_{i=1}^{n} \bigl(y_i - \hat{y}_i\bigr)^2
+$$
+
+**Why it feels good:**
+
+- **Squaring** makes **big** errors **much** more expensive than tiny ones (**outliers** shout loudly).
+- **Symmetric:** predicting **too high** vs **too low** by the same amount costs the **same**.
+- **Smooth:** as a function of **ŷ** (for fixed **y**), it is a **parabola**—derivatives exist and change **gradually** → friendly for **gradient-based** optimization later (**backprop**).
+
+<div className="not-prose my-6 flex flex-col items-center gap-3 rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-700 dark:bg-slate-900/50">
+  <p className="m-0 text-xs font-bold uppercase text-slate-500 dark:text-slate-400">Shape of error vs prediction (fixed y = 1)</p>
+  <p className="m-0 text-xs text-slate-600 dark:text-slate-400">Loss ∝ (ŷ − 1)² — minimum at **ŷ = 1**</p>
+  <svg viewBox="0 0 120 80" className="h-32 w-full max-w-xs text-emerald-600 dark:text-emerald-400" aria-hidden>
+    <path
+      d="M 10 70 Q 60 8 110 70"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.5"
+      strokeLinecap="round"
+    />
+    <line x1="10" y1="72" x2="110" y2="72" stroke="currentColor" strokeOpacity="0.3" strokeWidth="1" />
+    <text x="54" y="78" fill="currentColor" fillOpacity="0.45" fontSize="10" fontFamily="system-ui,sans-serif">
+      ŷ
+    </text>
+  </svg>
+</div>
+
+---
+
+## ⚠️ Deliberate discomfort: same label, different **confidence**
+
+Suppose **y = 1** (positive class). Compare **ŷ = 0.9** vs **ŷ = 0.6**—both on the **correct** side of 0.5.
+
+**MSE** says:
+
+$$
+(1 - 0.9)^2 = 0.01, \qquad (1 - 0.6)^2 = 0.16
+$$
+
+So MSE **does** penalize **0.6** more—but the **ratio** is modest compared to how **humans** feel: **0.9** is **confident and right**; **0.6** is **hesitant**. For **probability** outputs, we often want a loss that **cares more** about **being sure while wrong** than MSE’s pure **squared gap** story captures.
+
+<div className="not-prose my-6 rounded-xl border-2 border-amber-300 bg-amber-50/90 p-4 dark:border-amber-700 dark:bg-amber-950/30">
+  <p className="m-0 text-sm font-semibold text-amber-900 dark:text-amber-200">The tension</p>
+  <p className="mt-2 mb-0 text-sm text-slate-800 dark:text-slate-200">
+    MSE is **excellent** for **real-valued** regression. For **probabilities** in **classification**, we want a loss that speaks the language of **odds**, **logs**, and **calibration**—enter **cross-entropy**.
+  </p>
+</div>
+
+---
+
+<div className="not-prose my-8 rounded-2xl border-2 border-rose-400 bg-gradient-to-br from-rose-50 to-orange-50 px-5 py-4 text-center dark:border-rose-700 dark:from-rose-950/40 dark:to-orange-950/40">
+  <p className="m-0 text-xs font-bold uppercase tracking-widest text-rose-800 dark:text-rose-200">Act 3</p>
+  <p className="mt-2 mb-0 text-lg font-bold text-slate-900 dark:text-slate-100">Binary cross-entropy — built for probabilities</p>
+</div>
+
+## BCE: “Don’t be **confidently** wrong”
+
+For **y ∈ {0, 1}** and **ŷ ∈ (0, 1)** (model probability of class **1**):
+
+$$
+L_{\text{BCE}} = -\frac{1}{n} \sum_{i=1}^{n} \Bigl[ y_i \log(\hat{y}_i) + (1 - y_i)\log(1 - \hat{y}_i) \Bigr]
+$$
+
+(Implementations **clip** **ŷ** slightly inside **(0, 1)** so **log** stays finite.)
+
+**Intuition:** **log** blows up near **zero**. If **y = 1** but you predict **ŷ = 0.01**, then **log(0.01)** is **hugely** negative—after the minus sign, **loss explodes**. **Confident wrong** answers pay a **steep** price.
+
+<div className="not-prose my-6 overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-700">
+  <table className="w-full min-w-[300px] border-collapse text-left text-sm">
+    <thead>
+      <tr className="bg-slate-700 text-white dark:bg-slate-900">
+        <th className="p-3 font-semibold">Situation (y = 1)</th>
+        <th className="p-3 font-semibold">BCE story</th>
+      </tr>
+    </thead>
+    <tbody className="text-slate-800 dark:text-slate-200">
+      <tr className="border-b border-slate-200 dark:border-slate-700">
+        <td className="p-3">**ŷ = 0.99** (confident, correct)</td>
+        <td className="p-3">**Small** loss — **log(0.99)** near 0</td>
+      </tr>
+      <tr className="bg-rose-50/50 dark:bg-rose-950/20">
+        <td className="p-3">**ŷ = 0.01** (confident, **wrong**)</td>
+        <td className="p-3"><strong>HUGE</strong> loss — **log(0.01)** very negative</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<div className="not-prose my-6 rounded-xl border-2 border-violet-300 bg-violet-50/90 p-4 text-center dark:border-violet-700 dark:bg-violet-950/30">
+  <p className="m-0 text-sm font-bold text-violet-900 dark:text-violet-100">🔥 One-line teaching insight</p>
+  <p className="mt-2 mb-0 text-base text-slate-800 dark:text-slate-200">**BCE** ≈ **“Don’t be confidently wrong.”**</p>
+</div>
+
+---
+
+## Notice something interesting… (bridge to **Lesson 3**)
+
+- **BCE** expects **ŷ** to behave like a **probability** → must lie in **(0, 1)**.
+- A **sigmoid** on the **logit** does **exactly** that.
+
+So **sigmoid + BCE** is **not** a random pairing—it is a **designed** match between **output** semantics and **loss** semantics. (Same spirit as **softmax + cross-entropy** for **multi-class**.)
+
+<div className="not-prose my-6 grid gap-3 sm:grid-cols-2">
+  <div className="rounded-xl border border-sky-200 bg-sky-50/85 p-4 dark:border-sky-800 dark:bg-sky-950/25">
+    <p className="m-0 text-xs font-bold uppercase text-sky-800 dark:text-sky-200">Regression</p>
+    <p className="mt-2 mb-0 text-sm text-slate-800 dark:text-slate-200">**Linear** output + **MSE** (or Huber, …)</p>
+  </div>
+  <div className="rounded-xl border border-emerald-200 bg-emerald-50/85 p-4 dark:border-emerald-800 dark:bg-emerald-950/25">
+    <p className="m-0 text-xs font-bold uppercase text-emerald-800 dark:text-emerald-200">Binary classification</p>
+    <p className="mt-2 mb-0 text-sm text-slate-800 dark:text-slate-200">**Sigmoid** probability + **BCE**</p>
+  </div>
+</div>
+
+---
+
+## Final mental model
+
+| Piece | Role |
+| ----- | ---- |
+| **Network** | Maps inputs → predictions |
+| **Loss** | Scores **wrongness** |
+| **Training** | Change weights to **lower** loss |
+
+---
+
+## 🧩 How this sets up **backprop**
+
+**Forward pass** → compute **ŷ**  
+**Loss** → compute **how wrong**  
+**Backward pass** → **gradients** of loss w.r.t. weights (**chain rule** through layers)
+
+**Next lesson territory:** “We know **how wrong** we are—**which way** should each weight nudge?” That is **gradient descent** and **backpropagation**.
+
+---
+
+## 💡 Advanced layer (one line)
+
+**Binary cross-entropy** corresponds to **maximum likelihood** under a **Bernoulli** model—minimizing BCE is **equivalent** to **maximizing** the **log-probability** of the labels given the predicted probabilities. Same bridge from **neural nets** → **statistics** → **machine learning theory**.
+
+---
+
+<div className="not-prose mt-10 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-6 dark:border-slate-700">
+  <a href="./activation-functions" className="text-sm font-medium text-slate-600 no-underline hover:text-emerald-700 hover:underline dark:text-slate-400 dark:hover:text-emerald-400">← Lesson 3 · Activation functions</a>
+  <a href="./forward-pass" className="text-sm font-semibold text-emerald-700 no-underline hover:underline dark:text-emerald-400">Lesson 5 · Forward pass →</a>
+</div>

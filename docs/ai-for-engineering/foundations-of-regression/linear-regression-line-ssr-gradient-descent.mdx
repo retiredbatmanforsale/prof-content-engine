@@ -1,0 +1,432 @@
+---
+sidebar_label: '1 · Linear regression'
+title: 'Lesson 1 — Linear regression: lines, SSR, and gradient descent'
+description: >-
+  From y = wx + b to hyperplanes, residuals and sum of squared errors, gradient
+  descent updates, intuition, and the normal equation.
+---
+
+# Linear regression
+
+## Understanding how a line is represented in linear regression
+
+Let&apos;s start with a simple example:
+
+<div className="not-prose my-6 overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-700">
+  <table className="w-full min-w-[280px] border-collapse text-left text-sm">
+    <thead>
+      <tr className="bg-emerald-600 text-white dark:bg-emerald-800">
+        <th className="p-3 font-semibold">x</th>
+        <th className="p-3 font-semibold">y</th>
+      </tr>
+    </thead>
+    <tbody className="text-slate-800 dark:text-slate-200">
+      <tr className="border-b border-slate-200 dark:border-slate-700">
+        <td className="p-3 font-mono">2</td>
+        <td className="p-3 font-mono">2</td>
+      </tr>
+      <tr className="border-b border-slate-200 dark:border-slate-700">
+        <td className="p-3 font-mono">4</td>
+        <td className="p-3 font-mono">8</td>
+      </tr>
+      <tr className="border-b border-slate-200 dark:border-slate-700">
+        <td className="p-3 font-mono">5</td>
+        <td className="p-3 font-mono">11</td>
+      </tr>
+      <tr>
+        <td className="p-3 font-mono">100</td>
+        <td className="p-3 font-mono">296</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+Here, we&apos;re not trying to classify anything, we&apos;re predicting a <strong>continuous value</strong>. This is <strong>regression</strong>, not classification.
+
+<div className="not-prose my-6 rounded-xl border-l-4 border-sky-500 bg-sky-50/80 py-3 pl-4 pr-3 dark:bg-sky-950/25">
+  <p className="m-0 text-xs font-bold uppercase tracking-wide text-sky-800 dark:text-sky-300">Real-world analogy</p>
+  <p className="mt-2 mb-0 text-sm text-slate-800 dark:text-slate-200">
+    Let&apos;s say <strong>x</strong> is the size of a house in square yards, and <strong>y</strong> is the price of the house. We&apos;re trying to learn a function that maps <strong>size → price</strong>.
+  </p>
+</div>
+
+---
+
+## The equation of a line (1D input)
+
+When there is only one input feature, the relationship is modeled as:
+
+$$
+y = mx + c
+$$
+
+Or more generally, in machine learning terms:
+
+$$
+y = wx + b
+$$
+
+<div className="not-prose my-5 grid gap-3 sm:grid-cols-2">
+  <div className="rounded-xl border-2 border-violet-300 bg-violet-50/90 p-4 dark:border-violet-800 dark:bg-violet-950/30">
+    <p className="m-0 text-sm font-bold text-violet-900 dark:text-violet-200">w (or m)</p>
+    <p className="mt-1 mb-0 text-sm text-slate-800 dark:text-slate-200">The <strong>weight</strong> or <strong>slope</strong></p>
+  </div>
+  <div className="rounded-xl border-2 border-amber-300 bg-amber-50/90 p-4 dark:border-amber-800 dark:bg-amber-950/30">
+    <p className="m-0 text-sm font-bold text-amber-900 dark:text-amber-200">b (or c)</p>
+    <p className="mt-1 mb-0 text-sm text-slate-800 dark:text-slate-200">The <strong>bias</strong> or <strong>intercept</strong></p>
+  </div>
+</div>
+
+---
+
+## Moving beyond 1D: multiple input features
+
+What happens when we have more than one input?
+
+- **X₁** = size (sq. yards)
+- **X₂** = location score
+- **X₃** = city weight
+
+The equation becomes:
+
+$$
+y = w_1 x_1 + w_2 x_2 + w_3 x_3 + b
+$$
+
+In compact vector form (weights **w** ∈ ℝⁿ, input **x** ∈ ℝⁿ):
+
+$$
+y = \mathbf{w}^\top \mathbf{x} + b
+$$
+
+This is still a <strong>linear model</strong>, but it&apos;s now a <strong>hyperplane</strong> in higher dimensions:
+
+<div className="not-prose my-6 grid gap-3 md:grid-cols-3">
+  <div className="rounded-lg border border-indigo-200 bg-indigo-50/80 p-3 text-center text-sm dark:border-indigo-900/40 dark:bg-indigo-950/25">
+    <strong>2</strong> input features → <strong>2D</strong> hyperplane (a line in feature space cross-sections)
+  </div>
+  <div className="rounded-lg border border-indigo-200 bg-indigo-50/80 p-3 text-center text-sm dark:border-indigo-900/40 dark:bg-indigo-950/25">
+    <strong>3</strong> input features → <strong>3D</strong> hyperplane
+  </div>
+  <div className="rounded-lg border border-indigo-200 bg-indigo-50/80 p-3 text-center text-sm dark:border-indigo-900/40 dark:bg-indigo-950/25">
+    <strong>N</strong> input features → <strong>N</strong>-dimensional hyperplane
+  </div>
+</div>
+
+Each **wᵢ** is a parameter that the model learns during training.
+
+---
+
+## Visualizing a line
+
+Consider the equation:
+
+$$
+y = 3x + (-4)
+$$
+
+This is a classic slope-intercept form of a line:
+
+<div className="not-prose my-5 flex flex-wrap gap-4">
+  <div className="rounded-xl border-2 border-teal-400 bg-teal-50 px-4 py-2 dark:border-teal-700 dark:bg-teal-950/30">
+    <span className="text-sm font-bold text-teal-900 dark:text-teal-200">Slope (m) = 3</span>
+  </div>
+  <div className="rounded-xl border-2 border-orange-400 bg-orange-50 px-4 py-2 dark:border-orange-700 dark:bg-orange-950/30">
+    <span className="text-sm font-bold text-orange-900 dark:text-orange-200">Intercept (c) = −4</span>
+  </div>
+</div>
+
+<div className="not-prose my-6 rounded-xl border border-slate-200 bg-slate-50/90 p-4 text-center dark:border-slate-700 dark:bg-slate-900/40">
+  <a
+    title="Purufromlexai, CC0, via Wikimedia Commons"
+    href="https://commons.wikimedia.org/wiki/File:Visualising_a_Line_(y_%3D_3x_-_4).png"
+    className="inline-block no-underline"
+  >
+    <img
+      width={960}
+      className="mx-auto max-h-[min(70vh,540px)] w-auto max-w-full rounded-lg border border-slate-200 shadow-sm dark:border-slate-600"
+      alt="The graph of the linear equation y = 3x - 4 is a straight line with a slope (m) of 3 and a y-intercept of -4."
+      src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/25/Visualising_a_Line_%28y_%3D_3x_-_4%29.png/960px-Visualising_a_Line_%28y_%3D_3x_-_4%29.png"
+      loading="lazy"
+    />
+  </a>
+  <p className="mt-3 mb-0 text-xs text-slate-600 dark:text-slate-400">
+    <a href="https://commons.wikimedia.org/wiki/File:Visualising_a_Line_(y_%3D_3x_-_4).png" className="text-slate-700 underline dark:text-slate-300">
+      Purufromlexai
+    </a>
+    , CC0, via Wikimedia Commons
+  </p>
+</div>
+
+It represents a straight line in 2D space, and helps build intuition before moving into higher-dimensional regression.
+
+---
+
+## Sum of squared residuals (SSR) in linear regression and how it helps find optimal coefficients
+
+### 1. Understanding residuals
+
+In linear regression, our goal is to find the best-fitting line:
+
+$$
+y = mx + c
+$$
+
+where:
+
+- **y** is the predicted output.
+- **x** is the input.
+- **m** (slope) and **c** (intercept) are the coefficients we want to optimize.
+
+In general, this equation represents the equation of a line in 2D space where:
+
+- **m** is the slope (how much y changes when x increases).
+- **c** is the y-intercept (the value of y when x = 0).
+
+This equation defines a straight line because:
+
+<div className="not-prose my-5 space-y-3">
+  <div className="rounded-xl border-l-4 border-emerald-500 bg-emerald-50/70 py-2 pl-4 pr-3 dark:bg-emerald-950/20">
+    <p className="m-0 text-sm font-bold text-emerald-900 dark:text-emerald-200">Linear relationship</p>
+    <p className="mt-1 mb-0 text-sm text-slate-800 dark:text-slate-200">The output y changes <em>proportionally</em> with x, meaning it follows a straight-line trend.</p>
+  </div>
+  <div className="rounded-xl border-l-4 border-cyan-500 bg-cyan-50/70 py-2 pl-4 pr-3 dark:bg-cyan-950/20">
+    <p className="m-0 text-sm font-bold text-cyan-900 dark:text-cyan-200">First-degree polynomial</p>
+    <p className="mt-1 mb-0 text-sm text-slate-800 dark:text-slate-200">The highest power of x is 1, making it a linear function.</p>
+  </div>
+</div>
+
+### Linear regression: an informal explanation
+
+Linear regression is a technique that helps us find the best straight line through a set of data points. Let me explain how it works in a more structured and clear way.
+
+#### What are we trying to do?
+
+We want to find a line with the equation **Y = mx + c** (where **m** is the slope and **c** is the y-intercept) that best fits our data.
+
+#### Our process
+
+<div className="not-prose my-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+  <div className="rounded-xl border border-violet-200 bg-violet-50/80 p-3 text-center text-xs font-medium dark:border-violet-900/40 dark:bg-violet-950/25">
+    <span className="text-violet-700 dark:text-violet-300">1</span>
+    <p className="mt-2 mb-0 text-slate-800 dark:text-slate-200">Start with initial <strong>m</strong> and <strong>c</strong> (<em>m = 1</em>, <em>c = 1</em>)</p>
+  </div>
+  <div className="rounded-xl border border-violet-200 bg-violet-50/80 p-3 text-center text-xs font-medium dark:border-violet-900/40 dark:bg-violet-950/25">
+    <span className="text-violet-700 dark:text-violet-300">2</span>
+    <p className="mt-2 mb-0 text-slate-800 dark:text-slate-200">Predict with those values</p>
+  </div>
+  <div className="rounded-xl border border-violet-200 bg-violet-50/80 p-3 text-center text-xs font-medium dark:border-violet-900/40 dark:bg-violet-950/25">
+    <span className="text-violet-700 dark:text-violet-300">3</span>
+    <p className="mt-2 mb-0 text-slate-800 dark:text-slate-200">Compare to true <strong>y</strong>; compute errors</p>
+  </div>
+  <div className="rounded-xl border border-violet-200 bg-violet-50/80 p-3 text-center text-xs font-medium dark:border-violet-900/40 dark:bg-violet-950/25">
+    <span className="text-violet-700 dark:text-violet-300">4</span>
+    <p className="mt-2 mb-0 text-slate-800 dark:text-slate-200">Update <strong>m</strong> and <strong>c</strong> to reduce errors</p>
+  </div>
+  <div className="rounded-xl border border-violet-200 bg-violet-50/80 p-3 text-center text-xs font-medium dark:border-violet-900/40 dark:bg-violet-950/25">
+    <span className="text-violet-700 dark:text-violet-300">5</span>
+    <p className="mt-2 mb-0 text-slate-800 dark:text-slate-200">Repeat until satisfactory</p>
+  </div>
+</div>
+
+#### Our dataset
+
+**Training data:**
+
+<div className="not-prose my-4 overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-700">
+  <table className="w-full min-w-[320px] border-collapse text-left text-sm">
+    <thead>
+      <tr className="bg-slate-700 text-white dark:bg-slate-900">
+        <th className="p-2 font-semibold">Point</th>
+        <th className="p-2 font-semibold">x</th>
+        <th className="p-2 font-semibold">y</th>
+      </tr>
+    </thead>
+    <tbody className="text-slate-800 dark:text-slate-200">
+      <tr className="border-b border-slate-200 dark:border-slate-700"><td className="p-2">1</td><td className="p-2 font-mono">2</td><td className="p-2 font-mono">2</td></tr>
+      <tr className="border-b border-slate-200 dark:border-slate-700"><td className="p-2">2</td><td className="p-2 font-mono">4</td><td className="p-2 font-mono">8</td></tr>
+      <tr className="border-b border-slate-200 dark:border-slate-700"><td className="p-2">3</td><td className="p-2 font-mono">5</td><td className="p-2 font-mono">11</td></tr>
+      <tr className="border-b border-slate-200 dark:border-slate-700"><td className="p-2">4</td><td className="p-2 font-mono">100</td><td className="p-2 font-mono">296</td></tr>
+      <tr><td className="p-2">5</td><td className="p-2 font-mono">200</td><td className="p-2 font-mono">596</td></tr>
+    </tbody>
+  </table>
+</div>
+
+**Testing data (with current prediction errors):**
+
+<div className="not-prose my-4 overflow-x-auto rounded-xl border border-rose-200 dark:border-rose-900/40">
+  <table className="w-full min-w-[420px] border-collapse text-left text-sm">
+    <thead>
+      <tr className="bg-rose-600 text-white dark:bg-rose-900">
+        <th className="p-2 font-semibold">x</th>
+        <th className="p-2 font-semibold">predicted y</th>
+        <th className="p-2 font-semibold">true y</th>
+        <th className="p-2 font-semibold">error</th>
+      </tr>
+    </thead>
+    <tbody className="text-slate-800 dark:text-slate-200">
+      <tr className="border-b border-slate-200 dark:border-slate-700"><td className="p-2 font-mono">51</td><td className="p-2 font-mono">140</td><td className="p-2 font-mono">149</td><td className="p-2 font-mono text-amber-800 dark:text-amber-300">−9</td></tr>
+      <tr className="border-b border-slate-200 dark:border-slate-700"><td className="p-2 font-mono">55</td><td className="p-2 font-mono">170</td><td className="p-2 font-mono">161</td><td className="p-2 font-mono text-amber-800 dark:text-amber-300">+9</td></tr>
+      <tr className="border-b border-slate-200 dark:border-slate-700"><td className="p-2 font-mono">151</td><td className="p-2 font-mono">400</td><td className="p-2 font-mono">449</td><td className="p-2 font-mono text-amber-800 dark:text-amber-300">−49</td></tr>
+      <tr><td className="p-2 font-mono">201</td><td className="p-2 font-mono">550</td><td className="p-2 font-mono">599</td><td className="p-2 font-mono text-amber-800 dark:text-amber-300">−49</td></tr>
+    </tbody>
+  </table>
+</div>
+
+#### The improvement process
+
+We start with **m = 1** and **c = 1**, which gives us poor predictions. For example, with these values, when **x = 51**, we get **y = 52** (which is far from the true value of **149**).
+
+So we begin the iterative process:
+
+- Calculate how wrong our predictions are
+- Adjust **m** slightly
+- Adjust **c** slightly
+- Test if our predictions improved
+- Repeat
+
+Each iteration makes our line fit the data better. After multiple iterations, our **m** and **c** values will converge to the optimal values that minimize the errors across all data points.
+
+The pattern in our data suggests **m** should be close to **3** and **c** should be around **0**, which would give us **Y ≈ 3x**. This matches what we can observe: when x doubles, y approximately triples (e.g., x = 100 → y = 296, x = 200 → y = 596).
+
+This step-by-step refinement is the essence of the <strong>gradient descent</strong> algorithm commonly used in machine learning.
+
+---
+
+### Residuals and SSR
+
+For each data point **(xᵢ, yᵢ)**, the residual is the difference between the actual value **yᵢ** and the predicted value:
+
+$$
+\text{Error / Residual} = \text{true} - \text{predicted}
+$$
+
+$$
+\text{Residual}_i = y_i - \hat{y}_i
+$$
+
+With prediction **ŷᵢ = m xᵢ + c** (same line as **y = mx + c**):
+
+$$
+\text{Residual}_i = y_i - (m x_i + c)
+$$
+
+Since some residuals may be positive and others negative, we <strong>square</strong> them to measure the total error. <strong>Sum of squared errors (SSR)</strong>:
+
+$$
+\text{SSR} = \sum_{i=1}^{n} \bigl(y_i - (m x_i + c)\bigr)^2
+$$
+
+This is also called the <strong>cost function</strong> or <strong>loss function</strong>:
+
+$$
+J(m, c) = \sum_{i=1}^{n} \bigl(y_i - (m x_i + c)\bigr)^2
+$$
+
+---
+
+### 2. Finding the optimal coefficients using gradient descent
+
+The best values for **m** and **c** are the ones that minimize SSR. We use gradient descent to iteratively adjust **m** and **c** until we reach the optimal values.
+
+#### Gradient descent steps
+
+<div className="not-prose my-6 space-y-3">
+  <div className="flex gap-3 rounded-xl border border-indigo-200 bg-white p-3 dark:border-indigo-900/40 dark:bg-slate-900/50">
+    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-indigo-600 text-sm font-bold text-white">1</span>
+    <p className="m-0 text-sm text-slate-800 dark:text-slate-200">Initialize <strong>m</strong> and <strong>c</strong> with random values.</p>
+  </div>
+  <div className="flex gap-3 rounded-xl border border-indigo-200 bg-white p-3 dark:border-indigo-900/40 dark:bg-slate-900/50">
+    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-indigo-600 text-sm font-bold text-white">2</span>
+    <p className="m-0 text-sm text-slate-800 dark:text-slate-200">Compute the cost <strong>J(m, c)</strong> using the SSR formula.</p>
+  </div>
+  <div className="flex gap-3 rounded-xl border border-indigo-200 bg-white p-3 dark:border-indigo-900/40 dark:bg-slate-900/50">
+    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-indigo-600 text-sm font-bold text-white">3</span>
+    <div className="text-sm text-slate-800 dark:text-slate-200">
+      <p className="m-0 font-semibold">Compute the gradients (partial derivatives):</p>
+      <p className="mt-2 mb-1 m-0">The derivative of <strong>J</strong> with respect to <strong>m</strong>:</p>
+      $$
+      \frac{\partial J}{\partial m} = -2 \sum_{i=1}^{n} \bigl(y_i - (m x_i + c)\bigr)\, x_i
+      $$
+      <p className="mt-3 mb-1 m-0">The derivative of <strong>J</strong> with respect to <strong>c</strong>:</p>
+      $$
+      \frac{\partial J}{\partial c} = -2 \sum_{i=1}^{n} \bigl(y_i - (m x_i + c)\bigr)
+      $$
+    </div>
+  </div>
+  <div className="flex gap-3 rounded-xl border border-indigo-200 bg-white p-3 dark:border-indigo-900/40 dark:bg-slate-900/50">
+    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-indigo-600 text-sm font-bold text-white">4</span>
+    <div className="text-sm text-slate-800 dark:text-slate-200">
+      <p className="m-0">Update <strong>m</strong> and <strong>c</strong> using the learning rate <strong>η</strong> (eta):</p>
+      $$
+      m \leftarrow m - \eta\,\frac{\partial J}{\partial m}, \qquad
+      c \leftarrow c - \eta\,\frac{\partial J}{\partial c}
+      $$
+    </div>
+  </div>
+  <div className="flex gap-3 rounded-xl border border-indigo-200 bg-white p-3 dark:border-indigo-900/40 dark:bg-slate-900/50">
+    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-indigo-600 text-sm font-bold text-white">5</span>
+    <p className="m-0 text-sm text-slate-800 dark:text-slate-200">Repeat steps 2–4 until the cost <strong>J(m, c)</strong> stops decreasing (i.e., convergence is reached).</p>
+  </div>
+</div>
+
+---
+
+### 3. Intuition behind gradient descent
+
+Imagine standing on a mountain and trying to find the lowest point.
+
+With every iteration:
+
+- Compute the direction and magnitude in which you want to move in order to reduce the loss and make your parameters better.
+- Thus we say that with every step in the training process, the model is getting better and better and better.
+
+<div className="not-prose my-6 rounded-xl border-2 border-slate-300 bg-gradient-to-b from-slate-100 to-slate-200/80 p-4 dark:border-slate-600 dark:from-slate-900 dark:to-slate-950">
+  <p className="m-0 text-center text-xs font-bold uppercase tracking-wide text-slate-600 dark:text-slate-400">Analogy map</p>
+  <div className="mt-3 grid gap-2 text-sm text-slate-800 dark:text-slate-200 sm:grid-cols-3">
+    <div className="rounded-lg bg-white/90 p-2 text-center dark:bg-slate-800/80">
+      <strong>SSR / J</strong>
+      <p className="mt-1 mb-0 text-xs">Landscape of the mountain</p>
+    </div>
+    <div className="rounded-lg bg-white/90 p-2 text-center dark:bg-slate-800/80">
+      <strong>Gradients</strong>
+      <p className="mt-1 mb-0 text-xs">Direction to descend faster</p>
+    </div>
+    <div className="rounded-lg bg-white/90 p-2 text-center dark:bg-slate-800/80">
+      <strong>Learning rate η</strong>
+      <p className="mt-1 mb-0 text-xs">Step size — not too big, not too small</p>
+    </div>
+  </div>
+</div>
+
+The learning rate **η** controls the step size: we don&apos;t want to move too fast (overshooting) or too slow (taking forever to converge).
+
+---
+
+### 4. How SSR minimization leads to optimal coefficients
+
+- <strong>High SSR</strong> means the line is a bad fit (large prediction errors).
+- Gradient descent tweaks **m** and **c** iteratively to reduce SSR.
+- As SSR decreases, the regression line gets closer to the actual data points.
+- Eventually, when the gradients become small enough, we&apos;ve reached the best possible **m** and **c**.
+
+---
+
+### 5. Alternative: normal equation
+
+Instead of using gradient descent, there&apos;s a direct mathematical way to find optimal coefficients. In matrix form, with design matrix **X** and target vector **Y**, and parameter vector **θ** (here **θ = [c, m]ᵀ** when the model is **y = mx + c** in column form):
+
+$$
+\boldsymbol{\theta} = (\mathbf{X}^\top \mathbf{X})^{-1} \mathbf{X}^\top \mathbf{Y}
+$$
+
+<div className="not-prose my-4 rounded-lg border border-amber-300 bg-amber-50/80 p-3 text-sm text-amber-950 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-100">
+  <strong>Trade-off:</strong> This method is <em>computationally expensive</em> for large datasets (matrix inverse cost), which is why iterative methods like gradient descent are often preferred at scale.
+</div>
+
+---
+
+<div className="not-prose mt-10 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-6 dark:border-slate-700">
+  <a href="./intro" className="text-sm font-medium text-slate-600 no-underline hover:text-emerald-700 hover:underline dark:text-slate-400 dark:hover:text-emerald-400">← Course overview</a>
+  <a href="./why-logistic-regression" className="text-sm font-semibold text-emerald-700 no-underline hover:underline dark:text-emerald-400">Lesson 2 · Why logistic →</a>
+</div>

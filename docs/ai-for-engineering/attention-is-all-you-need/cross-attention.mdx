@@ -1,0 +1,159 @@
+---
+sidebar_label: '11 · Cross-attention'
+title: 'Lesson 11 — Cross-attention'
+description: >-
+  Disentangling self-attention, multi-head, and cross-attention; Q from decoder,
+  K and V from encoder; same scaled dot-product formula for translation.
+---
+
+# Cross-attention
+
+Students often jumble three ideas: **self-attention**, **multi-head attention**, and **cross-attention**. They are **not** three unrelated tricks—**multi-head** is a **way to run** attention (several heads in parallel); **self** vs **cross** describes **where Q, K, V come from**. **Cross-attention** is the variant where **queries** are built from **one** sequence (the **decoder**) and **keys** and **values** from **another** (the **encoder**). The **math** is the **same** scaled dot-product rule; only the **sources** of the three matrices change.
+
+<div className="not-prose my-6 rounded-xl border border-violet-200 bg-violet-50/70 p-4 dark:border-violet-900/40 dark:bg-violet-950/25">
+  <p className="m-0 text-sm text-slate-800 dark:text-slate-200">
+    The encoder–decoder diagram in [Vaswani et al. (2017)](https://arxiv.org/abs/1706.03762) and the interactive stack on [Attention is All You Need — Lex AI](https://aiayn.aiseekhegaindia.com/) both show the decoder block: <strong>masked self-attention</strong> → <strong>encoder–decoder attention</strong> (cross-attention) → <strong>FFN</strong>.
+  </p>
+</div>
+
+---
+
+## First, untangle the vocabulary
+
+<div className="not-prose my-6 overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-700">
+  <table className="w-full min-w-[320px] border-collapse text-left text-sm">
+    <thead>
+      <tr className="bg-slate-700 text-white dark:bg-slate-900">
+        <th className="p-3 font-semibold">Term</th>
+        <th className="p-3 font-semibold">What it means</th>
+      </tr>
+    </thead>
+    <tbody className="text-slate-800 dark:text-slate-200">
+      <tr className="border-b border-slate-200 dark:border-slate-700">
+        <td className="p-3 font-medium">**Self-attention**</td>
+        <td className="p-3"><strong>Q, K, V</strong> are all **linear projections of the same sequence** (e.g. source only, or target only in masked decoder self-attention).</td>
+      </tr>
+      <tr className="border-b border-slate-200 dark:border-slate-700">
+        <td className="p-3 font-medium">**Multi-head attention**</td>
+        <td className="p-3">Run **h** attentions **in parallel** with **different** **W^Q, W^K, W^V** per head, **concat**, **W^O**. Applies to **both** self-attention **and** cross-attention—you can have **multi-head cross-attention**.</td>
+      </tr>
+      <tr className="bg-emerald-50/50 dark:bg-emerald-950/20">
+        <td className="p-3 font-medium">**Cross-attention**</td>
+        <td className="p-3"><strong>Q</strong> from **sequence A** (decoder), <strong>K, V</strong> from **sequence B** (encoder). **Different** role than self; **same** inner formula.</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+So: **multi-head** answers “**how many** parallel attention maps?” **Self vs cross** answers “**which tensors** built **Q, K, V**?”
+
+---
+
+## Cross-attention: where **Q**, **K**, **V** come from
+
+Let **H**^dec be the decoder hidden states (target side, shape **(batch, target_len, d_model)**) and **H**^enc be the encoder output (source side, **(batch, source_len, d_model)**). Learned projections:
+
+$$
+Q = H^{\text{dec}} W^Q,\qquad K = H^{\text{enc}} W^K,\qquad V = H^{\text{enc}} W^V
+$$
+
+- **Query Q** — “What am I looking for **right now** on the target?” — from the **decoder**.
+- **Key K** — “How do **source** positions label themselves for matching?” — from the **encoder**.
+- **Value V** — “What **content** do I retrieve from the **source**?” — from the **encoder**.
+
+Compact mnemonic (as in your notes and the [Lex AI](https://aiayn.aiseekhegaindia.com/) cross-attention section):
+
+<div className="not-prose my-6 rounded-2xl border-2 border-indigo-300 bg-indigo-50/80 p-5 text-center font-mono text-sm text-indigo-950 dark:border-indigo-700 dark:bg-indigo-950/40 dark:text-indigo-100 sm:text-base">
+  CrossAttention(Q = decoder, K = encoder, V = encoder)
+</div>
+
+---
+
+## The formula does **not** change
+
+Scaled dot-product attention is **unchanged**:
+
+$$
+\text{CrossAttention}(Q, K, V) = \text{softmax}\left(\frac{Q K^\top}{\sqrt{d_k}}\right) V
+$$
+
+- **Q** has rows indexed by **target** positions (queries).
+- **K**, **V** have rows indexed by **source** positions.
+- **QKᵀ** has shape **(target_len, source_len)**: each target position assigns a **weight** to **every** source token.
+- **Softmax** is over the **source** axis → a **distribution** over the input sentence for **each** decoding step.
+- Multiplying by **V** **mixes** encoder vectors according to those weights.
+
+So: **same** **softmax(QKᵀ / √d_k) V**; **different** **construction** of **Q** vs **K, V** compared to self-attention.
+
+---
+
+## Visual: decoder queries, encoder memory
+
+<div className="not-prose my-8 flex flex-col items-center gap-4 rounded-2xl border border-slate-200 bg-gradient-to-b from-slate-50 to-white p-6 dark:border-slate-700 dark:from-slate-900 dark:to-slate-950">
+  <div className="flex w-full max-w-2xl flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
+    <div className="flex-1 rounded-xl border-2 border-sky-300 bg-sky-50/90 p-4 text-center dark:border-sky-700 dark:bg-sky-950/30">
+      <p className="m-0 text-xs font-bold uppercase text-sky-800 dark:text-sky-200">Encoder output</p>
+      <p className="mt-2 mb-0 text-sm text-slate-700 dark:text-slate-300">Source tokens → **K, V** (memory)</p>
+    </div>
+    <div className="flex flex-col items-center gap-1 text-xs text-slate-500 dark:text-slate-400">
+      <span className="font-semibold text-indigo-600 dark:text-indigo-400">QKᵀ → softmax</span>
+      <span aria-hidden className="text-2xl">
+        ←
+      </span>
+      <span>weights over source</span>
+    </div>
+    <div className="flex-1 rounded-xl border-2 border-emerald-300 bg-emerald-50/90 p-4 text-center dark:border-emerald-700 dark:bg-emerald-950/30">
+      <p className="m-0 text-xs font-bold uppercase text-emerald-800 dark:text-emerald-200">Decoder state</p>
+      <p className="mt-2 mb-0 text-sm text-slate-700 dark:text-slate-300">Target so far → **Q** (questions)</p>
+    </div>
+  </div>
+  <p className="m-0 max-w-xl text-center text-xs text-slate-600 dark:text-slate-400">
+    Each **decoder** position **picks** a **convex combination** of **encoder** **value** vectors—**grounding** the generated word in the **input** sentence.
+  </p>
+</div>
+
+---
+
+## Why cross-attention matters (encoder–decoder & machine translation)
+
+In **seq2seq** **machine translation**:
+
+1. The **encoder** reads the **source** (e.g. English) **in full** and produces a **sequence of memory vectors**.
+2. The **decoder** generates the **target** (e.g. French) **one token at a time**, with **causal** self-attention on the target.
+3. **Cross-attention** is the **only** place the decoder **reads** the **encoder**: it **chooses** which **source** words (or subwords) to emphasize when producing the **next** target token.
+
+Without cross-attention, the decoder would be a **language model** on the target only—it could not **condition** on the **specific source** sentence. Cross-attention is **necessary** for the **original** Transformer **translation** setup and for any **encoder–decoder** task where the output must **align** with a **given** input (translation, some summarization setups, speech-to-text stacks, etc.).
+
+**Alignment:** attention weights between target step and source positions are often plotted as **heatmaps**—early papers showed interpretable **word alignment** patterns.
+
+---
+
+## What does **not** use cross-attention?
+
+**Decoder-only** models (**GPT** family) have **no** encoder: they use **masked self-attention** + **FFN** only. **Encoder-only** models (**BERT**) use **self-attention** only. **Cross-attention** appears when **two** representations must **interact**—**decoder** × **encoder**.
+
+---
+
+## Multi-head cross-attention
+
+In practice, cross-attention is **multi-head** just like self-attention: **h** sets of **(Q_h, K_h, V_h)** with **Q_h** from decoder and **K_h, V_h** from encoder, then **concat** and **W^O**. The **distinction** (cross vs self) is unchanged—only the **tensor sources**.
+
+---
+
+## Takeaway
+
+| Question | Answer |
+| -------- | ------ |
+| **Q from?** | **Decoder** hidden states |
+| **K, V from?** | **Encoder** outputs |
+| **Formula?** | **Identical** to self-attention: **softmax(QKᵀ/√d_k) V** |
+| **Why in MT?** | Lets each **target** step **attend** to **source** memory—**conditional** generation |
+
+**Next:** the **encoder stack** in depth.
+
+---
+
+<div className="not-prose mt-10 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-6 dark:border-slate-700">
+  <a href="./feed-forward-neural-networks" className="text-sm font-medium text-slate-600 no-underline hover:text-emerald-700 hover:underline dark:text-slate-400 dark:hover:text-emerald-400">← Lesson 10 · Feed-forward networks</a>
+  <a href="./encoder-stack" className="text-sm font-semibold text-emerald-700 no-underline hover:underline dark:text-emerald-400">Lesson 12 · Encoder stack →</a>
+</div>

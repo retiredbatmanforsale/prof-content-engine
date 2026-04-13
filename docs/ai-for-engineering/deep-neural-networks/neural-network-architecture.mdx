@@ -1,0 +1,141 @@
+---
+sidebar_label: '9 · Architecture (recap)'
+title: 'Lesson 9 — Neural network architecture (binary classification recap)'
+description: >-
+  Input, hidden, and output layers in one story: binary classification,
+  tying together neurons, forward pass, loss, training, parameters, and
+  generalization from the course so far.
+---
+
+# **Neural network architecture**: input → hidden → output
+
+Earlier lessons built the stack **piece by piece**: the **neuron** (Lesson 1), **layers** and **depth** (Lesson 2), **activations** (Lesson 3), **loss** (Lesson 4), **forward** and **backward** passes (Lessons 5–6), **parameters vs hyperparameters** (Lesson 7), and **overfitting** (Lesson 8). This lesson **names the whole machine** as a **neural network architecture** and walks a single **binary classification** example end to end.
+
+---
+
+## The three-layer picture (one hidden layer)
+
+For **binary classification**, the usual pattern is:
+
+1. **Input layer** — one **unit per feature** (the **raw** **x**; **not** learned).  
+2. **Hidden layer** — **fully connected** **affine** map + **nonlinearity** (Lesson 2–3). **Combines** features into **learned** **directions**.  
+3. **Output layer** — for **two** classes, **one** **logit** **z** plus **sigmoid** **σ** gives **ŷ = P(class 1)** in **(0, 1)** (Lessons 3–4).
+
+Think of **spam vs not spam**: **input** = measured signals (word counts, links, …); **hidden** = internal **combinations** of those signals; **output** = **probability** of **spam**.
+
+<div className="not-prose my-8 flex flex-wrap items-end justify-center gap-6 rounded-2xl border-2 border-slate-200 bg-gradient-to-b from-slate-50 to-white p-6 dark:border-slate-700 dark:from-slate-900 dark:to-slate-950 sm:gap-10">
+  <div className="flex flex-col items-center gap-2">
+    <p className="m-0 text-xs font-bold uppercase text-sky-700 dark:text-sky-300">Input layer</p>
+    <p className="m-0 max-w-[140px] text-center text-xs text-slate-600 dark:text-slate-400">One neuron per feature (dimension <span className="font-mono">d</span>)</p>
+    <div className="flex flex-col gap-2">
+      <span className="flex h-9 w-9 items-center justify-center rounded-full border-2 border-sky-400 bg-sky-100 text-xs font-mono dark:border-sky-600 dark:bg-sky-900/50">x₁</span>
+      <span className="flex h-9 w-9 items-center justify-center rounded-full border-2 border-sky-400 bg-sky-100 text-xs font-mono dark:border-sky-600 dark:bg-sky-900/50">x₂</span>
+      <span className="flex h-9 w-9 items-center justify-center rounded-full border-2 border-dashed border-sky-300 bg-sky-50 text-[10px] font-mono text-slate-500 dark:border-sky-700 dark:bg-sky-950/50">⋮</span>
+      <span className="flex h-9 w-9 items-center justify-center rounded-full border-2 border-sky-400 bg-sky-100 text-xs font-mono dark:border-sky-600 dark:bg-sky-900/50">x<sub className="text-[9px]">d</sub></span>
+    </div>
+  </div>
+  <div className="mb-12 hidden text-center text-xs font-semibold text-slate-500 sm:block" aria-hidden>
+    W₁, b₁
+    <br />
+    + activation
+  </div>
+  <div className="flex flex-col items-center gap-2">
+    <p className="m-0 text-xs font-bold uppercase text-violet-700 dark:text-violet-300">Hidden layer</p>
+    <p className="m-0 max-w-[140px] text-center text-xs text-slate-600 dark:text-slate-400"><span className="font-mono">h</span> neurons (e.g. ReLU)</p>
+    <div className="flex flex-col gap-1.5">
+      <span className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-violet-400 bg-violet-100 text-[10px] font-mono dark:border-violet-600 dark:bg-violet-900/50">a₁</span>
+      <span className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-violet-400 bg-violet-100 text-[10px] font-mono dark:border-violet-600 dark:bg-violet-900/50">a₂</span>
+      <span className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-dashed border-violet-300 bg-violet-50 text-[10px] text-slate-500 dark:border-violet-700 dark:bg-violet-950/50">⋮</span>
+    </div>
+  </div>
+  <div className="mb-12 hidden text-center text-xs font-semibold text-slate-500 sm:block" aria-hidden>
+    w₂, b₂
+    <br />
+    + σ
+  </div>
+  <div className="flex flex-col items-center gap-2">
+    <p className="m-0 text-xs font-bold uppercase text-emerald-700 dark:text-emerald-300">Output layer</p>
+    <p className="m-0 max-w-[160px] text-center text-xs text-slate-600 dark:text-slate-400">1 neuron → ŷ = P(class 1)</p>
+    <span className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-emerald-400 bg-emerald-100 text-sm font-mono dark:border-emerald-600 dark:bg-emerald-900/50">ŷ</span>
+  </div>
+</div>
+
+**Depth:** **one** hidden layer here = **three** **named** **layers** (**input**, **hidden**, **output**). You can add **more** hidden layers (Lesson 2); the **story** is the same: **linear** blocks and **nonlinearities** chained together.
+
+---
+
+## Forward pass (compact)
+
+Let $\mathbf{x} \in \mathbb{R}^d$ be one example. **Trainable** weights and biases (Lesson 7):
+
+- **W₁** is an $h \times d$ matrix, **b₁** $\in \mathbb{R}^h$ — input → hidden  
+- **w₂** $\in \mathbb{R}^h$ (as a column vector), **b₂** $\in \mathbb{R}$ — hidden → logit  
+
+**Hidden** pre-activation and activation (hidden units often use **ReLU** in practice; **sigmoid** in the hidden layer is also possible and appeared in the small worked net of Lessons 5–6):
+
+$$
+\mathbf{z}^{(1)} = W_1 \mathbf{x} + \mathbf{b}_1, \qquad
+\mathbf{a} = \mathrm{ReLU}\bigl(\mathbf{z}^{(1)}\bigr)
+$$
+
+**Output** logit and **probability** for **class 1**:
+
+$$
+z^{(2)} = \mathbf{w}_2^\top \mathbf{a} + b_2, \qquad
+\hat{y} = \sigma\bigl(z^{(2)}\bigr) = \frac{1}{1 + e^{-z^{(2)}}}.
+$$
+
+That is the **forward pass** (Lesson 5): same computation as **`forward`** / **`predict`** at inference, without updating weights.
+
+---
+
+## Loss and label (binary classification)
+
+For a **label** **t ∈ {0, 1}**, **binary cross-entropy** (Lesson 4) is the standard pairing with **sigmoid**:
+
+$$
+\mathcal{L}_{\text{BCE}} = -\,\bigl( t \log \hat{y} + (1-t)\log(1-\hat{y}) \bigr).
+$$
+
+**Training** minimizes **average** **loss** over many **(x, t)** pairs. **Decision rule** on new **x**: e.g. predict **class 1** if **ŷ > 0.5** (threshold can be tuned for precision/recall).
+
+**Alternative head:** two logits + **softmax** for the two classes is equivalent in spirit; the **single** **sigmoid** **output** is the **minimal** **diagram** for **binary** work.
+
+---
+
+## Learning loop (Lessons 6–8 in one breath)
+
+1. **Forward** — compute **ŷ** from **x** and current parameters.  
+2. **Loss** — compare **ŷ** to **t**.  
+3. **Backward** — **chain rule** through the graph; **gradients** for **W₁**, **b₁**, **w₂**, **b₂**.  
+4. **Update** — **θ ← θ − η ∇θ L** (gradient descent).  
+5. **Watch** **validation** — if **train** improves but **val** does not, think **overfitting** (Lesson 8): **data**, **model**, **training**, **pre-training**, **post-training** levers.
+
+**Hyperparameters** (**η**, **h**, **d** via feature engineering, **regularization**, **epochs**, …) sit **outside** the tensors updated by **backprop** (Lesson 7).
+
+---
+
+## How this maps to earlier lessons
+
+| Topic | Where it shows up in this architecture |
+| ----- | -------------------------------------- |
+| **Neuron** | Each hidden unit is an **affine** + **activation** (Lesson 1). |
+| **Layers** | **Input** (features) → **hidden** → **output** (Lesson 2). |
+| **Activations** | **ReLU** in hidden, **sigmoid** on **binary** output (Lesson 3). |
+| **Loss** | **BCE** with **sigmoid** (Lesson 4). |
+| **Forward / backward** | **Composition** of layers; **gradients** w.r.t. all weights (Lessons 5–6). |
+| **Parameters** | **W₁**, **b₁**, **w₂**, **b₂** **learned**; **architecture** and **η** are **hyperparameters** (Lesson 7). |
+| **Generalization** | **Val** gap and **mitigations** (Lesson 8). |
+
+---
+
+## One-line story
+
+Binary classification with one hidden layer: **features** in, a **nonlinear hidden layer** mixes them, **sigmoid** outputs **ŷ**; **BCE** trains the stack; **backprop** updates **W₁**, **b₁**, **w₂**, **b₂**; Lessons 7–8 remind you that **hyperparameters** and **data** shape **generalization**.
+
+---
+
+<div className="not-prose mt-10 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-6 dark:border-slate-700">
+  <a href="./overfitting-in-neural-networks" className="text-sm font-medium text-slate-600 no-underline hover:text-emerald-700 hover:underline dark:text-slate-400 dark:hover:text-emerald-400">← Lesson 8 · Overfitting</a>
+  <a href="./neural-network-from-scratch" className="text-sm font-semibold text-emerald-700 no-underline hover:underline dark:text-emerald-400">Lesson 10 · From scratch →</a>
+</div>

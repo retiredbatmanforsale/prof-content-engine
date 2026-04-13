@@ -1,0 +1,140 @@
+---
+sidebar_label: '6 · Log-likelihood & BCE'
+title: 'Lesson 6 — Log likelihood instead of squared error'
+description: >-
+  From SSE in linear regression to Bernoulli likelihood, joint likelihood as a
+  product, log-likelihood, and binary cross-entropy (log loss) as the cost to
+  minimize.
+---
+
+# Log likelihood instead of squared error
+
+In **linear regression** we often minimize the **sum of squared errors (SSE)**:
+
+$$
+J_{\text{SSE}} = \sum_{i=1}^{m} \bigl( y_i - \hat{y}_i \bigr)^2
+$$
+
+where **ŷᵢ** is a **real-valued** prediction (same scale as **yᵢ**).
+
+For **logistic regression**, **ŷᵢ = σ(zᵢ)** is a **probability** in **(0, 1)**. If we plug that into **squared error** on **yᵢ ∈ {0, 1}**, the resulting loss as a function of the parameters is **not convex** in general: **gradient descent** can get stuck in **local minima** and you **lose a guarantee** of reaching a global optimum.
+
+**Maximum likelihood estimation (MLE)** picks parameters that make the observed labels **most probable** under the model. For standard logistic regression, turning that into a minimization problem (**negative log-likelihood**) gives a **convex** objective—much nicer for gradient-based optimization.
+
+<div className="not-prose my-6 rounded-xl border-2 border-indigo-200 bg-indigo-50/60 p-4 text-center dark:border-indigo-900/40 dark:bg-indigo-950/25">
+  <p className="m-0 text-sm font-semibold text-indigo-900 dark:text-indigo-200">One-line story</p>
+  <p className="mt-2 mb-0 text-sm text-slate-800 dark:text-slate-200">
+    <strong>SSE</strong> fits linear regression; for **probabilities** use **likelihood → log-likelihood → negative** → <strong>binary cross-entropy</strong>.
+  </p>
+</div>
+
+<div className="not-prose my-6 overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-700">
+  <table className="w-full min-w-[320px] border-collapse text-left text-sm">
+    <thead>
+      <tr className="bg-slate-700 text-white dark:bg-slate-900">
+        <th className="p-3 font-semibold">Model</th>
+        <th className="p-3 font-semibold">Common cost</th>
+        <th className="p-3 font-semibold">Shape (typical setup)</th>
+      </tr>
+    </thead>
+    <tbody className="text-slate-800 dark:text-slate-200">
+      <tr className="border-b border-slate-200 dark:border-slate-700">
+        <td className="p-3 font-medium">Linear regression</td>
+        <td className="p-3 font-mono text-xs sm:text-sm">SSE / MSE</td>
+        <td className="p-3"><strong>Convex</strong> in linear-in-parameters form</td>
+      </tr>
+      <tr className="bg-emerald-50/50 dark:border-slate-700 dark:bg-emerald-950/15">
+        <td className="p-3 font-medium">Logistic (σ on linear score)</td>
+        <td className="p-3 font-mono text-xs sm:text-sm">−log-likelihood (BCE)</td>
+        <td className="p-3">
+          <strong>Convex</strong> in <span className="font-mono">θ</span> (standard logit)
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+---
+
+## Step 1 — Bernoulli probabilities for one example
+
+For binary labels **yᵢ ∈ {0, 1}**, let the model output **ŷᵢ = ℙ(yᵢ = 1 | xᵢ)** (your **sigmoid** of the linear score). Then:
+
+$$
+\mathbb{P}(y_i = 1 \mid x_i) = \hat{y}_i, \qquad
+\mathbb{P}(y_i = 0 \mid x_i) = 1 - \hat{y}_i
+$$
+
+We can write the **probability of the observed label** **yᵢ** in one expression:
+
+$$
+\mathbb{P}(y_i \mid x_i) = \hat{y}_i^{\,y_i}\,(1 - \hat{y}_i)^{\,1 - y_i}
+$$
+
+- If **yᵢ = 1**, this reduces to **ŷᵢ**.
+- If **yᵢ = 0**, it reduces to **1 − ŷᵢ**.
+
+<div className="not-prose my-5 rounded-xl border-l-4 border-cyan-500 bg-cyan-50/70 py-3 pl-4 pr-3 dark:bg-cyan-950/20">
+  <p className="m-0 text-sm text-slate-800 dark:text-slate-200">
+    **ŷᵢ** is the **predicted** probability (depends on **θ**). Do not confuse it with the **label** **yᵢ**.
+  </p>
+</div>
+
+---
+
+## Step 2 — Likelihood for the whole dataset
+
+Assume examples are **independent** (standard i.i.d. story). The **likelihood** is the **product** over all **m** points:
+
+$$
+L(\boldsymbol{\theta}) = \prod_{i=1}^{m} \hat{y}_i^{\,y_i}\,(1 - \hat{y}_i)^{\,1 - y_i}
+$$
+
+**MLE** chooses **θ** to **maximize** **L(θ)** (equivalently **log L**).
+
+---
+
+## Step 3 — Log-likelihood (turn the product into a sum)
+
+$$
+\log L(\boldsymbol{\theta}) = \sum_{i=1}^{m} \Bigl[ y_i \log \hat{y}_i + (1 - y_i)\log(1 - \hat{y}_i) \Bigr]
+$$
+
+Products of many numbers in **(0, 1)** underflow quickly; the **log** makes the objective a **sum**—stable and easy to differentiate.
+
+We **maximize** **log L**, so in code we usually **minimize** the **negative**. Averaging over **m** gives a **mean** loss:
+
+$$
+J(\boldsymbol{\theta}) = - \frac{1}{m} \sum_{i=1}^{m} \Bigl[ y_i \log \hat{y}_i + (1 - y_i)\log(1 - \hat{y}_i) \Bigr]
+$$
+
+This **J** is the **binary cross-entropy** (also called **log loss**): the standard **cost function** for logistic regression under MLE.
+
+<div className="not-prose my-6 grid gap-3 md:grid-cols-2">
+  <div className="rounded-lg border border-emerald-300 bg-emerald-50/80 p-3 text-sm dark:border-emerald-800 dark:bg-emerald-950/25">
+    <strong className="text-emerald-900 dark:text-emerald-200">Same objective</strong>
+    <p className="mt-2 mb-0 text-slate-800 dark:text-slate-200">Maximizing **log L** = minimizing **−log L**; the **1/m** is a constant scale (same minimizer **θ**).</p>
+  </div>
+  <div className="rounded-lg border border-emerald-300 bg-emerald-50/80 p-3 text-sm dark:border-emerald-800 dark:bg-emerald-950/25">
+    <strong className="text-emerald-900 dark:text-emerald-200">Convexity</strong>
+    <p className="mt-2 mb-0 text-slate-800 dark:text-slate-200">For **ŷᵢ = σ(wᵀxᵢ + b)**, this **J** is **convex** in **(w, b)**—one global minimum, friendly to gradient descent.</p>
+  </div>
+</div>
+
+---
+
+## Sanity check with two probabilities
+
+| **yᵢ** | Term inside the sum |
+| -----: | ------------------- |
+| **1**  | **log ŷᵢ** (want **ŷᵢ** large) |
+| **0**  | **log(1 − ŷᵢ)** (want **ŷᵢ** small) |
+
+If the model is **confident and wrong** (e.g. **yᵢ = 1** but **ŷᵢ ≈ 0**), **log ŷᵢ** is very negative and **J** spikes—exactly the penalty we want.
+
+---
+
+<div className="not-prose mt-10 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-6 dark:border-slate-700">
+  <a href="./intuition-behind-logistic-regression" className="text-sm font-medium text-slate-600 no-underline hover:text-emerald-700 hover:underline dark:text-slate-400 dark:hover:text-emerald-400">← Lesson 5 · Intuition behind logistic regression</a>
+  <a href="./intro" className="text-sm font-semibold text-emerald-700 no-underline hover:underline dark:text-emerald-400">Course overview →</a>
+</div>

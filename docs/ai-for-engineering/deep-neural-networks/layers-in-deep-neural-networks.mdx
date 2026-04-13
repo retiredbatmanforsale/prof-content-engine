@@ -1,0 +1,268 @@
+---
+sidebar_label: '2 · Layers in a DNN'
+title: 'Lesson 2 — Layers in a deep neural network'
+description: >-
+  Input, hidden, and output layers in a fully connected stack: parameters,
+  nonlinearities, hyperparameters, and how depth buys complexity.
+---
+
+# Layers in a deep neural network
+
+In **Lesson 1**, one **neuron** was a single **linear score** plus an **activation**. A **deep neural network** is what you get when you **stack** many neurons **in layers**, **vertically**: raw **inputs** enter at the **bottom** (or **top**, depending on the diagram—here we draw **input → hidden → output** left to right), **hidden** layers build **intermediate** representations, and the **output** layer produces **predictions**. Researchers including **Geoffrey Hinton** helped popularize the view that **depth** lets a network learn **distributed**, **hierarchical** features—**simple** patterns in early layers, **composed** patterns deeper in—without hand-crafting rules.
+
+This lesson is about **fully connected** (**dense**) layers: **every** neuron in one layer connects to **every** neuron in the next.
+
+---
+
+## The three layer “roles”
+
+<div className="not-prose my-6 overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-700">
+  <table className="w-full min-w-[300px] border-collapse text-left text-sm">
+    <thead>
+      <tr className="bg-slate-700 text-white dark:bg-slate-900">
+        <th className="p-3 font-semibold">Layer</th>
+        <th className="p-3 font-semibold">What it holds</th>
+        <th className="p-3 font-semibold">Typical learnable part?</th>
+      </tr>
+    </thead>
+    <tbody className="text-slate-800 dark:text-slate-200">
+      <tr className="border-b border-slate-200 dark:border-slate-700">
+        <td className="p-3 font-medium">**Input**</td>
+        <td className="p-3">Your **features** **x** (pixels, tabular values, embeddings…)</td>
+        <td className="p-3">Usually **no** weights here—just the **signal** you feed in</td>
+      </tr>
+      <tr className="border-b border-slate-200 dark:border-slate-700">
+        <td className="p-3 font-medium">**Hidden**</td>
+        <td className="p-3">**Activations** after affine maps + nonlinearities—**internal** “thought”</td>
+        <td className="p-3"><strong>Yes</strong> — **W**, **b** between adjacent layers</td>
+      </tr>
+      <tr className="bg-emerald-50/50 dark:bg-emerald-950/20">
+        <td className="p-3 font-medium">**Output**</td>
+        <td className="p-3">**ŷ** — scalar, vector of class logits, probabilities…</td>
+        <td className="p-3"><strong>Yes</strong> — final **W**, **b** (and sometimes a **softmax** with **no** extra params)</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+**Input** = **where the story starts**; **output** = **what you optimize against the target**; **hidden** = **everything in between** that makes the model **more than** one linear map.
+
+---
+
+## Visual: a small fully connected stack
+
+Each **column** is a **layer**; each **pill** is one **neuron**. In a **dense** net, **each** pill in a column is connected to **all** pills in the **previous** column (only a **few** lines are drawn so the picture stays readable—the **rule** is **all-to-all**).
+
+<div className="not-prose my-8 rounded-2xl border-2 border-slate-200 bg-gradient-to-b from-slate-50 to-white p-6 dark:border-slate-700 dark:from-slate-900 dark:to-slate-950">
+  <div className="flex flex-wrap items-end justify-center gap-4 sm:gap-8 md:gap-10">
+    <div className="flex flex-col items-center gap-2">
+      <p className="m-0 text-xs font-bold uppercase tracking-wide text-sky-700 dark:text-sky-300">Input</p>
+      <div className="flex flex-col gap-2">
+        <span className="h-10 w-10 rounded-full border-2 border-sky-400 bg-sky-100 dark:border-sky-600 dark:bg-sky-900/50" title="x₁" />
+        <span className="h-10 w-10 rounded-full border-2 border-sky-400 bg-sky-100 dark:border-sky-600 dark:bg-sky-900/50" title="x₂" />
+        <span className="h-10 w-10 rounded-full border-2 border-sky-400 bg-sky-100 dark:border-sky-600 dark:bg-sky-900/50" title="x₃" />
+      </div>
+      <p className="m-0 text-[10px] text-slate-500 dark:text-slate-400">3 features</p>
+    </div>
+    <div className="hidden pb-8 text-slate-300 sm:block dark:text-slate-600" aria-hidden>
+      ···
+    </div>
+    <div className="flex flex-col items-center gap-2">
+      <p className="m-0 text-xs font-bold uppercase tracking-wide text-violet-700 dark:text-violet-300">Hidden 1</p>
+      <div className="flex flex-col gap-1.5">
+        <span className="h-8 w-8 rounded-full border-2 border-violet-400 bg-violet-100 dark:border-violet-600 dark:bg-violet-900/50" />
+        <span className="h-8 w-8 rounded-full border-2 border-violet-400 bg-violet-100 dark:border-violet-600 dark:bg-violet-900/50" />
+        <span className="h-8 w-8 rounded-full border-2 border-violet-400 bg-violet-100 dark:border-violet-600 dark:bg-violet-900/50" />
+        <span className="h-8 w-8 rounded-full border-2 border-violet-400 bg-violet-100 dark:border-violet-600 dark:bg-violet-900/50" />
+      </div>
+      <p className="m-0 text-[10px] text-slate-500 dark:text-slate-400">4 neurons</p>
+    </div>
+    <div className="hidden pb-8 text-slate-300 sm:block dark:text-slate-600" aria-hidden>
+      ···
+    </div>
+    <div className="flex flex-col items-center gap-2">
+      <p className="m-0 text-xs font-bold uppercase tracking-wide text-violet-700 dark:text-violet-300">Hidden 2</p>
+      <div className="flex flex-col gap-1.5">
+        <span className="h-8 w-8 rounded-full border-2 border-violet-400 bg-violet-100 dark:border-violet-600 dark:bg-violet-900/50" />
+        <span className="h-8 w-8 rounded-full border-2 border-violet-400 bg-violet-100 dark:border-violet-600 dark:bg-violet-900/50" />
+        <span className="h-8 w-8 rounded-full border-2 border-violet-400 bg-violet-100 dark:border-violet-600 dark:bg-violet-900/50" />
+        <span className="h-8 w-8 rounded-full border-2 border-violet-400 bg-violet-100 dark:border-violet-600 dark:bg-violet-900/50" />
+      </div>
+    </div>
+    <div className="hidden pb-8 text-slate-300 sm:block dark:text-slate-600" aria-hidden>
+      ···
+    </div>
+    <div className="flex flex-col items-center gap-2">
+      <p className="m-0 text-xs font-bold uppercase tracking-wide text-emerald-700 dark:text-emerald-300">Output</p>
+      <div className="flex flex-col gap-2">
+        <span className="h-10 w-10 rounded-full border-2 border-emerald-400 bg-emerald-100 dark:border-emerald-600 dark:bg-emerald-900/50" />
+        <span className="h-10 w-10 rounded-full border-2 border-emerald-400 bg-emerald-100 dark:border-emerald-600 dark:bg-emerald-900/50" />
+      </div>
+      <p className="m-0 text-[10px] text-slate-500 dark:text-slate-400">e.g. 2 classes</p>
+    </div>
+  </div>
+  <p className="mt-6 mb-0 text-center text-xs text-slate-600 dark:text-slate-400">
+    <strong>Fully connected:</strong> each violet circle receives a weighted sum from <strong>all three</strong> input circles—and so on along the chain.
+  </p>
+</div>
+
+---
+
+## Forward pass (one step at a time, gently)
+
+Write **h⁽⁰⁾ = x** for the input. Layer **ℓ = 1 … L** does: **linear** transform, then **activation** **f** (same idea as Lesson 1, but now **vector** outputs):
+
+$$
+\mathbf{z}^{(\ell)} = W^{(\ell)} \mathbf{h}^{(\ell-1)} + \mathbf{b}^{(\ell)}, \qquad
+\mathbf{h}^{(\ell)} = f\bigl(\mathbf{z}^{(\ell)}\bigr)
+$$
+
+The **output layer** might use **f** = identity (regression) or **softmax** on logits (classification). **Hidden** layers almost always use **ReLU**, **GELU**, **tanh**, etc.
+
+---
+
+## Where **weights** and **biases** live
+
+**Between** layer **ℓ − 1** and **ℓ**:
+
+- **W⁽ℓ⁾** — matrix with one **column** per neuron in layer **ℓ** (or the transpose convention in code—same parameter count).
+- **b⁽ℓ⁾** — one bias **per** neuron in layer **ℓ**.
+
+So **parameters** sit on **edges** between layers, not “inside” the circles—the circles are **values** flowing through the net.
+
+---
+
+## Counting parameters (toy example)
+
+If layer **ℓ − 1** has **n_in** neurons and layer **ℓ** has **n_out** neurons:
+
+$$
+\text{params for this edge} = n_{\text{in}} \times n_{\text{out}} + n_{\text{out}}
+$$
+
+(weights + biases).
+
+<div className="not-prose my-6 overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-700">
+  <table className="w-full min-w-[280px] border-collapse text-left text-sm">
+    <thead>
+      <tr className="bg-slate-700 text-white dark:bg-slate-900">
+        <th className="p-3 font-semibold">Connection</th>
+        <th className="p-3 font-semibold">Shape intuition</th>
+        <th className="p-3 font-semibold">Count (example)</th>
+      </tr>
+    </thead>
+    <tbody className="text-slate-800 dark:text-slate-200">
+      <tr className="border-b border-slate-200 dark:border-slate-700">
+        <td className="p-3">Input **3** → Hidden **4**</td>
+        <td className="p-3">**W** mixes 3 → 4</td>
+        <td className="p-3 font-mono">3×4 + 4 = **16**</td>
+      </tr>
+      <tr className="border-b border-slate-200 dark:border-slate-700">
+        <td className="p-3">Hidden **4** → Hidden **4**</td>
+        <td className="p-3">**W** mixes 4 → 4</td>
+        <td className="p-3 font-mono">4×4 + 4 = **20**</td>
+      </tr>
+      <tr className="bg-emerald-50/50 dark:bg-emerald-950/20">
+        <td className="p-3">Hidden **4** → Output **2**</td>
+        <td className="p-3">**W** mixes 4 → 2</td>
+        <td className="p-3 font-mono">4×2 + 2 = **10**</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+**Total** for this tiny net: **16 + 20 + 10 = 46** trainable scalars. **Wider** layers and **more** layers multiply this quickly—that is **capacity**.
+
+---
+
+## Complexity: what **depth** and **width** buy you
+
+<div className="not-prose my-6 grid gap-3 md:grid-cols-2">
+  <div className="rounded-xl border-2 border-indigo-200 bg-indigo-50/85 p-4 dark:border-indigo-800 dark:bg-indigo-950/30">
+    <p className="m-0 text-xs font-bold uppercase text-indigo-800 dark:text-indigo-200">More neurons per layer (width)</p>
+    <p className="mt-2 mb-0 text-sm text-slate-800 dark:text-slate-200">More **linear combinations** available **at once**—richer slice of functions at **each** step.</p>
+  </div>
+  <div className="rounded-xl border-2 border-amber-200 bg-amber-50/85 p-4 dark:border-amber-800 dark:bg-amber-950/30">
+    <p className="m-0 text-xs font-bold uppercase text-amber-800 dark:text-amber-200">More hidden layers (depth)</p>
+    <p className="mt-2 mb-0 text-sm text-slate-800 dark:text-slate-200">**Compose** nonlinearities—**features of features**. This is the heart of **deep** learning’s **hierarchy** story.</p>
+  </div>
+</div>
+
+**Tradeoff:** more parameters → **more flexible** but **easier to overfit** and **costlier** to train—**architecture** is a design choice.
+
+---
+
+## Nonlinearity **between** layers
+
+If you **only** stacked **linear** maps, the whole network would **collapse** to **one** linear map. **f** **between** layers **breaks** that: each hidden block can **bend** the space so later layers see **new** directions. **No** nonlinearity in hidden layers → **no** extra **expressive** power from depth (for standard fully connected nets).
+
+---
+
+## Hyperparameters vs **learned** weights
+
+<div className="not-prose my-6 overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-700">
+  <table className="w-full min-w-[300px] border-collapse text-left text-sm">
+    <thead>
+      <tr className="bg-slate-700 text-white dark:bg-slate-900">
+        <th className="p-3 font-semibold">You set before training (hyperparameters)</th>
+        <th className="p-3 font-semibold">Optimizer learns from data</th>
+      </tr>
+    </thead>
+    <tbody className="text-slate-800 dark:text-slate-200">
+      <tr className="border-b border-slate-200 dark:border-slate-700">
+        <td className="p-3">Number of **hidden** layers, neurons per layer</td>
+        <td className="p-3">Entries of **W⁽ℓ⁾**, **b⁽ℓ⁾**</td>
+      </tr>
+      <tr className="border-b border-slate-200 dark:border-slate-700">
+        <td className="p-3">Choice of **f** (ReLU vs GELU…), **learning rate**, batch size</td>
+        <td className="p-3">Values that **minimize loss** on examples</td>
+      </tr>
+      <tr className="bg-violet-50/50 dark:bg-violet-950/20">
+        <td className="p-3" colSpan={2}>
+          **“Tunable” hidden layers:** people often mean **width/depth** you **tune** by experiment—or **regularization** that **constrains** training. The **activations** in hidden layers **change** every step; the **sizes** of those layers are **fixed** unless you **redesign** the net.
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+---
+
+## Connectionist story (Hinton’s angle, in one breath)
+
+**Geoffrey Hinton** and colleagues pushed the idea that **intelligence** can emerge from **many simple units** adjusting **weights** from **data**—**layers** let those units build **abstractions** without a human listing every rule. You are not memorizing a formula; you are seeing **why** the **stack** is shaped like a **column** of **transformations** from **input** to **output**.
+
+---
+
+## ASCII map (fully connected)
+
+<div className="not-prose my-6 rounded-xl border border-slate-200 bg-slate-900 p-4 dark:border-slate-600">
+  <pre className="m-0 overflow-x-auto whitespace-pre-wrap font-mono text-[10px] leading-relaxed text-slate-100 sm:text-xs">{`  INPUT          HIDDEN 1         HIDDEN 2         OUTPUT
+ (features)    (n₁ neurons)      (n₂ neurons)     (predictions)
+    ○ ○ ○  ────►  ○ ○ ○ ○  ────►  ○ ○ ○ ○  ────►  ○ ○
+    │ │ │        all-to-all       all-to-all       logits / ŷ
+    └─┴─┘        each edge        each edge        (task-dependent)
+     x           has W,b          has W,b`}</pre>
+</div>
+
+---
+
+## Takeaway
+
+| Idea | One line |
+| ---- | -------- |
+| **Input layer** | **Features** you provide |
+| **Hidden layers** | **Learned** internal vectors; **W, b** **between** layers |
+| **Output layer** | **Task** output + final **linear** (and maybe **softmax**) |
+| **Dense** | **Full** connectivity **layer to layer** |
+| **Parameters** | Mostly **n_in × n_out + n_out** **per** affine block |
+| **Depth / width** | **Complexity** and **cost** knobs |
+
+**Next lessons** go deeper into **training** these stacks—**loss**, **gradients**, and **optimization**.
+
+---
+
+<div className="not-prose mt-10 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-6 dark:border-slate-700">
+  <a href="./perceptron-and-neuron" className="text-sm font-medium text-slate-600 no-underline hover:text-emerald-700 hover:underline dark:text-slate-400 dark:hover:text-emerald-400">← Lesson 1 · Perceptron &amp; neuron</a>
+  <a href="./activation-functions" className="text-sm font-semibold text-emerald-700 no-underline hover:underline dark:text-emerald-400">Lesson 3 · Activation functions →</a>
+</div>

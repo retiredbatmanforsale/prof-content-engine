@@ -1,0 +1,146 @@
+---
+sidebar_label: '6 · Backward pass'
+title: 'Lesson 6 — How neural networks learn (backward pass)'
+description: >-
+  Training loop, variable hierarchy, chain rule, gradients on W₁, b₁, W₂, b₂,
+  gradient descent updates, learning rate, and loss vs iterations.
+---
+
+# How neural networks learn: the **backward pass**
+
+Lesson 5 showed **prediction**: **x** flows **forward** through **W₁**, **b₁**, **σ**, **W₂**, **b₂**, **σ** to **y**. **Learning** adds a loop: after each forward pass you **measure error** with a **loss**, then **propagate sensitivity backward** to get **how to nudge** every **weight** and **bias**. That backward phase is **backpropagation**; it is **exactly** the **multivariate chain rule** applied along the **dependency graph** of intermediate variables.
+
+We keep the same **3 → 4 → 2** net (**W₁**, **b₁**, **W₂**, **b₂**) so symbols match Lesson 5.
+
+---
+
+## The training loop (what actually repeats)
+
+For each **step** (one **batch** or one **example**, depending on your setup):
+
+1. **Forward pass** — compute **z⁽¹⁾**, **a**, **z⁽²⁾**, **y** from **x** and current parameters.  
+2. **Loss** — compare **y** to targets **t** (labels): **L = loss(y, t)**.  
+3. **Backward pass** — compute **partial derivatives** of **L** with respect to **every** learned scalar: entries of **W₁**, **b₁**, **W₂**, **b₂**.  
+4. **Update** — move parameters a little **opposite** the gradient (**gradient descent**).
+
+Then repeat: **forward → loss → backward → update**, again and again. Libraries hide the bookkeeping, but the **story** is always this.
+
+---
+
+## What we need from calculus
+
+**Loss** **L** is a **scalar**. Each parameter (say an entry **(W₁)ⱼᵢ**) influences **L** only through the **chain** of intermediate values. To get **∂L / ∂(W₁)ⱼᵢ** you:
+
+1. Draw (or imagine) **who depends on whom**: **x** → **z⁽¹⁾** → **a** → **z⁽²⁾** → **y** → **L**.  
+2. Apply the **chain rule**: multiply **local derivatives** along each path, **sum** when one variable feeds **several** children (e.g. **L** may depend on **y₁** and **y₂**; both may depend on a shared earlier node).
+
+So **differentiation rules** for training are not mysterious: they are **sum and product of partials** along that **hierarchy**. **Backprop** is an **efficient order** to compute all those partials without redoing work—once you see the **graph**, the algorithm is **mechanical**.
+
+---
+
+## Hierarchy of variables (dependency “levels”)
+
+Think of **computation** as a **DAG** (directed acyclic graph) from **inputs and parameters** up to **L**:
+
+<div className="not-prose my-8 overflow-x-auto rounded-xl border border-slate-200 bg-slate-50/80 p-4 dark:border-slate-700 dark:bg-slate-900/50">
+  <pre className="m-0 min-w-[280px] whitespace-pre font-mono text-xs leading-relaxed text-slate-800 dark:text-slate-200 sm:text-sm">
+{`  parameters & input          intermediates              loss
+  ─────────────────          ─────────────              ────
+  x, W₁, b₁    →    z⁽¹⁾  →  a  = σ(z⁽¹⁾)
+                    ↓
+              W₂, b₂  →    z⁽²⁾  →  y  = σ(z⁽²⁾)  →  L(y, t)`}
+  </pre>
+</div>
+
+- **L** depends on **y** (and **t**, but **t** is fixed data—not a parameter).  
+- **y** depends on **z⁽²⁾**, hence on **W₂**, **b₂**, and **a**.  
+- **a** depends on **z⁽¹⁾**, hence on **W₁**, **b₁**, and **x**.
+
+**Chain rule** always answers: “If I wiggle this **parent**, how does **L** move?” by threading **∂L/∂child · ∂child/∂parent** (and **adding** branches when a node has **multiple** children).
+
+**Example (scalar intuition):** if **L** depends on **y₁** and **y₂**, and both depend on some **u**,
+
+$$
+\frac{\partial L}{\partial u}
+  = \frac{\partial L}{\partial y_1}\frac{\partial y_1}{\partial u}
+  + \frac{\partial L}{\partial y_2}\frac{\partial y_2}{\partial u}.
+$$
+
+That **sum over paths** is the **heart** of backprop when **fan-out** happens.
+
+---
+
+## What we compute: gradients for **W₁**, **b₁**, **W₂**, **b₂**
+
+**Training** needs **every** partial derivative of **L** with respect to **each learnable scalar**:
+
+- **∂L / ∂(W₁)ⱼᵢ** for **j = 1..4**, **i = 1..3**  
+- **∂L / ∂(b₁)ⱼ** for **j = 1..4**  
+- **∂L / ∂(W₂)ₖⱼ** for **k = 1..2**, **j = 1..4**  
+- **∂L / ∂(b₂)ₖ** for **k = 1..2**
+
+You do **not** need to memorize closed forms for each entry by heart. You need the **pattern**:
+
+1. Start from **∂L/∂y** (depends on your **loss**).  
+2. Multiply by **∂y/∂z⁽²⁾** (sigmoid **derivative**).  
+3. From **z⁽²⁾ = W₂a + b₂**, get sensitivities w.r.t. **W₂**, **b₂**, **a**.  
+4. Propagate **∂L/∂a** backward through **a = σ(z⁽¹⁾)** to **z⁽¹⁾**, then through **z⁽¹⁾ = W₁x + b₁** to **W₁**, **b₁**.
+
+Same **recipe** for deeper nets: **one backward step per forward op**, reusing stored **activations** from the forward pass.
+
+---
+
+## The **gradient vector** (stacking partials)
+
+Implementation-wise, we do not keep hundreds of names like **∂L/∂(W₁)₃₂** separate forever. We **pack** every **∂L/∂parameter** into **one long vector** (or list of **tensors** the same shape as **W₁**, **b₁**, …) called the **gradient** **∇L** (or **∇θ L** if **θ** is “all parameters”).
+
+$$
+\nabla_\theta L
+  = \text{stack of all } \frac{\partial L}{\partial \theta_i}
+$$
+
+**Backprop** fills that structure. **Gradient descent** then uses **one** update rule on the whole lot.
+
+---
+
+## Update rule (gradient descent)
+
+Let **θ** denote **all** parameters (every entry of **W₁**, **b₁**, **W₂**, **b₂**). After computing **∇θ L** on the current minibatch (or full batch):
+
+$$
+\theta \leftarrow \theta - \eta \, \nabla_\theta L.
+$$
+
+Here **η** (**eta**) is the **learning rate**: a small positive **hyperparameter** that says how **large** each step is.
+
+- **η too small** — loss creeps down; training is **slow**.  
+- **η too large** — steps **overshoot**; loss can **oscillate** or **diverge**.  
+- **Just right** — you often see **loss vs iteration** (or vs **epoch**) **curve** that **drops** quickly at first, then **flattens** as you approach a **good** region of parameter space.
+
+So the **learning rate** directly shapes that **curve**: it is the **knob** on **how aggressively** you apply the **gradient signal** from backprop.
+
+---
+
+## How this sits next to Lesson 5
+
+| Phase | Role |
+| ----- | ---- |
+| **Forward** | **x**, **θ** → **y** (prediction) |
+| **Loss** | **y**, **t** → **L** (scalar error) |
+| **Backward** | **L** → **∂L/∂θ** for every parameter (**chain rule**) |
+| **Update** | **θ ← θ − η ∇L** |
+
+**Inference** skips **loss**, **backward**, and **update**; **training** is the full loop.
+
+---
+
+## One-line story
+
+**Nested** **forward** **graph** → **nested** **chain rule** → **gradient** → **descent** with **η** → **loss** **curve** improves over **iterations**.
+
+---
+
+<div className="not-prose mt-10 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-6 dark:border-slate-700">
+  <a href="./forward-pass" className="text-sm font-medium text-slate-600 no-underline hover:text-emerald-700 hover:underline dark:text-slate-400 dark:hover:text-emerald-400">← Lesson 5 · Forward pass</a>
+  <a href="./trainable-parameters-and-hyperparameters" className="text-sm font-semibold text-emerald-700 no-underline hover:underline dark:text-emerald-400">Lesson 7 · Parameters &amp; hyperparameters →</a>
+</div>
