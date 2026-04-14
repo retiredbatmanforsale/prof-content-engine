@@ -1,0 +1,314 @@
+---
+sidebar_label: 'Talk · Statistical models → modern AI'
+title: 'From Statistical Models to Modern AI Systems'
+description: >-
+  Talk notes: evolution of deep learning, GPUs, AlexNet, scale, transformers,
+  world models, and engineering outlook—structured for presentation with image
+  placeholders.
+---
+
+{/* Presenter mode: each major ## reads like a slide. Drop images into the dashed placeholder boxes (Wikimedia / your assets). */}
+
+<div className="not-prose mb-10 rounded-2xl border-2 border-violet-200 bg-gradient-to-br from-violet-50 via-white to-sky-50 px-6 py-10 text-center dark:border-violet-800 dark:from-violet-950/40 dark:via-slate-950 dark:to-sky-950/30 sm:px-10">
+  <p className="m-0 text-xs font-bold uppercase tracking-[0.2em] text-violet-600 dark:text-violet-300">Talk</p>
+  <h1 className="mt-2 text-balance text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-50 sm:text-4xl">
+    From Statistical Models to Modern AI Systems
+  </h1>
+  <p className="mx-auto mt-4 max-w-2xl text-lg text-slate-600 dark:text-slate-300">
+    The evolution of <strong>deep learning</strong>—from small models to planet-scale systems—and what it means for engineers next.
+  </p>
+  <p className="mt-6 text-sm font-medium text-slate-500 dark:text-slate-400">Puru Kathuria</p>
+</div>
+
+---
+
+## Puru Kathuria
+
+<div className="not-prose grid items-start gap-6 lg:grid-cols-[1fr_1.05fr]">
+  <div className="flex flex-col gap-5">
+    <div className="rounded-2xl border-2 border-violet-200 bg-gradient-to-br from-white to-violet-50/90 px-5 py-6 shadow-md dark:border-violet-700 dark:from-slate-900 dark:to-violet-950/40 sm:px-7 sm:py-8">
+      <p className="m-0 text-center text-xs font-bold uppercase tracking-widest text-violet-600 dark:text-violet-300">Bio · at a glance</p>
+      <ul className="mt-5 list-none space-y-4 p-0 text-base font-semibold leading-snug text-slate-800 dark:text-slate-100 sm:text-lg sm:leading-snug">
+        <li className="flex gap-3">
+          <span className="shrink-0 text-violet-500 dark:text-violet-400" aria-hidden>▸</span>
+          <span><strong className="text-slate-900 dark:text-white">CS, ML, DL</strong> — <strong>IIIT Delhi</strong></span>
+        </li>
+        <li className="flex gap-3">
+          <span className="shrink-0 text-violet-500 dark:text-violet-400" aria-hidden>▸</span>
+          <span><strong className="text-slate-900 dark:text-white">AI research</strong> — <strong>KraCr LAB</strong> and <strong>DCB Lab</strong></span>
+        </li>
+        <li className="flex gap-3">
+          <span className="shrink-0 text-violet-500 dark:text-violet-400" aria-hidden>▸</span>
+          <span><strong className="text-slate-900 dark:text-white">MathWorks</strong> — intern → SWE → <strong>DL</strong></span>
+        </li>
+        <li className="flex gap-3">
+          <span className="shrink-0 text-violet-500 dark:text-violet-400" aria-hidden>▸</span>
+          <span><strong className="text-slate-900 dark:text-white">Google</strong> (2020) — <strong>Cloud Security</strong>; <strong>Distributed Systems</strong> + <strong>Modern AI</strong></span>
+        </li>
+        <li className="flex gap-3">
+          <span className="shrink-0 text-violet-500 dark:text-violet-400" aria-hidden>▸</span>
+          <span><strong className="text-slate-900 dark:text-white">Lex AI</strong> — Having fun with <strong>AI</strong> and <strong>Education</strong></span>
+        </li>
+      </ul>
+    </div>
+    <div className="rounded-2xl border border-orange-200 bg-gradient-to-r from-orange-50/90 to-amber-50/80 p-5 dark:border-orange-900/50 dark:from-orange-950/30 dark:to-amber-950/20">
+      <p className="m-0 text-xs font-bold uppercase tracking-wide text-orange-800 dark:text-orange-200">Newsletter &amp; site</p>
+      <p className="mt-2 text-sm text-slate-700 dark:text-slate-300">
+        Writing on AI lives on my Substack (custom domain): open the site or use the subscribe embed below—no extra Docusaurus plugin; Substack serves the embed iframe.
+      </p>
+      <a
+        href="https://www.purukathuria.com/"
+        className="mt-4 inline-flex w-full items-center justify-center rounded-xl bg-orange-600 px-4 py-3 text-center text-base font-bold text-white no-underline shadow-md transition-colors hover:bg-orange-700 dark:bg-orange-600 dark:hover:bg-orange-500 sm:text-lg"
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        purukathuria.com →
+      </a>
+      <div className="mt-4 overflow-hidden rounded-xl border border-orange-200/80 bg-white dark:border-orange-900/40 dark:bg-slate-950">
+        <iframe
+          title="Puru Kathuria on Substack — subscribe"
+          src="https://www.purukathuria.com/embed"
+          width="100%"
+          height="150"
+          style={{ border: '0', background: 'transparent' }}
+          frameBorder={0}
+          scrolling="no"
+        />
+      </div>
+      <p className="mt-2 text-center text-xs text-slate-500 dark:text-slate-400">
+        If the embed is empty, your browser or Substack may block third-party frames—use the button above. For <strong>single posts</strong>, Substack’s <strong>Share → Embed</strong> gives pasteable HTML for talks.
+      </p>
+    </div>
+  </div>
+  <figure className="m-0 flex flex-col items-center justify-center">
+    <div className="overflow-hidden rounded-2xl border-2 border-slate-200 bg-white shadow-lg ring-4 ring-violet-100 dark:border-slate-600 dark:bg-slate-900 dark:ring-violet-950/50">
+      <img
+        src="https://media.licdn.com/dms/image/v2/D4D03AQGQtno9QlQ5ug/profile-displayphoto-shrink_800_800/profile-displayphoto-shrink_800_800/0/1715758859402?e=1777507200&amp;v=beta&amp;t=IgKjumaawDhJlXJaGpVRUbVlsHTcEFrKspyTWJJxqms"
+        alt="Puru Kathuria"
+        className="mx-auto block h-auto max-h-[min(420px,70vh)] w-full max-w-md object-cover object-top"
+        width={800}
+        height={800}
+      />
+    </div>
+    <figcaption className="mt-3 text-center text-xs text-slate-500 dark:text-slate-400">Photo via LinkedIn profile</figcaption>
+  </figure>
+</div>
+
+**Through-line:** research rigor → shipping algorithms in industry → **large-scale systems** → **teaching** what actually matters.
+
+---
+
+## Two lenses on “hard” engineering
+
+| Lens | MathWorks era | Google era |
+| ----- | ------------- | ----------- |
+| **Dominant pain** | High **algorithmic** complexity | High **distributed** scale |
+| **Rough scale** | Not “millions of QPS” | **Large** QPS, big fleets |
+| **What you optimize** | Motion planning, geometry, DL hybrids | Backends, security, ML in production |
+| **Muscle memory** | Deep math in the loop | Systems + reliability |
+
+**Bridge habit:** informal **Friday cohorts** (Deep Learning Bookshop at MathWorks → ML reading group at Google) → love of **unpacking** theory **and** practice → **Lexi**.
+
+---
+
+## Thesis of this talk
+
+<div className="not-prose my-8 rounded-xl border-l-4 border-violet-500 bg-violet-50/80 py-4 pl-5 pr-4 dark:bg-violet-950/30">
+  <p className="m-0 text-base font-semibold text-slate-900 dark:text-slate-100">
+    A handful of deep-learning researchers and builders—often not household names—helped unlock <strong>trillions</strong> in value and a <strong>trillion-dollar</strong> industry narrative.
+  </p>
+  <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
+    Today: <strong>how</strong> that happened, <strong>what</strong> scaled, <strong>where</strong> we are, <strong>what</strong> engineers should watch next.
+  </p>
+</div>
+
+---
+
+## Breakthrough A — “Attention Is All You Need”
+
+<div className="not-prose my-6 flex flex-wrap items-center justify-between gap-4 rounded-xl bg-slate-900 px-5 py-4 text-slate-100">
+  <span className="font-mono text-sm text-emerald-400">Transformer</span>
+  <span className="text-sm">Self-attention · parallelizable · became the backbone of modern LLMs</span>
+</div>
+
+{/* Image: paper figure / Vaswani et al. attention diagram — Wikimedia or paper PDF */}
+
+**Audience hook:** “Who’s heard of Attention Is All You Need?” — sets up that **another** breakthrough was **hardware-meets-research** at least as consequential for **velocity** of the field.
+
+---
+
+## Breakthrough B — Silicon Valley meets Toronto
+
+<div className="not-prose grid gap-6 md:grid-cols-2">
+  <div className="rounded-xl border border-slate-200 p-5 dark:border-slate-700">
+    <p className="m-0 text-xs font-bold uppercase text-emerald-600 dark:text-emerald-400">Santa Clara / NVIDIA</p>
+    <p className="mt-2 text-sm text-slate-700 dark:text-slate-300">
+      <strong>Jensen Huang</strong> — graphics as a bet; “we sell <strong>technology</strong>” positioning; long runway before DL became the killer workload.
+    </p>
+    <div className="mt-4 rounded-lg border-2 border-dashed border-emerald-400/70 bg-emerald-50/60 p-8 text-center text-xs text-emerald-900 dark:bg-emerald-950/30 dark:text-emerald-100">
+      📷 NVIDIA logo / keynote / Jensen portrait (Wikimedia)
+    </div>
+  </div>
+  <div className="rounded-xl border border-slate-200 p-5 dark:border-slate-700">
+    <p className="m-0 text-xs font-bold uppercase text-sky-600 dark:text-sky-400">Toronto</p>
+    <p className="mt-2 text-sm text-slate-700 dark:text-slate-300">
+      <strong>Geoffrey Hinton</strong> and students — ideas of <strong>learning in neural nets</strong>; competition-grade vision models.
+    </p>
+    <div className="mt-4 rounded-lg border-2 border-dashed border-sky-400/70 bg-sky-50/60 p-8 text-center text-xs text-sky-900 dark:bg-sky-950/30 dark:text-sky-100">
+      📷 Hinton / U of T / lab photo (Wikimedia)
+    </div>
+  </div>
+</div>
+
+---
+
+## AlexNet — why GPUs mattered
+
+| Ingredient | Why it mattered |
+| ---------- | ---------------- |
+| **~8-layer CNN** | Strong signal on **ImageNet** (hard, real-world vision) |
+| **Two GPUs** | Split model across devices → **parallel** matmuls |
+| **Graphics mindset** | Pixels / regions → **independent** parallel work |
+
+<div className="not-prose my-6 rounded-xl border border-slate-200 bg-slate-50 p-5 font-mono text-xs leading-relaxed text-slate-800 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 sm:text-sm">
+  <pre className="m-0 whitespace-pre">{`   Input image
+        │
+   ┌────┴────┐
+   │ conv + │  …  stack of representation layers
+   │  ReLU   │
+   └────┬────┘
+        │
+   split / data-parallel  ──────►  GPU 0    GPU 1
+        │
+        ▼
+   softmax / loss on labels`}</pre>
+</div>
+
+<div className="not-prose rounded-lg border-2 border-dashed border-violet-400/70 bg-violet-50/50 p-8 text-center text-xs text-violet-900 dark:bg-violet-950/30 dark:text-violet-100">
+  📷 GPU die shot / PCIe card / “two GPUs” diagram (Wikimedia)
+</div>
+
+**Punchline:** NVIDIA had been waiting ~**12 years** for a “this is it” moment—GPUs as **trainers**, not only **rasterizers**.
+
+---
+
+## The “Big Bang” framing
+
+<div className="not-prose my-8 space-y-4">
+  <div className="flex flex-wrap gap-3">
+    <span className="rounded-full bg-emerald-600 px-3 py-1 text-xs font-bold text-white">1</span>
+    <span className="text-sm text-slate-700 dark:text-slate-300">GPUs are <strong>great</strong> at training deep nets.</span>
+  </div>
+  <div className="flex flex-wrap gap-3">
+    <span className="rounded-full bg-emerald-600 px-3 py-1 text-xs font-bold text-white">2</span>
+    <span className="text-sm text-slate-700 dark:text-slate-300">These nets <strong>scale</strong>—more compute ↔ richer functions.</span>
+  </div>
+  <div className="flex flex-wrap gap-3">
+    <span className="rounded-full bg-emerald-600 px-3 py-1 text-xs font-bold text-white">3</span>
+    <span className="text-sm text-slate-700 dark:text-slate-300">Markets saw a <strong>supercomputer inside a workstation</strong> story.</span>
+  </div>
+</div>
+
+**Universal approximation intuition (one line):** high-capacity nets learn **representations** that map inputs toward outputs; **scale** makes that usable in practice.
+
+<div className="not-prose rounded-lg border-2 border-dashed border-amber-400/70 bg-amber-50/50 p-8 text-center text-xs text-amber-950 dark:bg-amber-950/30 dark:text-amber-100">
+  📷 Market cap / H100 cluster / data-center row — optional “scale” visual
+</div>
+
+---
+
+## Model lineage (the stack we climbed)
+
+<div className="not-prose my-8 overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-700">
+  <table className="w-full min-w-[280px] border-collapse text-left text-sm">
+    <thead>
+      <tr className="bg-slate-800 text-white dark:bg-slate-950">
+        <th className="p-3">Era</th>
+        <th className="p-3">Representative idea</th>
+      </tr>
+    </thead>
+    <tbody className="text-slate-800 dark:text-slate-200">
+      <tr className="border-b border-slate-200 dark:border-slate-700">
+        <td className="p-3 font-medium">Classical</td>
+        <td className="p-3">Linear models, statistics-first</td>
+      </tr>
+      <tr className="border-b border-slate-200 dark:border-slate-700">
+        <td className="p-3 font-medium">Early NN</td>
+        <td className="p-3">Perceptrons → multi-layer nets</td>
+      </tr>
+      <tr className="border-b border-slate-200 dark:border-slate-700">
+        <td className="p-3 font-medium">Vision scale-up</td>
+        <td className="p-3">CNNs · <strong>AlexNet</strong> moment</td>
+      </tr>
+      <tr className="border-b border-slate-200 dark:border-slate-700">
+        <td className="p-3 font-medium">Sequence &amp; context</td>
+        <td className="p-3">RNNs → <strong>attention</strong> → <strong>Transformers</strong></td>
+      </tr>
+      <tr className="bg-emerald-50/50 dark:bg-emerald-950/20">
+        <td className="p-3 font-medium">Today</td>
+        <td className="p-3">Huge models · reasoning &amp; “world models” on the horizon</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+---
+
+## Moore’s Law vs “accelerated computing”
+
+| Moore’s Law (classic intuition) | AI era add-on |
+| ------------------------------ | ------------- |
+| ~**2×** capability / **~2 years** | **GPUs / TPUs** = throughput for **dense linear algebra** |
+| Cost per transistor falls | **“Moore’s law on steroids”** for **parallel** training |
+
+**Order-of-magnitude story (talk track, not a benchmark):**
+
+- Early GPU-class models on the order of **~10⁸** parameters  
+- Frontier systems today in the **trillions** of parameters (with caveats on counting MoEs, etc.)
+
+<div className="not-prose rounded-lg border-2 border-dashed border-slate-400/60 bg-slate-100/80 p-8 text-center text-xs text-slate-700 dark:bg-slate-800 dark:text-slate-200">
+  📷 Moore’s law chart (Wikimedia) + optional overlay: GPU FLOPS trend
+</div>
+
+---
+
+## Modern AI — where the problems moved
+
+| Theme | What changed |
+| ----- | ------------- |
+| **Architecture** | Transformers dominate language &amp; increasingly vision/multimodal |
+| **Performance** | Models exceed humans on **narrow** suites—forces honest evaluation |
+| **Next frontier** | **Reasoning**, causality, **physics** — models that reflect how the world works |
+| **World models** | Learn from **observation** of environment, not text alone |
+
+**Speaker note:** “We are in a **fix and extend** phase—making systems **reliable**, **grounded**, and **interpretable** enough for real stakes.”
+
+---
+
+## Closing — engineers in the room
+
+**Two questions to land:**
+
+1. **Will AI take our jobs?** (Frame on stage: displacement vs **task** change vs **new** roles—keep your voice.)  
+2. **What should we optimize for?** Borrow signal from **tier-one builders** you cite:
+
+<div className="not-prose my-6 grid gap-4 sm:grid-cols-2">
+  <div className="rounded-xl border border-violet-200 bg-white p-5 dark:border-violet-800 dark:bg-slate-900">
+    <p className="m-0 font-semibold text-slate-900 dark:text-slate-100">Andrej Karpathy</p>
+    <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">End-to-end systems thinking, teaching clarity, “bitter lesson” energy—pick 1–2 themes you actually use.</p>
+    <div className="mt-3 rounded border border-dashed border-violet-300 p-4 text-center text-xs text-slate-500 dark:border-violet-700">📷 optional portrait</div>
+  </div>
+  <div className="rounded-xl border border-violet-200 bg-white p-5 dark:border-violet-800 dark:bg-slate-900">
+    <p className="m-0 font-semibold text-slate-900 dark:text-slate-100">Demis Hassabis</p>
+    <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">Science-grade AGI framing, research organization, long horizons—what you want the audience to remember tomorrow.</p>
+    <div className="mt-3 rounded border border-dashed border-violet-300 p-4 text-center text-xs text-slate-500 dark:border-violet-700">📷 optional portrait</div>
+  </div>
+</div>
+
+**Final beat:** the same curiosity that powered **Friday book clubs** is the durable skill—**learn in public**, **ship systems**, **teach the stack**.
+
+---
+
+<div className="not-prose mt-12 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-6 dark:border-slate-700">
+  <a href="./intro" className="text-sm font-medium text-slate-600 no-underline hover:text-violet-700 hover:underline dark:text-slate-400 dark:hover:text-violet-400">← AI writing &amp; talks</a>
+</div>

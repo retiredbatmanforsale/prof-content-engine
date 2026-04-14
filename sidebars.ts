@@ -15,14 +15,14 @@ const sidebars: SidebarsConfig = {
   docsSidebar: [
     {
       type: 'category',
-      label: 'AI Industry Trends',
+      label: 'AI writing & talks',
       link: {
         type: 'doc',
-        id: 'ai-industry-trends/intro',
+        id: 'ai-writing-and-talks/intro',
       },
       items: [
-        'ai-industry-trends/varun-moan-from-mit-to-antigravity',
-        'ai-industry-trends/my-notes-agentic-ides-and-the-field',
+        'ai-writing-and-talks/intro',
+        'ai-writing-and-talks/from-statistical-models-to-modern-ai-systems',
       ],
     },
     {
