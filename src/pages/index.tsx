@@ -15,7 +15,7 @@ const tracks = [
     title: 'AI for Leaders',
     description:
       'Understand LLMs, generative AI, prompt engineering, and AI literacy — built for business leaders and decision-makers.',
-    link: '/courses/ai-for-leaders/intro',
+    link: '/courses/ai-for-leaders/llms-101/intro',
     icon: '\u25B2',
     accent: 'var(--lexai-coral-500)',
   },

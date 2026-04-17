@@ -11,7 +11,7 @@ const config: Config = {
   tagline: 'Prof by Lex AI – community-driven platform for Machine Learning, Deep Learning, and Language Models',
   favicon: 'img/lexailogo.svg',
 
-  url: process.env.SITE_URL || (isProd ? 'https://prof-lexai.vercel.app' : 'http://localhost:3001'),
+  url: process.env.SITE_URL || (isProd ? 'https://prof.lexailabs.com' : 'http://localhost:3001'),
   baseUrl: '/',
 
   organizationName: 'rachit-k12',
@@ -22,7 +22,7 @@ const config: Config = {
 
   customFields: {
     apiUrl: process.env.API_URL || 'https://lexai-auth-service-747134511273.asia-south2.run.app',
-    mainPlatformUrl: process.env.MAIN_PLATFORM_URL || 'https://prof-lexai.vercel.app',
+    mainPlatformUrl: process.env.MAIN_PLATFORM_URL || 'https://prof.lexailabs.com',
   },
 
   i18n: {
@@ -56,7 +56,7 @@ const config: Config = {
       logo: {
         alt: 'Prof by Lex AI',
         src: 'img/lexailogo.svg',
-        href: isProd ? 'https://prof-lexai.vercel.app/' : '/',
+        href: isProd ? 'https://prof.lexailabs.com/' : '/',
         target: '_self',
       },
       items: [],
