@@ -1,0 +1,240 @@
+---
+title: 'Lesson 1 — AI literacy & the road to generative AI'
+sidebar_label: '1 · AI literacy & the road to generative AI'
+description: >-
+  From statistics and probability to symbolic AI, classical ML, deep learning,
+  and generative systems—how ideas, data, compute, and models evolved together.
+sidebar_position: 2
+---
+
+# Lesson 1 — AI literacy & the road to generative AI
+
+**Generative AI** did not appear overnight. Before anyone said “large language model” in a boardroom, systems were already grounded in **statistics and probability**. What changed is not the existence of math—it is the **scale** of data, compute, model complexity, and the **kind of question** we ask models to answer.
+
+This lesson is a **map**: where today’s systems sit on a much longer timeline, and why that context matters when you evaluate vendors, pilots, and risk.
+
+---
+
+## A quick orientation
+
+Imagine four dials on one machine—**mathematics**, **data**, **compute**, and **model complexity**. Over decades, all four turned up together. Performance on hard tasks often rose **non-linearly** with that scale. The billions of dollars and engineering hours are, in part, a bet that **throughput** (how much useful work a system can do per dollar) would eventually justify the investment.
+
+:::tip[What to take away]
+
+You do not need to memorize every acronym. You need a **mental model**: prediction → representation → scale → **generation**—and where your use case sits on that path.
+
+:::
+
+---
+
+## The umbrella: AI → machine learning → deep learning
+
+**Artificial intelligence** is the broadest label: any system that seems to require intelligence—rules, learning, or hybrid.
+
+Under that umbrella sits **machine learning (ML)**: systems that **improve from examples** instead of only hand-written rules. Some textbooks still call it **statistical pattern recognition** (Duda & Hart’s framing is part of that lineage).
+
+**Deep learning** is a **subset** of ML: models built from **many stacked, differentiable layers**—often neural networks—so the system can learn **hierarchical representations** (edges → textures → parts → objects, or characters → morphemes → ideas).
+
+```text
+┌──────────────────────────────────────────────┐
+│                    AI                        │
+│  ┌────────────────────────────────────────┐ │
+│  │           Machine learning              │ │
+│  │  ┌──────────────────────────────────┐    │ │
+│  │  │        Deep learning             │    │ │
+│  │  │   (CNNs, RNNs, Transformers…)    │    │ │
+│  │  └──────────────────────────────────┘    │ │
+│  │  + other ML (e.g. shallow trees, SVMs)   │ │
+│  └────────────────────────────────────────┘ │
+│  + symbolic / rule systems, search, logic…  │
+└──────────────────────────────────────────────┘
+```
+
+Each ring is not “better” in isolation—it is a different **contract** with data and engineering.
+
+---
+
+## Four waves (story, not scripture)
+
+Histories are simplified on purpose. Treat the table below as a **conceptual map**, not a full academic history.
+
+| Wave | Era (rough) | Core idea | Strength | Limit |
+|------|-------------|-----------|----------|-------|
+| **1 · Symbolic AI** | 1950s onward | Expert systems, **if–else** forests, explicit rules | Crystal-clear for **deterministic** workflows | **Brittle**: unknown cases, combinatorial explosion, hard to scale tacit knowledge |
+| **2 · Classical ML** | 1990s–2010s boom | Learn **patterns from data** with equations + loss | Works with modest data; interpretable baselines | **Feature engineering** burden; plateaus on raw high-dimensional inputs |
+| **3 · Deep learning** | CNN/RNN era → Transformers | **Learn representations** and interactions end-to-end | CV, speech, language breakthroughs | Data + compute + tooling hunger; opaque layers |
+| **4 · Generative AI** | Recent LLM / diffusion era | Model **distributions over outputs**—tokens, pixels, audio | Creation, drafting, code, multimodal | Safety, evaluation, cost, “hallucination” as a product risk |
+
+---
+
+### Wave 1 — Symbolic AI (the “giant if–else” era)
+
+Early **expert systems** encoded domain logic as **decision trees** and rules. If there are ten chess moves, you might try to branch on all ten. That is honest engineering—and it is also **rigid**: the world hands you move eleven, or a typo, or a sensor glitch.
+
+**Non-determinism** (messy reality) was not the strength of pure symbolic stacks. What they *were* good at: **air-traffic-style** procedures, tax logic slices, anything where the state space was bounded and audited.
+
+<div className="not-prose my-6 rounded-xl border border-amber-200 bg-amber-50/80 p-4 dark:border-amber-900/60 dark:bg-amber-950/30">
+  <p className="m-0 text-sm font-semibold text-amber-900 dark:text-amber-100">Mental picture</p>
+  <p className="mt-2 mb-0 text-sm text-amber-950/90 dark:text-amber-100/90">
+    A wall of <strong>green / yellow / red</strong> rules. Beautiful until the world serves a shade of <em>chartreuse</em> nobody documented.
+  </p>
+</div>
+
+---
+
+### Wave 2 — Classical machine learning (patterns from examples)
+
+Here the shift is philosophical: instead of enumerating futures, you **collect examples** and **fit** a model.
+
+**Classification example:** 10,000 cat images and 10,000 dog images. Each image might be flattened to **pixels** (a 10×10 thumbnail → 100 numbers). The algorithm searches for a boundary in that 100-dimensional space that separates classes **statistically**.
+
+**Regression example:** predict a **continuous** value—next quarter’s demand, a stock price proxy, a yield. Same toolkit, different target.
+
+| Family | Typical outputs | You might have heard… |
+|--------|-----------------|------------------------|
+| Linear / logistic models | Line, plane, probability of class | Baselines, interpretable coefficients |
+| SVMs, kernel methods | Margins in transformed spaces | Strong on structured tabular + kernels |
+| Trees, forests, boosting | Class or value with splits | XGBoost, random forest “classics” |
+| Ensembles | Average or stack models | Often wins Kaggle-era tabular |
+
+Every classical model still whispers the same truth: **there is an equation**, and **there is a loss** measuring how wrong you are.
+
+---
+
+### A line and a squiggle (linear vs logistic intuition)
+
+If symbols on the page make you tense, you are in good company. **Every** model in machine learning is written the same way at a high level: a **small set of equations** (what the model computes) and a **loss** (how far off it is). Nothing below is there to impress you—it is just the usual notation for two famous building blocks.
+
+- **Linear regression** gives you a **raw score**: a number on the real line, from negative infinity to positive infinity. Think “how many units sold?” or “what is the trend value here?”—not yet a probability.
+- **Logistic regression** starts from the same linear idea, then runs that score through a **squashing curve** so the result lands between **0 and 1** and reads as a **probability**—the usual setup for a **binary classifier** (e.g. chance this email is spam, chance this image is a dog).
+
+Same ingredients, different **last step**: unbounded number versus calibrated probability.
+
+**Linear regression** (for intuition):
+
+$$
+y = \beta_0 + \beta_1 x
+$$
+
+The **degree** of the polynomial in $x$ is one—it is a **linear** model in the parameters. It outputs a **real number** on $(-\infty, \infty)$.
+
+**Logistic regression** stacks the same linear core with a **sigmoid** “squasher”:
+
+$$
+P(Y=1 \mid x) = \sigma(\beta_0 + \beta_1 x) = \frac{1}{1 + e^{-(\beta_0 + \beta_1 x)}}
+$$
+
+The sigmoid maps the real line into **$(0,1)$**—a **probability** for a positive class. That is how we turned “height of a line” into “confidence it is a dog.”
+
+<div className="not-prose my-6 overflow-x-auto rounded-xl border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900/40">
+  <table className="w-full min-w-[280px] border-collapse text-left text-sm">
+    <thead>
+      <tr className="border-b border-slate-200 bg-slate-50 dark:border-slate-600 dark:bg-slate-800/80">
+        <th className="p-3 font-semibold text-slate-900 dark:text-slate-100">Model</th>
+        <th className="p-3 font-semibold text-slate-900 dark:text-slate-100">Output flavor</th>
+        <th className="p-3 font-semibold text-slate-900 dark:text-slate-100">Classic use</th>
+      </tr>
+    </thead>
+    <tbody className="text-slate-700 dark:text-slate-300">
+      <tr className="border-b border-slate-100 dark:border-slate-700/80">
+        <td className="p-3 font-medium">Linear regression</td>
+        <td className="p-3">Continuous</td>
+        <td className="p-3">Demand curves, simple trends</td>
+      </tr>
+      <tr>
+        <td className="p-3 font-medium">Logistic regression</td>
+        <td className="p-3">Probability / class</td>
+        <td className="p-3">Spam, churn, medical triage baselines</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+---
+
+### Wave 3 — Deep learning (representation + modality)
+
+Neural networks obsess over a biological metaphor—**neurons**—but the engineering win is simpler: **composable nonlinearities** and **a lot of parameters**.
+
+Rough picture of a feed-forward stack:
+
+```text
+Input (e.g. 100 pixel values)
+        ↓
+ Hidden layers (width & depth = hyperparameters you choose)
+        ↓
+ Output (e.g. 3 logits → cat / dog / elephant)
+```
+
+If logistic regression with $k$ features had **order $k$** parameters, deep nets can carry **orders of magnitude more**—and learn **interactions** you would never hand-code.
+
+**Architectures became verbs:**
+
+| Modality | Workhorse | Why it mattered |
+|----------|-------------|-----------------|
+| Images | **CNNs** (“deep computer vision”) | Local patterns, translation-ish structure |
+| Sequences | **RNNs** (and later LSTMs, etc.) | **Today depends on yesterday**—stocks, weather, audio, language |
+| Video | Frames over time | A clip is a **sequence of images** |
+| Biology / finance | Signals as sequences | DNA motifs, ECG, order flow |
+
+**Computer vision** in industry is everywhere: **object detection** for autonomy (camera stacks vs pricier sensors), **facial recognition** in access control, **medical imaging** screening, **quality inspection** on lines. Modern “world models” dream bigger—physics, affordances—but vision was an early **sensor→semantics** bridge.
+
+---
+
+### Wave 4 — Generative AI (from “which class?” to “what comes next?”)
+
+Older systems were often built to **predict a label**, **rank items**, or **estimate a value**. Generative systems shift the probability question:
+
+| Era | Question shape | Example |
+|-----|----------------|---------|
+| Classical / deep (discriminative tilt) | $P(\text{class} \mid x)$ | Cat vs dog |
+| Generative (autoregressive text) | $P(\text{next token} \mid \text{previous tokens})$ | Draft an email, write code |
+
+A **token** is the smallest chunk a model reads/writes—it may be a word, a sub-word, or a symbol. Loop that conditional generation and you get **sentences, stories, documents**.
+
+Creativity was once called the last frontier; generative models forced a product rethink: **drafting** is now a baseline capability—and **governance** is the new bottleneck.
+
+---
+
+## Two more paradigms worth naming
+
+### Reinforcement learning (RL)
+
+An agent **acts**, observes **reward / regret**, and updates policy toward **more reward**. Think games, robotics, some recommendation finetunes—not the same contract as supervised learning on a static CSV.
+
+### Continual learning (still hard at scale)
+
+Train **GPT‑class** models once for billions; freeze weights; serve queries. The world changes daily—news, regulation, your catalog—but **full retrains** are expensive. **Continual learning** asks: how can systems **adapt** without bankrupting retraining? This remains an open engineering + research frontier for massive models.
+
+---
+
+## ANI, AGI, ASI (labels, hype, and roadmaps)
+
+| Term | Plain-language sketch | Product lens |
+|------|-------------------------|--------------|
+| **ANI** (narrow AI) | Superhuman *inside one lane*—e.g. diabetic retinopathy screening—without claiming “general scientist” | Most shipping value today |
+| **AGI** (aspirational) | Human-band **breadth**: learn, transfer, reason across tasks | Roadmap narratives, capital markets stories |
+| **ASI** (hypothetical) | **Superhuman** recursive improvement loops—“singularity” discourse | Science fiction + ethics panels; rarely an engineering spec |
+
+Some founders argue AGI will **accelerate science** (more “Einsteins”). Others warn the same language can **inflate valuations**. Your job as a leader: separate **demo** from **deployable reliability** for *your* domain.
+
+---
+
+## How this lesson connects to the rest of the course
+
+You now have a **timeline mental model**:
+
+1. **Rules** when the world is small and known.  
+2. **Data + equations** when the world is noisy but structured.  
+3. **Deep nets** when raw inputs are high-dimensional and interactions matter.  
+4. **Generative stacks** when the product is **new content conditioned on context**.
+
+Next up in this track: we will zoom from this map into **LLMs**, **prompting**, and **applied use cases**—always tying back to **data, evaluation, and risk**.
+
+---
+
+## Further reading (optional)
+
+- Duda, Hart & Stork — *Pattern Classification* (historical “statistical pattern recognition” framing).  
+- Goodfellow, Bengio & Courville — *Deep Learning* (representation-learning era).  
+- Follow-up lessons in this track on **LLM behavior**, **prompt design**, and **evaluation**—linked from the course overview page.

@@ -1,0 +1,233 @@
+---
+title: 'Lesson 3 — From data to deployment: how AI models are built'
+sidebar_label: '3 · From data to deployment: how AI models are built'
+description: >-
+  A leader-friendly walkthrough of the model lifecycle—data, cleaning, training,
+  evaluation, deployment, and feedback—with minimal math and no code.
+sidebar_position: 4
+---
+
+# Lesson 3 — From data to deployment: how AI models are built
+
+Whether the system is **classical machine learning**, **deep learning**, or **generative AI**, teams still talk about the same object: a **model**—something you **train**, then **query** at **inference** time. The vocabulary changes; the **shape of the work** is surprisingly stable.
+
+This lesson is a **single map** of that work, so you can read roadmaps, vendor decks, and risk reviews without getting lost in equations.
+
+---
+
+## Two moments in every model’s life
+
+| Stage | Plain meaning | What you fund / govern |
+|--------|----------------|-------------------------|
+| **Training** | The model **learns** from historical examples | Data rights, compute budgets, research time, reproducibility |
+| **Inference** | The model **answers** new questions in production | Latency, uptime, monitoring, human oversight |
+
+**Complexity** is not magic—it tracks **how many adjustable knobs** the architecture has: a tiny model might have **a handful of parameters**; a frontier network might have **billions**. More knobs can mean more capacity—and more ways to **overfit** or **misbehave** if data and process are weak.
+
+---
+
+## Where “model” sits in the AI landscape
+
+```text
+  Artificial intelligence  ─────────────────────────────►  broad goal
+        └── Machine learning  ───────────────────────►  learn from data
+              └── Deep learning  ─────────────────────►  deep stacks of learned features
+                    └── Generative AI  ───────────────►  outputs text, images, audio…
+```
+
+A **model** is the concrete artifact: parameters + architecture + training recipe. It always lives **inside** one of those traditions—even when marketing says only “AI.”
+
+---
+
+## The lifecycle at a glance
+
+<figure className="not-prose my-8 mx-auto max-w-4xl rounded-2xl border border-sky-200 bg-gradient-to-b from-sky-50/90 to-white p-4 shadow-sm dark:border-sky-900/50 dark:from-sky-950/40 dark:to-slate-900/40">
+  <img
+    src="https://upload.wikimedia.org/wikipedia/commons/a/a3/AI_Model_Development_-_going_from_Data_Collection_to_Model_Development_to_Deployment.gif"
+    alt="Animated flow from data collection through model development to deployment"
+    width={800}
+    height={396}
+    loading="lazy"
+    decoding="async"
+    className="mx-auto h-auto max-w-full rounded-lg"
+  />
+  <figcaption className="mt-3 text-center text-xs text-sky-900/80 dark:text-sky-100/80">
+    <a href="https://commons.wikimedia.org/wiki/File:AI_Model_Development_-_going_from_Data_Collection_to_Model_Development_to_Deployment.gif" className="underline">
+      AI model development — data to deployment
+    </a>
+    {' · '}
+    Purufromlexai ·{' '}
+    <a href="https://creativecommons.org/licenses/by/4.0/deed.en" className="underline">CC BY 4.0</a>
+    {' · '}Wikimedia Commons
+  </figcaption>
+</figure>
+
+---
+
+## 1 · Gather and lock down data
+
+Every serious model starts as a **data project**. Example from your world: a vision system at an **airport** that must tell **human faces** from **animals** at a gate needs **many thousands** of curated examples—not a handful of screenshots.
+
+| Activity | Why it shows up on a budget line |
+|----------|----------------------------------|
+| **Acquisition** | Buy datasets, commission capture, partner with operators, or (carefully) use **synthetic** data |
+| **Rights & consent** | Legal basis to train and to run inference in each region |
+| **Labeling** | Humans or tools assigning the “right answer” per image, document, or row |
+
+<div className="not-prose my-6 rounded-xl border border-violet-200 bg-violet-50/90 p-4 dark:border-violet-900/50 dark:bg-violet-950/30">
+  <p className="m-0 text-sm font-semibold text-violet-900 dark:text-violet-100">Split the data before you trust a number</p>
+  <p className="mt-2 mb-0 text-sm text-violet-950/90 dark:text-violet-100/90">
+    A classic pattern is an <strong>80 / 20</strong> split: most rows for <strong>training</strong>, a held-out slice for <strong>testing</strong> (sometimes called <strong>unseen</strong> data). Many teams add a <strong>validation</strong> slice for tuning—three-way splits reduce the chance you “accidentally peek” at the test set while experimenting.
+  </p>
+</div>
+
+<figure className="not-prose my-8 mx-auto max-w-3xl rounded-2xl border border-emerald-200 bg-white p-3 shadow-sm dark:border-emerald-900/40 dark:bg-slate-900/50">
+  <img
+    src="https://upload.wikimedia.org/wikipedia/commons/thumb/d/d5/DataSplit-Training%2CTesting_%26_Validation_Split.png/960px-DataSplit-Training%2CTesting_%26_Validation_Split.png"
+    alt="Diagram of training, testing, and validation data splits"
+    loading="lazy"
+    decoding="async"
+    className="mx-auto h-auto max-w-full rounded-lg"
+  />
+  <figcaption className="mt-3 text-center text-xs text-slate-600 dark:text-slate-400">
+    <a href="https://commons.wikimedia.org/wiki/File:DataSplit-Training%2CTesting_%26_Validation_Split.png" className="underline">Training, testing &amp; validation split</a>
+    {' · '}Purufromlexai · <a href="https://creativecommons.org/licenses/by/4.0/deed.en" className="underline">CC BY 4.0</a>
+  </figcaption>
+</figure>
+
+---
+
+## 2 · Clean, balance, and engineer the data
+
+**Cleaning** makes examples usable: remove **corrupt files**, fix **blank fields**, clip wild **outliers**, standardize **formats** and **sizes** (especially for images and documents).
+
+**Data engineering** handles **distribution**: if “human face” photos overwhelm “animal” photos, the model can learn to **always guess the majority class**. Teams fix imbalance with **resampling**, **re-weighting**, or **augmentation** (carefully—augmentation should respect physics and privacy).
+
+| Scale | Storage & access pattern |
+|-------|---------------------------|
+| **Notebook-scale proof of concept** | A laptop, a CSV, a folder of images |
+| **Production-scale** | Object stores, lakehouses, streaming pipelines, **governed** feature stores |
+
+---
+
+## 3 · Choose architecture and loss (still without code)
+
+**Model equation** is jargon for “what computation turns inputs into outputs.” **Linear regression** is one equation; a **deep neural network** nests many small equations—hence the term **architecture**.
+
+<figure className="not-prose my-8 mx-auto max-w-3xl rounded-2xl border border-amber-200 bg-amber-50/40 p-3 dark:border-amber-900/40 dark:bg-slate-900/50">
+  <img
+    src="https://upload.wikimedia.org/wikipedia/commons/thumb/4/47/ModelComplexity_varies_with_model_architecture_and_model_equation_%28linear%2C_logistic_%2C_NN%29.png/960px-ModelComplexity_varies_with_model_architecture_and_model_equation_%28linear%2C_logistic_%2C_NN%29.png"
+    alt="Comparison of linear regression, logistic regression, and neural network model complexity"
+    loading="lazy"
+    decoding="async"
+    className="mx-auto h-auto max-w-full rounded-lg"
+  />
+  <figcaption className="mt-3 text-center text-xs text-amber-950/90 dark:text-amber-100/80">
+    <a href="https://commons.wikimedia.org/wiki/File:ModelComplexity_varies_with_model_architecture_and_model_equation_%28linear%2C_logistic_%2C_NN%29.png" className="underline">Model complexity across linear, logistic, and neural setups</a>
+    {' · '}Purufromlexai · <a href="https://creativecommons.org/licenses/by/4.0/deed.en" className="underline">CC BY 4.0</a>
+  </figcaption>
+</figure>
+
+**Loss function** is the scoreboard during training: the system **nudges parameters** to make that score better.
+
+| Problem type | Output you expect | Typical loss (names only) |
+|----------------|-------------------|---------------------------|
+| **Regression** | A number on the real line (e.g. next week’s **price level**) | Mean squared error family |
+| **Binary classification** | Two classes (e.g. **spam / not spam**) | Cross-entropy style losses |
+| **Multi-class** | Many labels (emotions, product codes) | Cross-entropy generalized |
+
+**Evaluation** must match the job: **accuracy**, **sensitivity**, **specificity** for many classification settings; **R²** and error metrics for regression. The right metric is the one that mirrors **business harm**—the same way a sales org tracks **pipeline** while finance tracks **run-rate savings.**
+
+---
+
+## Probabilities at a glance (sigmoid vs softmax)
+
+When outputs must read as **probabilities** (between 0 and 1, or a vector of class probabilities), architectures often end with a **sigmoid** (two-class style) or **softmax** (multi-class) layer. You do not need to implement them—you need to know **what question they answer**.
+
+<figure className="not-prose my-8 mx-auto max-w-4xl rounded-2xl border border-rose-200 bg-gradient-to-b from-rose-50/80 to-white p-4 dark:border-rose-900/40 dark:from-rose-950/30 dark:to-slate-900/40">
+  <img
+    src="https://upload.wikimedia.org/wikipedia/commons/d/d9/Sigmoid_And_Softmax_Giving_Probabilities.gif"
+    alt="Animation contrasting sigmoid and softmax outputs as probabilities"
+    width={800}
+    height={270}
+    loading="lazy"
+    decoding="async"
+    className="mx-auto h-auto max-w-full rounded-lg"
+  />
+  <figcaption className="mt-3 text-center text-xs text-rose-900/85 dark:text-rose-100/85">
+    <a href="https://commons.wikimedia.org/wiki/File:Sigmoid_And_Softmax_Giving_Probabilities.gif" className="underline">Sigmoid and softmax producing probabilities</a>
+    {' · '}Purufromlexai · <a href="https://creativecommons.org/licenses/by/4.0/deed.en" className="underline">CC BY 4.0</a>
+  </figcaption>
+</figure>
+
+---
+
+## Parameters as “knobs”
+
+**Weights and biases** are the adjustable parts of the network—think of them as **tuning knobs** learned during training.
+
+<figure className="not-prose my-8 mx-auto max-w-3xl rounded-2xl border border-indigo-200 bg-indigo-50/30 p-3 dark:border-indigo-900/40 dark:bg-slate-900/50">
+  <img
+    src="https://upload.wikimedia.org/wikipedia/commons/thumb/a/a9/Weights%26BiasesInAModel.png/960px-Weights%26BiasesInAModel.png"
+    alt="Diagram of weights and biases as adjustable knobs in a neural network"
+    loading="lazy"
+    decoding="async"
+    className="mx-auto h-auto max-w-full rounded-lg"
+  />
+  <figcaption className="mt-3 text-center text-xs text-indigo-950/90 dark:text-indigo-100/85">
+    <a href="https://commons.wikimedia.org/wiki/File:Weights%26BiasesInAModel.png" className="underline">Weights &amp; biases in a model</a>
+    {' · '}Purufromlexai · <a href="https://creativecommons.org/licenses/by/4.0/deed.en" className="underline">CC BY 4.0</a>
+  </figcaption>
+</figure>
+
+---
+
+## 4 · Train, watch for overfit, then validate
+
+Training is a loop in words:
+
+1. **Forward pass** — show the model an example; read its guess.  
+2. **Loss** — measure how wrong the guess is.  
+3. **Backward pass** — adjust knobs to reduce that loss next time.  
+4. **Repeat** across **epochs** — you should see loss **trend down** on healthy runs (your teams will show you the curve).
+
+**Overfitting** means the model **memorized the training set** but **fails on unseen data**. Good generalization shows **similar quality** on train and test when both are drawn fairly from the same world.
+
+:::tip[What to ask in a review]
+
+“If we plot train vs test metrics side by side, **where do they diverge**—and what did we change in the recipe right before that?”
+
+:::
+
+---
+
+## 5 · Deploy, observe, and feed learning back
+
+**Deployment** is not a PDF—it is **software**: containers, APIs on **GCP / AWS / Azure**, batch jobs, or edge devices. An **API endpoint** lets the airport operations team send live frames and receive **structured decisions** (counts, alerts, confidence bands).
+
+**Feedback** closes the loop: field teams report **false alarms**, **missed animals**, **lighting issues**. That feedback becomes **new labels**, **policy tweaks**, or **retraining**—which sends you back to **data** and **governance**.
+
+---
+
+## Same pipeline, generative twist
+
+For **generation**, the architecture is tuned to **predict the next token** (or patch, or frame) autoregressively—but the **business stages** still line up: **data → train → evaluate → ship → monitor → improve**.
+
+---
+
+## One-page flow (pin this in a workshop)
+
+```text
+ ┌──────────────┐    ┌──────────────┐    ┌────────────────┐    ┌─────────────┐    ┌──────────────┐
+ │ Collect data │ → │ Clean & split │ → │ Train model   │ → │ Deploy API   │ → │ Monitor &     │
+ │ + rights       │    │ + balance      │    │ + loss curves │    │ + SLAs       │    │ improve data   │
+ └──────────────┘    └──────────────┘    └────────────────┘    └─────────────┘    └──────────────┘
+        ↑                                                                __________________|
+                                    feedback & new examples
+```
+
+---
+
+## Closing
+
+You do not need to derive backpropagation to **govern** AI programs. You **do** need to recognize the **pipeline**: data quality and rights at the base, honest **evaluation** in the middle, and **operational feedback** at the top. When a vendor says “the model is done,” ask which **stages** above they are skipping—and what risk that pushes onto **your** organization.

@@ -1,0 +1,159 @@
+---
+title: 'Lesson 2 — AI as a five-layer stack (“the cake”)'
+sidebar_label: '2 · AI as a five-layer stack (“the cake”)'
+description: >-
+  How NVIDIA’s Jensen Huang frames the AI industry as five dependent layers—from
+  energy and silicon to infrastructure, models, and applications—with examples
+  leaders can use in strategy and vendor conversations.
+sidebar_position: 3
+---
+
+# Lesson 2 — AI as a five-layer stack (“the cake”)
+
+A single **model name** is not the same thing as an **AI industry**. NVIDIA CEO **Jensen Huang** often describes the full AI system as a **five-layer infrastructure stack**—sometimes called a **“five-layer cake.”** Each layer is a different slice of technology and economics; together they form a **dependent pyramid**: the top only works if everything below can deliver power, chips, facilities, and software at scale.
+
+---
+
+## The stack in one glance
+
+<div className="not-prose my-8 flex flex-col items-center gap-3">
+  <figure className="m-0 max-w-3xl rounded-xl border border-slate-200 bg-slate-50/80 p-3 shadow-sm dark:border-slate-600 dark:bg-slate-900/50">
+    <img
+      src="https://upload.wikimedia.org/wikipedia/commons/2/2f/AIisa5layercake.gif"
+      alt="Animation illustrating AI as a five-layer cake: energy at the base, then silicon, infrastructure, models, and applications at the top"
+      width={800}
+      height={316}
+      loading="lazy"
+      decoding="async"
+      className="mx-auto h-auto max-w-full rounded-lg"
+    />
+    <figcaption className="mt-3 px-1 text-center text-xs leading-relaxed text-slate-600 dark:text-slate-400">
+      <a href="https://commons.wikimedia.org/wiki/File:AIisa5layercake.gif" className="text-slate-700 underline dark:text-slate-300">
+        AI is a 5 layer cake
+      </a>
+      {' — '}
+      <span>Purufromlexai</span>,{' '}
+      <a href="https://creativecommons.org/licenses/by/4.0/deed.en" className="text-slate-700 underline dark:text-slate-300">
+        CC BY 4.0
+      </a>
+      , via Wikimedia Commons.
+    </figcaption>
+  </figure>
+</div>
+
+---
+
+## The five layers (what each one does)
+
+Think of a **contract chain**: applications assume models exist; models assume clusters and power exist; clusters assume chips exist; chips assume fabs and electricity exist. If any link weakens, the whole story changes—latency, cost, availability, or national policy.
+
+| Layer | Name (short) | Role | What leaders notice |
+|:-----:|----------------|------|----------------------|
+| **5** | **Applications & agentic software** | Products, copilots, agents, workflows sold to users | UX, trust, integration, procurement |
+| **4** | **AI models** | Frontier LLMs, vision, audio, multimodal “brains” | Capability, safety, evaluation, lock-in |
+| **3** | **Infrastructure & orchestration** | Data centers, cloud, cooling, networking, MLOps delivery | Uptime, region, carbon, capex cycles |
+| **2** | **Hardware / silicon** | GPUs, accelerators, memory, packaging | Lead times, price per flop, vendor concentration |
+| **1** | **Energy** | Power grid, PPAs, locality of electrons | Cost per token trained, sustainability, geopolitics |
+
+---
+
+## Layer 1 — Energy (the base)
+
+Everything above is ultimately **paid for in kilowatt-hours**. Training and serving large models at scale means **dense power**, often in specific geographies where land, water for cooling, and grid capacity line up.
+
+- **Why it matters for AI:** A stalled power build is a stalled cluster; a cheap electron is a cheaper training run over the life of a fleet.
+- **Geopolitical angle (often discussed in industry):** Some regions—**China** is frequently cited in public discourse—combine **generation capacity**, manufacturing depth, and policy in ways that create **cost or speed advantages** in the energy layer. Whether that is “arbitrage” in a strict finance sense is debatable; the operational point is simpler: **energy is not evenly priced or available everywhere.**
+
+**Takeaway:** When someone pitches “we will train our own foundation model next quarter,” ask where the **megawatts** are coming from—not just the GPUs.
+
+---
+
+## Layer 2 — Hardware / silicon
+
+This layer is **chips and compute**: GPUs and other accelerators, HBM memory, interconnects, and the roadmaps that set training ceilings a few years out.
+
+- **NVIDIA** is widely described as holding **leading GPU designs and software ecosystems** (CUDA, networking stacks) that anchor much of today’s training and inference for frontier models.
+- **TSMC** (Taiwan Semiconductor Manufacturing Company) is the **world’s most advanced high-volume chip fab** for many leading-edge nodes; a large share of cutting-edge AI accelerators is manufactured there. Calling TSMC a “monopoly” is shorthand in casual commentary; more precisely, it is **extremely concentrated capacity** with few substitutes at the leading edge—**which is a supply-chain risk**, not a moral claim.
+
+**Takeaway:** “We bought GPUs” always implies “someone can still **manufacture** them at yield”—that is a different company and country map than the logo on the heatsink.
+
+---
+
+## Layer 3 — Infrastructure / orchestration
+
+Here live **data centers**, **hyperscale cloud**, **cooling**, **power delivery**, **networking**, and the **orchestration** layers that turn raw silicon into reliable **training and inference services**.
+
+Examples named in public investing and press (not exhaustive):
+
+| Company / group | Angle on AI infrastructure |
+|-----------------|------------------------------|
+| **AWS** (and peers) | Global regions, GPU instances, managed ML stacks |
+| **Adani** | Large Indian energy + infra footprint; AI data-center narratives in regional press |
+| **Airtel** | Telecom + edge/cloud positioning in several markets |
+| **Yotta** (India) | Colocation / DC brands often cited alongside AI demand stories |
+
+**Takeaway:** The product you buy at layer 5 is only as reliable as **layer 3 SLAs**—and those SLAs are tied to **power and silicon lead times** below.
+
+---
+
+## Layer 4 — AI models (the “brain”)
+
+This is the **research and training** layer: frontier labs shipping **large language**, **vision**, **speech**, and **multimodal** models. Weights, architectures, post-training, safety filters, and release cadence all live here.
+
+- **Innovation** is fastest here in headlines—but **execution** still depends on layers 1–3.
+- **Concentration:** A **small number of labs** ship many of the models the rest of the industry fine-tunes or wraps.
+
+**Takeaway:** Model choice is not only “accuracy”; it is **dependency** (API, region, update policy, safety posture) on a thin set of providers.
+
+---
+
+## Layer 5 — Applications & agentic software (the top)
+
+This is where **software products and agents** sit: copilots, CRM assistants, coding agents, vertical SaaS with an “AI” panel, and internal automation. Huang’s framing emphasizes **scale**: **dozens to roughly ~100** frontier-model organizations versus **tens of thousands** of companies building at the **application** layer.
+
+- **Why the skew matters:** Competition and differentiation move **fast** at the top; **commoditization pressure** is real if everyone calls the same API.
+- **Agentic** here means workflows that **plan, call tools, and iterate**—still anchored to a model from layer 4 and infra from layer 3.
+
+**Takeaway:** Most enterprises will spend their time in **layer 5** decisions—UX, data access, evaluation, governance—even when the strategic bottleneck is **lower in the cake**.
+
+---
+
+## Dependency flow (the pyramid, bottom to top)
+
+```text
+                    ┌─────────────────────┐
+   Layer 5          │  Apps & agents      │  ← what customers touch
+                    └──────────┬──────────┘
+                    ┌──────────▼──────────┐
+   Layer 4          │  AI models          │  ← weights, APIs, safety
+                    └──────────┬──────────┘
+                    ┌──────────▼──────────┐
+   Layer 3          │  DC, cloud, cooling │  ← scale & reliability
+                    └──────────┬──────────┘
+                    ┌──────────▼──────────┐
+   Layer 2          │  Silicon / GPUs     │  ← manufacturing depth
+                    └──────────┬──────────┘
+                    ┌──────────▼──────────┐
+   Layer 1          │  Energy             │  ← physics & geography
+                    └─────────────────────┘
+```
+
+**One sentence:** Applications stand on models; models stand on orchestrated compute; compute stands on chips; chips stand on **power you can actually deliver**.
+
+---
+
+## How to use this frame in a meeting
+
+| If the discussion is about… | Ask about the layer below |
+|------------------------------|---------------------------|
+| “Our new AI agent” (L5) | Which **model** (L4), which **region / SLA** (L3), which **GPU generation** (L2), which **power budget** (L1)? |
+| “Vendor lock-in on the model” (L4) | Can we **port weights** or **replicate training** given our **infra** (L3) and **chip** supply (L2)? |
+| “Cheaper training” | **Energy + utilization** (L1, L3)—not only headline **$/GPU-hour** (L2). |
+
+---
+
+## Closing thought
+
+The “five-layer cake” is a **communication tool**, not a law of physics. Real deployments blur lines (on-device silicon, private power deals, hybrid cloud). Still, the stack answers a question executives actually need: **Where is the risk concentrated, and where is the margin?** Often—not always—the further **down** you go, the **slower** things move—and the **harder** they are to substitute.
+
+Next in this course, we keep connecting **models and applications** to the **decisions** you make on data, evaluation, and prompting—now with a clearer picture of **what sits underneath** when something breaks or gets expensive.

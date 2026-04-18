@@ -20,7 +20,7 @@ const curriculumData = {
         },
         { 
           id: "genai-for-everyone", 
-          title: "Generative AI for Everyone", 
+          title: "AI 4 Everyone: Gen AI Systems, LLMs, Prompting & Applied AI Use cases", 
           status: "completed",
           description: "GenAI landscape and practical applications for leaders",
           links: ["/courses/ai-for-leaders/genai-for-everyone/intro"],

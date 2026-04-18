@@ -28,10 +28,28 @@ const sidebars: SidebarsConfig = {
     {
       type: 'category',
       label: 'AI for Leaders',
+      link: {
+        type: 'doc',
+        id: 'ai-for-leaders/intro',
+      },
       items: [
+        'ai-for-leaders/intro',
         'ai-for-leaders/llms-101/intro',
-        'ai-for-leaders/llms-101/llm-foundations-quiz-dummy',
-        'ai-for-leaders/genai-for-everyone/intro',
+        {
+          type: 'category',
+          label: 'AI 4 Everyone — Gen AI & use cases',
+          link: {
+            type: 'doc',
+            id: 'ai-for-leaders/genai-for-everyone/intro',
+          },
+          items: [
+            'ai-for-leaders/genai-for-everyone/intro',
+            'ai-for-leaders/genai-for-everyone/literacy-and-the-road-to-generative-ai',
+            'ai-for-leaders/genai-for-everyone/five-layer-ai-stack',
+            'ai-for-leaders/genai-for-everyone/ai-model-lifecycle-for-leaders',
+            'ai-for-leaders/genai-for-everyone/llm-design-case-study',
+          ],
+        },
         'ai-for-leaders/prompt-engineering/intro',
         'ai-for-leaders/ai-literacy/intro',
       ],
