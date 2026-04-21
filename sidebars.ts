@@ -23,6 +23,7 @@ const sidebars: SidebarsConfig = {
       items: [
         'ai-writing-and-talks/intro',
         'ai-writing-and-talks/from-statistical-models-to-modern-ai-systems',
+        'ai-writing-and-talks/what-should-we-learn-engineer-modern-ai',
       ],
     },
     {
@@ -30,11 +31,9 @@ const sidebars: SidebarsConfig = {
       label: 'AI for Leaders',
       link: {
         type: 'doc',
-        id: 'ai-for-leaders/intro',
+        id: 'ai-for-leaders/genai-for-everyone/intro',
       },
       items: [
-        'ai-for-leaders/intro',
-        'ai-for-leaders/llms-101/intro',
         {
           type: 'category',
           label: 'AI 4 Everyone — Gen AI & use cases',
@@ -50,8 +49,6 @@ const sidebars: SidebarsConfig = {
             'ai-for-leaders/genai-for-everyone/llm-design-case-study',
           ],
         },
-        'ai-for-leaders/prompt-engineering/intro',
-        'ai-for-leaders/ai-literacy/intro',
       ],
     },
     {
@@ -172,7 +169,6 @@ const sidebars: SidebarsConfig = {
             'ai-for-engineering/foundations-of-regression/log-likelihood-instead-of-squared-error',
           ],
         },
-        'ai-for-engineering/tree-based-algorithms-classical-ml/intro',
         {
           type: 'category',
           label: 'AI Research',
@@ -182,7 +178,6 @@ const sidebars: SidebarsConfig = {
           },
           items: ['ai-for-engineering/ai-research/aletheia-gemini-deep-think-math-research'],
         },
-        'ai-for-engineering/agentic-ai/intro',
       ],
     },
   ],

@@ -13,9 +13,9 @@ const curriculumData = {
         { 
           id: "llms-101", 
           title: "Large Language Models 101", 
-          status: "completed", 
+          status: "planned", 
           description: "What LLMs can and can't do, and how leaders should evaluate them",
-          links: ["/courses/ai-for-leaders/llms-101/intro"],
+          links: [],
           businessValue: "Foundation for LLM-related decisions"
         },
         { 
@@ -29,17 +29,17 @@ const curriculumData = {
         { 
           id: "prompt-engineering", 
           title: "Prompt Engineering", 
-          status: "completed",
+          status: "planned",
           description: "Effective prompting for business and product workflows",
-          links: ["/courses/ai-for-leaders/prompt-engineering/intro"],
+          links: [],
           businessValue: "Get reliable outputs from AI tools"
         },
         { 
           id: "ai-literacy", 
           title: "AI Literacy", 
-          status: "completed",
+          status: "planned",
           description: "Core concepts and vocabulary for AI-savvy leadership",
-          links: ["/courses/ai-for-leaders/ai-literacy/intro"],
+          links: [],
           businessValue: "Communicate clearly about AI across your organization"
         },
         { 
@@ -404,7 +404,7 @@ const CurriculumTree = () => {
         
         <div className="next-steps">
           <h4>Ready to Start Learning?</h4>
-          <a href="/courses/ai-for-leaders/llms-101/intro" className="start-learning-btn">
+          <a href="/courses/ai-for-leaders/genai-for-everyone/intro" className="start-learning-btn">
             Begin with LLMs 101 →
           </a>
         </div>
