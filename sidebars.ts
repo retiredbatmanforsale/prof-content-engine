@@ -31,15 +31,15 @@ const sidebars: SidebarsConfig = {
       label: 'Prompt engineering',
       link: {
         type: 'doc',
-        id: 'prompt-engineering/introduction',
+        id: 'ai-for-leaders/prompt-engineering/introduction',
       },
       items: [
-        'prompt-engineering/introduction',
-        'prompt-engineering/design-of-a-prompt',
-        'prompt-engineering/language-models-are-few-shot-learners',
-        'prompt-engineering/hallucinations-in-large-language-models',
-        'prompt-engineering/hands-on-prompt-design-webapp-cursor',
-        'prompt-engineering/building-digital-assets-tutorial',
+        'ai-for-leaders/prompt-engineering/introduction',
+        'ai-for-leaders/prompt-engineering/design-of-a-prompt',
+        'ai-for-leaders/prompt-engineering/language-models-are-few-shot-learners',
+        'ai-for-leaders/prompt-engineering/hallucinations-in-large-language-models',
+        'ai-for-leaders/prompt-engineering/hands-on-prompt-design-webapp-cursor',
+        'ai-for-leaders/prompt-engineering/building-digital-assets-tutorial',
       ],
     },
     {
@@ -71,6 +71,18 @@ const sidebars: SidebarsConfig = {
       type: 'category',
       label: 'AI for Engineering',
       items: [
+        {
+          type: 'category',
+          label: 'MLE Interview',
+          link: {
+            type: 'doc',
+            id: 'ai-for-engineering/mle-interview/intro',
+          },
+          items: [
+            'ai-for-engineering/mle-interview/intro',
+            'ai-for-engineering/mle-interview/rubrics-and-playbook',
+          ],
+        },
         {
           type: 'category',
           label: 'Deep Computer Vision (CNN)',
@@ -167,6 +179,7 @@ const sidebars: SidebarsConfig = {
             'ai-for-engineering/deep-neural-networks/overfitting-in-neural-networks',
             'ai-for-engineering/deep-neural-networks/neural-network-architecture',
             'ai-for-engineering/deep-neural-networks/neural-network-from-scratch',
+            'ai-for-engineering/deep-neural-networks/interview-readiness',
           ],
         },
         {

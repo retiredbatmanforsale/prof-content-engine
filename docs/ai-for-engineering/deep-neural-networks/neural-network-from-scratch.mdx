@@ -5,6 +5,14 @@ description: >-
   Walkthrough aligned with the lexai-fellowship notebook: architecture init,
   random weights, forward pass with sigmoid, MSE loss, backprop as gradient
   descent, training loop, and prediction.
+tutor_topic: "Neural networks from scratch (NumPy)"
+tutor_concepts:
+  - "weight shapes and matrix dimensions"
+  - "random weight symmetry breaking"
+  - "forward pass affine plus sigmoid"
+  - "sigmoid derivative from stored activations"
+  - "MSE loss over batch"
+  - "backprop gradient computation steps"
 ---
 
 # **Neural networks from scratch** (implementation)
@@ -198,6 +206,48 @@ The notebook **demo** trains on **XOR**-style data so you can see **nonlinear** 
 6. **`train`** — loop **epochs**; **`predict`** — **forward** **only**.
 
 Work through the **[notebook](https://github.com/retiredbatmanforsale/lexai-fellowship/blob/main/neural_network_scratch.ipynb)** cell by cell with this list open—you are **reifying** every **lesson** in **executable** **NumPy**.
+
+---
+
+<PythonPlayground minLines={20} starter={`import numpy as np
+
+# XOR dataset
+X = np.array([[0,0],[0,1],[1,0],[1,1]])
+y = np.array([[0],[1],[1],[0]])
+
+def sigmoid(z): return 1 / (1 + np.exp(-z))
+def sigmoid_d(z): return sigmoid(z) * (1 - sigmoid(z))
+
+np.random.seed(42)
+W1 = np.random.randn(2, 4) * 0.5
+b1 = np.zeros((1, 4))
+W2 = np.random.randn(4, 1) * 0.5
+b2 = np.zeros((1, 1))
+lr = 0.5
+
+for epoch in range(5001):
+    # Forward
+    z1 = X @ W1 + b1
+    a1 = sigmoid(z1)
+    z2 = a1 @ W2 + b2
+    yhat = sigmoid(z2)
+    loss = np.mean((yhat - y) ** 2)
+
+    # Backward
+    d2 = (yhat - y) * sigmoid_d(z2) / len(X)
+    W2 -= lr * a1.T @ d2
+    b2 -= lr * d2.sum(axis=0, keepdims=True)
+    d1 = d2 @ W2.T * sigmoid_d(z1)
+    W1 -= lr * X.T @ d1
+    b1 -= lr * d1.sum(axis=0, keepdims=True)
+
+    if epoch % 1000 == 0:
+        print(f"Epoch {epoch:5d}  loss={loss:.4f}")
+
+print("\\nPredictions:")
+for xi, yi, pi in zip(X, y.flatten(), yhat.flatten()):
+    print(f"  {xi} → {pi:.3f}  (label={yi})")
+`} />
 
 ---
 

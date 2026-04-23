@@ -1,6 +1,7 @@
 import {themes as prismThemes} from 'prism-react-renderer';
 import type {Config} from '@docusaurus/types';
 import type * as Preset from '@docusaurus/preset-classic';
+import 'dotenv/config';
 const remarkMath = require('remark-math');
 const rehypeKatex = require('rehype-katex');
 
@@ -48,6 +49,25 @@ const config: Config = {
       } satisfies Preset.Options,
     ],
   ],
+  themes: [
+    '@docusaurus/theme-mermaid',
+    [
+      '@easyops-cn/docusaurus-search-local',
+      {
+        hashed: true,
+        docsRouteBasePath: 'courses',
+        indexDocs: true,
+        indexBlog: false,
+        indexPages: false,
+        language: ['en'],
+        searchBarShortcut: true,
+        searchBarShortcutHint: true,
+      },
+    ],
+  ],
+  markdown: {
+    mermaid: true,
+  },
 
   themeConfig: {
     image: 'img/social-card.jpg',

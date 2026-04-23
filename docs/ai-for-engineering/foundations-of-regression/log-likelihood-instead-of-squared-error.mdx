@@ -5,6 +5,14 @@ description: >-
   From SSE in linear regression to Bernoulli likelihood, joint likelihood as a
   product, log-likelihood, and binary cross-entropy (log loss) as the cost to
   minimize.
+tutor_topic: "Log likelihood instead of squared error"
+tutor_concepts:
+  - "SSE non-convexity for probabilities"
+  - "MLE parameter selection principle"
+  - "Bernoulli likelihood single example"
+  - "unified probability expression trick"
+  - "negative log-likelihood convexity"
+  - "binary cross-entropy as loss"
 ---
 
 # Log likelihood instead of squared error
@@ -133,6 +141,37 @@ This **J** is the **binary cross-entropy** (also called **log loss**): the stand
 If the model is **confident and wrong** (e.g. **yᵢ = 1** but **ŷᵢ ≈ 0**), **log ŷᵢ** is very negative and **J** spikes—exactly the penalty we want.
 
 ---
+
+<PythonPlayground minLines={16} starter={`import numpy as np
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+
+# Binary cross-entropy vs MSE loss curves for a single prediction
+p = np.linspace(0.01, 0.99, 200)
+
+# True label y=1
+bce = -np.log(p)          # BCE for correct class (lower is better as p→1)
+mse = (1 - p) ** 2        # MSE for same target
+
+plt.figure(figsize=(7, 4))
+plt.plot(p, bce, label='BCE  −log(p)', color='#6366f1', linewidth=2)
+plt.plot(p, mse, label='MSE  (1−p)²', color='#f97316', linewidth=2, linestyle='--')
+plt.xlabel('Predicted probability p  (true label = 1)')
+plt.ylabel('Loss')
+plt.title('Why BCE penalises confident wrong predictions more than MSE')
+plt.legend()
+plt.tight_layout()
+plt.show()
+
+# Numeric demo: confident wrong prediction
+p_wrong = 0.02
+print(f"Confident wrong (p={p_wrong}):")
+print(f"  BCE = {-np.log(p_wrong):.2f}   MSE = {(1-p_wrong)**2:.2f}")
+p_right = 0.95
+print(f"Confident right (p={p_right}):")
+print(f"  BCE = {-np.log(p_right):.2f}   MSE = {(1-p_right)**2:.2f}")
+`} />
 
 <Quiz
   lessonId="ai-for-engineering/foundations-of-regression/log-likelihood-instead-of-squared-error"

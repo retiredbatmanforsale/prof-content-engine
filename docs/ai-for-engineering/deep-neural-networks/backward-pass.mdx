@@ -4,6 +4,14 @@ title: 'Lesson 6 — How neural networks learn (backward pass)'
 description: >-
   Training loop, variable hierarchy, chain rule, gradients on W₁, b₁, W₂, b₂,
   gradient descent updates, learning rate, and loss vs iterations.
+tutor_topic: "How neural networks learn (backward pass)"
+tutor_concepts:
+  - "chain rule in backprop"
+  - "gradient descent parameter update"
+  - "loss measures prediction error"
+  - "computation as dependency DAG"
+  - "local vs accumulated gradients"
+  - "forward then backward pass order"
 ---
 
 # How neural networks learn: the **backward pass**
@@ -119,6 +127,8 @@ Here **η** (**eta**) is the **learning rate**: a small positive **hyperparamete
 
 So the **learning rate** directly shapes that **curve**: it is the **knob** on **how aggressively** you apply the **gradient signal** from backprop.
 
+<GradientDescentViz label="parameter  θ" />
+
 ---
 
 ## How this sits next to Lesson 5
@@ -131,6 +141,44 @@ So the **learning rate** directly shapes that **curve**: it is the **knob** on *
 | **Update** | **θ ← θ − η ∇L** |
 
 **Inference** skips **loss**, **backward**, and **update**; **training** is the full loop.
+
+---
+
+<PythonPlayground minLines={20} starter={`import numpy as np
+
+# 3→4→2 net — manual forward + backward (matches Lessons 5 & 6)
+np.random.seed(1)
+sigmoid = lambda z: 1 / (1 + np.exp(-z))
+sig_d   = lambda z: sigmoid(z) * (1 - sigmoid(z))
+
+W1 = np.random.randn(4, 3) * 0.5
+b1 = np.zeros((4, 1))
+W2 = np.random.randn(2, 4) * 0.5
+b2 = np.zeros((2, 1))
+lr = 0.3
+
+# Single training example
+x = np.array([[0.5], [-0.2], [0.8]])
+t = np.array([[1.0], [0.0]])   # target
+
+for step in range(401):
+    # Forward
+    z1 = W1 @ x + b1;  a1 = sigmoid(z1)
+    z2 = W2 @ a1 + b2; yhat = sigmoid(z2)
+    loss = 0.5 * np.sum((yhat - t) ** 2)
+
+    # Backward
+    d2   = (yhat - t) * sig_d(z2)
+    dW2  = d2 @ a1.T;  db2 = d2
+    d1   = W2.T @ d2 * sig_d(z1)
+    dW1  = d1 @ x.T;   db1 = d1
+
+    W2 -= lr * dW2;  b2 -= lr * db2
+    W1 -= lr * dW1;  b1 -= lr * db1
+
+    if step % 100 == 0:
+        print(f"Step {step:3d}  loss={loss:.4f}  ŷ={yhat.flatten()}")
+`} />
 
 ---
 
