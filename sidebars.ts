@@ -33,7 +33,14 @@ const sidebars: SidebarsConfig = {
         type: 'doc',
         id: 'prompt-engineering/introduction',
       },
-      items: ['prompt-engineering/introduction', 'prompt-engineering/design-of-a-prompt'],
+      items: [
+        'prompt-engineering/introduction',
+        'prompt-engineering/design-of-a-prompt',
+        'prompt-engineering/language-models-are-few-shot-learners',
+        'prompt-engineering/hallucinations-in-large-language-models',
+        'prompt-engineering/hands-on-prompt-design-webapp-cursor',
+        'prompt-engineering/building-digital-assets-tutorial',
+      ],
     },
     {
       type: 'category',

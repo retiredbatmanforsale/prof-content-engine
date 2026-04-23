@@ -1,0 +1,195 @@
+---
+title: 'Prompt engineering — Building digital assets (hands-on tutorial)'
+sidebar_label: '6 · Digital assets (tutorial)'
+description: >-
+  Step-by-step workflows: notes to outlines to decks, product slides, teaser
+  videos, images, and audio using tools like ChatGPT, Gamma, Canva, Runway, and
+  ElevenLabs—with copy-paste prompt patterns.
+sidebar_position: 6
+---
+
+# Building digital assets with prompting
+
+This is the **capstone tutorial** for the track: you already shape **text** and **code** with prompts. Here you chain those skills into **presentations, visuals, motion, and sound**—using **named, industry-common tools** (many with free tiers or trials). UIs change; when a step says **“in the product”**, follow the latest official help pages for that tool.
+
+---
+
+<div className="not-prose my-6 rounded-2xl border-2 border-fuchsia-300 bg-gradient-to-r from-fuchsia-50 via-white to-cyan-50 p-6 dark:border-fuchsia-800/50 dark:from-fuchsia-950/25 dark:via-slate-900 dark:to-cyan-950/25">
+  <p className="m-0 text-xs font-bold uppercase tracking-wide text-fuchsia-900 dark:text-fuchsia-200">What you will produce in this lesson</p>
+  <ul className="mt-3 mb-0 list-none space-y-2 pl-0 text-sm text-slate-800 dark:text-slate-100">
+    <li><strong>A.</strong> Messy notes → structured outline → slide deck (via <strong>Gamma</strong> and/or <strong>Marp</strong>).</li>
+    <li><strong>B.</strong> A <strong>product narrative</strong> you can drop into <strong>Google Slides</strong> or <strong>Microsoft PowerPoint</strong> (with <strong>Copilot</strong> where available).</li>
+    <li><strong>C.</strong> A <strong>teaser storyboard + VO script</strong> for a short video (<strong>Runway</strong>, <strong>CapCut</strong>, <strong>ElevenLabs</strong>).</li>
+    <li><strong>D.</strong> A <strong>reference map</strong> of other digital assets and typical stacks.</li>
+  </ul>
+</div>
+
+---
+
+## Before you start (one-time setup)
+
+| Need | Suggested approach |
+|------|-------------------|
+| **LLM for text** | **ChatGPT** (OpenAI), **Claude** (Anthropic), or **Google Gemini** in **Google AI Studio** / Workspace—pick one you already use for drafting. |
+| **Accounts** | Create logins for **Gamma**, **Canva**, **ElevenLabs**, and (optionally) **Runway** before the timed part of the tutorial so you are not stuck at email verification. |
+| **Assets folder** | On your machine, create `digital-assets-lab/` and save every export (PDF, MP4, PNG) with a version suffix (`v1`, `v2`). |
+
+---
+
+## Tutorial A — From messy notes to a rough outline to slides
+
+### Step A1 · Capture messy notes
+
+Paste your raw bullets into **ChatGPT**, **Claude**, or a **Notion** page (you can use **Notion AI** if you pay for it—otherwise paste into an LLM chat). Do **not** clean them first.
+
+### Step A2 · Prompt for a **deck-ready outline** (copy and adapt)
+
+Use a **single** chat message like this (replace the bracketed parts):
+
+```text
+You are an editorial director. Here are messy notes from a meeting about [PRODUCT / TOPIC].
+
+Tasks:
+1) Remove duplicates and group themes.
+2) Output a TALK OUTLINE for a 10-minute deck: exactly 8 slides, each with: slide title, 3 bullets max, optional speaker note (1 sentence).
+3) Slide 1 must be "Problem", slide 2 "Audience", last slide "Next step / CTA".
+4) Do not invent statistics; if numbers are missing, write "TBD — confirm with team".
+
+Notes:
+[PASTE NOTES HERE]
+```
+
+**Save** the model output as `outline-v1.md` in your lab folder.
+
+### Step A3 · Build the deck in **Gamma**
+
+1. Sign in at **gamma.app** (product: **Gamma**).
+2. Start a **new project** with **Generate** or **Import** (wording may vary)—paste **outline-v1.md** or paste slide titles section by section if the importer prefers structured text.
+3. Choose a **template** that matches your brand (minimal / corporate / bold).
+4. Use Gamma’s **edit** tools to: tighten bullets, fix any **TBD** you can verify, and **export** to **PDF** or **PowerPoint (.pptx)** if your team reviews in **Microsoft PowerPoint** or **Google Slides** (import the `.pptx` into Slides if needed).
+
+**Alternative for engineering-heavy teams:** keep the deck in **code** using **Marp** (Markdown Presentation Ecosystem) or **reveal.js**—write `slides.md`, run the **Marp for VS Code** extension or the Marp CLI, and export **HTML** or **PDF**. Your outline from Step A2 maps almost 1:1 to Marp slide breaks (`---` between slides).
+
+| Output path | Best when… |
+|-------------|------------|
+| **Gamma → PDF / PPTX** | Fast stakeholder-ready visuals; low code. |
+| **Marp / reveal.js** | Version control in **Git**, CI-friendly exports. |
+
+---
+
+## Tutorial B — Preparing a **product** presentation deck
+
+Goal: a **credible** product story—not fiction about metrics.
+
+### Step B1 · Source-of-truth doc
+
+In **Google Docs** or **Notion**, maintain one page: **positioning**, **ICP**, **3 features**, **pricing model** (even if high level), **known limitations**. You will **paste** excerpts into the LLM—this is **grounding** (same idea as in the hallucination lesson).
+
+### Step B2 · Prompt for “slide copy only” (then design in a deck tool)
+
+```text
+Using ONLY the facts in the SOURCE excerpt below, write slide-ready copy for Google Slides.
+
+Rules:
+- 12 slides max.
+- Each slide: Title (max 8 words) + up to 4 bullets (max 12 words each) + 1 optional speaker note.
+- If a fact is missing, output the bullet as "TBD" instead of guessing.
+- Tone: confident but not hype.
+
+SOURCE:
+[PASTE FROM YOUR DOC]
+```
+
+### Step B3 · Assemble in **Google Slides** or **PowerPoint**
+
+1. **Google Slides** (slides.google.com): new presentation → paste titles and bullets per slide. If your workspace has **Gemini** side panel, use it to **shorten** or **rephrase**—always **check** facts against your source doc.
+2. **Microsoft PowerPoint** (desktop or web): same manual paste, or use **Copilot for Microsoft 365** where licensed—ask it to **reformat**, not to **invent** customer counts.
+
+### Step B4 · Optional polish in **Canva**
+
+1. Open **canva.com** → **Presentation** template.
+2. Import a **PDF** export from Slides/Gamma or rebuild slides visually.
+3. Use **Canva Magic Studio** features (e.g. **Magic Write**, **Magic Switch** where available) for **headline variants**—keep product numbers out unless verified.
+
+---
+
+## Tutorial C — Short **product teaser video** (industry-common + accessible stack)
+
+This path avoids a single “black box” generator: you **script** in an LLM, **generate** b-roll or motion in a video tool, **edit** accessibly, **narrate** with TTS.
+
+### Step C1 · Script and shot list in **ChatGPT** or **Claude**
+
+```text
+Write a 30-second product teaser.
+
+Constraints:
+- VO length: about 75–90 spoken words.
+- Structure: hook (5s) → problem (8s) → product glimpse (12s) → CTA (5s).
+- Output TWO blocks: (1) voice-over script only (2) numbered shot list: each line = one visual idea for b-roll (no copyrighted character names).
+
+Product facts you may use:
+[PASTE 5–10 LINES OF FACTUAL COPY]
+```
+
+Save as `teaser-script.txt`.
+
+### Step C2 · Visuals and motion
+
+| Tool | Role in this tutorial |
+|------|------------------------|
+| **Runway** (runwayml.com) | **Gen-3 Alpha** (or current flagship model name in-product) for **text-to-video** clips from lines in your shot list—generate **2–4 short** clips, not one long hallucination. |
+| **Adobe Firefly** (firefly.adobe.com) | **Text-to-image** for still frames or backgrounds if you prefer stills + Ken Burns in edit. |
+| **CapCut** (capcut.com — CapCut desktop or mobile) | **Free tier** friendly **timeline edit**: trim Runway clips, add captions, royalty-aware **audio** from CapCut’s library. |
+
+**Workflow:** export clips from **Runway** as MP4 → import into **CapCut** → align cuts to your VO timing (rough cut first).
+
+### Step C3 · Voice-over with **ElevenLabs**
+
+1. Sign in at **elevenlabs.io**.
+2. Use **Text to Speech** with a stock **Voice Library** voice first (simplest rights story for learning).
+3. Paste lines from `teaser-script.txt` → generate **WAV** or **MP3** → import audio track into **CapCut** under your video track.
+4. **Voice cloning** (custom voice from samples) exists in **ElevenLabs** but is **sensitive**: only clone voices you **own or have written permission** to use; many orgs ban cloning without legal review. For coursework, **stay on library voices**.
+
+### Step C4 · Export
+
+From **CapCut**: export **1080p**, H.264 MP4, upload to your drive as `teaser-lab-v1.mp4`.
+
+---
+
+## Reference map — more digital assets you can drive with prompts
+
+Use this table when you brainstorm **what** to build next; the **prompt** is usually “structured brief + constraints + format,” same as code and slides.
+
+| Digital asset | Example tools | How prompting shows up |
+|---------------|---------------|-------------------------|
+| **Slide decks** | **Gamma**, **Google Slides**, **PowerPoint**, **Canva**, **Marp**, **reveal.js** | Outline → slide titles; or “one prompt per slide” for Copilot/Gemini side panels. |
+| **Still images** | **Adobe Firefly**, **DALL·E 3** (inside **ChatGPT**), **Midjourney**, **Stable Diffusion** ecosystems | Style + composition + **negative** constraints (“no text in image”). |
+| **Vector / UI mock** | **Figma** (+ **FigJam** / plugins), **Adobe Express** | Prompt for **component copy** in LLM; paste into Figma; use **Auto layout** manually for structure. |
+| **Motion / video** | **Runway**, **CapCut**, **Adobe Premiere Pro** with **Firefly**-powered features where available | Shot list from LLM; per-clip prompts in Runway/Firefly. |
+| **Voice & audio** | **ElevenLabs**, **Google Cloud Text-to-Speech**, **Amazon Polly** | Script discipline (SSML optional in cloud TTS); ElevenLabs for expressive VO. |
+| **Docs & specs** | **Notion**, **Google Docs**, **Confluence**, **ChatGPT** | Same outline prompts; **export** to PDF for legal review workflows. |
+| **Data viz from text** | **ChatGPT** → **Chart** (where enabled), or generate **Observable Plot** / **Vega-Lite** JSON → paste into notebooks | Ask for **chart type + axis labels + data** explicitly to reduce hallucinated series. |
+
+---
+
+## Quality bar (same lessons as earlier in the course)
+
+| Risk | What to do in asset workflows |
+|------|-------------------------------|
+| **Hallucinated facts on slides** | Ground every number in a **source doc**; use **TBD** in prompts. |
+| **On-image text gibberish** | Prefer **Firefly / DALL·E** with “minimal text” or add text only in **Canva** / **Slides**. |
+| **Copyright / likeness** | No celebrity or brand **lookalike** prompts; use **stock** or **original** b-roll. |
+| **Voice ethics** | Default to **library** voices in **ElevenLabs**; treat **cloning** as a **legal + HR** decision, not a tutorial trick. |
+
+---
+
+## Checklist — you finished this tutorial when…
+
+- [ ] You have **outline-v1.md** generated from real messy notes.  
+- [ ] You have **one deck export** (Gamma PDF/PPTX **or** Marp HTML/PDF).  
+- [ ] You have **slide-ready copy** pasted into **Slides** or **PowerPoint** for your product doc.  
+- [ ] You have **teaser-script.txt** + at least **one** MP4 clip from **Runway** or **one** still from **Firefly**, assembled in **CapCut** with **ElevenLabs** VO (library voice).  
+
+---
+
+You have now walked the same **prompt design** ideas—**scope, grounding, format, iteration**—across **text, decks, pixels, motion, and audio**. The tools will rename models and buttons; the **workflow** stays: **brief → structured model output → professional tool → human review → export.**

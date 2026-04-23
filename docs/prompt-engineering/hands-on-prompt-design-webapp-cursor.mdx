@@ -1,0 +1,163 @@
+---
+title: 'Prompt engineering — Hands-on: prompt design with Cursor'
+sidebar_label: '5 · Hands-on (Cursor + web app)'
+description: >-
+  A guided lab: build a small web app twice—first with a vague prompt, then with
+  a structured one—and compare what Cursor (and the model) actually do.
+sidebar_position: 5
+---
+
+# Hands-on: prompt design with Cursor
+
+This lesson is **not** a lecture. You will **do** something small, **twice**, and the difference between the two runs is the whole point: **prompt design is a control surface** for AI-assisted coding—especially in tools like **Cursor**, where the model sees your repo, your selection, and the instructions you type.
+
+You already know the ideas from **Design of a prompt** and **Hallucinations**; here you **feel** them in the loop of build → run → fix.
+
+---
+
+<div className="not-prose my-6 grid gap-4 sm:grid-cols-3">
+  <div className="rounded-xl border border-emerald-300 bg-emerald-50/90 p-4 dark:border-emerald-800 dark:bg-emerald-950/30">
+    <p className="m-0 text-xs font-bold uppercase text-emerald-900 dark:text-emerald-200">Time</p>
+    <p className="mt-1 mb-0 text-sm text-emerald-950 dark:text-emerald-100/90">About **30–45 minutes** if you explore slowly.</p>
+  </div>
+  <div className="rounded-xl border border-sky-300 bg-sky-50/90 p-4 dark:border-sky-800 dark:bg-sky-950/30">
+    <p className="m-0 text-xs font-bold uppercase text-sky-900 dark:text-sky-200">You need</p>
+    <p className="mt-1 mb-0 text-sm text-sky-950 dark:text-sky-100/90">**Cursor** installed, a **blank folder** for this lab, and a browser.</p>
+  </div>
+  <div className="rounded-xl border border-violet-300 bg-violet-50/90 p-4 dark:border-violet-800 dark:bg-violet-950/30">
+    <p className="m-0 text-xs font-bold uppercase text-violet-900 dark:text-violet-200">You build</p>
+    <p className="mt-1 mb-0 text-sm text-violet-950 dark:text-violet-100/90">A tiny **static** web page that teaches **good vs bad** prompts—by example.</p>
+  </div>
+</div>
+
+---
+
+## Why a web app for *this* course?
+
+A web app is a **bounded artifact**: you can open it, click it, and see whether the output matches what you **thought** you asked for. When the model **guesses** your stack, your layout, or your scope, the running page makes that guess **visible**. That is harder to see when the “deliverable” is only a paragraph of prose.
+
+**Tutorial arc (what works well in MDX):**
+
+| Phase | Purpose |
+|-------|---------|
+| **1 · Setup** | Same goal every time—so differences are mostly **prompting** |
+| **2 · Prompt A** | **Weak** instruction on purpose—observe chaos or drift |
+| **3 · Observe** | Name what went wrong using **course vocabulary** |
+| **4 · Prompt B** | **Strong** instruction—role, scope, files, acceptance checks |
+| **5 · Compare** | Side-by-side: time, edits, confidence, hallucination risk |
+| **6 · Reflect** | One short write-up you can reuse at work |
+
+---
+
+## 1 · Lab setup (5 minutes)
+
+1. Create an empty folder, e.g. `prompt-design-lab`.
+2. Open that folder **as the project root** in Cursor.
+3. Optional but useful: add a one-line `README.md` (“Lab for prompt engineering course”) so the model knows it is a fresh repo.
+
+You are **intentionally** not giving it starter code yet—depending on which prompt you use first, the model may invent structure for you.
+
+---
+
+## 2 · Case study — Prompt A (vague)
+
+**Goal of this run:** see what happens when the task is **under-specified**.
+
+Open **Cursor Chat** or **Composer** (whichever you use for multi-file edits). Paste something **close** to this—do not “improve” it yet:
+
+```text
+Build a webapp that demonstrates why prompt design matters. Make it look nice.
+```
+
+**Let it run.** Accept or reject edits as you normally would, until it stops or you have something you can open in a browser.
+
+---
+
+### What to write down while Prompt A runs
+
+Use a scratch note—three bullets is enough:
+
+| Watch for… | Why it matters for prompt engineering |
+|------------|--------------------------------------|
+| **Stack guess** | React? Vue? plain HTML? It picked **something** you did not name. |
+| **Scope creep** | Extra pages, routers, or dependencies “because nice apps have them.” |
+| **Meaning drift** | “Demonstrates prompts” might become a generic landing page with **no** clear before/after. |
+
+These are the same failure modes as **ambiguous** asks in any domain—just faster because code compiles (or breaks) in front of you.
+
+---
+
+## 3 · Case study — Prompt B (structured)
+
+**Goal of this run:** same *idea* as Prompt A, but you **design the contract**.
+
+**Recommended path:** use a **new folder** (or delete generated files) so you are not fighting old guesses. Then paste **Prompt B** below as one message (adjust names if you like; keep the **constraints**).
+
+```text
+You are a senior front-end engineer helping me teach prompt engineering.
+
+Build a SINGLE-PAGE static web app (no React, no build step, no npm) using only:
+- index.html
+- styles.css
+- app.js
+
+Topic: teach "bad prompt vs good prompt" for asking an AI to summarize an email.
+
+Requirements:
+1) index.html loads styles.css and app.js.
+2) The page has a clear title and two columns (or stacked on mobile): "Weak prompt" vs "Strong prompt". Show example prompt TEXT in each (realistic email-summary scenario).
+3) Under each, show a short MOCK model response (plain text in the page, not a live API call) that illustrates what typically goes wrong vs what improves.
+4) Use a readable font, comfortable spacing, and a simple color palette (light mode is enough).
+5) Add a footer line: "Prompt design controls scope, format, and grounding."
+
+When done, list the files you created and how to open index.html in a browser.
+```
+
+**Run it.** Open `index.html` in your browser (file:// is fine for this lab).
+
+---
+
+## 4 · Compare the two runs (the heart of the lesson)
+
+Fill this in **from your own run**—numbers are examples only:
+
+| Dimension | Prompt A (vague) | Prompt B (structured) |
+|-----------|------------------|------------------------|
+| **Stack** | Often guessed (may add tooling) | **Locked**: static HTML/CSS/JS |
+| **Scope** | “Nice” → open-ended | **Bounded**: one pedagogical scenario |
+| **Teachability** | May miss before/after insight | **Forced**: weak vs strong + mock outputs |
+| **Your time** | More cleanup / reading diffs | Usually faster to **validate** |
+| **Hallucination risk** | Higher—model invents structure | Lower—**grounded** in files you named |
+
+The meta-lesson: **Prompt B is not “clever wording.”** It is **role + medium + file contract + acceptance criteria + pedagogy**—the same pattern as strong prompts outside Cursor.
+
+---
+
+## 5 · Optional stretch — third pass (5–10 minutes)
+
+Pick **one** lever you learned in **Design of a prompt** and add it to a **Prompt C** yourself—for example:
+
+- **Constraints:** “No external fonts; no images; under 200 lines total across files.”
+- **Structured output:** “Add a small table: Goal | Weak prompt risk | Strong prompt fix.”
+- **Multi-persona:** “Add a sidebar note written as a skeptical reviewer poking holes in the weak prompt.”
+
+Paste into Cursor, run once, compare to Prompt B.
+
+---
+
+## 6 · Connect back to the course (checklist)
+
+| Course idea | Where you saw it in this lab |
+|-------------|------------------------------|
+| **Ambiguity** | Prompt A let the model **fill blanks** you never set |
+| **Context & constraints** | Prompt B named **files**, **forbidden** stacks, and **layout** |
+| **Hallucination / fabrication** | Ungrounded “nice” copy or fake behavior is easier when the **task** is vague |
+| **Iterate** | Stretch pass is deliberate **one-lever** refinement |
+
+---
+
+## Wrap-up
+
+You used **Cursor** as the instrument, but the skill is universal: **treat the model like a collaborator who needs a spec.** Vague prompts produce **creative variance**; that is fun for brainstorming and expensive for **repeatable** teaching artifacts like a small web app.
+
+When you finish, you should have **something runnable** and a **personal** one-paragraph note: *What surprised you more—the first output or how little you had to fight after Prompt B?* That sentence is worth more than any template I could give you next.

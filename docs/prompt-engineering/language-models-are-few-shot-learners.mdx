@@ -1,0 +1,188 @@
+---
+title: 'Prompt engineering — Language models are few-shot learners'
+sidebar_label: '3 · Few-shot learners (GPT-3 paper)'
+description: >-
+  The OpenAI paper that popularized in-context learning: pre-training vs prompting,
+  zero/one/few-shot, scaling laws, and what the graphs really showed—told as a walkthrough.
+sidebar_position: 3
+---
+
+# Language models are few-shot learners
+
+For a long time, if you wanted a model to behave on a **custom, domain-specific** task, the story was familiar: you **fine-tuned**. Learning meant **gradients**—weights updating, loss going down, data and GPUs on the clock. That kind of learning is powerful, but it is also **expensive**: time, compute, and data all add up.
+
+Then a long experimental paper from **OpenAI** landed—dozens of pages, not a new architecture announcement, but something like a **shift in how people talk** about large language models. The title is almost a slogan: **Language Models are Few-Shot Learners**. It documents **GPT-3** (same family of idea as before: a **decoder-only, dense transformer**—no secret new block), and it spends its energy on **plots, benchmarks, and a way of seeing** what happens when you put **examples inside the prompt** instead of always reaching for the training loop.
+
+This lesson follows that walkthrough: **why the paper existed**, what **in-context learning** actually means in plain language, and **what the figures invite you to believe**—including where the marketing ended and the nuance began.
+
+---
+
+<div className="not-prose my-6 rounded-2xl border-2 border-indigo-200 bg-gradient-to-br from-indigo-50 via-white to-violet-50 p-6 shadow-sm dark:border-indigo-800/60 dark:from-indigo-950/40 dark:via-slate-900 dark:to-violet-950/30">
+  <p className="m-0 text-sm font-semibold uppercase tracking-wide text-indigo-800 dark:text-indigo-200">The hinge idea</p>
+  <p className="mt-2 mb-0 text-base leading-relaxed text-slate-800 dark:text-slate-100">
+    You can steer behavior at **inference time** by placing **examples in the context window**—without updating weights. The paper explores how far that goes when the model is **very large**, and how it compares to **zero-shot** (instructions only) and **one-shot** (a single demonstration).
+  </p>
+</div>
+
+---
+
+## Why this paper showed up when it did
+
+Imagine the research landscape: the **largest** public models people compared were on the order of **tens of billions** of parameters. GPT-3 pushed an order of magnitude further—**175 billion** parameters in the flagship story. The paper is partly **documentation of capability** (what this scale can do on standard benchmarks) and partly **argument**: that **scaling** and **prompt-side examples** together change the curve—not a line, often something **steeper** than linear intuition would suggest on log-scaled axes.
+
+Knowing that backdrop helps. The authors were not smuggling a new layer name; they were saying, in effect: *look what happens if we train this big thing the familiar way, then study how it responds when we **only** change what we put in the prompt.*
+
+---
+
+## Two kinds of “learning” on one picture
+
+One of the paper’s memorable figures contrasts an **outer** story with an **inner** story. Think of it narratively:
+
+| The outer loop | The inner loop |
+|----------------|----------------|
+| **Pre-training** — huge text, **unsupervised**, **stochastic gradient descent**, weights moving for a long time | **Inference** — you type a **sequence** that already contains **patterns** (examples), and the model completes the next piece **in one forward pass** |
+
+The figure shows tiny **tasks** as if they were lines in one prompt: a few **additions**, a few **spelling fixes**, a few **English→French** word pairs—then the model is nudged to do the **next** instance “in the same style.” That steering-by-example is what people ended up calling **in-context learning**: the “lesson” lives in the **tokens you send**, not in a weight update step.
+
+<div className="not-prose my-8 rounded-xl border border-emerald-300 bg-emerald-50/90 p-5 dark:border-emerald-800 dark:bg-emerald-950/35">
+  <p className="m-0 text-xs font-bold uppercase tracking-wider text-emerald-900 dark:text-emerald-200">Story beat</p>
+  <p className="mt-2 mb-0 text-sm leading-relaxed text-emerald-950 dark:text-emerald-100/90">
+    If you only say “add 10 and 2,” a chatty model might ramble about arithmetic. If you first show five or six **minimal** addition pairs in the same format, then ask for the seventh, the continuation often **snaps** to that format—because the prompt has become a **template** the forward pass can latch onto.
+  </p>
+</div>
+
+---
+
+## Why people say “forward pass only”
+
+Here is the distinction that clears a lot of fog. **Training** cycles: forward → loss → **backward** → weight change. **Inference** (what you do when you call “predict”) is overwhelmingly **forward only**: fixed weights, new input, next-token distribution. **In-context learning** in this paper’s sense happens in that **forward** phase—if examples changed weights, we would just call it **training** again.
+
+So the word “learning” is **metaphorical** in one sense: no gradient step. In another sense, something **does** adapt: the model’s **hidden activations** for *this* sequence reflect the examples you gave, so the same frozen weights can **route** behavior differently than they would on a blank instruction.
+
+---
+
+## Zero-shot, one-shot, few-shot — three doors into the same room
+
+The paper systematically compares **how many demonstrations** appear before the test item:
+
+<div className="not-prose my-6 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-stretch sm:justify-center">
+  <div className="flex-1 min-w-[10rem] rounded-xl border-2 border-rose-200 bg-rose-50 p-4 text-center dark:border-rose-900/50 dark:bg-rose-950/30">
+    <p className="m-0 text-xs font-bold text-rose-800 dark:text-rose-200">Zero-shot</p>
+    <p className="mt-2 mb-0 text-sm text-rose-950/90 dark:text-rose-100/85">No worked example—only the task description (or implied task).</p>
+  </div>
+  <div className="flex-1 min-w-[10rem] rounded-xl border-2 border-amber-200 bg-amber-50 p-4 text-center dark:border-amber-900/50 dark:bg-amber-950/30">
+    <p className="m-0 text-xs font-bold text-amber-900 dark:text-amber-200">One-shot</p>
+    <p className="mt-2 mb-0 text-sm text-amber-950/90 dark:text-amber-100/85">A single demonstration, then the real question.</p>
+  </div>
+  <div className="flex-1 min-w-[10rem] rounded-xl border-2 border-teal-200 bg-teal-50 p-4 text-center dark:border-teal-900/50 dark:bg-teal-950/30">
+    <p className="m-0 text-xs font-bold text-teal-900 dark:text-teal-200">Few-shot</p>
+    <p className="mt-2 mb-0 text-sm text-teal-950/90 dark:text-teal-100/85">Several examples—often the star of the graphs.</p>
+  </div>
+</div>
+
+Across many experiments, **few-shot** tends to look like the **strongest generic strategy** when you can afford the tokens; **one-shot** often gives a surprising lift; **zero-shot** is the baseline where everyone starts together.
+
+---
+
+## A graph that tells a story: one example, three model sizes
+
+One plot tracks **accuracy** against **how many in-context examples** you allow, for a concrete task (in the walkthrough: something like **stripping random symbols from a word**—a narrow pattern-matching job). At **zero** examples, small and large models sit in a similar, modest band.
+
+Then you add **one** example. The **175B** model’s curve jumps sharply; the **mid** model rises noticeably; the **smallest** model inches up. Add **10**, then **100** examples, and the separation widens.
+
+| What you can read from that shape | Why it matters for prompting |
+|-----------------------------------|------------------------------|
+| **Everyone** benefits from at least one demonstration on this task | Examples are not a luxury only for huge models |
+| The **largest** model gains the **most** from the same context | Scale and in-context examples **interact**—not just two independent sliders |
+| In-context learning is “cool” on small models but can feel **dramatic** on big ones | When you design prompts for frontier systems, a few rows of examples can do **heavy** work |
+
+---
+
+## Many benchmarks, one aggregate picture
+
+Another figure zooms out: **dozens** of accuracy-based benchmarks, **aggregate** performance, model size on the horizontal axis, and again the comparison of **zero / one / few** shot. The narrative the curve supports: **few-shot climbs faster** as models grow; **bigger models + few examples** is the combination that repeatedly sits on top. Log-scaled axes exaggerate horizontal gaps visually, so the lesson is about **direction and ordering**, not measuring pixel distances with a ruler.
+
+---
+
+## Compute, loss, and the feeling of “predictable scaling”
+
+A different figure trades in **compute** (think training budget in **petaFLOP/s-days**) against **validation loss**—often **cross-entropy** on held-out text. The headline from the transcript: as you pour in more compute (and the associated data/model size story), **loss tends to fall along a smooth, almost law-like curve**—not random wandering. The paper ties this to earlier scaling work and extends the story across more orders of magnitude, with small deviations from a fitted line.
+
+| Axis / quantity | Plain-language reading |
+|-----------------|-------------------------|
+| More **compute** | More serious training run |
+| Lower **validation loss** | Better next-token fit on held-out data—correlated with many downstream scores |
+| **Power-law** language | “If we spend X more, we roughly expect *this kind* of gain”—useful for planning, dangerous if treated as infinite truth |
+
+That plot is part of why the era felt like **intelligence could be budgeted** like infrastructure—an idea that energized labs and also invited pushback later, when **architecture and data quality** came back into fashion.
+
+---
+
+## LAMBDA, TriviaQA, and arithmetic — not all tasks are the same
+
+The walkthrough lingers on **LAMBDA**-style evaluations (long-range **context** for predicting a missing word) versus **TriviaQA** (reading comprehension / **evidence** and question answering). Same broad theme—**scale** and **few-shot** help—but the **one-shot** story differs by benchmark: on LAMBDA, **one** demonstration is not as sweet as **few**; **few-shot** still wins.
+
+Another family of plots looks **arithmetic**: two-digit addition does well with demonstrations; **five-digit** subtraction drags accuracy down—**harder patterns** stress the trick even when the model is large. There is still a striking **gap** between “previous largest” and **175B** on some bars—visually, a jump from middling to “often excellent” on the easy arithmetic settings the paper highlights.
+
+| Benchmark “personality” | What it mainly stresses |
+|-------------------------|-------------------------|
+| **LAMBDA** | Long context, coherence across distance |
+| **TriviaQA** | Retrieval of facts from provided passages |
+| **Arithmetic grids** | Symbolic pattern depth (digits and operations) |
+
+So the paper’s story is not “few-shot solves everything equally”; it is “**directionally**, few-shot + scale keeps showing up when we stress-test different skills.”
+
+---
+
+## The deeper philosophical thread (and where it got stretched)
+
+The transcript spends time on a seductive line of reasoning: to predict the next token in a **physics** textbook, the model must internalize something **physics-shaped**; for **translation**, something **bilingual**. So **language modeling** starts to look like a **universal** training objective—almost **world modeling**.
+
+That bridge excited people and also **overreached** in places: **reading** about gravity is not the same as **grounding** in sensors and the physical world. Still, the fair point stands: these systems are **not** mere static echo chambers of memorized strings; the **forward pass** on a rich prompt can reorganize **internal** computation so that behavior **adapts** to the task **without** a weight write.
+
+---
+
+## Data contamination — the worry, and what they measured
+
+Critics asked: are benchmark scores just **memorization**—training text leaking into test? The paper discusses **overlap** between train and evaluation. The empirical finding summarized in the talk: **cleaning** suspected contamination often moves numbers by only about **1–2%**. The narrative conclusion researchers drew: at **sufficient scale**, **generalization** can be **robust enough** that small leakage does not **invalidate** the whole story—though it never excuses sloppy evaluation hygiene.
+
+---
+
+## Four things worth carrying in your pocket
+
+These are not formal theorems; they are **wisdom extracted from a long experimental paper** and the graphs that illustrated it.
+
+<div className="not-prose my-8 grid gap-4 sm:grid-cols-2">
+  <div className="rounded-xl border-l-4 border-blue-500 bg-blue-50/90 p-4 dark:bg-blue-950/25">
+    <p className="m-0 text-sm font-bold text-blue-900 dark:text-blue-100">1 · Scaling and loss</p>
+    <p className="mt-2 mb-0 text-sm leading-relaxed text-blue-950/90 dark:text-blue-100/85">
+      More **compute** (with the training recipe that implies) tracks to lower **validation loss** along curves that look **stable enough to plan around**—even if the world is messier than any single law.
+    </p>
+  </div>
+  <div className="rounded-xl border-l-4 border-purple-500 bg-purple-50/90 p-4 dark:bg-purple-950/25">
+    <p className="m-0 text-sm font-bold text-purple-900 dark:text-purple-100">2 · Few-shot and model size</p>
+    <p className="mt-2 mb-0 text-sm leading-relaxed text-purple-950/90 dark:text-purple-100/85">
+      **More examples in context** help across sizes, but the **slope** of improvement steepens for **larger** models—few-shot on a big model is the “double engine” story from the talk.
+    </p>
+  </div>
+  <div className="rounded-xl border-l-4 border-orange-500 bg-orange-50/90 p-4 dark:bg-orange-950/25">
+    <p className="m-0 text-sm font-bold text-orange-900 dark:text-orange-100">3 · Not just next-token parroting</p>
+    <p className="mt-2 mb-0 text-sm leading-relaxed text-orange-950/90 dark:text-orange-100/85">
+      Good **language modeling** correlates with **diverse** downstream behavior; the **forward pass** can **specialize** behavior to the prompt. The jump from there to “full **world model**” was **controversial**—useful hype to question, useful capability to respect.
+    </p>
+  </div>
+  <div className="rounded-xl border-l-4 border-cyan-500 bg-cyan-50/90 p-4 dark:bg-cyan-950/25">
+    <p className="m-0 text-sm font-bold text-cyan-900 dark:text-cyan-100">4 · Contamination and robustness</p>
+    <p className="mt-2 mb-0 text-sm leading-relaxed text-cyan-950/90 dark:text-cyan-100/85">
+      Some **train/test overlap** existed; stripping suspicious overlap often **nudged** scores, not **collapsed** them—supporting the claim that **generalization** mattered, not only **lookup**.
+    </p>
+  </div>
+</div>
+
+---
+
+## How this connects back to prompt engineering
+
+You live in the world this paper helped **name**. When you choose **few-shot** over **zero-shot**, you are doing something the curves already told us: **investing tokens in examples** buys **disproportionate** behavior change—especially on large models. When you explain to a teammate why a **tiny** prompt rewrite failed, you can point to **ambiguity** *and* to **missing demonstrations**. When someone asks whether the model “**learned**” from your chat, you can answer with care: **not** the way SGD learns, but **yes**—the **forward pass** on that context is a real computational **adaptation**.
+
+The paper is long; the graphs are dense. The through-line of the video—and of this lesson—is friendlier: **same architecture, new scale, new respect for what a prompt can carry**, and a invitation to read **every benchmark plot** as a **story about a task**, not as a single number called “intelligence.”
