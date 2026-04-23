@@ -231,3 +231,43 @@ For **generation**, the architecture is tuned to **predict the next token** (or 
 ## Closing
 
 You do not need to derive backpropagation to **govern** AI programs. You **do** need to recognize the **pipeline**: data quality and rights at the base, honest **evaluation** in the middle, and **operational feedback** at the top. When a vendor says “the model is done,” ask which **stages** above they are skipping—and what risk that pushes onto **your** organization.
+
+---
+
+## Lesson Quiz
+
+<Quiz
+  quizId="genai-model-lifecycle-lesson-quiz-v1"
+  lessonId="ai-model-lifecycle-for-leaders"
+  userId="demo-user-001"
+  questions={[
+    {
+      id: 'q1',
+      prompt: 'Which stage focuses on latency, uptime, and human oversight?',
+      options: ['Training', 'Inference', 'Data cleaning', 'Labeling'],
+      correctIndex: 1,
+    },
+    {
+      id: 'q2',
+      prompt: 'What is the main risk of overfitting?',
+      options: [
+        'The model underuses compute in training',
+        'The model memorizes training data but fails on unseen data',
+        'The model always predicts the majority class by design',
+        'The model cannot be deployed as an API',
+      ],
+      correctIndex: 1,
+    },
+    {
+      id: 'q3',
+      prompt: 'In lifecycle governance, feedback from production should primarily lead to:',
+      options: [
+        'Only adding more GPUs',
+        'New labels, policy updates, and retraining decisions',
+        'Removing evaluation metrics',
+        'Skipping data rights checks for speed',
+      ],
+      correctIndex: 1,
+    },
+  ]}
+/>

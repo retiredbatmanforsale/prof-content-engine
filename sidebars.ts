@@ -28,6 +28,15 @@ const sidebars: SidebarsConfig = {
     },
     {
       type: 'category',
+      label: 'Prompt engineering',
+      link: {
+        type: 'doc',
+        id: 'prompt-engineering/introduction',
+      },
+      items: ['prompt-engineering/introduction', 'prompt-engineering/design-of-a-prompt'],
+    },
+    {
+      type: 'category',
       label: 'AI for Leaders',
       link: {
         type: 'doc',

@@ -1,0 +1,166 @@
+---
+title: 'Prompt engineering — Design of a prompt'
+sidebar_label: '2 · Design of a prompt'
+description: >-
+  Bad vs good prompts, ambiguity and context, roles, structured outputs,
+  chain-of-thought, multi-persona prompts, iteration, and constraints.
+sidebar_position: 2
+---
+
+# Design of a prompt
+
+Small changes in how you write a prompt often mean **big** changes in what you get back.
+
+---
+
+## Bad prompts vs good prompts
+
+| Bad | Why it hurts | Good (same intent) |
+|-----|--------------|-------------------|
+| “Fix my email.” | No audience, tone, or length | “Rewrite for a **busy VP**: **under 80 words**, **polite**, **one clear ask**.” |
+| “Summarize.” | No source, scope, or format | “**3 bullets**, max **15 words** each; only **decisions** and **next steps**.” |
+| “Is this secure?” | No system, no threat model | “Assume **REST API on AWS**. List **top 3 risks** for this JSON payload: …” |
+
+**Pattern:** add **who**, **what**, **how long**, and **format** when you can.
+
+---
+
+## Ambiguity
+
+Ambiguity means the model can **reasonably** fill in blanks in more than one way—so you get luck, not control.
+
+| Vague phrase | What the model might guess wrong |
+|--------------|----------------------------------|
+| “Professional” | Legal formal vs startup casual |
+| “Short” | One sentence vs one paragraph |
+| “Best” | Cheapest vs fastest vs safest |
+
+**Fix:** replace fuzzy words with **measurable** or **enumerated** asks (“exactly 5 items”, “second person”, “no bullet points”).
+
+---
+
+## Context in prompt design
+
+**Context** is everything the model needs besides the bare task: background, constraints, prior output, or pasted material.
+
+| Without enough context | With context |
+|------------------------|--------------|
+| “Comment on our pricing.” | “We sell **B2B SaaS**, **$50/user/mo**, **annual contract**. Give **3 pros / 3 cons** vs monthly.” |
+| “Improve this.” | Paste the **draft**, then: “Improve **clarity only**; do **not** change facts.” |
+
+<div className="not-prose my-5 rounded-xl border border-sky-200 bg-sky-50/80 p-4 text-sm text-sky-950 dark:border-sky-900/50 dark:bg-sky-950/30 dark:text-sky-100/90">
+  <strong className="block text-sky-900 dark:text-sky-100">Quick recipe</strong>
+  <span className="mt-1 block">Task + **relevant facts** + **what to ignore** + **desired shape** of the answer.</span>
+</div>
+
+---
+
+## Role prompting
+
+Tell the model **who** it should “act as” so tone, depth, and priorities align.
+
+| Use case | Starter line |
+|----------|--------------|
+| Code review | “You are a **senior engineer**; prioritize **readability** and **edge cases**.” |
+| Executive summary | “You are a **strategy consultant**; **no jargon**; **CEO audience**.” |
+| Learning | “You are a **patient tutor**; use **analogies**; check understanding after each step.” |
+
+Example (compressed):
+
+> “You are a **senior engineer at a large tech company**. Review this function for **bugs and naming**; be direct.”
+
+---
+
+## Structured outputs
+
+Ask for a **shape** the model can follow—easier to parse, compare, and automate.
+
+| Shape | When to use it |
+|-------|----------------|
+| **JSON** | APIs, configs, machine-readable fields |
+| **Table** (markdown) | Compare options, requirements matrices |
+| **Numbered steps** | Procedures, debugging, runbooks |
+
+**JSON example (idea only):**  
+“Return **only** valid JSON with keys `summary`, `risks` (array of strings), `recommendation`.”
+
+**Step-by-step example:**  
+“Answer in **sections**: (1) Assumptions (2) Plan (3) Final answer.”
+
+---
+
+## Chain of thought (CoT)
+
+Ask the model to **think in order** before the final answer—often improves reasoning on harder tasks.
+
+| Plain CoT | One-line pattern |
+|-----------|------------------|
+| Linear reasoning | “**First** think step by step **in numbered steps**. **Then** give the final answer in **one short paragraph**.” |
+
+**Tip:** If you only need the answer for users, you can add: “Show reasoning **briefly**, then **bold** the final conclusion.”
+
+---
+
+## Multi-persona role prompting
+
+Use **several voices** so trade-offs surface before you decide.
+
+> “**Act as an investor** and **as a founder**. **Debate** whether we should ship an MVP in 4 weeks vs polish for 8. End with **one joint recommendation**.”
+
+| Persona | Often stresses |
+|-----------|----------------|
+| Investor | Risk, runway, focus |
+| Founder | vision, speed, team morale |
+| User | simplicity, trust, edge cases |
+
+---
+
+## When output is weak — iterate
+
+If the answer is **gibberish**, **off-topic**, or **too generic**, refine in **one dimension** per turn.
+
+| Symptom | Try this next prompt |
+|---------|---------------------|
+| Too long | “Same content in **half the words**.” |
+| Wrong tone | “**More formal** / **warmer**; keep facts.” |
+| Hallucinated detail | “**Only** use facts from the pasted text; say **‘unknown’** if missing.” |
+| Wrong format | “Repeat using **this exact template**: …” |
+
+<div className="not-prose my-5 flex flex-wrap items-center justify-center gap-2 text-sm font-medium text-slate-800 dark:text-slate-100">
+  <span className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 dark:border-amber-800 dark:bg-amber-950/40">Try</span>
+  <span className="text-amber-500">→</span>
+  <span className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 dark:border-amber-800 dark:bg-amber-950/40">Adjust one lever</span>
+  <span className="text-amber-500">→</span>
+  <span className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 dark:border-amber-800 dark:bg-amber-950/40">Re-run</span>
+</div>
+
+---
+
+## Constraints for control
+
+Constraints **narrow** the output space—more predictable, easier to evaluate.
+
+| Constraint type | Examples |
+|-----------------|----------|
+| **Length** | “Max **120 words**”, “**Exactly 5** bullets” |
+| **Scope** | “**Do not** propose new features”, “**EU GDPR** framing only” |
+| **Determinism** | “Use **only** these labels: …”, “**No** markdown tables” |
+| **Evidence** | “Cite **only** the provided document; **no** external claims” |
+
+Combine **role + structure + constraints** when stakes are high (compliance, customer-facing copy, code).
+
+---
+
+## Lesson recap
+
+| Topic | One-line takeaway |
+|-------|-------------------|
+| Bad vs good | Add audience, format, and limits |
+| Ambiguity | Replace fuzzy words with checks you can verify |
+| Context | Paste facts; say what not to change |
+| Roles | Steer tone and priorities with a persona |
+| Structure | JSON / tables / steps for reliable shape |
+| CoT | Numbered reasoning, then final answer |
+| Multi-persona | Debate trade-offs, then synthesize |
+| Iterate | Fix one thing per follow-up |
+| Constraints | Make outputs narrower and more testable |
