@@ -1,0 +1,415 @@
+---
+sidebar_label: '🎯 Interview Readiness'
+title: 'Interview Readiness — Foundations of Regression'
+description: >-
+  Real interview questions on linear and logistic regression as asked at Google,
+  Amazon, Meta, and Microsoft MLE and Applied Scientist loops in 2024–2026.
+  Conceptual, math derivation, and ML system design.
+---
+
+# Interview Readiness — Foundations of Regression
+
+These are real questions reported across Google, Amazon, Meta, and Microsoft MLE and Applied Scientist loops in 2024–2026, sourced from Glassdoor, Blind, Interview Query, Prepfully, and verified candidate reports. They are grouped by theme, tagged by company, and rated by difficulty.
+
+**How to use this page:** Read the question. Think through your answer out loud — exactly as you would in an interview. Then reveal the answer and compare.
+
+<div className="not-prose my-6 flex flex-wrap gap-3 text-xs font-semibold">
+  <span className="rounded-full bg-red-100 px-3 py-1 text-red-700 dark:bg-red-900/40 dark:text-red-300">Google</span>
+  <span className="rounded-full bg-yellow-100 px-3 py-1 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-300">Amazon</span>
+  <span className="rounded-full bg-blue-100 px-3 py-1 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300">Meta</span>
+  <span className="rounded-full bg-teal-100 px-3 py-1 text-teal-700 dark:bg-teal-900/40 dark:text-teal-300">Microsoft</span>
+  <span className="rounded-full bg-blue-100 px-3 py-1 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300">Conceptual</span>
+  <span className="rounded-full bg-violet-100 px-3 py-1 text-violet-800 dark:bg-violet-900/40 dark:text-violet-300">Math</span>
+  <span className="rounded-full bg-orange-100 px-3 py-1 text-orange-800 dark:bg-orange-900/40 dark:text-orange-300">System Design</span>
+</div>
+
+---
+
+## Linear Regression
+
+<InterviewQuestion
+  number={1}
+  difficulty="Conceptual"
+  company={["Google", "Amazon", "Meta", "Microsoft"]}
+  question="What are the assumptions of linear regression? How would you test each one?"
+>
+
+The six assumptions and how to verify them:
+
+1. **Linearity** — The relationship between X and E[Y|X] is linear. Test with residual-vs-fitted plots; a curved pattern indicates non-linearity. Add polynomial features or transform Y if needed.
+
+2. **Independence of errors** — Residuals are uncorrelated. Test with the Durbin-Watson statistic (value ≈ 2 means no autocorrelation; values below 1.5 or above 2.5 are a red flag). Critical for time-series data.
+
+3. **Homoscedasticity** — Variance of residuals is constant across fitted values. Test with a residual-vs-fitted plot (a "cone" shape indicates heteroscedasticity) or the Breusch-Pagan test. Fix with log/Box-Cox transform on Y, or use Weighted Least Squares.
+
+4. **Normality of residuals** — Errors are normally distributed. Test with a QQ-plot of residuals. Note: this assumption is only needed for valid t-tests and CIs on small samples — OLS is unbiased regardless.
+
+5. **No perfect multicollinearity** — Features are not exact linear combinations of each other. Test with the Variance Inflation Factor (VIF); VIF above 5 warrants investigation, VIF above 10 is serious. Fix with Ridge regression or dropping the highest-VIF feature.
+
+6. **Exogeneity** — E[ε|X] = 0; errors are uncorrelated with the predictors. Violated by omitted variable bias or measurement error. Hard to test directly — requires domain knowledge.
+
+**Google interviewers push hardest on why each assumption matters. Amazon asks what happens when each is violated.** A complete answer chains through the assumption, the diagnostic tool, and the fix.
+
+</InterviewQuestion>
+
+<InterviewQuestion
+  number={2}
+  difficulty="Math"
+  company={["Amazon", "Google"]}
+  question="Derive the closed-form OLS solution. Under what conditions does it fail, and how do you fix it?"
+>
+
+**Derivation:**
+
+Minimise the sum of squared residuals: `SSE = ‖y − Xβ‖²`
+
+Taking `∂SSE/∂β = 0`:
+
+`−2Xᵀ(y − Xβ) = 0` → `XᵀXβ = Xᵀy`
+
+Solving: **`β̂ = (XᵀX)⁻¹Xᵀy`** — the normal equation.
+
+This is also the MLE under Gaussian noise: assuming `ε ~ N(0, σ²I)`, maximising the log-likelihood gives the same normal equations.
+
+**When does it fail?**
+
+`XᵀX` is not invertible when:
+- **p &gt; n** (more features than samples) — the matrix is rank-deficient
+- **Perfect multicollinearity** — one feature is a linear combination of others
+
+**Fixes:**
+- **Ridge regression**: `β̂_ridge = (XᵀX + λI)⁻¹Xᵀy` — adding `λI` makes the matrix invertible regardless of rank
+- **Lasso / ElasticNet**: use coordinate descent instead of a closed form
+- **PCA + regression**: project features to a lower-dimensional orthogonal basis first
+- **`np.linalg.lstsq`**: uses SVD — numerically preferred over explicit matrix inversion even when `XᵀX` is invertible
+
+</InterviewQuestion>
+
+<InterviewQuestion
+  number={3}
+  difficulty="Math"
+  company="Amazon"
+  question="Can you fit a linear regression model with 100 rows and 1,000 features? What happens to the OLS solution?"
+>
+
+This is a confirmed Amazon Applied Scientist phone-screen question (Bengaluru, May 2025).
+
+**The answer: no unique OLS solution exists.**
+
+When p &gt; n (1,000 features, 100 rows), `XᵀX` is a 1,000 × 1,000 matrix of rank at most 100. It is rank-deficient and therefore **not invertible** — the normal equation `XᵀXβ = Xᵀy` has infinitely many solutions.
+
+Practically: the model perfectly fits the training data with zero training error but generalises catastrophically — pure overfitting.
+
+**Fixes:**
+
+| Method | Mechanism | When to use |
+|---|---|---|
+| **Ridge (L2)** | `β̂ = (XᵀX + λI)⁻¹Xᵀy` — `λI` guarantees invertibility | Correlated features, keep all |
+| **Lasso (L1)** | Coordinate descent with soft-thresholding | Suspect sparse signal, want feature selection |
+| **ElasticNet** | Combines L1 + L2 | Both sparsity and multicollinearity |
+| **PCA + OLS** | Project to k &lt;&lt; p orthogonal components | Features highly correlated |
+| **Bayesian regression** | Place a prior on β — effectively regularises | Need uncertainty quantification |
+
+The interviewer typically follows up: *"Why does adding λI to XᵀX fix invertibility?"* — because a positive definite matrix (λI) plus any positive semi-definite matrix (XᵀX) is always positive definite, hence invertible.
+
+</InterviewQuestion>
+
+<InterviewQuestion
+  number={4}
+  difficulty="Math"
+  company={["Google", "Amazon", "Meta", "Microsoft"]}
+  question="Why does L1 regularization produce sparsity while L2 does not? Give a geometric explanation."
+>
+
+This is the single most-attributed regression question across all four companies — confirmed at Google MLE (2026), Meta MLE (verbatim on Prepfully), Microsoft MLE (Prepfully), and standard at Amazon.
+
+**Geometric explanation:**
+
+Regularized regression minimises Loss(β) subject to a constraint on β. The constraint defines a feasible region:
+
+- **L2 (Ridge)**: constraint is `‖β‖₂² ≤ t` — a **circle** (2D) or sphere (nD). Smooth, no corners.
+- **L1 (Lasso)**: constraint is `‖β‖₁ ≤ t` — a **diamond** (2D) or cross-polytope (nD). Has corners exactly on the coordinate axes.
+
+The optimum is where the loss contours first touch the constraint region. The L1 diamond's corners sit on the axes — where one or more `β_j = 0`. Loss contours (ellipses) are far more likely to first touch a corner than a smooth edge. This is why **Lasso solutions are exactly sparse**: coefficients hit zero, not just shrink toward it.
+
+**Analytical explanation:**
+
+The L1 subgradient at `β_j = 0` is the interval `[−λ, λ]`. The KKT condition allows a coefficient to stay at exactly zero if its gradient falls within this interval. L2 has a smooth gradient (`2λβ_j`), so weights shrink toward but never reach zero for finite λ.
+
+**Practical implications:**
+
+- L1 → feature selection (sparse β); L2 → all features kept with shrinkage
+- With correlated features: Ridge shrinks both together; Lasso picks one arbitrarily
+- **Bayesian view**: L2 corresponds to a Gaussian prior; L1 corresponds to a Laplace prior — the sharp peak at zero induces sparsity
+
+</InterviewQuestion>
+
+<InterviewQuestion
+  number={5}
+  difficulty="Conceptual"
+  company={["Google", "Amazon", "Meta"]}
+  question="How do you detect multicollinearity? What is VIF, what threshold matters, and how do you fix it?"
+>
+
+Confirmed at Meta, Amazon, and Google.
+
+**Detection tools:**
+
+1. **Correlation matrix** — pairwise correlations above 0.8 are suspicious, but doesn't catch multivariate collinearity
+2. **Condition number of XᵀX** — eigenvalue ratio; above 30 suggests moderate, above 100 suggests severe multicollinearity
+3. **Variance Inflation Factor (VIF)** — the standard tool:
+
+`VIF_j = 1 / (1 − R²_j)`
+
+where `R²_j` is the R² from regressing feature j on all other features. VIF above 5 warrants investigation; above 10 is serious.
+
+**A classic Amazon variant:** *"Given features: year-born, BMI, country-at-birth, weekly-alcohol, nationality-at-birth — what's the problem?"* The trap is spotting near-perfect collinearity between country-at-birth and nationality-at-birth without being told.
+
+**Fixes:**
+
+- Drop the highest-VIF feature iteratively and recheck
+- Apply **Ridge regression** — the standard fix; spreads weight across correlated features stably
+- Combine correlated features via PCA into orthogonal components
+
+**Important nuance (Interview Query):** *"How would you interpret a negative coefficient for a variable that's positively correlated with Y?"* This is Simpson's paradox — a coefficient reflects the *partial* effect holding other features constant. Multicollinearity and confounders can flip signs.
+
+</InterviewQuestion>
+
+---
+
+## Logistic Regression
+
+<InterviewQuestion
+  number={6}
+  difficulty="Conceptual"
+  company={["Google", "Microsoft"]}
+  question="Explain logistic regression. Why is it called 'regression' if it's a classifier? Derive the sigmoid from the logit."
+>
+
+Confirmed Google 2026 MLE question (LinkJob report) and Microsoft DS intern Glassdoor question.
+
+**Why "regression":**
+
+Logistic regression models the **log-odds (logit)** of class membership as a *linear* function of features. The regression is over continuous log-odds — the name reflects that linear relationship, not the output type.
+
+**Deriving the sigmoid:**
+
+Start with the logit: `log(p / (1−p)) = wᵀx + b`
+
+Solve for p step by step:
+
+`p = e^(wᵀx + b) · (1 − p)`
+
+`p · (1 + e^(wᵀx + b)) = e^(wᵀx + b)`
+
+`p = 1 / (1 + e^(−(wᵀx + b))) = σ(wᵀx + b)`
+
+The sigmoid emerges directly from the logit model — it's not arbitrary. It maps ℝ → (0,1) smoothly, is differentiable everywhere, and has the elegant derivative `σ'(z) = σ(z)(1−σ(z))` — critical for backpropagation.
+
+**Logistic regression is a discriminative model** — it directly models P(Y|X), not P(X,Y). Google Research interviewers sometimes follow up citing the Ng & Jordan 2001 result that LR asymptotically outperforms Naive Bayes as data grows.
+
+</InterviewQuestion>
+
+<InterviewQuestion
+  number={7}
+  difficulty="Math"
+  company={["Google", "Amazon", "Meta"]}
+  question="Why don't we use MSE for logistic regression? Give both the non-convexity argument and the vanishing gradient argument."
+>
+
+Confirmed Google MLE follow-up (LinkJob 2026), standard at Amazon, and Analytics Vidhya / ProjectPro. **A strong answer requires both arguments — one alone is incomplete.**
+
+**Argument 1 — Non-convexity:**
+
+Let `ŷ = σ(wᵀx)`. The MSE cost is `J = Σ(y − σ(wᵀx))²`. The Hessian involves terms like `σ(1−σ)(1−2σ(wᵀx))` — when σ saturates near 0 or 1, this can become indefinite. The loss surface has **saddle points and local minima**. Gradient descent can get stuck.
+
+Binary cross-entropy has Hessian `H = XᵀWX` where `W = diag(σᵢ(1−σᵢ))`. Since `σᵢ(1−σᵢ) > 0` for all finite z, H is positive semi-definite — **the loss is convex** and gradient descent finds the global minimum.
+
+**Argument 2 — Vanishing gradients:**
+
+The MSE gradient for a misclassified example with extreme confidence is:
+
+`∂J/∂w ∝ (y − ŷ) · σ(z)(1−σ(z)) · x`
+
+When `σ(z) → 0`, `σ(1−σ) → 0` as well. The gradient **vanishes on confidently wrong predictions** — exactly where you need the largest update.
+
+Binary cross-entropy's gradient simplifies to `(ŷ − y) · x` — no `σ'` term. It doesn't saturate and keeps pushing hard on wrong predictions.
+
+</InterviewQuestion>
+
+<InterviewQuestion
+  number={8}
+  difficulty="Math"
+  company={["Meta", "Google"]}
+  question="Derive binary cross-entropy from scratch. Show how it follows from MLE under a Bernoulli model."
+>
+
+Confirmed at Meta MLE phone screens (Bharathi Priyaa's Medium) and Google MLE (LinkJob 2026).
+
+**Step 1 — Bernoulli likelihood:**
+
+For a single example with label y ∈ `{0, 1}` and predicted probability `p = σ(wᵀx)`:
+
+`P(y | x; w) = p^y · (1−p)^(1−y)`
+
+When y=1 it gives p, when y=0 it gives (1−p).
+
+**Step 2 — Joint likelihood over m examples:**
+
+`L(w) = Π p_i^y_i · (1−p_i)^(1−y_i)`
+
+**Step 3 — Log-likelihood:**
+
+`log L(w) = Σ [ y_i · log(p_i) + (1−y_i) · log(1−p_i) ]`
+
+**Step 4 — Negative log-likelihood (MLE → minimisation):**
+
+`J(w) = −(1/m) · Σ [ y_i · log(p_i) + (1−y_i) · log(1−p_i) ]`
+
+This is binary cross-entropy. **Minimising BCE is exactly maximising the Bernoulli log-likelihood.**
+
+**Step 5 — Gradient (the elegant result):**
+
+`∂J/∂w = (1/m) · Xᵀ(σ(Xw) − y)`
+
+The gradient is simply the prediction error `(ŷ − y)`, because the sigmoid's derivative cancels with the chain-rule factor — making the gradient of BCE + sigmoid as clean as MSE + identity.
+
+</InterviewQuestion>
+
+<InterviewQuestion
+  number={9}
+  difficulty="Conceptual"
+  company={["Google", "Amazon"]}
+  question="What is the Bayesian interpretation of L1 and L2 regularization? How does this connect to MAP estimation?"
+>
+
+A Google Research and Amazon Applied Scientist favorite.
+
+**The setup:**
+
+MAP estimation maximises `P(w | data) ∝ P(data | w) · P(w)`. Taking the log:
+
+`log P(w | data) = log-likelihood + log P(w) + const`
+
+The choice of prior `P(w)` determines the regularizer.
+
+**L2 ↔ Gaussian prior:**
+
+If `P(w) = N(0, τ²I)`, then `log P(w) = −(1/2τ²) · ‖w‖²`. Adding this to the log-likelihood and negating gives BCE + `λ‖w‖²` — **Ridge regularization**. The Gaussian has no sharp spike at zero, so weights shrink but never hit zero.
+
+**L1 ↔ Laplace prior:**
+
+If `P(w) = Laplace(0, b)`, then `log P(w) = −(1/b) · ‖w‖₁`. This gives BCE + `λ‖w‖₁` — **Lasso regularization**. The Laplace distribution has a sharp spike at zero — many coefficients land exactly there.
+
+**ElasticNet ↔ mixture** of Gaussian and Laplace priors.
+
+**The gotcha (for senior roles):** MAP only gives the posterior *mode* — not the full posterior. The genuine Bayesian Lasso (Park & Casella 2008) uses a scale mixture of normals for the full posterior. Google Research interviewers may ask about this distinction.
+
+</InterviewQuestion>
+
+<InterviewQuestion
+  number={10}
+  difficulty="Conceptual"
+  company={["Amazon", "Meta", "Google"]}
+  question="How do you handle class imbalance in logistic regression while preserving calibration?"
+>
+
+Confirmed at Amazon MLE (Prepfully), Meta, and Google. Almost always a follow-up after any fraud, churn, or CTR modelling question.
+
+**The core tension:** most fixes for imbalance hurt calibration. A strong answer addresses both.
+
+**Fix 1 — Class weighting:**
+Set `class_weight='balanced'` in sklearn. The loss penalises minority-class errors proportionally to the class ratio. Preserves calibration reasonably well.
+
+**Fix 2 — Undersampling with calibration correction:**
+Undersample the majority class by factor β during training. After training, correct predicted probabilities:
+
+`p_true = p_model / (p_model + (1 − p_model) / β)`
+
+Without this correction, predicted probabilities are systematically inflated for the minority class. Meta uses this in production for down-sampled CTR training data.
+
+**Fix 3 — SMOTE:**
+Generates synthetic minority-class examples. Effective for decision boundary quality but **distorts calibration** (per JAMIA 2022). Apply Platt scaling or isotonic regression post-hoc.
+
+**Threshold tuning:**
+The default 0.5 threshold is wrong under imbalance. Tune it on a held-out validation set by optimising your business metric — Youden's J, F1, or a cost-sensitive threshold.
+
+**Evaluation metrics:**
+Accuracy is useless. Use PR-AUC, F1/F-beta, log-loss, and the Brier score. Meta additionally uses **Normalized Entropy (NE)** from their 2014 ads paper.
+
+</InterviewQuestion>
+
+<InterviewQuestion
+  number={11}
+  difficulty="Conceptual"
+  company={["Amazon", "Meta", "Google"]}
+  question="When does logistic regression fail? Walk through at least three distinct failure modes."
+>
+
+**1. Perfect or quasi-complete separation:**
+If a feature perfectly separates the classes, MLE diverges — weights grow to ±∞ and the optimizer never converges. Fix: Firth's penalized likelihood, L2 regularization, or dropping the separating feature.
+
+**2. Non-linearly separable structure:**
+The decision boundary `wᵀx + b = 0` is always a hyperplane. XOR is the textbook example — no linear boundary can separate it. Fix: engineer polynomial/interaction features, switch to a kernel SVM, tree-based model, or neural network.
+
+**3. Severe multicollinearity:**
+Highly correlated features produce unstable, high-variance coefficient estimates — signs can flip unpredictably. Fix: Ridge regularization or drop one of the correlated features.
+
+**4. Rare events with small n:**
+With few positive examples, MLE estimates are biased away from zero (Hauck-Donner effect). Fix: Firth's correction or a Bayesian approach with an informative prior.
+
+**5. Correlated observations:**
+Logistic regression assumes i.i.d. observations. Clustered or time-series data violates this, inflating false-positive rates. Fix: mixed-effects logistic regression (GLMM) or GEE.
+
+</InterviewQuestion>
+
+<InterviewQuestion
+  number={12}
+  difficulty="System Design"
+  company={["Meta", "Google"]}
+  question="Design a CTR prediction system for an ads or search ranking platform. Why would you use logistic regression over GBDT or a deep model? How would you calibrate it?"
+>
+
+The archetypal Meta MLE system design question, and a confirmed Google MLE system design variant.
+
+**Why logistic regression as the baseline:**
+
+- Scores in **microseconds** — critical at billion-query/day scale
+- **Calibrated probabilities** by design — directly optimising BCE gives calibrated outputs, essential for bid pricing in ads auctions
+- **Interpretable** — feature weights are auditable for policy and legal review
+- **Works well in high-dimensional sparse feature spaces** — text, categorical, ad IDs hashed via feature hashing
+
+Meta's 2014 production paper used GBDT to engineer features, then logistic regression to score them — not GBDT alone.
+
+**Feature design:**
+
+- User features: historical CTR, device, location, time of day, session depth
+- Item/ad features: position bias, historical CTR of the ad, ad category
+- Cross features: user × ad category affinity, query × ad relevance score
+- Trend features: change in engagement last 7 days vs prior 7 days — delta features often outperform absolute values
+
+**Training:**
+
+- Loss: binary cross-entropy
+- Down-sample negatives (CTR is 1–5%) for compute efficiency
+- Re-calibrate after downsampling: `p_true = p_model / (p_model + (1 − p_model) / β)`
+- L2 regularization to control high-cardinality feature overfitting
+
+**Serving at scale:**
+
+- Precompute user and item features offline; retrieve at serve time from a feature store (Redis / Memcached)
+- Shadow-deploy new model versions; A/B test on a traffic slice
+- Monitor for distribution shift weekly — CTR patterns shift with seasonality and ad inventory changes
+
+**When to move beyond LR:**
+
+Move to GBDT when non-linear feature interactions dominate. Move to a deep model (DLRM, two-tower) when learned embeddings for high-cardinality entities outperform engineered features. In practice, **LR remains the production baseline at Meta and Amazon in 2026** for latency-critical serving paths.
+
+</InterviewQuestion>
+
+---
+
+<div className="not-prose mt-10 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-6 dark:border-slate-700">
+  <a href="./log-likelihood-instead-of-squared-error" className="text-sm font-medium text-slate-600 no-underline hover:text-emerald-700 hover:underline dark:text-slate-400 dark:hover:text-emerald-400">← Lesson 6 · Log likelihood & BCE</a>
+  <a href="./intro" className="text-sm font-semibold text-emerald-700 no-underline hover:underline dark:text-emerald-400">Course overview →</a>
+</div>

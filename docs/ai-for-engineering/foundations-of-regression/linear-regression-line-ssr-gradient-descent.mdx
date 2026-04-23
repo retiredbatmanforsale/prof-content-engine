@@ -426,6 +426,42 @@ $$
 
 ---
 
+<Quiz
+  lessonId="ai-for-engineering/foundations-of-regression/linear-regression-line-ssr-gradient-descent"
+  questions={[
+    {
+      id: "lr-q1",
+      prompt: "In the equation y = wx + b, what does 'b' represent?",
+      options: ["The slope of the line", "The bias (intercept)", "The input feature", "The predicted output"],
+      correctIndex: 1,
+    },
+    {
+      id: "lr-q2",
+      prompt: "What does SSR stand for in the context of linear regression?",
+      options: ["Sum of Squared Residuals", "Sum of Standard Residuals", "Simple Squared Regression", "Sum of Sigmoid Responses"],
+      correctIndex: 0,
+    },
+    {
+      id: "lr-q3",
+      prompt: "Gradient descent updates model weights by moving in which direction relative to the gradient of the loss?",
+      options: ["In the direction of the gradient", "Opposite to the direction of the gradient", "Perpendicular to the gradient", "At a fixed rate regardless of gradient"],
+      correctIndex: 1,
+    },
+    {
+      id: "lr-q4",
+      prompt: "If a model predicts ŷ = 8 but the actual value is y = 5, what is the residual (y − ŷ)?",
+      options: ["-3", "3", "13", "40"],
+      correctIndex: 0,
+    },
+    {
+      id: "lr-q5",
+      prompt: "The normal equation finds optimal weights by:",
+      options: ["Iterating gradient steps until convergence", "Analytically in one computation, without iteration", "Sampling random weights until cost is minimized", "Using a neural network to regress on the parameters"],
+      correctIndex: 1,
+    },
+  ]}
+/>
+
 <div className="not-prose mt-10 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-6 dark:border-slate-700">
   <a href="./intro" className="text-sm font-medium text-slate-600 no-underline hover:text-emerald-700 hover:underline dark:text-slate-400 dark:hover:text-emerald-400">← Course overview</a>
   <a href="./why-logistic-regression" className="text-sm font-semibold text-emerald-700 no-underline hover:underline dark:text-emerald-400">Lesson 2 · Why logistic →</a>

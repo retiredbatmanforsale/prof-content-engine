@@ -169,6 +169,36 @@ Points on one side of the boundary are classified as <strong>class 1</strong>; p
 
 ---
 
+<Quiz
+  lessonId="ai-for-engineering/foundations-of-regression/logistic-regression-decision-boundaries"
+  questions={[
+    {
+      id: "db-q1",
+      prompt: "What is the default threshold used to convert a sigmoid output into a class label?",
+      options: ["0.25", "0.5", "0.75", "1.0"],
+      correctIndex: 1,
+    },
+    {
+      id: "db-q2",
+      prompt: "At the decision boundary of a logistic regression model, what is the value of wx + b?",
+      options: ["1", "-1", "0", "0.5"],
+      correctIndex: 2,
+    },
+    {
+      id: "db-q3",
+      prompt: "For a model with two continuous features, the decision boundary of logistic regression is a:",
+      options: ["Curve", "Circle", "Line or hyperplane", "Step function"],
+      correctIndex: 2,
+    },
+    {
+      id: "db-q4",
+      prompt: "P(y=1 | x) = 0.8 means:",
+      options: ["The model is 80% wrong", "There is an 80% probability the input belongs to class 1", "The loss is 0.8", "The weight magnitude is 0.8"],
+      correctIndex: 1,
+    },
+  ]}
+/>
+
 <div className="not-prose mt-10 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-6 dark:border-slate-700">
   <div className="flex flex-wrap gap-x-4 gap-y-2">
     <a href="./sigmoid-function-logistic-regression" className="text-sm font-medium text-slate-600 no-underline hover:text-emerald-700 hover:underline dark:text-slate-400 dark:hover:text-emerald-400">← Lesson 3</a>

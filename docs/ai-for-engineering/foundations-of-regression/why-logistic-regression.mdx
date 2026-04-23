@@ -154,6 +154,36 @@ The set of points where <strong>σ(wᵀx + b) = 0.5</strong> (equivalently <stro
 
 ---
 
+<Quiz
+  lessonId="ai-for-engineering/foundations-of-regression/why-logistic-regression"
+  questions={[
+    {
+      id: "wlr-q1",
+      prompt: "What is the main problem with using linear regression for binary classification?",
+      options: ["It runs too slowly on large datasets", "It can output values outside the [0, 1] probability range", "It requires too many features", "It only works with one class"],
+      correctIndex: 1,
+    },
+    {
+      id: "wlr-q2",
+      prompt: "Logistic regression outputs values in which range?",
+      options: ["(-∞, +∞)", "(-1, 1)", "(0, 1)", "[0, 100]"],
+      correctIndex: 2,
+    },
+    {
+      id: "wlr-q3",
+      prompt: "What function does logistic regression use to bound its output between 0 and 1?",
+      options: ["ReLU", "Tanh", "Sigmoid", "Softmax"],
+      correctIndex: 2,
+    },
+    {
+      id: "wlr-q4",
+      prompt: "Which of the following is an appropriate use case for logistic regression?",
+      options: ["Predicting tomorrow's temperature", "Predicting house prices", "Classifying whether an email is spam", "Estimating future stock value"],
+      correctIndex: 2,
+    },
+  ]}
+/>
+
 <div className="not-prose mt-10 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-6 dark:border-slate-700">
   <div className="flex flex-wrap gap-x-4 gap-y-2">
     <a href="./intro" className="text-sm font-medium text-slate-600 no-underline hover:text-emerald-700 hover:underline dark:text-slate-400 dark:hover:text-emerald-400">← Course overview</a>

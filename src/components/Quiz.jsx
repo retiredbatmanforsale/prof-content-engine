@@ -1,29 +1,22 @@
 import React, {useMemo, useState} from 'react';
+import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
 
-function defaultSubmitAttempt(payload) {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve({
-        status: 'mock_saved',
-        attemptId: payload.attemptId,
-        receivedAt: new Date().toISOString(),
-      });
-    }, 500);
-  });
+const TOKEN_KEY = 'lexai_access_token';
+
+function decodeJwtPayload(token) {
+  try {
+    const base64 = token.split('.')[1];
+    const json = atob(base64.replace(/-/g, '+').replace(/_/g, '/'));
+    return JSON.parse(json);
+  } catch {
+    return null;
+  }
 }
 
-function buildAttemptId(quizId, lessonId) {
-  const rand = Math.random().toString(36).slice(2, 10);
-  return `${quizId}:${lessonId}:${Date.now()}:${rand}`;
-}
+export default function Quiz({lessonId, questions = []}) {
+  const {siteConfig} = useDocusaurusContext();
+  const apiUrl = siteConfig.customFields?.apiUrl || '';
 
-export default function Quiz({
-  quizId,
-  lessonId,
-  userId = null,
-  questions = [],
-  submitAttempt = defaultSubmitAttempt,
-}) {
   const [answers, setAnswers] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState('');
@@ -66,23 +59,23 @@ export default function Quiz({
         };
       });
 
-      const payload = {
-        attemptId: buildAttemptId(quizId, lessonId),
-        quizId,
-        lessonId,
-        userId,
-        score,
-        total,
-        answers: answerRecords,
-        submittedAt: new Date().toISOString(),
-      };
+      const token = typeof sessionStorage !== 'undefined'
+        ? sessionStorage.getItem(TOKEN_KEY)
+        : null;
 
-      const apiResult = await submitAttempt(payload);
-
-      setResult({
-        ...payload,
-        apiResult,
+      const res = await fetch(`${apiUrl}/quiz/attempts`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? {Authorization: `Bearer ${token}`} : {}),
+        },
+        body: JSON.stringify({lessonId, score, total, answers: answerRecords}),
       });
+
+      if (!res.ok) throw new Error('Failed to save quiz attempt.');
+      const apiResult = await res.json();
+
+      setResult({score, total, apiResult});
     } catch (error) {
       setSubmitError(error instanceof Error ? error.message : 'Failed to submit quiz attempt.');
     } finally {
@@ -152,10 +145,7 @@ export default function Quiz({
       {result ? (
         <div className="mt-5 rounded-xl border border-emerald-300 bg-emerald-50 p-4 dark:border-emerald-700 dark:bg-emerald-950/30">
           <p className="m-0 text-sm font-semibold text-emerald-900 dark:text-emerald-200">
-            Submitted: {result.score}/{result.total}
-          </p>
-          <p className="mt-2 mb-0 text-xs text-emerald-900/90 dark:text-emerald-300/90">
-            Attempt ID: {result.attemptId}
+            Score: {result.score}/{result.total}
           </p>
         </div>
       ) : null}

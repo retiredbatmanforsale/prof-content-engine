@@ -182,6 +182,36 @@ If it is <strong>close to 0</strong>, we classify as <strong>class 0</strong>.
 
 ---
 
+<Quiz
+  lessonId="ai-for-engineering/foundations-of-regression/intuition-behind-logistic-regression"
+  questions={[
+    {
+      id: "mle-q1",
+      prompt: "Why does SSE create problems when used with logistic regression?",
+      options: ["Because logistic regression has too many parameters", "Because plugging sigmoid outputs into SSE creates a non-convex loss with multiple local minima", "Because SSE only works with linear models", "Because SSE requires integer outputs"],
+      correctIndex: 1,
+    },
+    {
+      id: "mle-q2",
+      prompt: "MLE stands for:",
+      options: ["Multi-Layer Estimation", "Maximum Loss Estimation", "Maximum Likelihood Estimation", "Minimal Log Error"],
+      correctIndex: 2,
+    },
+    {
+      id: "mle-q3",
+      prompt: "MLE chooses parameters that:",
+      options: ["Minimize the prediction error on training set", "Make the observed labels most probable under the model", "Maximize the number of correct predictions only", "Reduce the variance of predictions"],
+      correctIndex: 1,
+    },
+    {
+      id: "mle-q4",
+      prompt: "For a correctly predicted class-1 example, the sigmoid output σ(z) should be close to:",
+      options: ["0", "0.5", "1", "-1"],
+      correctIndex: 2,
+    },
+  ]}
+/>
+
 <div className="not-prose mt-10 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-6 dark:border-slate-700">
   <a href="./logistic-regression-decision-boundaries" className="text-sm font-medium text-slate-600 no-underline hover:text-emerald-700 hover:underline dark:text-slate-400 dark:hover:text-emerald-400">← Lesson 4 · Decision boundaries</a>
   <a href="./log-likelihood-instead-of-squared-error" className="text-sm font-semibold text-emerald-700 no-underline hover:underline dark:text-emerald-400">Lesson 6 · Log likelihood &amp; BCE →</a>

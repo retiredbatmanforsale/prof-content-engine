@@ -183,6 +183,7 @@ const sidebars: SidebarsConfig = {
             'ai-for-engineering/foundations-of-regression/logistic-regression-decision-boundaries',
             'ai-for-engineering/foundations-of-regression/intuition-behind-logistic-regression',
             'ai-for-engineering/foundations-of-regression/log-likelihood-instead-of-squared-error',
+            'ai-for-engineering/foundations-of-regression/interview-readiness',
           ],
         },
         {
