@@ -1,0 +1,322 @@
+---
+sidebar_label: '🎯 Interview Readiness'
+title: 'Interview Readiness — Deep Neural Networks'
+description: >-
+  High-signal deep neural network interview questions across Google, Meta, Apple,
+  Amazon, OpenAI, Microsoft, and other tier-1 employers, organized by
+  difficulty and grounded in a research-backed source dataset.
+tutor_topic: "Interview Readiness — Deep Neural Networks"
+tutor_concepts:
+  - "backpropagation gradient flow"
+  - "vanishing and exploding gradients"
+  - "optimizer tradeoffs in training"
+  - "regularization techniques for overfitting"
+  - "production model debugging signals"
+  - "neural network system design"
+---
+
+# Interview Readiness — Deep Neural Networks
+
+These questions are curated from your deep-research dataset in `deep-neural-networks-interview-questions.md`, which synthesizes interview signals across 13 top employers.  
+They are grouped by theme, tagged by company, and written in the same answer-first style used in real loops.
+
+**How to use this page:** Try answering each question out loud in 3-5 minutes. Then open the answer and evaluate your depth, tradeoff clarity, and production maturity.
+
+<div className="not-prose my-6 flex flex-wrap gap-3 text-xs font-semibold">
+  <span className="rounded-full bg-red-100 px-3 py-1 text-red-700 dark:bg-red-900/40 dark:text-red-300">Google</span>
+  <span className="rounded-full bg-blue-100 px-3 py-1 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300">Meta</span>
+  <span className="rounded-full bg-zinc-100 px-3 py-1 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">Apple</span>
+  <span className="rounded-full bg-yellow-100 px-3 py-1 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-300">Amazon</span>
+  <span className="rounded-full bg-emerald-100 px-3 py-1 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">OpenAI</span>
+  <span className="rounded-full bg-teal-100 px-3 py-1 text-teal-700 dark:bg-teal-900/40 dark:text-teal-300">Microsoft</span>
+  <span className="rounded-full bg-indigo-100 px-3 py-1 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300">Databricks</span>
+  <span className="rounded-full bg-cyan-100 px-3 py-1 text-cyan-700 dark:bg-cyan-900/40 dark:text-cyan-300">Snowflake</span>
+  <span className="rounded-full bg-violet-100 px-3 py-1 text-violet-800 dark:bg-violet-900/40 dark:text-violet-300">Fundamentals</span>
+  <span className="rounded-full bg-orange-100 px-3 py-1 text-orange-800 dark:bg-orange-900/40 dark:text-orange-300">Training/Debugging</span>
+  <span className="rounded-full bg-fuchsia-100 px-3 py-1 text-fuchsia-800 dark:bg-fuchsia-900/40 dark:text-fuchsia-300">System Design</span>
+</div>
+
+---
+
+## Fundamentals and Core Mechanics
+
+<InterviewQuestion
+  number={1}
+  difficulty="Fundamentals"
+  company={["Google", "OpenAI", "Apple"]}
+  question="Derive backpropagation updates for a single hidden-layer network with sigmoid activations."
+>
+
+High-signal expectation: show chain-rule structure, not just final equations.
+
+For output layer:
+- `delta_out = (y_hat - y) * sigma'(z_out)` for MSE-style derivation
+- `dW_out = a_hidden^T * delta_out`, `db_out = sum(delta_out)`
+
+For hidden layer:
+- `delta_hidden = (delta_out * W_out^T) * sigma'(z_hidden)`
+- `dW_hidden = x^T * delta_hidden`, `db_hidden = sum(delta_hidden)`
+
+If using sigmoid + BCE at output, mention simplification:
+- `delta_out = (y_hat - y)` (the sigmoid derivative cancels)
+
+Strong candidates explain where vanishing gradients appear in this chain as depth increases.
+
+</InterviewQuestion>
+
+<InterviewQuestion
+  number={2}
+  difficulty="Fundamentals"
+  company={["Meta", "Microsoft", "Amazon", "Apple"]}
+  question="Explain the bias-variance trade-off in deep neural networks. How do dropout and L2 regularization change it?"
+>
+
+- **High bias**: underfit, both train and validation errors high.
+- **High variance**: overfit, train low and validation high.
+- **Dropout** increases stochastic regularization; lowers variance and improves robustness, but too much can raise bias.
+- **L2 regularization** penalizes large weights, smooths decision boundaries, reduces variance, and can improve calibration.
+
+In interviews, go beyond definition and state diagnosis flow:
+1) inspect learning curves,  
+2) classify failure as bias vs variance,  
+3) choose remedy accordingly.
+
+</InterviewQuestion>
+
+<InterviewQuestion
+  number={3}
+  difficulty="Fundamentals"
+  company={["OpenAI", "Google", "Meta", "Microsoft"]}
+  question="Explain self-attention and why the scaling factor 1/sqrt(d_k) is necessary."
+>
+
+Self-attention computes:
+
+`Attention(Q, K, V) = softmax(QK^T / sqrt(d_k)) V`
+
+Without scaling, dot-product magnitudes grow with `d_k`, pushing softmax into saturation where gradients are tiny and training becomes unstable.  
+Scaling keeps logits in a trainable regime and stabilizes optimization in deeper transformers.
+
+Good follow-up signal:
+- distinguish self-attention vs cross-attention
+- explain causal mask in decoder-only models
+- mention memory/runtime cost of `O(n^2)`
+
+</InterviewQuestion>
+
+---
+
+## Training, Optimization, and Debugging
+
+<InterviewQuestion
+  number={4}
+  difficulty="Training/Debugging"
+  company={["Google", "Meta", "Amazon"]}
+  question="Your training loss is stuck at a high value. Walk through a systematic debugging plan."
+>
+
+A strong plan is layered and falsifiable:
+
+1. **Data sanity**
+   - Check label integrity, class ratios, leakage, and preprocessing parity.
+2. **Overfit tiny subset test**
+   - If model cannot overfit 100-500 examples, issue is likely implementation or architecture.
+3. **Gradient flow**
+   - Track gradient norms layer-wise; detect zeros/explosions.
+4. **Initialization and optimizer**
+   - Verify init (He/Xavier), learning rate, warmup, weight decay.
+5. **Loss-activation compatibility**
+   - Ensure output activation and loss are correctly paired.
+6. **Instrumentation**
+   - Plot train/val curves, per-batch loss, and feature/label drift.
+
+Interviewers look for ordering, hypotheses, and quick isolation strategy, not random knob-tuning.
+
+</InterviewQuestion>
+
+<InterviewQuestion
+  number={5}
+  difficulty="Training/Debugging"
+  company={["Apple", "Google", "OpenAI"]}
+  question="Why do vanishing gradients happen, and how do residual connections help?"
+>
+
+Vanishing gradients arise when repeated multiplication by small derivatives (for example sigmoid/tanh in saturated regions) shrinks gradient magnitude exponentially with depth.
+
+Residual blocks learn:
+`y = F(x) + x`
+
+The identity path gives a direct gradient route, reducing attenuation and making very deep networks trainable.
+
+Common high-quality fixes to mention:
+- residual/skip connections
+- ReLU-family activations
+- normalization (LayerNorm/BatchNorm where appropriate)
+- better initialization
+- gradient clipping for instability
+
+</InterviewQuestion>
+
+<InterviewQuestion
+  number={6}
+  difficulty="Training/Debugging"
+  company={["Apple", "OpenAI", "Meta", "Google"]}
+  question="How would you reduce an LLM to 4x smaller for on-device deployment with minimal quality loss?"
+>
+
+Reference answer structure:
+- **Quantization** (int8/int4, sometimes lower): best latency/memory win, may hurt quality on sensitive tasks.
+- **Pruning** (structured preferred for hardware): removes low-importance channels/heads.
+- **Distillation**: student model learns teacher behavior, often strongest quality-retention path.
+- **Serving optimizations**: KV-cache policy, operator fusion, memory layout alignment, batching strategy.
+
+A strong senior answer compares methods under a constrained objective:
+`quality floor + latency target + memory budget + power budget`.
+
+</InterviewQuestion>
+
+---
+
+## System Design and Production Maturity
+
+<InterviewQuestion
+  number={7}
+  difficulty="System Design"
+  company={["Meta", "LinkedIn", "Google", "Netflix"]}
+  question="Design a two-stage ranking system for a large-scale feed."
+>
+
+Expected architecture:
+1. **Candidate generation** (high recall, low latency)
+2. **Heavy ranker** (high precision, richer features)
+3. **Re-ranker/business constraints** (diversity, freshness, safety)
+
+Critical discussion points:
+- offline vs online metric mismatch
+- feedback loops and selection bias
+- feature freshness and online/offline skew
+- exploration vs exploitation
+- guardrails (quality, policy, user harm)
+
+Senior signal: explain why a model with better offline AUC can still reduce online CTR or retention.
+
+</InterviewQuestion>
+
+<InterviewQuestion
+  number={8}
+  difficulty="System Design"
+  company={["Stripe", "Airbnb", "Uber", "Amazon"]}
+  question="Design a real-time risk/fraud scoring system under strict latency constraints."
+>
+
+Strong blueprint:
+- event ingestion (streaming), feature computation, online feature store
+- low-latency inference service with fallback rules
+- calibrated thresholds by risk tier
+- delayed-label backfill and retraining loop
+- drift and feature health monitoring
+
+Must-cover metrics:
+- precision/recall at operating threshold
+- false positive business cost
+- PSI/data drift and label delay sensitivity
+
+This question primarily tests production reliability under non-stationary data.
+
+</InterviewQuestion>
+
+<InterviewQuestion
+  number={9}
+  difficulty="System Design"
+  company={["OpenAI", "Google", "Microsoft"]}
+  question="How do scaling laws influence model size, data size, and compute allocation decisions?"
+>
+
+Interview target: strategic reasoning, not equation memorization.
+
+Good answer components:
+- model quality improves predictably with more parameters/data/compute, but with diminishing returns
+- there is a compute-optimal frontier; blindly scaling one axis is inefficient
+- planning must include training cost, inference cost, latency SLOs, and product ROI
+- evaluation strategy should detect when more compute no longer buys meaningful business lift
+
+At senior levels, tie this to portfolio planning and launch risk.
+
+</InterviewQuestion>
+
+---
+
+## Platform and MLOps-Oriented Signals
+
+<InterviewQuestion
+  number={10}
+  difficulty="System Design"
+  company={["Databricks", "Snowflake", "Microsoft", "Amazon"]}
+  question="What does production-grade MLOps look like for deep neural networks?"
+>
+
+Core elements expected:
+- reproducible datasets and versioned features
+- experiment tracking and model registry
+- CI/CD for training and serving
+- shadow/canary rollout with rollback criteria
+- observability: data drift, concept drift, latency, and business KPIs
+
+Company-specific hooks from the research corpus:
+- Databricks: MLflow lifecycle and registry discipline
+- Snowflake: reproducible training sets and warehouse-native governance
+- Microsoft/Amazon: enterprise reliability, security, and compliance constraints
+
+</InterviewQuestion>
+
+<InterviewQuestion
+  number={11}
+  difficulty="Training/Debugging"
+  company={["Google", "Amazon", "Databricks", "Microsoft"]}
+  question="What are common distributed training bottlenecks, and how do you mitigate them?"
+>
+
+Common bottlenecks:
+- communication overhead (all-reduce pressure)
+- load imbalance and stragglers
+- memory bandwidth limits
+- inefficient data pipelines (GPU starvation)
+- cache-line and contention issues at scale
+
+Mitigations:
+- overlap communication/compute
+- gradient accumulation and mixed precision
+- better sharding strategy (data/tensor/pipeline parallel hybrids)
+- input pipeline profiling and prefetch tuning
+- topology-aware placement and batching
+
+Interviewers usually score candidates on whether they can reason from hardware constraints to model throughput.
+
+</InterviewQuestion>
+
+<InterviewQuestion
+  number={12}
+  difficulty="System Design"
+  company={["Apple", "Google", "OpenAI", "Meta"]}
+  question="Why is LLM inference often memory-bound, and what optimizations would you prioritize first?"
+>
+
+Inference is frequently memory-bound because token generation repeatedly reads large weight matrices and KV-cache state; memory movement, not raw FLOPs, becomes dominant.
+
+High-signal optimizations:
+1. quantization for bandwidth reduction
+2. KV-cache strategy and cache locality
+3. kernel/operator fusion
+4. continuous batching and request scheduling
+5. architecture variants that reduce attention cost (where applicable)
+
+Best answers connect these choices to latency, throughput, and quality tradeoffs, not only to benchmark speedups.
+
+</InterviewQuestion>
+
+---
+
+<div className="not-prose mt-10 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-6 dark:border-slate-700">
+  <a href="./neural-network-from-scratch" className="text-sm font-medium text-slate-600 no-underline hover:text-emerald-700 hover:underline dark:text-slate-400 dark:hover:text-emerald-400">← Lesson 10 · Neural network from scratch</a>
+  <a href="./intro" className="text-sm font-semibold text-emerald-700 no-underline hover:underline dark:text-emerald-400">Course overview →</a>
+</div>

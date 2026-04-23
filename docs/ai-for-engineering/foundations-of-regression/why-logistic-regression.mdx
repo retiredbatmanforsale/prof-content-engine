@@ -4,6 +4,14 @@ title: 'Lesson 2 — Why do we need logistic regression?'
 description: >-
   Limits of linear regression for classification, bounded probabilities, decision
   boundaries, and how the sigmoid leads to logistic regression.
+tutor_topic: "Why do we need logistic regression?"
+tutor_concepts:
+  - "linear regression output unbounded"
+  - "classification requires probabilities"
+  - "linear regression fails classification"
+  - "sigmoid maps reals to probabilities"
+  - "logistic regression outputs class probabilities"
+  - "discrete labels need bounded outputs"
 ---
 
 # Why do we need logistic regression?
@@ -153,6 +161,36 @@ $$
 The set of points where <strong>σ(wᵀx + b) = 0.5</strong> (equivalently <strong>wᵀx + b = 0</strong>) is still a <strong>linear decision boundary</strong> in **x** — logistic regression is <em>linear in the features</em> but <em>non-linear in the probability</em> because of **σ**. Richer boundaries usually mean richer features (e.g. polynomials) or a different model — but we still start from this clean <strong>score → probability</strong> idea.
 
 ---
+
+<Quiz
+  lessonId="ai-for-engineering/foundations-of-regression/why-logistic-regression"
+  questions={[
+    {
+      id: "wlr-q1",
+      prompt: "What is the main problem with using linear regression for binary classification?",
+      options: ["It runs too slowly on large datasets", "It can output values outside the [0, 1] probability range", "It requires too many features", "It only works with one class"],
+      correctIndex: 1,
+    },
+    {
+      id: "wlr-q2",
+      prompt: "Logistic regression outputs values in which range?",
+      options: ["(-∞, +∞)", "(-1, 1)", "(0, 1)", "[0, 100]"],
+      correctIndex: 2,
+    },
+    {
+      id: "wlr-q3",
+      prompt: "What function does logistic regression use to bound its output between 0 and 1?",
+      options: ["ReLU", "Tanh", "Sigmoid", "Softmax"],
+      correctIndex: 2,
+    },
+    {
+      id: "wlr-q4",
+      prompt: "Which of the following is an appropriate use case for logistic regression?",
+      options: ["Predicting tomorrow's temperature", "Predicting house prices", "Classifying whether an email is spam", "Estimating future stock value"],
+      correctIndex: 2,
+    },
+  ]}
+/>
 
 <div className="not-prose mt-10 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-6 dark:border-slate-700">
   <div className="flex flex-wrap gap-x-4 gap-y-2">

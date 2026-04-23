@@ -4,6 +4,14 @@ title: 'Lesson 5 — How neural networks make predictions (forward pass)'
 description: >-
   A concrete 3→4→2 network: matrix forms, nested sigmoid equations, and why
   forward pass = model.predict in code.
+tutor_topic: "How neural networks make predictions (forward pass)"
+tutor_concepts:
+  - "forward pass direction"
+  - "linear transformation per layer"
+  - "activation function role"
+  - "no weight updates during inference"
+  - "layer output as next layer input"
+  - "sigmoid output range"
 ---
 
 # How neural networks make predictions: the **forward pass**
@@ -21,6 +29,8 @@ This lesson uses one tiny architecture so you can **read** every symbol:
 ---
 
 ## Picture of the stack
+
+<NeuralNetForwardViz />
 
 <div className="not-prose my-8 flex flex-wrap items-end justify-center gap-6 rounded-2xl border-2 border-slate-200 bg-gradient-to-b from-slate-50 to-white p-6 dark:border-slate-700 dark:from-slate-900 dark:to-slate-950 sm:gap-10">
   <div className="flex flex-col items-center gap-2">

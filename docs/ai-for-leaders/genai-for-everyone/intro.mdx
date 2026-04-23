@@ -61,5 +61,38 @@ Work through the lessons **in order**; each one adds vocabulary you will reuse i
 
 Later lessons go deeper into **prompt patterns** and **applied workflows**—Lessons 1–4 cover **history**, **industry stack**, **model lifecycle**, and **how LLMs are designed**.
 
+::::
+
+---
+
+## Course Final Quiz (Draft format)
+
+Use this at the end of the course once all lessons are completed. This uses the same payload schema, so results can later map cleanly to completion and certificate workflows in your LMS backend.
+
+<Quiz
+  quizId="genai-for-everyone-course-final-v1"
+  lessonId="genai-for-everyone-course-final"
+  userId="demo-user-001"
+  questions={[
+    {
+      id: 'final-q1',
+      prompt: 'Which layer sits above models in the five-layer AI stack?',
+      options: ['Energy', 'Silicon', 'Applications', 'Infrastructure'],
+      correctIndex: 2,
+    },
+    {
+      id: 'final-q2',
+      prompt: 'Why do teams keep a held-out test split?',
+      options: [
+        'To reduce cloud cost only',
+        'To estimate real-world performance on unseen data',
+        'To avoid model deployment',
+        'To replace all training data',
+      ],
+      correctIndex: 1,
+    },
+  ]}
+/>
+
 :::
 

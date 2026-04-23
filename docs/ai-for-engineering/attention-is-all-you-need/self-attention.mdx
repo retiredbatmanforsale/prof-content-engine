@@ -4,6 +4,14 @@ title: 'Lesson 5 — Self-attention'
 description: >-
   From token and positional input to Q, K, V; scaled dot-product attention and
   softmax weights; why embeddings are not Q/K/V; parallel long-range modeling.
+tutor_topic: "Self-attention"
+tutor_concepts:
+  - "queries keys values roles"
+  - "self-attention vs recurrence"
+  - "parallel computation of positions"
+  - "direct long-range token links"
+  - "single-layer mixing path length"
+  - "same sequence as QKV source"
 ---
 
 # Self-attention
@@ -148,6 +156,8 @@ $$
 **Why √d_k?** Dot products grow roughly with dimension; dividing keeps scores in a range where **softmax** is neither flat nor one-hot saturated—stable training.
 
 **Why softmax?** It turns raw scores into **competition**: each query **allocates 100%** of its attention budget across keys—exactly the “who should I listen to?” story. (See **Lesson 4** for the same mechanism in the generic Q/K/V picture.)
+
+<AttentionHeatmapViz />
 
 ---
 

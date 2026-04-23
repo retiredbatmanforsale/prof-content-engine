@@ -1,0 +1,149 @@
+---
+title: 'Prompt engineering — Hallucinations in large language models'
+sidebar_label: '4 · Hallucinations'
+description: >-
+  Why confident text is not always true, common failure modes, and how prompt
+  design and verification can reduce risk—without deep math.
+sidebar_position: 4
+tutor_topic: "Prompt engineering — Hallucinations in large language models"
+tutor_concepts:
+  - "LLM as next-token engine"
+  - "hallucination definition in LLMs"
+  - "fluency versus factual accuracy"
+  - "confidence-seeking vs truth-seeking reading"
+  - "prompt design steers behavior"
+  - "stochastic output variability"
+---
+
+# Hallucinations in large language models
+
+When a model answers in **clear, fluent paragraphs**, it is easy to forget what is actually happening under the hood. This lesson stays at the level you already have: **probability**, **randomness**, and **language**—without diving into equations. The goal is to **recognize** hallucination, **name** it, and **use prompts** where they can genuinely help.
+
+---
+
+<div className="not-prose my-6 rounded-2xl border-2 border-amber-300 bg-gradient-to-br from-amber-50 via-orange-50/80 to-rose-50 p-6 shadow-sm dark:border-amber-800/50 dark:from-amber-950/30 dark:via-slate-900 dark:to-rose-950/25">
+  <p className="m-0 text-xs font-bold uppercase tracking-wider text-amber-900 dark:text-amber-200">A useful distinction</p>
+  <p className="mt-2 mb-0 text-base leading-relaxed text-amber-950 dark:text-amber-100/90">
+    <strong>Confidence-seeking</strong> reading: “Does this <em>sound</em> authoritative and complete?”<br />
+    <strong>Truth-seeking</strong> reading: “Can I <em>verify</em> each claim against a source I trust?”<br /><br />
+    Context that <em>fits the question</em> is not automatically <em>factually correct</em>. Fluency and plausibility are features of the model; guaranteed truth is not.
+  </p>
+</div>
+
+---
+
+## What people mean by “hallucination” here
+
+In everyday speech, **hallucination** in LLMs usually means: the model produced something that is **wrong, invented, or unsupported**—yet it is phrased as if it were **sure**. That is different from saying “I don’t know” or “I would need to check a database.”
+
+| Everyday label | What often happened |
+|----------------|---------------------|
+| **Hallucination** | Plausible continuation that **was not grounded** in reliable evidence for this question |
+| **Honest uncertainty** (rare unless prompted) | Hedged language or a request for more context |
+
+**Bridging to prompts:** you cannot “patch” mathematics you never showed the model, but you **can** change the **task shape**: require **sources**, **step visibility**, **forbidden invention**, or a **second pass** that only critiques. Prompt design does not remove randomness—it **steers** behavior and **surfaces** risk.
+
+---
+
+## Not a database—a next-token engine
+
+An LLM is **not** a lookup table of facts. It is a **large probabilistic model**: at each step it assigns **chances** to many possible next pieces of text, then **samples** (or picks sharply) among them. **Stochastic** means: small changes in temperature or in the prompt can change the path—and **plausible** wrong answers sit beside **plausible** right ones in that space.
+
+<div className="not-prose my-6 rounded-xl border border-sky-300 bg-sky-50/90 p-5 dark:border-sky-800 dark:bg-sky-950/35">
+  <p className="m-0 text-sm font-semibold text-sky-900 dark:text-sky-100">Mental model (no formulas)</p>
+  <p className="mt-2 mb-0 text-sm leading-relaxed text-sky-950 dark:text-sky-100/88">
+    Think: <strong>“What word would naturally come next in this kind of document?”</strong>—not <strong>“What row in my spreadsheet is true?”</strong> Training teaches **patterns of language and reasoning shape**; it does not give the model a perfect, queryable **ledger of reality** for every domain.
+  </p>
+</div>
+
+---
+
+## Ways things go wrong (without blaming “bugs”)
+
+These labels help teams discuss failures calmly—each suggests **different** mitigations.
+
+| Mode | Plain description | Simple example shape |
+|------|-------------------|----------------------|
+| **Fabrication** | Names, dates, citations, or “studies” that **read well** but were **never provided** | “According to a 2019 paper by…” with no real paper in context |
+| **Inaccurate reasoning** | Steps **sound** logical but a link in the chain is wrong | Correct premises, wrong conclusion; or algebra slip hidden in words |
+| **Outdated or contaminated knowledge** | Training mix included **old** facts or **noisy** text; the model **echoes** that prior | Policy numbers from years ago; rare edge cases over-represented in data |
+| **Overgeneralization** | Smooth, **abstract** answer that **erases nuance** | “Always do X” when the truth is “it depends on jurisdiction / patient / market” |
+
+None of these require malice or “broken code.” They arise from **how** the system is built and **what** it was trained to optimize (coherent language, not your personal liability line).
+
+---
+
+## When fuzzy output is almost OK—and when it is not
+
+| Zone | Why hallucination might be **more tolerable** | What you still do |
+|------|-----------------------------------------------|---------------------|
+| **Brainstorming, ideation, tone drafts** | You will **edit**, merge, or throw away most lines | Label ideas as **draft**; rank or vote; human picks |
+| **Legal, medical, finance, research citations** | Errors can **harm** people, contracts, or science | **Sources**, **human sign-off**, **systems** designed for evidence—not vibes |
+
+The model does not know which zone you are in unless **you** say so in the prompt and in your **workflow**.
+
+---
+
+## Leveraging prompts to **control** and **mitigate** (not erase)
+
+Prompting cannot **guarantee** truth. It can **narrow** the model’s job and **raise the cost** of silent invention.
+
+| Technique | Idea in one line |
+|-----------|------------------|
+| **Grounding** | Paste **allowed** text (policy, spec, transcript) and say: “Answer **only** from this; if missing, write **‘not in source’**.” |
+| **Constraints** | “**No** external citations,” “**max** three claims,” “every claim ends with **[source: section]”** |
+| **Structure** | Force **bullet evidence** before a summary, or JSON with a **confidence** field the human must interpret cautiously |
+| **Scope** | “Do **not** infer law; describe **general** patterns only” or “I am not asking for diagnosis—**education** only” |
+| **Two-pass verification** | Generate as one **role**, then **critique** as another (below) |
+
+<div className="not-prose my-6 flex flex-wrap items-center justify-center gap-2 text-center text-sm font-medium text-violet-950 dark:text-violet-100">
+  <span className="rounded-lg border border-violet-300 bg-violet-100 px-3 py-2 dark:border-violet-700 dark:bg-violet-950/50">Tighten task</span>
+  <span className="text-violet-500">→</span>
+  <span className="rounded-lg border border-violet-300 bg-violet-100 px-3 py-2 dark:border-violet-700 dark:bg-violet-950/50">Add evidence rules</span>
+  <span className="text-violet-500">→</span>
+  <span className="rounded-lg border border-violet-300 bg-violet-100 px-3 py-2 dark:border-violet-700 dark:bg-violet-950/50">Verify or human review</span>
+</div>
+
+---
+
+## “Expert A” then “Expert B”—critique as a lever
+
+A practical pattern from the field: LLMs are often **stronger at checking** a given piece of text than at **inventing** a perfect first draft from thin air—especially if you give them **the same** material to audit.
+
+**Pass 1 — Expert A (generator):**  
+“Draft recommendations for \<goal\> using **only** the pasted brief.”
+
+**Pass 2 — Expert B (critic, separate call or clear section):**  
+“You are a **skeptical reviewer**. List **every** claim in the draft that is not directly supported by the brief. Flag **logical gaps**. Do **not** rewrite the whole doc—output a **findings list**.”
+
+| Why two hats help | Caveat |
+|-------------------|--------|
+| Critique mode encourages **“what could be wrong?”** | A second LLM pass can still **miss** errors or **invent** new ones—use it as **assist**, not **oracle** |
+
+---
+
+## Hallucination is expected behavior—not a switch you can turn off
+
+Because the core is **probabilistic** and **stochastic**, you should plan for **residual risk**: sometimes the model will still **fill gaps** beautifully and wrongly. Your job shifts from **elimination** to **management**: **process**, **tools** (retrieval, calculators, APIs), **prompts**, and **humans** in the loop where stakes are high.
+
+---
+
+## Lesson map (all subtopics at a glance)
+
+| # | Topic | One-line anchor |
+|---|--------|-----------------|
+| 1 | Confidence vs truth | Plausible ≠ verified |
+| 2 | Definition + prompts | Name failure modes; shape task and evidence rules |
+| 3 | Not a database | Next-token probabilities, not guaranteed facts |
+| 4 | Fabrication | Invented specifics dressed as fact |
+| 5 | Bad reasoning | Logic slips with confident tone |
+| 6 | Stale / noisy knowledge | World and training data move on |
+| 7 | Overgeneralization | Smooth answers that erase “it depends” |
+| 8 | Prompt levers | Ground, constrain, structure, scope |
+| 9 | Generator + critic | Expert A / Expert B verification pattern |
+| 10 | Manage, don’t fantasize about “zero hallucination” | Design for residual risk |
+| 11 | Domains | Creative vs **high-stakes** guardrails |
+
+---
+
+When you leave this lesson, the habit to keep is **truth-seeking by design**: assume the model will **try** to be helpful and fluent; your prompts and your **review** teach it **where** being silent, narrow, or source-bound is the **better** kind of helpful.

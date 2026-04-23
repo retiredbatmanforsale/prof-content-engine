@@ -4,6 +4,13 @@ title: 'Lesson 3 — The sigmoid: the secret sauce of logistic regression'
 description: >-
   Definition σ(z), linear score z = wᵀx + b, limits, smoothness, examples, and
   the squashing intuition for probabilities.
+tutor_topic: "The sigmoid: the secret sauce of logistic regression"
+tutor_concepts:
+  - "sigmoid formula definition"
+  - "output range zero to one"
+  - "sigmoid value at zero"
+  - "linear input z meaning"
+  - "S-shaped curve behavior"
 ---
 
 # The sigmoid function: the secret sauce of logistic regression
@@ -68,6 +75,8 @@ $$
     </tbody>
   </table>
 </div>
+
+<ActivationViz fn="sigmoid" />
 
 ---
 
@@ -168,6 +177,42 @@ This means that even if our linear model produces a value like <strong>27</stron
 </div>
 
 ---
+
+<Quiz
+  lessonId="ai-for-engineering/foundations-of-regression/sigmoid-function-logistic-regression"
+  questions={[
+    {
+      id: "sig-q1",
+      prompt: "What is the value of σ(0)?",
+      options: ["0", "1", "0.5", "Undefined"],
+      correctIndex: 2,
+    },
+    {
+      id: "sig-q2",
+      prompt: "As z → +∞, σ(z) approaches:",
+      options: ["0", "∞", "0.5", "1"],
+      correctIndex: 3,
+    },
+    {
+      id: "sig-q3",
+      prompt: "The sigmoid function formula is:",
+      options: ["σ(z) = 1 / (1 − e⁻ᶻ)", "σ(z) = 1 / (1 + e⁻ᶻ)", "σ(z) = eᶻ / (1 + eᶻ − 1)", "σ(z) = z / (1 + |z|)"],
+      correctIndex: 1,
+    },
+    {
+      id: "sig-q4",
+      prompt: "What shape does the sigmoid curve form?",
+      options: ["A straight line", "A parabola", "An S-shape", "A bell curve"],
+      correctIndex: 2,
+    },
+    {
+      id: "sig-q5",
+      prompt: "In logistic regression, z = wᵀx + b is called:",
+      options: ["The probability", "The decision boundary", "The linear score (logit)", "The log-likelihood"],
+      correctIndex: 2,
+    },
+  ]}
+/>
 
 <div className="not-prose mt-10 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-6 dark:border-slate-700">
   <div className="flex flex-wrap gap-x-4 gap-y-2">

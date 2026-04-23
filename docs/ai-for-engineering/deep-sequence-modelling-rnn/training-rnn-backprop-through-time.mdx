@@ -4,6 +4,14 @@ title: 'Lesson 5 — Training RNNs: From Backpropagation to Backpropagation Thro
 description: >-
   Backpropagation recap, temporal dependencies, BPTT, vanishing and exploding
   gradients, and how LSTMs address training stability.
+tutor_topic: "Training RNNs: From Backpropagation to Backpropagation Through Time"
+tutor_concepts:
+  - "chain rule in backpropagation"
+  - "feedforward training loop steps"
+  - "RNN unrolling through time"
+  - "BPTT gradient flow across timesteps"
+  - "vanishing gradient problem in RNNs"
+  - "shared weights across timesteps"
 ---
 
 # Training RNNs: From Backpropagation to Backpropagation Through Time
@@ -70,6 +78,8 @@ In <strong>feedforward neural networks</strong>, training follows a simple loop:
 </div>
 
 This process is repeated across <strong>batches</strong> of data until <strong>convergence</strong>.
+
+<GradientDescentViz label="parameter  θ" />
 
 ---
 
@@ -248,6 +258,62 @@ By introducing <strong>explicit memory cells</strong> and <strong>gating functio
     <p className="mt-2 mb-0 text-sm text-slate-800 dark:text-slate-200"><strong>Gradients</strong> during training.</p>
   </div>
 </div>
+
+---
+
+<PythonPlayground minLines={22} starter={`import numpy as np
+
+# Minimal Elman RNN trained with BPTT — predicts next bit in a repeating sequence
+np.random.seed(7)
+seq = [1, 0, 1, 0, 1, 0, 1, 0]   # input sequence (t=0..6 → predict t=1..7)
+
+hidden_size = 4
+Wxh = np.random.randn(hidden_size, 1) * 0.3
+Whh = np.random.randn(hidden_size, hidden_size) * 0.3
+Why = np.random.randn(1, hidden_size) * 0.3
+bh  = np.zeros((hidden_size, 1))
+by  = np.zeros((1, 1))
+lr  = 0.05
+
+tanh   = np.tanh
+sig    = lambda z: 1 / (1 + np.exp(-z))
+
+for epoch in range(201):
+    h = np.zeros((hidden_size, 1))
+    total_loss = 0
+    grads = {k: np.zeros_like(v) for k, v in
+             zip(['Wxh','Whh','Why','bh','by'],[Wxh,Whh,Why,bh,by])}
+    hs, ys, zhs = [], [], []
+
+    # Forward through time
+    for t in range(len(seq) - 1):
+        x = np.array([[seq[t]]], dtype=float)
+        zh = Wxh @ x + Whh @ h + bh
+        h  = tanh(zh)
+        y  = sig(Why @ h + by)
+        hs.append(h.copy()); ys.append(y); zhs.append(zh)
+        total_loss += (y - seq[t+1]) ** 2
+
+    # BPTT
+    dh_next = np.zeros_like(h)
+    for t in reversed(range(len(seq) - 1)):
+        x   = np.array([[seq[t]]], dtype=float)
+        dy  = (ys[t] - seq[t+1]) * ys[t] * (1 - ys[t])
+        grads['Why'] += dy @ hs[t].T
+        grads['by']  += dy
+        dh   = Why.T @ dy + dh_next
+        dzh  = dh * (1 - hs[t] ** 2)
+        grads['Wxh'] += dzh @ x.T
+        grads['Whh'] += dzh @ (hs[t-1].T if t > 0 else np.zeros_like(hs[0]).T)
+        grads['bh']  += dzh
+        dh_next = Whh.T @ dzh
+
+    for k, v in zip(['Wxh','Whh','Why','bh','by'],[Wxh,Whh,Why,bh,by]):
+        v -= lr * np.clip(grads[k], -1, 1)   # gradient clipping
+
+    if epoch % 50 == 0:
+        print(f"Epoch {epoch:3d}  loss={float(total_loss):.4f}")
+`} />
 
 ---
 

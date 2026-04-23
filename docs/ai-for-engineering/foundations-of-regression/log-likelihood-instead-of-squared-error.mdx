@@ -5,6 +5,14 @@ description: >-
   From SSE in linear regression to Bernoulli likelihood, joint likelihood as a
   product, log-likelihood, and binary cross-entropy (log loss) as the cost to
   minimize.
+tutor_topic: "Log likelihood instead of squared error"
+tutor_concepts:
+  - "SSE non-convexity for probabilities"
+  - "MLE parameter selection principle"
+  - "Bernoulli likelihood single example"
+  - "unified probability expression trick"
+  - "negative log-likelihood convexity"
+  - "binary cross-entropy as loss"
 ---
 
 # Log likelihood instead of squared error
@@ -133,6 +141,67 @@ This **J** is the **binary cross-entropy** (also called **log loss**): the stand
 If the model is **confident and wrong** (e.g. **yᵢ = 1** but **ŷᵢ ≈ 0**), **log ŷᵢ** is very negative and **J** spikes—exactly the penalty we want.
 
 ---
+
+<PythonPlayground minLines={16} starter={`import numpy as np
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+
+# Binary cross-entropy vs MSE loss curves for a single prediction
+p = np.linspace(0.01, 0.99, 200)
+
+# True label y=1
+bce = -np.log(p)          # BCE for correct class (lower is better as p→1)
+mse = (1 - p) ** 2        # MSE for same target
+
+plt.figure(figsize=(7, 4))
+plt.plot(p, bce, label='BCE  −log(p)', color='#6366f1', linewidth=2)
+plt.plot(p, mse, label='MSE  (1−p)²', color='#f97316', linewidth=2, linestyle='--')
+plt.xlabel('Predicted probability p  (true label = 1)')
+plt.ylabel('Loss')
+plt.title('Why BCE penalises confident wrong predictions more than MSE')
+plt.legend()
+plt.tight_layout()
+plt.show()
+
+# Numeric demo: confident wrong prediction
+p_wrong = 0.02
+print(f"Confident wrong (p={p_wrong}):")
+print(f"  BCE = {-np.log(p_wrong):.2f}   MSE = {(1-p_wrong)**2:.2f}")
+p_right = 0.95
+print(f"Confident right (p={p_right}):")
+print(f"  BCE = {-np.log(p_right):.2f}   MSE = {(1-p_right)**2:.2f}")
+`} />
+
+<Quiz
+  lessonId="ai-for-engineering/foundations-of-regression/log-likelihood-instead-of-squared-error"
+  questions={[
+    {
+      id: "ll-q1",
+      prompt: "Why is log-likelihood used instead of raw likelihood for optimization?",
+      options: ["It is faster to compute", "Products of small probabilities become sums of logs — numerically stable and easier to optimize", "It always gives a larger value", "The log removes the need for gradients"],
+      correctIndex: 1,
+    },
+    {
+      id: "ll-q2",
+      prompt: "Binary cross-entropy loss is also known as:",
+      options: ["Hinge loss", "Log loss (negative log-likelihood)", "Mean squared error", "KL divergence"],
+      correctIndex: 1,
+    },
+    {
+      id: "ll-q3",
+      prompt: "For a correctly labeled class-1 example (y=1), the Bernoulli log-likelihood contribution is:",
+      options: ["log(1 − σ(z))", "log(σ(z))", "−log(σ(z))", "σ(z)²"],
+      correctIndex: 1,
+    },
+    {
+      id: "ll-q4",
+      prompt: "Minimizing the negative log-likelihood is equivalent to:",
+      options: ["Minimizing SSE", "Maximizing the likelihood of the training data", "Minimizing the number of model parameters", "Maximizing the decision boundary margin"],
+      correctIndex: 1,
+    },
+  ]}
+/>
 
 <div className="not-prose mt-10 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-6 dark:border-slate-700">
   <a href="./intuition-behind-logistic-regression" className="text-sm font-medium text-slate-600 no-underline hover:text-emerald-700 hover:underline dark:text-slate-400 dark:hover:text-emerald-400">← Lesson 5 · Intuition behind logistic regression</a>
