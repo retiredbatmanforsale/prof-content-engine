@@ -149,6 +149,20 @@ pre, code {
   font-family: 'Plus Jakarta Sans', system-ui, -apple-system, 'Segoe UI', Roboto, Ubuntu, sans-serif;
 }
 
+/* "Prof" navbar title — Instrument Serif italic, matching the landing page logo */
+.navbar__title {
+  font-family: 'Instrument Serif', Georgia, 'Times New Roman', serif;
+  font-style: italic;
+  font-weight: 400;
+  font-size: 1.25rem;
+  color: #171717;
+  letter-spacing: -0.01em;
+}
+
+[data-theme='dark'] .navbar__title {
+  color: #ffffff;
+}
+
 /* Links */
 a {
   color: var(--ifm-link-color);
@@ -306,4 +320,123 @@ pre {
 :focus-visible {
   outline: 2px solid var(--ifm-color-primary);
   outline-offset: 2px;
+}
+
+/* ============================================
+   Sidebar: Track → Course → Lesson hierarchy
+   Matches brand: neutral palette, Instrument Serif, coral accent
+   ============================================ */
+
+/* DIVIDER — groups courses inside a track */
+.sidebar-divider {
+  display: block;
+  font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+  font-size: 0.6rem;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #d4d4d4;
+  padding: 1rem 0.75rem 0.35rem;
+  pointer-events: none;
+  user-select: none;
+}
+
+[data-theme='dark'] .sidebar-divider {
+  color: #404040;
+}
+
+/* TRACK — tiny uppercase label, like section headers on the landing page */
+.sidebar-track > .menu__list-item-collapsible > .menu__link {
+  font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+  font-size: 0.65rem;
+  font-weight: 500;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: #a3a3a3;
+  padding-top: 1.25rem;
+  padding-bottom: 0.35rem;
+  background: none !important;
+}
+
+.sidebar-track > .menu__list-item-collapsible > .menu__link:hover {
+  color: #737373;
+  background: none !important;
+}
+
+.sidebar-track > .menu__list-item-collapsible > .menu__caret {
+  opacity: 0.35;
+}
+
+[data-theme='dark'] .sidebar-track > .menu__list-item-collapsible > .menu__link {
+  color: #525252;
+}
+
+/* COURSE — Instrument Serif italic, editorial feel */
+.sidebar-course > .menu__list-item-collapsible > .menu__link {
+  font-family: 'Instrument Serif', Georgia, serif;
+  font-style: italic;
+  font-size: 0.95rem;
+  font-weight: 400;
+  color: #171717;
+  border-left: 1.5px solid transparent;
+  padding-left: 0.85rem;
+  border-radius: 0 4px 4px 0;
+  transition: border-color 0.15s ease, color 0.15s ease;
+  margin-top: 1px;
+  margin-bottom: 1px;
+  background: none !important;
+}
+
+.sidebar-course > .menu__list-item-collapsible > .menu__link:hover {
+  color: #171717;
+  border-left-color: #e5e5e5;
+  background: #fafafa !important;
+}
+
+/* Active course — coral left border, coral text */
+.sidebar-course:not(.menu__list-item--collapsed) > .menu__list-item-collapsible > .menu__link {
+  border-left-color: #FF7F50;
+  color: #FF7F50;
+  background: #fffbfa !important;
+}
+
+[data-theme='dark'] .sidebar-course > .menu__list-item-collapsible > .menu__link {
+  color: #e5e5e5;
+}
+
+[data-theme='dark'] .sidebar-course:not(.menu__list-item--collapsed) > .menu__list-item-collapsible > .menu__link {
+  color: #FF7F50;
+  background: rgba(255, 127, 80, 0.06) !important;
+}
+
+/* LESSON — Inter, compact, muted until active */
+.theme-doc-sidebar-item-link-level-3 > .menu__link,
+.theme-doc-sidebar-item-link-level-4 > .menu__link {
+  font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+  font-size: 0.78rem;
+  font-weight: 400;
+  color: #737373;
+  padding-top: 0.25rem;
+  padding-bottom: 0.25rem;
+}
+
+.theme-doc-sidebar-item-link-level-3 > .menu__link:hover,
+.theme-doc-sidebar-item-link-level-4 > .menu__link:hover {
+  color: #171717;
+}
+
+.theme-doc-sidebar-item-link-level-3 > .menu__link--active,
+.theme-doc-sidebar-item-link-level-4 > .menu__link--active {
+  font-weight: 500;
+  color: #171717;
+}
+
+[data-theme='dark'] .theme-doc-sidebar-item-link-level-3 > .menu__link,
+[data-theme='dark'] .theme-doc-sidebar-item-link-level-4 > .menu__link {
+  color: #525252;
+}
+
+[data-theme='dark'] .theme-doc-sidebar-item-link-level-3 > .menu__link--active,
+[data-theme='dark'] .theme-doc-sidebar-item-link-level-4 > .menu__link--active {
+  color: #e5e5e5;
 }
