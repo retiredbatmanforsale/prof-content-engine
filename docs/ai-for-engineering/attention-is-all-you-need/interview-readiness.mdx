@@ -1,0 +1,328 @@
+---
+sidebar_label: '🎯 Interview Readiness'
+title: 'Interview Readiness — Attention Is All You Need'
+description: >-
+  High-signal Transformer and attention mechanism interview questions across Google, Amazon,
+  Microsoft, Meta, Apple, Netflix, Stripe, Snowflake, and Databricks, organized
+  by theme and difficulty.
+tutor_topic: "Interview Readiness — Attention Is All You Need (Transformer)"
+tutor_concepts:
+  - "scaled dot-product attention: derivation and sqrt(d_k) scaling"
+  - "multi-head attention and representational diversity"
+  - "positional encodings: sinusoidal, learned, RoPE, ALiBi"
+  - "encoder-only vs decoder-only vs encoder-decoder architectures"
+  - "training stability: warmup, gradient clipping, pre-LayerNorm"
+  - "fine-tuning, catastrophic forgetting, and LoRA"
+---
+
+# Interview Readiness — Attention Is All You Need (Transformer)
+
+These questions are drawn from the Transformer and attention mechanisms interview research dataset, synthesizing signals from 9 top employers across ML Engineer, NLP Engineer, and Research Scientist roles.  
+They cover attention mechanics, architecture choices, training stability, and production Transformer system design.
+
+**How to use this page:** Try answering each question out loud in 3–5 minutes. Then open the answer and evaluate your depth, tradeoff clarity, and production maturity.
+
+<div className="not-prose my-6 flex flex-wrap gap-3 text-xs font-semibold">
+  <span className="rounded-full bg-red-100 px-3 py-1 text-red-700 dark:bg-red-900/40 dark:text-red-300">Google</span>
+  <span className="rounded-full bg-yellow-100 px-3 py-1 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-300">Amazon</span>
+  <span className="rounded-full bg-teal-100 px-3 py-1 text-teal-700 dark:bg-teal-900/40 dark:text-teal-300">Microsoft</span>
+  <span className="rounded-full bg-blue-100 px-3 py-1 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300">Meta</span>
+  <span className="rounded-full bg-zinc-100 px-3 py-1 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">Apple</span>
+  <span className="rounded-full bg-rose-100 px-3 py-1 text-rose-700 dark:bg-rose-900/40 dark:text-rose-300">Netflix</span>
+  <span className="rounded-full bg-violet-100 px-3 py-1 text-violet-700 dark:bg-violet-900/40 dark:text-violet-300">Stripe</span>
+  <span className="rounded-full bg-cyan-100 px-3 py-1 text-cyan-700 dark:bg-cyan-900/40 dark:text-cyan-300">Snowflake</span>
+  <span className="rounded-full bg-indigo-100 px-3 py-1 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300">Databricks</span>
+  <span className="rounded-full bg-violet-100 px-3 py-1 text-violet-800 dark:bg-violet-900/40 dark:text-violet-300">Fundamentals</span>
+  <span className="rounded-full bg-orange-100 px-3 py-1 text-orange-800 dark:bg-orange-900/40 dark:text-orange-300">Training/Debugging</span>
+  <span className="rounded-full bg-fuchsia-100 px-3 py-1 text-fuchsia-800 dark:bg-fuchsia-900/40 dark:text-fuchsia-300">System Design</span>
+</div>
+
+---
+
+## Quick-Reference Coverage Table
+
+| Q | Question (abbreviated) | Section | Difficulty | Companies |
+|---|------------------------|---------|------------|-----------|
+| 1 | Derive scaled dot-product attention and explain √d_k | Fundamentals | Fundamentals | Google, Meta, Apple |
+| 2 | Multi-head vs single large-head attention | Fundamentals | Fundamentals | Google, Meta, Microsoft |
+| 3 | Sinusoidal vs learned vs RoPE vs ALiBi positional encodings | Fundamentals | Fundamentals | Apple, Google, Amazon |
+| 4 | Encoder-only vs decoder-only vs encoder-decoder | Fundamentals | Fundamentals | Meta, Google, Microsoft |
+| 5 | Transformer training diverges to NaN after thousands of steps | Training/Debugging | Training/Debugging | Google, Meta, Microsoft |
+| 6 | Fine-tuning degrades general capabilities (catastrophic forgetting) | Training/Debugging | Training/Debugging | Amazon, Netflix, Databricks |
+| 7 | How to size layers, d_model, heads, and FFN dimension | Training/Debugging | Training/Debugging | Stripe, Meta, Apple |
+| 8 | Attention complexity and efficient attention alternatives | Training/Debugging | Training/Debugging | Google, Meta, Microsoft |
+| 9 | Design a semantic search / RAG system for enterprise docs | System Design | System Design | Google, Amazon, Microsoft |
+| 10 | Design a large-scale machine translation pipeline | System Design | System Design | Google, Meta, Microsoft |
+| 11 | Design a Transformer-based recommendation system | System Design | System Design | Netflix, Meta, Amazon |
+| 12 | Design low-latency serving infrastructure for a large Transformer | System Design | System Design | Google, Apple, Databricks |
+
+---
+
+## Fundamentals and Core Mechanics
+
+<InterviewQuestion
+  number={1}
+  difficulty="Fundamentals"
+  company={["Google", "Meta", "Apple"]}
+  question="Walk me through scaled dot-product attention. Derive the output shape step by step, and explain precisely why we divide by √d_k rather than d_k or some other factor."
+>
+
+- Given input X ∈ ℝ^(n×d_model), project to Q = XW_Q, K = XW_K, V = XW_V, where W_Q, W_K ∈ ℝ^(d_model×d_k) and W_V ∈ ℝ^(d_model×d_v).
+- Compute scores S = QK^T ∈ ℝ^(n×n). Each entry `s_{ij}` is the dot product of query i with key j — a similarity measure over d_k dimensions.
+- Output = `softmax(S / √d_k) V ∈ ℝ^(n×d_v)`.
+- **Why √d_k:** if components of Q and K are independent with mean 0 and variance 1, then `q·k` has mean 0 and variance `d_k`. Without scaling, large d_k makes dot products large in magnitude, pushing softmax into saturated regions where one logit dominates (near-one-hot attention) and gradients vanish.
+- Dividing by `√d_k` normalizes variance back to 1, keeping softmax in a well-behaved regime. Dividing by `d_k` (instead of its square root) would over-shrink and produce near-uniform attention — high entropy with no selectivity.
+- **Practical note:** in mixed-precision training, this scaling also prevents fp16 overflow in logits — fused attention kernels (FlashAttention) apply the scale before the matmul for numerical stability.
+
+</InterviewQuestion>
+
+<InterviewQuestion
+  number={2}
+  difficulty="Fundamentals"
+  company={["Google", "Meta", "Microsoft"]}
+  question="Why do we use multi-head attention instead of a single attention layer with a larger d_k? Isn't it mathematically equivalent?"
+>
+
+- It is **not** equivalent. With h heads, each head operates on its own subspace of dimension `d_k = d_model/h` via separate Q/K/V projections, and softmax is computed independently per head — you get h different attention distributions, not one.
+- A single large head produces one softmax-weighted mixture. Multi-head lets the model attend to multiple positions and relation types simultaneously — empirically, one head tracks syntactic dependencies, another tracks coreference, another tracks positional locality (Clark et al., Voita et al.).
+- **Cost is roughly the same:** total parameters and FLOPs are similar because each head is smaller (`d_model/h`). Representational diversity comes essentially for free.
+- **Output projection:** `concat(head_1, …, head_h) W_O` projects back to d_model, letting the model learn how to combine the heads' outputs.
+- **Tradeoffs:**
+  - Too many heads → each head too low-dimensional to capture useful patterns
+  - Too few heads → loss of diversity
+  - h=8–16 for d_model=512–1024 is standard
+- **Modern efficiency variants:** MQA (Multi-Query Attention) and GQA (Grouped-Query Attention) share K/V across heads with minimal quality loss — a major inference efficiency win used in Llama 2/3.
+
+</InterviewQuestion>
+
+<InterviewQuestion
+  number={3}
+  difficulty="Fundamentals"
+  company={["Apple", "Google", "Amazon"]}
+  question="Compare sinusoidal vs learned positional encodings. When would you pick one over the other, and what are modern alternatives like RoPE and ALiBi solving?"
+>
+
+| Scheme | Mechanism | Length extrapolation | Parameters | Used in |
+|--------|-----------|----------------------|------------|---------|
+| **Sinusoidal** | `PE(pos, 2i) = sin(pos / 10000^{2i/d})` | In principle yes (periodic) | None | Original Transformer |
+| **Learned** | Embedding table of size max_len × d_model | No — degrades beyond max_len | max_len × d_model | BERT, GPT-2 |
+| **RoPE** | Rotates Q/K by position-dependent angle | Good | None | LLaMA, GPT-NeoX |
+| **ALiBi** | Adds linear bias `−m·\|i−j\|` to attention scores | Excellent | None | MPT, BLOOM |
+
+- **Sinusoidal:** deterministic, no parameters, encodes relative position as a linear function of PE(pos). Reasonable but in practice learned embeddings slightly outperform for fixed-length tasks.
+- **Learned:** more flexible but cannot extrapolate — deploying on contexts longer than training max_len causes degradation. Common source of production bugs.
+- **RoPE:** encodes *relative* position inside the dot product itself by rotating Q and K. Generalizes better than absolute schemes and is the current de-facto standard for decoder-only LLMs.
+- **ALiBi:** zero parameters, excellent length extrapolation by penalizing distant attention linearly. Best when you train on short contexts and want to serve longer ones.
+- **Decision axis:** length extrapolation needed → RoPE or ALiBi. Fixed short contexts with maximum flexibility → learned. Absolute sinusoidal is largely legacy now.
+
+</InterviewQuestion>
+
+<InterviewQuestion
+  number={4}
+  difficulty="Fundamentals"
+  company={["Meta", "Google", "Microsoft"]}
+  question="Explain the differences between encoder-only, decoder-only, and encoder-decoder Transformers. Why has the field largely converged on decoder-only for LLMs?"
+>
+
+| Architecture | Attention type | Training objective | Best for |
+|-------------|----------------|-------------------|----------|
+| **Encoder-only** (BERT) | Bidirectional self-attention | Masked LM | Classification, NER, retrieval embeddings |
+| **Decoder-only** (GPT) | Causal (masked) self-attention | Next-token prediction | Generation, in-context learning, LLMs |
+| **Encoder-decoder** (T5, original Transformer) | Encoder: bidirectional; Decoder: causal + cross-attention | Seq2seq objectives | Translation, summarization, structured output |
+
+- **Why decoder-only won for LLMs:**
+  1. **Scale and simplicity:** one stack, one objective — easier to scale training infrastructure and data pipelines.
+  2. **In-context learning emerges:** next-token prediction at scale yields zero/few-shot generalization that's hard to elicit from encoder-decoder models.
+  3. **Unified interface:** any task becomes "predict tokens given a prompt" — classification, QA, translation, and code all collapse to generation.
+  4. **KV caching:** causal mask enables efficient incremental decoding — the key inference efficiency win that makes interactive use practical.
+- **Encoder-decoder still wins** for tightly conditioned generation (speech recognition, NMT) where separating source understanding from target generation helps accuracy and efficiency.
+- **Encoder-only still wins** for embeddings and retrieval — bidirectional context produces richer representations for similarity tasks.
+
+</InterviewQuestion>
+
+---
+
+## Training, Debugging and Optimisation
+
+<InterviewQuestion
+  number={5}
+  difficulty="Training/Debugging"
+  company={["Google", "Meta", "Microsoft"]}
+  question="You're training a Transformer from scratch and loss diverges (NaNs) after a few thousand steps. Walk me through your debugging process."
+>
+
+- **Reproduce and isolate:** fix the seed, note the exact step. Is it a single bad batch (data issue) or a gradual blow-up (instability)?
+- **Check learning rate schedule — most common cause.** Transformers require warmup (typically 1k–10k steps) before reaching peak LR. Without warmup, early updates on random attention patterns destabilize LayerNorm statistics. Use linear warmup + cosine or inverse-sqrt decay.
+- **Inspect attention logits:** log `max |QK^T / √d_k|` per layer. If exploding, consider: (a) attention logit soft-capping (Gemma-style), (b) QK-LayerNorm (ViT-22B, Chameleon) — normalize Q and K before the dot product.
+- **Gradient clipping:** global norm clip at 1.0 is standard. A single outlier batch without clipping can wreck an entire run.
+- **Mixed precision:** bf16 is far more stable than fp16 for Transformers. Same exponent range as fp32 eliminates most overflow cases. If stuck with fp16, use loss scaling and watch for Inf in attention softmax.
+- **LayerNorm placement:** pre-LN (norm before sublayer) is dramatically more stable than post-LN at depth. Post-LN requires careful initialization; pre-LN is the default for production-grade training.
+- **Initialization:** output projections should be scaled down, e.g., `1/√(2·n_layers)` for residual branches — GPT-2 style initialization prevents early-training residual stream blow-up.
+- **Data:** inspect the batch right before divergence — long sequences of repeated tokens, corrupted UTF-8, or extreme token imbalance can trigger instability.
+
+</InterviewQuestion>
+
+<InterviewQuestion
+  number={6}
+  difficulty="Training/Debugging"
+  company={["Amazon", "Netflix", "Databricks"]}
+  question="You fine-tune a pretrained Transformer on your domain data and val loss goes down but downstream task performance degrades. What's happening and how do you fix it?"
+>
+
+- **Classic catastrophic forgetting:** adapting to the new distribution erased general capabilities. Val loss on your domain improved, but capabilities on other tasks degraded.
+- **Diagnose:** evaluate on a held-out general benchmark (not just domain val loss). Track per-capability metrics over fine-tuning steps — there's usually a sweet spot early, followed by capability decay.
+- **Fixes by severity:**
+
+| Fix | What it addresses | Cost |
+|-----|-------------------|------|
+| Lower LR (1e-5) + fewer epochs (1–3) | Overtraining — the #1 cause | None |
+| **LoRA / adapters** | Freeze base weights, train low-rank deltas | Low compute |
+| Mix in 10–30% general-domain replay data | Prevents distribution drift | Data pipeline |
+| KL regularization to base model | Penalizes divergence from pretrained distribution | Training complexity |
+| Freeze lower layers | Preserves general features, fine-tunes task-specific top layers | Architecture change |
+
+- **LoRA is the production pattern:** freeze base weights, train low-rank delta matrices. Preserves original capabilities, reduces compute 10–100×, and adapters can be swapped per task at inference.
+- **Also check:** is your val set actually representative of the downstream task? Often the disconnect is a distribution mismatch between fine-tune data and real evaluation — not forgetting at all.
+
+</InterviewQuestion>
+
+<InterviewQuestion
+  number={7}
+  difficulty="Training/Debugging"
+  company={["Stripe", "Meta", "Apple"]}
+  question="How would you choose the number of layers, d_model, number of heads, and FFN dimension for a Transformer? What's the relationship between them?"
+>
+
+- **Chinchilla scaling laws** are the starting point: for a given compute budget C, optimal model size N and training tokens D scale as N ∝ C^0.5, D ∝ C^0.5. Roughly 20 tokens per parameter for training-optimal. If inference cost dominates, train a smaller model on more tokens (LLaMA approach).
+- **d_model and heads:** `d_model` must be divisible by `n_heads`. Head dimension `d_k = d_model/n_heads` — keep this in the range 64–128. Below 32, heads are too narrow to be useful.
+- **FFN dimension:** typically `4 × d_model` (original Transformer) or `8/3 × d_model` for SwiGLU. The FFN is where most model parameters live — it's where factual knowledge is largely stored.
+- **Depth vs width:** for a fixed parameter budget, deeper usually wins up to ~40 layers; past that, diminishing returns and harder parallelism. Deep-narrow overfits less but is harder to pipeline-parallelize; shallow-wide is more hardware-friendly.
+- **Reference ratios (GPT-3 13B):** d_model=5120, layers=40, heads=40, head_dim=128, FFN=20480. Rule of thumb: `layers ≈ d_model/128`, `heads ≈ d_model/128`.
+- **Hardware constraints:** `d_model` should be a multiple of 64 or 128 for tensor-core alignment. Batch × seq × d_model must fit in HBM with activations — use gradient checkpointing if not.
+- **Task calibration:** for small domain models (fraud, ranking), deviate significantly. A 6-layer, d=256 model often suffices and is orders of magnitude cheaper to serve. Always ablate at 10× smaller scale before committing to a large run.
+
+</InterviewQuestion>
+
+<InterviewQuestion
+  number={8}
+  difficulty="Training/Debugging"
+  company={["Google", "Meta", "Microsoft"]}
+  question="Standard self-attention is O(n²) in sequence length. What are the main approaches to efficient attention, and when would you use each?"
+>
+
+- **The problem:** for a sequence of length n, the attention matrix S = QK^T is n×n — both memory O(n²·d) and compute O(n²·d) scale quadratically. At n=8192 this is already large; at n=1M it's infeasible with naive attention.
+- **FlashAttention (Dao et al. 2022):** does *not* reduce asymptotic complexity — still O(n²). Instead, reorders computation to avoid materializing the full n×n attention matrix in HBM. Uses tiling + recomputation during backward. 2–4× speedup and O(n) memory. **This is the default today** — used in virtually all modern LLM training.
+
+| Approach | Complexity | Quality | Best for |
+|----------|-----------|---------|----------|
+| **FlashAttention** | O(n²) compute, O(n) memory | Exact | All training; standard default |
+| **Sparse attention** (Longformer, BigBird) | O(n·k) | Near-exact | Documents with local + global structure |
+| **Linear attention** (Performer, RWKV) | O(n) | Approximation — quality loss | Very long sequences, on-device |
+| **Sliding window** (Mistral) | O(n·w) | Exact within window | Long-context generation with local patterns |
+
+- **Practical guidance:**
+  - For most training runs: FlashAttention — no quality tradeoff, significant memory and speed win.
+  - For contexts > 32k with structured inputs (documents, code): sparse or sliding window attention.
+  - For O(n) linear complexity with quality acceptable: linear attention (Mamba/SSM is increasingly competitive here).
+  - For inference latency on very long contexts: paged attention (vLLM) with KV cache compression.
+
+</InterviewQuestion>
+
+---
+
+## System Design and Production
+
+<InterviewQuestion
+  number={9}
+  difficulty="System Design"
+  company={["Google", "Amazon", "Microsoft"]}
+  question="Design a semantic search and Retrieval-Augmented Generation (RAG) system for a large enterprise knowledge base of 10 million documents."
+>
+
+**Key axes a strong answer must cover:**
+
+- **Indexing pipeline:**
+  1. Document chunking (512–1024 token chunks with overlap) + metadata extraction
+  2. Bi-encoder embedding model (e.g., `sentence-transformers/all-MiniLM`) → 384-dim normalized vectors
+  3. ANN index (Faiss HNSW or hosted Pinecone/Weaviate) for retrieval
+- **Query path:** user query → embed → ANN retrieval (top-K=20) → re-rank with cross-encoder (MiniLM-CrossEncoder, much slower but higher precision) → top-3–5 chunks → LLM for answer generation with citations.
+- **Why two-stage retrieval:** bi-encoder retrieval is fast (< 20ms) but less precise; cross-encoder re-ranking is slow (< 500ms for top-20) but highly accurate. Combining gives speed + quality.
+- **RAG vs fine-tuning tradeoff:** RAG keeps knowledge fresh without retraining; fine-tuning bakes knowledge in but becomes stale. For enterprise knowledge that changes frequently, RAG wins. For stable domain vocabulary/style, combine both.
+- **Freshness:** incremental indexing via a change data capture pipeline (Kafka → embedding service → upsert). Stale chunks must be tombstoned within minutes for compliance-sensitive content.
+- **Evaluation:** Retrieval recall@K on a held-out QA benchmark; answer faithfulness (does the generated answer stay grounded in retrieved chunks?); hallucination rate. Track all three — they can move in opposite directions.
+
+</InterviewQuestion>
+
+<InterviewQuestion
+  number={10}
+  difficulty="System Design"
+  company={["Google", "Meta", "Microsoft"]}
+  question="Design a large-scale neural machine translation pipeline serving 10 billion translation requests per day across 100 language pairs."
+>
+
+**Strong blueprint:**
+
+- **Model architecture:** encoder-decoder Transformer (M2M-100 or NLLB style) — one model for all language pairs via language tokens. Avoids 10,000 separate bilingual models; enables transfer learning across related languages.
+- **Serving tier:**
+  - High-traffic pairs (EN↔ES, EN↔ZH, EN↔FR): dedicated cached serving with INT8 quantized models and compiled CUDA kernels
+  - Long-tail pairs: shared multi-lingual model with lower optimization — lower throughput acceptable
+  - Latency target: < 200ms p99 for web, < 50ms for inline UI translation
+- **Batching strategy:** dynamic batching — group requests by source language and approximate token count. Padding cost is high; group similar lengths together to minimize wasted compute.
+- **Quality:**
+  - BLEU/chrF on held-out test sets per language pair (automated)
+  - Human evaluation via side-by-side MQM for high-stakes pairs quarterly
+  - Monitor BLEU on a stable reference set for regression detection after model updates
+- **Cache layer:** identical or near-identical queries (common phrases, UI strings) served from a response cache (Redis). 30–40% cache hit rate is achievable for high-traffic pairs with UI-heavy usage.
+- **Bias and safety:** translation can introduce gender bias or cultural insensitivity. Audit high-traffic pairs for known failure modes; add a post-translation safety filter for regulated content categories.
+
+</InterviewQuestion>
+
+<InterviewQuestion
+  number={11}
+  difficulty="System Design"
+  company={["Netflix", "Meta", "Amazon"]}
+  question="Design a Transformer-based recommendation system for a streaming platform with 200 million users and a catalog of 20,000 titles."
+>
+
+**Architecture:**
+
+- **Two-tower model (retrieval stage):**
+  - User tower: Transformer that encodes watch history (item IDs + timestamps + ratings) as a contextual user embedding
+  - Item tower: encodes title metadata (genre, cast, synopsis embeddings) as a fixed item embedding
+  - ANN retrieval: find top-K=500 candidates from 20k items via dot product against item tower embeddings
+- **Ranking stage:** heavier model (DLRM-style or cross-attention ranker) that scores each of the K candidates using full user context + item features + interaction features (time of day, device, session depth).
+- **Sequential modeling with Transformer:** each user's watch history is a sequence of (item_id, timestamp, completion_rate) tokens. Causal self-attention captures temporal patterns — "just finished a thriller → more likely to want thriller next." BERT4Rec and SASRec are reference architectures.
+- **Feature freshness:** real-time features (current session activity) from a streaming feature store (Flink → Redis); offline features (30-day watch history) from a batch pipeline.
+- **Evaluation:** offline: Recall@K, NDCG; online: A/B test on play rate, completion rate, and 7-day retention. Offline metrics are directionally useful but don't perfectly predict online performance.
+- **Cold start:** new titles use content-based embeddings from synopsis + metadata until sufficient interaction data accumulates. New users: use demographic or onboarding signals, then transition to collaborative filtering.
+
+</InterviewQuestion>
+
+<InterviewQuestion
+  number={12}
+  difficulty="System Design"
+  company={["Google", "Apple", "Databricks"]}
+  question="Design the serving infrastructure for a large Transformer model (7B parameters) with a p99 latency target of 200ms for a production API."
+>
+
+**Key design axes:**
+
+- **Hardware selection:** A100/H100 for throughput; for latency-sensitive serving, single-GPU request routing avoids cross-GPU communication overhead. A100 80GB can fit a 7B model in INT8 with KV cache for ~1000 concurrent tokens.
+- **Quantization:** INT8 weight quantization (bitsandbytes or GPTQ) reduces memory from ~14GB (FP16) to ~7GB, enabling larger KV caches and more concurrent requests. INT4 (AWQ) further halves memory with modest quality loss — acceptable for many applications.
+- **KV cache management:** the dominant memory consumer at inference time. Use **paged attention** (vLLM) to manage KV cache as non-contiguous memory pages — eliminates fragmentation and enables 3–5× more concurrent requests for the same GPU memory budget.
+- **Continuous batching:** unlike static batching, continuous batching inserts new requests as soon as a sequence finishes (mid-batch). Critical for hitting latency SLOs on variable-length inputs — a static batch is bottlenecked by its longest sequence.
+- **Latency budget breakdown:**
+  - Prefill (prompt processing): O(n²) — scales with prompt length. Cache common system prompts.
+  - Decode (generation): O(1) per token with KV cache — latency per token is roughly constant.
+  - Network and overhead: keep < 20ms with co-located inference service.
+- **Autoscaling:** scale on GPU utilization and queue depth, not CPU metrics. Pre-warm instances — cold start for a 7B model is 10–30 seconds.
+- **Monitoring:** tokens-per-second throughput, time-to-first-token (TTFT), inter-token latency, KV cache utilization, request queue depth.
+
+</InterviewQuestion>
+
+---
+
+<div className="not-prose mt-10 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-6 dark:border-slate-700">
+  <a href="./encoder-decoder-transformer" className="text-sm font-medium text-slate-600 no-underline hover:text-emerald-700 hover:underline dark:text-slate-400 dark:hover:text-emerald-400">← Lesson 14 · Encoder–Decoder Transformer</a>
+  <a href="./intro" className="text-sm font-semibold text-emerald-700 no-underline hover:underline dark:text-emerald-400">Course overview →</a>
+</div>

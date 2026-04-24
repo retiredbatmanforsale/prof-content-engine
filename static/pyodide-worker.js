@@ -2,6 +2,7 @@
 importScripts("https://cdn.jsdelivr.net/pyodide/v0.26.4/full/pyodide.js");
 
 let pyodide = null;
+let bufferedRun = null; // holds { code, id } if a run arrives before init completes
 
 // Python wrapper: captures stdout, stderr, and matplotlib figures
 const WRAPPER = `
@@ -34,26 +35,7 @@ except Exception:
 [_out.getvalue(), _err.getvalue(), _figs]
 `;
 
-async function init() {
-  try {
-    pyodide = await loadPyodide({
-      indexURL: "https://cdn.jsdelivr.net/pyodide/v0.26.4/full/"
-    });
-    self.postMessage({ type: "ready" });
-  } catch (e) {
-    self.postMessage({ type: "init_error", message: String(e) });
-  }
-}
-
-self.onmessage = async function (e) {
-  const { type, code, id } = e.data;
-  if (type !== "run") return;
-
-  if (!pyodide) {
-    self.postMessage({ type: "error", id, message: "Python runtime not ready yet." });
-    return;
-  }
-
+async function executeRun(code, id) {
   try {
     self.postMessage({ type: "status", id, message: "Installing packages…" });
     await pyodide.loadPackagesFromImports(code);
@@ -72,6 +54,36 @@ self.onmessage = async function (e) {
   } catch (err) {
     self.postMessage({ type: "error", id, message: String(err) });
   }
+}
+
+async function init() {
+  try {
+    pyodide = await loadPyodide({
+      indexURL: "https://cdn.jsdelivr.net/pyodide/v0.26.4/full/"
+    });
+    self.postMessage({ type: "ready" });
+    // Execute any run request that arrived while init was in progress
+    if (bufferedRun) {
+      const { code, id } = bufferedRun;
+      bufferedRun = null;
+      await executeRun(code, id);
+    }
+  } catch (e) {
+    self.postMessage({ type: "init_error", message: String(e) });
+  }
+}
+
+self.onmessage = async function (e) {
+  const { type, code, id } = e.data;
+  if (type !== "run") return;
+
+  if (!pyodide) {
+    // Init still in progress — buffer the request; init() will run it when ready
+    bufferedRun = { code, id };
+    return;
+  }
+
+  await executeRun(code, id);
 };
 
 init();

@@ -1,0 +1,320 @@
+---
+sidebar_label: '🎯 Interview Readiness'
+title: 'Interview Readiness — Deep Computer Vision (CNN)'
+description: >-
+  High-signal computer vision and CNN interview questions across Google, Amazon,
+  Microsoft, Meta, Apple, Netflix, Stripe, Snowflake, and Databricks, organized
+  by theme and difficulty.
+tutor_topic: "Interview Readiness — Deep Computer Vision (CNN)"
+tutor_concepts:
+  - "convolution operation and output spatial dimensions"
+  - "residual connections and gradient flow in ResNet"
+  - "pooling strategies and spatial invariance tradeoffs"
+  - "anchor boxes and object detection mechanics"
+  - "transfer learning and fine-tuning strategy for vision"
+  - "batch normalization: training vs inference behavior"
+---
+
+# Interview Readiness — Deep Computer Vision (CNN)
+
+These questions are drawn from the CNN interview research dataset, synthesizing signals from 9 top employers across ML Engineer, Computer Vision Engineer, and Applied Scientist roles.  
+They cover convolution mechanics, residual architectures, training and debugging, and production CV system design.
+
+**How to use this page:** Try answering each question out loud in 3–5 minutes. Then open the answer and evaluate your depth, tradeoff clarity, and production maturity.
+
+<div className="not-prose my-6 flex flex-wrap gap-3 text-xs font-semibold">
+  <span className="rounded-full bg-red-100 px-3 py-1 text-red-700 dark:bg-red-900/40 dark:text-red-300">Google</span>
+  <span className="rounded-full bg-yellow-100 px-3 py-1 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-300">Amazon</span>
+  <span className="rounded-full bg-teal-100 px-3 py-1 text-teal-700 dark:bg-teal-900/40 dark:text-teal-300">Microsoft</span>
+  <span className="rounded-full bg-blue-100 px-3 py-1 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300">Meta</span>
+  <span className="rounded-full bg-zinc-100 px-3 py-1 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">Apple</span>
+  <span className="rounded-full bg-rose-100 px-3 py-1 text-rose-700 dark:bg-rose-900/40 dark:text-rose-300">Netflix</span>
+  <span className="rounded-full bg-violet-100 px-3 py-1 text-violet-700 dark:bg-violet-900/40 dark:text-violet-300">Stripe</span>
+  <span className="rounded-full bg-cyan-100 px-3 py-1 text-cyan-700 dark:bg-cyan-900/40 dark:text-cyan-300">Snowflake</span>
+  <span className="rounded-full bg-indigo-100 px-3 py-1 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300">Databricks</span>
+  <span className="rounded-full bg-violet-100 px-3 py-1 text-violet-800 dark:bg-violet-900/40 dark:text-violet-300">Fundamentals</span>
+  <span className="rounded-full bg-orange-100 px-3 py-1 text-orange-800 dark:bg-orange-900/40 dark:text-orange-300">Training/Debugging</span>
+  <span className="rounded-full bg-fuchsia-100 px-3 py-1 text-fuchsia-800 dark:bg-fuchsia-900/40 dark:text-fuchsia-300">System Design</span>
+</div>
+
+---
+
+## Quick-Reference Coverage Table
+
+| Q | Question (abbreviated) | Section | Difficulty | Companies |
+|---|------------------------|---------|------------|-----------|
+| 1 | Derive output spatial dimensions with dilation | Fundamentals | Fundamentals | Google, Meta, Apple |
+| 2 | ResNet residual connections: motivation and math | Fundamentals | Fundamentals | Google, Microsoft, Meta |
+| 3 | Max pooling vs average pooling vs strided conv | Fundamentals | Fundamentals | Amazon, Apple, Meta |
+| 4 | Anchor boxes in object detection | Fundamentals | Fundamentals | Google, Meta, Amazon |
+| 5 | Fine-tuning ResNet-50 on 10k medical X-rays | Training/Debugging | Training/Debugging | Meta, Apple, Netflix |
+| 6 | Batch normalization: training vs inference | Training/Debugging | Training/Debugging | Google, Meta, Microsoft |
+| 7 | Object detector mAP stuck, low-confidence predictions | Training/Debugging | Training/Debugging | Amazon, Apple, Netflix |
+| 8 | Production distribution shift in a deployed CNN | Training/Debugging | Training/Debugging | Google, Amazon, Netflix |
+| 9 | Design a product image tagging pipeline at scale | System Design | System Design | Amazon, Google, Stripe |
+| 10 | Design a large-scale visual similarity search system | System Design | System Design | Meta, Apple, Google |
+| 11 | MLOps for a CV model at 100M predictions/day | System Design | System Design | Databricks, Snowflake, Amazon |
+| 12 | Design a real-time video content moderation pipeline | System Design | System Design | Meta, Apple, Netflix |
+
+---
+
+## Fundamentals and Core Mechanics
+
+<InterviewQuestion
+  number={1}
+  difficulty="Fundamentals"
+  company={["Google", "Meta", "Apple"]}
+  question="Derive the output spatial dimensions of a 2D convolution given input size H×W, kernel size K, stride S, padding P, and dilation D. Then explain why 'same' padding isn't always exactly achievable and how frameworks handle it."
+>
+
+- The effective kernel size under dilation is `K_eff = D*(K-1) + 1`. Output height: `H_out = floor((H + 2P - K_eff) / S) + 1`, and similarly for width.
+- For stride 1, "same" padding requires `P = (K_eff - 1)/2`, which is only an integer when `K_eff` is odd. That's why 3×3 and 5×5 kernels dominate — 2×2 or 4×4 kernels need asymmetric padding.
+- For stride > 1, true "same" output size is `ceil(H/S)`. Total pad: `P_total = max((H_out-1)*S + K_eff - H, 0)`, split as `floor(P_total/2)` on the left and `ceil(P_total/2)` on the right (asymmetric).
+- TensorFlow's `padding='SAME'` handles asymmetric cases automatically. PyTorch `padding='same'` only works for stride 1 — for stride > 1, use explicit `F.pad`.
+- Practical gotcha: off-by-one mismatches when porting TF → PyTorch come almost always from asymmetric padding, especially in detection/segmentation where spatial alignment is critical.
+- Parameter count: `K*K*C_in*C_out + C_out` (with bias), independent of spatial size — this is the core efficiency win over fully connected MLPs.
+
+</InterviewQuestion>
+
+<InterviewQuestion
+  number={2}
+  difficulty="Fundamentals"
+  company={["Google", "Microsoft", "Meta"]}
+  question="Explain the design motivation behind residual connections in ResNet. Why does adding the identity shortcut help, mathematically and empirically?"
+>
+
+- **Problem motivation:** empirically, deeper plain networks (56-layer) had *higher* training error than shallow 20-layer nets — degradation, not overfitting. SGD could not find the identity mapping through stacked nonlinearities.
+- **Reformulation:** instead of learning `H(x)`, learn the residual `F(x) = H(x) - x` and output `F(x) + x`. If identity is optimal, the network drives `F → 0`, which is easier to find than fitting identity through stacked activations.
+- **Gradient flow:** backprop through `y = F(x) + x` gives `∂L/∂x = ∂L/∂y * (1 + ∂F/∂x)`. The `1` guarantees a non-vanishing gradient path to early layers even when `∂F/∂x` is tiny.
+- **Loss landscape:** Li et al. (2018) showed skip connections smooth the loss surface dramatically, making optimization tractable at depth.
+- **Architectural consequences:** enables 100+ layer networks; bottleneck blocks (`1×1 → 3×3 → 1×1`) reduce compute while maintaining expressivity; pre-activation variants (BN-ReLU-Conv ordering) improve gradient flow further.
+- **Tradeoff:** residual blocks require storing activations for backward pass (higher peak memory); dimension mismatches when stride or channels change require projection shortcuts (`1×1` conv with matched stride).
+
+</InterviewQuestion>
+
+<InterviewQuestion
+  number={3}
+  difficulty="Fundamentals"
+  company={["Amazon", "Apple", "Meta"]}
+  question="Compare max pooling, average pooling, and strided convolutions for downsampling. When would you choose each, and what is 'spatial invariance' really buying you?"
+>
+
+| Method | Mechanism | Best for | Tradeoff |
+|--------|-----------|----------|----------|
+| **Max pooling** | Keeps maximum activation in window | Feature presence detection, classification | Destroys exact location; no learnable params |
+| **Average pooling** | Averages activations in window | Global aggregation (GAP replaces FC layers) | Dilutes strong activations |
+| **Strided conv** | Learnable downsampling | Modern architectures (ResNet, EfficientNet) | Adds parameters; more expressive |
+
+- **Spatial invariance nuance:** CNNs are *translation equivariant* in conv layers — true invariance only comes from global pooling. Aggressive pooling *hurts* localization tasks (detection, segmentation) by destroying spatial information.
+- **Production tradeoffs:** max pooling has no learnable parameters (cheaper, implicit regularization); strided conv is more flexible but adds cost. For mobile/edge, pooling is preferred for efficiency and parameter count.
+- **Modern take:** SOTA architectures (ConvNeXt, Swin Transformer) use strided or patch convolutions exclusively for spatial reduction. Pooling remains standard only for global aggregation at the final stage.
+
+</InterviewQuestion>
+
+<InterviewQuestion
+  number={4}
+  difficulty="Fundamentals"
+  company={["Google", "Meta", "Amazon"]}
+  question="Explain anchor boxes in object detection. Why were they introduced, how are they matched to ground truth, and what are their limitations?"
+>
+
+- **Motivation:** raw box regression from image features is unstable — objects vary massively in scale and aspect ratio. Anchors provide reference priors: at each spatial location, predict offsets relative to predefined boxes of known scales and ratios.
+- **Matching:** each anchor is assigned to a GT box via IoU. Faster R-CNN rule: IoU > 0.7 → positive, < 0.3 → negative, in-between → ignored. Each GT guarantees at least one positive (the max-IoU anchor).
+- **Regression targets:** network predicts offsets `(tx, ty, tw, th)` where `tx = (x - x_a)/w_a` and `tw = log(w/w_a)` — log-scale for width/height keeps gradients well-conditioned across object scales.
+- **Loss:** focal loss for classification (handles foreground/background imbalance) + smooth L1 for regression, applied only to positive anchors.
+
+| Approach | Anchors | Pros | Cons |
+|----------|---------|------|------|
+| **Anchor-based** (Faster R-CNN, YOLOv5-v8) | Yes | Mature tooling, fast convergence | Hyperparameter-sensitive, scale mismatch across domains |
+| **Anchor-free** (FCOS, CenterNet) | No | Simpler pipeline, fewer heuristics | Less training stability on small datasets |
+| **Query-based** (DETR) | No | End-to-end, no NMS needed | Slow convergence, heavy compute |
+
+- For production with mature tooling requirements, anchor-based (YOLOv8) remains the default. For new domains or research, anchor-free is increasingly preferred.
+
+</InterviewQuestion>
+
+---
+
+## Training, Debugging and Optimisation
+
+<InterviewQuestion
+  number={5}
+  difficulty="Training/Debugging"
+  company={["Meta", "Apple", "Netflix"]}
+  question="You're fine-tuning a pretrained ImageNet ResNet-50 on a medical imaging dataset of 10k labeled X-rays. Training loss drops fine but validation accuracy plateaus well below expectations. Walk me through your debugging and fine-tuning strategy."
+>
+
+- **First diagnose:** is it overfitting (train ≫ val) or underfitting both? A plateau with good train loss suggests overfitting or distribution mismatch. Check for patient leakage in val set construction — same patient in train and val is a documented failure mode in medical imaging that inflates training accuracy artificially.
+- **Domain gap:** ImageNet is natural images; X-rays are grayscale, high-resolution, with different statistics. Don't blindly use ImageNet mean/std. Consider RadImageNet or self-supervised pretraining on unlabeled X-rays — often outperforms ImageNet initialization for medical domains.
+- **Fine-tuning strategy:**
+  1. Start with feature extraction (freeze backbone, train head only) to establish a baseline
+  2. Unfreeze progressively from top layers down with discriminative learning rates (10× lower for earlier layers)
+  3. Small LR (1e-4 to 1e-5) with cosine decay
+- **Regularization:** strong augmentation tuned for domain — no horizontal flip for chest X-rays (anatomy is asymmetric). Add dropout in the head, weight decay, and be cautious with mixup on medical labels.
+- **BatchNorm gotcha:** small batch sizes (common at high resolution) make BN statistics noisy. Consider GroupNorm or freezing BN stats during fine-tuning.
+- **Sanity checks:** overfit 50 images to confirm the pipeline is correct; use Grad-CAM to verify the model attends to pathology regions, not scanner edges or embedded text markers (a documented failure mode in CheXNet-era work).
+
+</InterviewQuestion>
+
+<InterviewQuestion
+  number={6}
+  difficulty="Training/Debugging"
+  company={["Google", "Meta", "Microsoft"]}
+  question="Explain batch normalization during training vs. inference. What specific problems does it cause in practice, and when would you prefer GroupNorm or LayerNorm?"
+>
+
+- **Training:** normalizes each channel over the batch using batch mean/variance, then applies learnable scale γ and shift β. Maintains running mean/variance via exponential moving average for inference.
+- **Inference:** uses fixed running statistics — otherwise predictions depend on batch composition, which is non-deterministic and wrong.
+- **Why it helps:** stabilizes activation distributions, enables larger learning rates, provides mild regularization from batch noise.
+- **Practical failure modes:**
+  1. Small batches (batch=1–2 for high-res detection/segmentation) → noisy statistics, unstable training
+  2. Forgetting `model.eval()` → wildly wrong validation numbers (batch stats leak into eval)
+  3. Distributed training → requires SyncBN to aggregate across GPUs, adding communication cost
+  4. Fine-tuning → freeze BN layers explicitly or running stats will drift on new domain
+  5. Domain shift at inference → running stats don't match deployment distribution
+
+| Normalization | Computes stats over | Best for | Notes |
+|---------------|---------------------|----------|-------|
+| **BatchNorm** | Batch × spatial dims | Large-batch classification | Fails at small batch sizes |
+| **GroupNorm** | Channel groups per sample | Detection/segmentation (batch=1–2) | No train/eval discrepancy |
+| **LayerNorm** | All channels per sample | Transformers, ConvNeXt | Standard for sequence models |
+
+- Rule of thumb: batch ≥ 16 and no domain shift → BN. Small batch, variable sizes, or on-device deployment (BN folded into conv) → GroupNorm or LayerNorm.
+
+</InterviewQuestion>
+
+<InterviewQuestion
+  number={7}
+  difficulty="Training/Debugging"
+  company={["Amazon", "Apple", "Netflix"]}
+  question="You're training an object detector and mAP is stuck. You notice most predictions are low-confidence and many objects are missed. What are the likely causes and how do you fix them?"
+>
+
+- **First, separate localization vs. classification errors** using per-class AP, precision-recall curves, and diagnostic tools like TIDE. Low recall with low confidence suggests the model isn't learning positive examples well.
+- **Foreground/background imbalance:** with 100k+ anchors and fewer than 100 positives per image, standard BCE loss is dominated by easy negatives. Fix: focal loss (RetinaNet), OHEM (hard negative mining), or ratio-based sampling (1:3 positive:negative).
+- **Anchor mismatch:** if objects are much smaller or have unusual aspect ratios vs COCO-default anchors, the model never receives strong positive signals. Run k-means on GT box dimensions — if anchor-GT IoU coverage is below 80%, re-cluster anchors to match your dataset.
+- **Feature scale mismatch:** small objects (< 32px) are frequently missed by single-scale heads that only look at large-stride feature maps. Add an FPN (Feature Pyramid Network) to route multi-scale features to detection heads.
+- **NMS threshold too aggressive:** reducing NMS IoU threshold (0.5 → 0.3) can suppress valid overlapping detections in crowded scenes. Use Soft-NMS for dense scenarios.
+- **Confidence threshold calibration:** low-confidence-but-correct predictions suggest uncertainty, not incorrectness — check if temperature scaling improves calibration before discarding detections.
+
+</InterviewQuestion>
+
+<InterviewQuestion
+  number={8}
+  difficulty="Training/Debugging"
+  company={["Google", "Amazon", "Netflix"]}
+  question="Your deployed CNN classifier achieves 94% accuracy on your test set but quietly degrades on ~8% of production traffic. Users report confident misclassifications on inputs you expect the model to handle. Walk through your distribution shift diagnosis."
+>
+
+- **Instrument first:** log prediction confidence distributions, per-class precision, and top-N disagreement rates in production vs the test set. A model that's confidently wrong is almost always encountering out-of-distribution inputs.
+- **Root causes to investigate:**
+  1. **Covariate shift** — input distribution changed (new camera hardware, different lighting, preprocessing pipeline update). Compare pixel statistics (mean, std, histogram) of production inputs vs training data.
+  2. **Label shift** — class prevalence in production differs from training; a class rare in training is common in production.
+  3. **Temporal drift** — concept drift over time (seasonal changes, product line updates, new device resolutions).
+- **Practical detection tools:** MMD (Maximum Mean Discrepancy) for feature-space drift; PSI (Population Stability Index) for input feature distributions; monitor softmax entropy — rising mean entropy is an early warning of distribution shift.
+- **Short-term fixes:** add a rejection threshold ("I don't know" class); route low-confidence predictions to human review; recalibrate with temperature scaling on a recent production sample.
+- **Long-term fixes:** continuous learning pipeline — sample and label a fraction of production traffic with drift signals; retrain on a rolling window; shadow-deploy new models before traffic cutover.
+- **Sampling strategy:** prioritize low-confidence production samples for labeling, not random samples — you want the hard cases the model struggles with, not easy confirmations.
+
+</InterviewQuestion>
+
+---
+
+## System Design and Production
+
+<InterviewQuestion
+  number={9}
+  difficulty="System Design"
+  company={["Amazon", "Google", "Stripe"]}
+  question="Design a real-time product image classification and attribute tagging system for an e-commerce catalog of 50 million SKUs."
+>
+
+**Key axes a strong answer must cover:**
+
+- **Offline vs online split:** catalog image classification is primarily offline — crawl images, run batch inference, write results to a product attribute store. Real-time path is needed only for new-listing uploads and user-generated content.
+- **Model pipeline:**
+  1. Category classifier (hierarchical: department → category → subcategory) — cascaded softmax or hierarchical softmax over taxonomy
+  2. Attribute tagger (color, material, style) — multi-label heads on a shared backbone (EfficientNet-B4 or ResNet-50)
+  3. Quality/spam filter — lightweight binary classifier upstream to gate downstream inference cost
+- **Scale for 50M SKUs:** queue-based batch pipeline (Kafka/SQS → GPU inference workers → DynamoDB/Elasticsearch attribute store). No need for sub-second latency on catalog; optimize for throughput.
+- **Data flywheel:** user clicks, purchase signals, and search queries provide implicit relevance feedback — feed into periodic retraining cycles.
+- **Serving latency (real-time new-listing path):** keep under 200ms p99. Use TorchServe or Triton Inference Server with ONNX export and INT8 quantization.
+- **Evaluation:** offline precision/recall per category; online A/B test measuring search relevance and downstream conversion — model attribute accuracy doesn't map directly to business metric improvement, so both must be tracked.
+
+</InterviewQuestion>
+
+<InterviewQuestion
+  number={10}
+  difficulty="System Design"
+  company={["Meta", "Apple", "Google"]}
+  question="Design a large-scale image similarity search system for a platform with 10 billion images."
+>
+
+**Strong blueprint:**
+
+- **Embedding pipeline:** CNN or Vision Transformer backbone (ResNet-50, CLIP ViT) produces a d=256–512 L2-normalized embedding per image. Run offline with GPU batch inference; write to a vector index.
+- **Index technology:**
+  - HNSW (via Faiss) for recall-optimized approximate nearest neighbor — low-ms latency at billion scale
+  - Product quantization (PQ) for memory compression — reduces a 512-dim float32 vector to ~32 bytes (16× compression), fitting 10B vectors in ~320GB RAM
+  - IVF+PQ in Faiss is the standard production configuration for billion-scale retrieval
+- **Query path:** user uploads image → embedding service → ANN query against vector index → re-rank top-K with a heavier cross-attention model → return results.
+- **Freshness:** new images indexed via streaming pipeline (Kafka → embedding service → index upsert with near-realtime latency). Full re-index periodically when the backbone model is retrained.
+- **Near-duplicate detection:** perceptual hashing (pHash) as a cheap O(1) pre-filter before ANN; same embedding system for semantic near-duplicates.
+- **Safety layer:** run a safety classifier in parallel with embedding generation; tombstone known-violating image hashes from results immediately.
+- **Metrics:** recall@K on a held-out gold eval set; p95 latency; index size vs recall tradeoff as corpus grows; monitor embedding drift when backbone is updated.
+
+</InterviewQuestion>
+
+<InterviewQuestion
+  number={11}
+  difficulty="System Design"
+  company={["Databricks", "Snowflake", "Amazon"]}
+  question="How would you design the MLOps infrastructure to monitor, retrain, and safely roll out updates to a computer vision model serving 100 million predictions per day?"
+>
+
+**Core elements expected:**
+
+- **Versioned artifacts:** model checkpoints, training datasets, and preprocessing configs versioned together (MLflow, DVC). Every serving artifact is reproducible from a single git SHA.
+- **Monitoring stack:**
+  - Input data drift: PSI on pixel statistics and feature embeddings (MMD)
+  - Prediction drift: softmax entropy distribution over time; per-class confidence shift
+  - Business KPIs: downstream conversion, click-through on attributed products — tracked separately from model accuracy
+  - Infrastructure: latency p50/p95/p99 per endpoint, error rate, GPU utilization
+- **Retraining triggers:** scheduled (weekly/monthly) plus event-driven (drift threshold crossed, new labeled batch exceeds size threshold).
+- **Training pipeline at scale:** Spark/Databricks for large-scale data preprocessing; distributed PyTorch (DDP) for training; MLflow for experiment tracking and model registry with stage gates (Staging → Production).
+- **Safe rollout strategy:**
+  1. **Shadow mode** — new model runs alongside production, logs predictions with zero traffic impact
+  2. **Canary** — 5% traffic slice, full monitoring for 24–48 hours
+  3. **Progressive rollout** — 10% → 50% → 100% with automated rollback trigger on metric degradation
+- **Rollback SLOs:** define hard thresholds before each rollout — error rate increase > 2% or p95 latency exceeded → automated rollback to previous pinned version.
+
+</InterviewQuestion>
+
+<InterviewQuestion
+  number={12}
+  difficulty="System Design"
+  company={["Meta", "Apple", "Netflix"]}
+  question="Design a real-time video content moderation pipeline for a user-generated content platform receiving 500 hours of video per minute."
+>
+
+**Key design axes:**
+
+- **Tiered approach:** not all frames need deep inference. Pre-filter with cheap signals (upload metadata, audio classification, user report rate) before running expensive vision models.
+- **Frame sampling strategy:** sample 1 FPS for baseline analysis; increase to 5–10 FPS when pre-filter raises risk score. Full-video deep inference is unsustainable at this volume.
+- **Model cascade:**
+  1. Lightweight binary classifier (MobileNet, < 10ms): is this frame potentially violating? Route positives to next tier.
+  2. Medium-precision multi-class classifier (ResNet-50, < 50ms): categorizes violation type (NSFW, violence, graphic content, etc.)
+  3. Human review queue: borderline predictions routed to reviewers; high-confidence violations auto-actioned with audit trail
+- **Latency SLOs by content type:** new uploads checked within minutes; live stream requires near-real-time (< 2s). Different pipelines for different SLOs.
+- **False positive cost:** incorrectly removing legitimate content damages creator trust. Tune thresholds per category with asymmetric cost functions. Track appeals rate as a lagging quality signal for threshold calibration.
+- **Hash-based deduplication:** PhotoDNA / perceptual hashing for instant O(1) matching against known-violating content — no model inference needed for known hashes.
+- **Adversarial robustness:** anticipate evasion techniques (mirroring, color shift, noise injection). Augment training data with adversarial examples; monitor production for known evasion signatures.
+
+</InterviewQuestion>
+
+---
+
+<div className="not-prose mt-10 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-6 dark:border-slate-700">
+  <a href="./learning-to-see-cnns" className="text-sm font-medium text-slate-600 no-underline hover:text-emerald-700 hover:underline dark:text-slate-400 dark:hover:text-emerald-400">← Lesson 8 · Learning to see: CNNs</a>
+  <a href="./intro" className="text-sm font-semibold text-emerald-700 no-underline hover:underline dark:text-emerald-400">Course overview →</a>
+</div>

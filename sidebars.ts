@@ -92,6 +92,7 @@ const sidebars: SidebarsConfig = {
             'ai-for-engineering/deep-computer-vision-cnn/preserving-spatial-structure-cnns',
             'ai-for-engineering/deep-computer-vision-cnn/filters-features-convolutions',
             'ai-for-engineering/deep-computer-vision-cnn/learning-to-see-cnns',
+            'ai-for-engineering/deep-computer-vision-cnn/interview-readiness',
           ],
         },
         {
@@ -106,6 +107,7 @@ const sidebars: SidebarsConfig = {
             'ai-for-engineering/deep-sequence-modelling-rnn/bringing-sequence-modeling-real-world',
             'ai-for-engineering/deep-sequence-modelling-rnn/training-rnn-backprop-through-time',
             'ai-for-engineering/deep-sequence-modelling-rnn/training-an-rnn-in-pytorch',
+            'ai-for-engineering/deep-sequence-modelling-rnn/interview-readiness',
           ],
         },
         { type: 'html', value: '<span class="sidebar-divider">Transformers</span>' },
@@ -129,6 +131,7 @@ const sidebars: SidebarsConfig = {
             'ai-for-engineering/attention-is-all-you-need/encoder-stack',
             'ai-for-engineering/attention-is-all-you-need/decoder-stack',
             'ai-for-engineering/attention-is-all-you-need/encoder-decoder-transformer',
+            'ai-for-engineering/attention-is-all-you-need/interview-readiness',
           ],
         },
         {
@@ -147,6 +150,7 @@ const sidebars: SidebarsConfig = {
             'ai-for-engineering/build-and-train-your-own-gpt2-model/feed-forward-neural-networks',
             'ai-for-engineering/build-and-train-your-own-gpt2-model/generation-of-next-tokens',
             'ai-for-engineering/build-and-train-your-own-gpt2-model/decoder-only-transformer',
+            'ai-for-engineering/build-and-train-your-own-gpt2-model/interview-readiness',
           ],
         },
         { type: 'html', value: '<span class="sidebar-divider">Career</span>' },

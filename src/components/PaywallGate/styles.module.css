@@ -1,0 +1,131 @@
+.gate {
+  display: flex;
+  justify-content: center;
+  padding: 3rem 1rem 5rem;
+}
+
+.card {
+  width: 100%;
+  max-width: 520px;
+  background: #fff;
+  border: 1px solid #e5e5e5;
+  border-radius: 16px;
+  padding: 2.5rem;
+  text-align: center;
+}
+
+.lockIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  background: #fff5f5;
+  border-radius: 50%;
+  color: #FF6B6B;
+  margin-bottom: 1.5rem;
+}
+
+.meta {
+  margin-bottom: 1.5rem;
+}
+
+.lessonLabel {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #a3a3a3;
+  margin: 0 0 0.5rem;
+}
+
+.title {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #171717;
+  margin: 0 0 0.5rem;
+  line-height: 1.35;
+}
+
+.description {
+  font-size: 0.9rem;
+  color: #525252;
+  margin: 0;
+  line-height: 1.6;
+}
+
+.divider {
+  width: 40px;
+  height: 2px;
+  background: #FF6B6B;
+  border-radius: 99px;
+  margin: 1.5rem auto;
+}
+
+.headline {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #171717;
+  margin: 0 0 0.5rem;
+}
+
+.subtext {
+  font-size: 0.875rem;
+  color: #737373;
+  margin: 0 0 1.75rem;
+  line-height: 1.6;
+}
+
+.actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.primaryBtn {
+  display: block;
+  padding: 0.75rem 1.5rem;
+  background: #171717;
+  color: #fff !important;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-decoration: none !important;
+  transition: opacity 0.15s;
+}
+
+.primaryBtn:hover {
+  opacity: 0.85;
+}
+
+.secondaryBtn {
+  display: block;
+  padding: 0.75rem 1.5rem;
+  background: transparent;
+  color: #525252 !important;
+  border: 1px solid #e5e5e5;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  text-decoration: none !important;
+  transition: border-color 0.15s, color 0.15s;
+}
+
+.secondaryBtn:hover {
+  border-color: #a3a3a3;
+  color: #171717 !important;
+}
+
+.plans {
+  margin: 1.25rem 0 0;
+  font-size: 0.8rem;
+}
+
+.plansLink {
+  color: #a3a3a3 !important;
+  text-decoration: none !important;
+}
+
+.plansLink:hover {
+  color: #525252 !important;
+}

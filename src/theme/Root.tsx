@@ -1,10 +1,12 @@
-import React, {useEffect, useState} from 'react';
+import React, { useEffect, useState } from 'react';
 import BrowserOnly from '@docusaurus/BrowserOnly';
 import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
+import { AuthContext, type AuthState } from '../context/AuthContext';
+import { ProgressProvider } from '../context/ProgressContext';
 
 const TOKEN_KEY = 'lexai_access_token';
 const REFRESH_KEY = 'lexai_refresh_token';
-const REFRESH_INTERVAL_MS = 13 * 60 * 1000; // 13 minutes
+const REFRESH_INTERVAL_MS = 13 * 60 * 1000;
 
 function decodeJwtPayload(token: string): Record<string, unknown> | null {
   try {
@@ -16,26 +18,39 @@ function decodeJwtPayload(token: string): Record<string, unknown> | null {
   }
 }
 
-function isTokenValid(token: string): boolean {
+/** Returns 'paid' | 'free-account' | null (null = invalid/expired). */
+function decodeAuthState(token: string): 'paid' | 'free-account' | null {
   const payload = decodeJwtPayload(token);
-  if (!payload) return false;
+  if (!payload) return null;
   const exp = payload.exp as number | undefined;
-  if (exp && exp * 1000 < Date.now()) return false;
-  return Boolean(payload.hasAccess);
+  if (exp && exp * 1000 < Date.now()) return null;
+  return Boolean(payload.hasAccess) ? 'paid' : 'free-account';
 }
 
-function AuthGate({children}: {children: React.ReactNode}) {
-  const {siteConfig} = useDocusaurusContext();
+/** Dev-only: ?dev_auth=anonymous|free|paid overrides auth state on localhost. */
+function getDevOverride(): AuthState | null {
+  if (typeof window === 'undefined') return null;
+  const p = new URLSearchParams(window.location.search).get('dev_auth');
+  if (p === 'anonymous') return 'anonymous';
+  if (p === 'free') return 'free-account';
+  if (p === 'paid') return 'paid';
+  return null;
+}
+
+function AuthGate({ children }: { children: React.ReactNode }) {
+  const { siteConfig } = useDocusaurusContext();
   const apiUrl = (siteConfig.customFields?.apiUrl as string) || '';
-  const mainPlatformUrl = (siteConfig.customFields?.mainPlatformUrl as string) || '';
-  const isLocal = typeof window !== 'undefined' &&
+  const isLocal =
+    typeof window !== 'undefined' &&
     (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
 
-  const [authed, setAuthed] = useState(isLocal);
-  const [checking, setChecking] = useState(!isLocal);
+  const [authState, setAuthState] = useState<AuthState>(
+    isLocal ? (getDevOverride() ?? 'paid') : 'checking'
+  );
 
   useEffect(() => {
     if (isLocal) return;
+
     // 1. Extract tokens from URL if present
     const params = new URLSearchParams(window.location.search);
     const urlToken = params.get('token');
@@ -45,21 +60,24 @@ function AuthGate({children}: {children: React.ReactNode}) {
       sessionStorage.setItem(TOKEN_KEY, urlToken);
       localStorage.setItem(REFRESH_KEY, urlRt);
 
-      // Clean URL — remove token params
       params.delete('token');
       params.delete('rt');
       const cleanSearch = params.toString();
       const cleanUrl =
-        window.location.pathname + (cleanSearch ? `?${cleanSearch}` : '') + window.location.hash;
+        window.location.pathname +
+        (cleanSearch ? `?${cleanSearch}` : '') +
+        window.location.hash;
       window.history.replaceState(null, '', cleanUrl);
     }
 
-    // 2. Check stored token
+    // 2. Check stored access token
     const accessToken = sessionStorage.getItem(TOKEN_KEY);
-    if (accessToken && isTokenValid(accessToken)) {
-      setAuthed(true);
-      setChecking(false);
-      return;
+    if (accessToken) {
+      const state = decodeAuthState(accessToken);
+      if (state) {
+        setAuthState(state);
+        return;
+      }
     }
 
     // 3. Try to refresh
@@ -67,57 +85,52 @@ function AuthGate({children}: {children: React.ReactNode}) {
     if (refreshToken) {
       fetch(`${apiUrl}/auth/refresh`, {
         method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({refreshToken}),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ refreshToken }),
       })
         .then((res) => {
           if (!res.ok) throw new Error('refresh failed');
           return res.json();
         })
         .then((data) => {
-          if (data.accessToken && isTokenValid(data.accessToken)) {
-            sessionStorage.setItem(TOKEN_KEY, data.accessToken);
-            localStorage.setItem(REFRESH_KEY, data.refreshToken);
-            setAuthed(true);
-          } else {
-            redirectToLogin();
+          if (data.accessToken) {
+            const state = decodeAuthState(data.accessToken);
+            if (state) {
+              sessionStorage.setItem(TOKEN_KEY, data.accessToken);
+              localStorage.setItem(REFRESH_KEY, data.refreshToken);
+              setAuthState(state);
+              return;
+            }
           }
+          setAuthState('anonymous');
         })
-        .catch(() => {
-          redirectToLogin();
-        })
-        .finally(() => setChecking(false));
+        .catch(() => setAuthState('anonymous'));
       return;
     }
 
-    // 4. No tokens — redirect to login
-    redirectToLogin();
-    setChecking(false);
+    // 4. No tokens — anonymous
+    setAuthState('anonymous');
+  }, [apiUrl, isLocal]);
 
-    function redirectToLogin() {
-      const currentUrl = window.location.href;
-      window.location.href = `${mainPlatformUrl}/login?redirect=${encodeURIComponent(currentUrl)}`;
-    }
-  }, [apiUrl, mainPlatformUrl]);
-
-  // Periodic refresh
+  // Periodic token refresh
   useEffect(() => {
-    if (!authed) return;
+    if (authState === 'checking' || authState === 'anonymous') return;
 
     const interval = setInterval(async () => {
       const refreshToken = localStorage.getItem(REFRESH_KEY);
       if (!refreshToken) return;
-
       try {
         const res = await fetch(`${apiUrl}/auth/refresh`, {
           method: 'POST',
-          headers: {'Content-Type': 'application/json'},
-          body: JSON.stringify({refreshToken}),
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ refreshToken }),
         });
         if (!res.ok) return;
         const data = await res.json();
         if (data.accessToken) {
           sessionStorage.setItem(TOKEN_KEY, data.accessToken);
+          const state = decodeAuthState(data.accessToken);
+          if (state) setAuthState(state);
         }
         if (data.refreshToken) {
           localStorage.setItem(REFRESH_KEY, data.refreshToken);
@@ -128,46 +141,16 @@ function AuthGate({children}: {children: React.ReactNode}) {
     }, REFRESH_INTERVAL_MS);
 
     return () => clearInterval(interval);
-  }, [authed, apiUrl]);
+  }, [authState, apiUrl]);
 
-  if (checking) {
-    return (
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          height: '100vh',
-          fontFamily: 'Plus Jakarta Sans, system-ui, sans-serif',
-          color: '#737373',
-        }}>
-        <div style={{textAlign: 'center'}}>
-          <div
-            style={{
-              width: 32,
-              height: 32,
-              border: '3px solid #e5e5e5',
-              borderTopColor: '#3b82f6',
-              borderRadius: '50%',
-              animation: 'lexai-spin 0.6s linear infinite',
-              margin: '0 auto 16px',
-            }}
-          />
-          <p style={{margin: 0, fontSize: 14}}>Verifying access...</p>
-          <style>{`@keyframes lexai-spin { to { transform: rotate(360deg); } }`}</style>
-        </div>
-      </div>
-    );
-  }
-
-  if (!authed) {
-    return null; // Will have redirected
-  }
-
-  return <>{children}</>;
+  return (
+    <AuthContext.Provider value={{ authState }}>
+      <ProgressProvider>{children}</ProgressProvider>
+    </AuthContext.Provider>
+  );
 }
 
-export default function Root({children}: {children: React.ReactNode}) {
+export default function Root({ children }: { children: React.ReactNode }) {
   return (
     <BrowserOnly fallback={<div />}>
       {() => <AuthGate>{children}</AuthGate>}

@@ -59,13 +59,23 @@ type DropdownProps = {
 function NavDropdown({ label, items, active }: DropdownProps) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
+  const closeTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+
+  function handleEnter() {
+    clearTimeout(closeTimer.current);
+    setOpen(true);
+  }
+
+  function handleLeave() {
+    closeTimer.current = setTimeout(() => setOpen(false), 150);
+  }
 
   return (
     <div
       ref={ref}
       className="prof-dropdown"
-      onMouseEnter={() => setOpen(true)}
-      onMouseLeave={() => setOpen(false)}
+      onMouseEnter={handleEnter}
+      onMouseLeave={handleLeave}
     >
       <button
         className={`prof-dropdown__trigger${active ? ' prof-dropdown__trigger--active' : ''}`}

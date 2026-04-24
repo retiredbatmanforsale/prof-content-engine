@@ -1,10 +1,14 @@
 ---
 title: Build and Train Your Own GPT-2 Model
+access: public
 ---
+
+import CourseTopicTree from '@site/src/components/CourseTopicTree';
+import { gpt2TopicTree } from '@site/src/data/topic-trees/build-and-train-gpt2';
 
 # Build and Train Your Own GPT-2 Model
 
-This course will walk through building a GPT-2 style transformer and training it end-to-end.
+This course walks through every component of GPT-2 — embeddings, causal attention, residuals, layer norm, feed-forward blocks — and assembles them into a decoder-only transformer trained end-to-end.
 
-Course content coming soon.
+<CourseTopicTree data={gpt2TopicTree} />
 

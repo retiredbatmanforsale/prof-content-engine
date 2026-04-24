@@ -1,0 +1,19 @@
+.menuExternalLink {
+  align-items: center;
+}
+
+.linkLabel {
+  overflow: hidden;
+  display: -webkit-box;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.progressIcon {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  margin-right: 6px;
+  line-height: 1;
+}

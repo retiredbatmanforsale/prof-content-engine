@@ -1,0 +1,344 @@
+---
+sidebar_label: '🎯 Interview Readiness'
+title: 'Interview Readiness — Build and Train Your Own GPT-2'
+description: >-
+  High-signal decoder-only Transformer and language model pretraining interview questions
+  across Google, Amazon, Microsoft, Meta, Apple, Netflix, Stripe, Snowflake, and Databricks,
+  organized by theme and difficulty.
+tutor_topic: "Interview Readiness — Build and Train Your Own GPT-2"
+tutor_concepts:
+  - "decoder-only forward pass, causal masking, and autoregressive factorization"
+  - "perplexity: definition, cross-entropy relationship, comparison pitfalls"
+  - "byte-pair encoding and tokenization tradeoffs"
+  - "sampling strategies: temperature, top-k, top-p nucleus sampling"
+  - "Chinchilla scaling laws and compute-optimal training"
+  - "RLHF pipeline: SFT, reward model, and PPO"
+---
+
+# Interview Readiness — Build and Train Your Own GPT-2
+
+These questions are drawn from the GPT-2 and decoder-only Transformer interview research dataset, synthesizing signals from 9 top employers across ML Engineer, LLM Engineer, and Research Scientist roles.  
+They cover autoregressive architecture mechanics, language model training, scaling laws, and production LLM system design.
+
+**How to use this page:** Try answering each question out loud in 3–5 minutes. Then open the answer and evaluate your depth, tradeoff clarity, and production maturity.
+
+<div className="not-prose my-6 flex flex-wrap gap-3 text-xs font-semibold">
+  <span className="rounded-full bg-red-100 px-3 py-1 text-red-700 dark:bg-red-900/40 dark:text-red-300">Google</span>
+  <span className="rounded-full bg-yellow-100 px-3 py-1 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-300">Amazon</span>
+  <span className="rounded-full bg-teal-100 px-3 py-1 text-teal-700 dark:bg-teal-900/40 dark:text-teal-300">Microsoft</span>
+  <span className="rounded-full bg-blue-100 px-3 py-1 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300">Meta</span>
+  <span className="rounded-full bg-zinc-100 px-3 py-1 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">Apple</span>
+  <span className="rounded-full bg-rose-100 px-3 py-1 text-rose-700 dark:bg-rose-900/40 dark:text-rose-300">Netflix</span>
+  <span className="rounded-full bg-violet-100 px-3 py-1 text-violet-700 dark:bg-violet-900/40 dark:text-violet-300">Stripe</span>
+  <span className="rounded-full bg-cyan-100 px-3 py-1 text-cyan-700 dark:bg-cyan-900/40 dark:text-cyan-300">Snowflake</span>
+  <span className="rounded-full bg-indigo-100 px-3 py-1 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300">Databricks</span>
+  <span className="rounded-full bg-violet-100 px-3 py-1 text-violet-800 dark:bg-violet-900/40 dark:text-violet-300">Fundamentals</span>
+  <span className="rounded-full bg-orange-100 px-3 py-1 text-orange-800 dark:bg-orange-900/40 dark:text-orange-300">Training/Debugging</span>
+  <span className="rounded-full bg-fuchsia-100 px-3 py-1 text-fuchsia-800 dark:bg-fuchsia-900/40 dark:text-fuchsia-300">System Design</span>
+</div>
+
+---
+
+## Quick-Reference Coverage Table
+
+| Q | Question (abbreviated) | Section | Difficulty | Companies |
+|---|------------------------|---------|------------|-----------|
+| 1 | Decoder-only forward pass, causal masking, autoregressive factorization | Fundamentals | Fundamentals | Google, Meta, Apple |
+| 2 | Define perplexity and its cross-entropy relationship; comparison pitfalls | Fundamentals | Fundamentals | Google, Amazon, Microsoft |
+| 3 | BPE vs WordPiece vs byte-level BPE tokenization tradeoffs | Fundamentals | Fundamentals | Meta, Apple, Databricks |
+| 4 | Temperature, top-k, and top-p sampling: when to use each | Fundamentals | Fundamentals | Google, Meta, Microsoft |
+| 5 | Pretraining loss spike and divergence at step 50k | Training/Debugging | Training/Debugging | Google, Meta, Databricks |
+| 6 | Chinchilla: compute budget → optimal model size and token count | Training/Debugging | Training/Debugging | Google, Microsoft, Meta |
+| 7 | RLHF pipeline: SFT → reward model → PPO failure modes | Training/Debugging | Training/Debugging | Google, Meta, Apple |
+| 8 | Optimize GPT-2-sized model for < 100ms p95 inference latency | Training/Debugging | Training/Debugging | Google, Amazon, Microsoft |
+| 9 | Design a production LLM API serving 10k requests per minute | System Design | System Design | Google, Amazon, Microsoft |
+| 10 | Design a code generation and IDE autocomplete system | System Design | System Design | Google, Meta, Microsoft |
+| 11 | Design a RAG-based enterprise knowledge assistant | System Design | System Design | Amazon, Microsoft, Databricks |
+| 12 | Design an LLM evaluation and quality assurance framework | System Design | System Design | Google, Meta, Stripe |
+
+---
+
+## Fundamentals and Core Mechanics
+
+<InterviewQuestion
+  number={1}
+  difficulty="Fundamentals"
+  company={["Google", "Meta", "Apple"]}
+  question="Walk me through the forward pass of a decoder-only Transformer for next-token prediction. Explain the role of causal masking and why the autoregressive objective factorizes the joint distribution the way it does."
+>
+
+- The model receives token IDs, embeds them via a learned embedding matrix `E ∈ ℝ^(V×d)`, and adds positional information (learned, sinusoidal, or RoPE applied inside the attention computation).
+- Each of the N transformer blocks applies: LayerNorm → multi-head causal self-attention → residual → LayerNorm → MLP (4d hidden with GeLU or SwiGLU) → residual. Pre-norm (GPT-2/3 style) is preferred over post-norm for training stability at scale.
+- Self-attention: `Attention(Q,K,V) = softmax(QK^T/√d_k + M)V` where M is the causal mask (−∞ above the diagonal). This ensures token t only attends to positions ≤ t — making the training parallelizable while preserving autoregressive semantics.
+- Final hidden states pass through a LayerNorm and a projection `W_U` (often weight-tied to the embedding matrix E^T) to produce logits of shape (T, V).
+- **Autoregressive factorization:** `P(x_1...x_T) = ∏ P(x_t | x_{<t})` is just the chain rule of probability — no assumption. What the causal mask enforces is that each position's prediction depends only on prior tokens, so all T positions can be trained in parallel with a single forward pass.
+- Loss: cross-entropy between logits at position t and token `x_{t+1}`, averaged over all positions and the batch — equivalent to minimizing the negative log-likelihood of the training corpus.
+
+</InterviewQuestion>
+
+<InterviewQuestion
+  number={2}
+  difficulty="Fundamentals"
+  company={["Google", "Amazon", "Microsoft"]}
+  question="Define perplexity. What's its relationship to cross-entropy loss, and what are the pitfalls of using it to compare two language models?"
+>
+
+- **Definition:** `PPL = exp(CE)` where CE is the average per-token cross-entropy loss in nats. Intuitively: the effective branching factor. PPL=20 means the model is as uncertain as if choosing uniformly among 20 tokens at each step.
+- **Derivation:** `CE = −(1/T) Σ log P(x_t | x_{<t})`. Exponentiating gives the geometric mean of `1/P(x_t)` — the perplexity.
+- **Comparison pitfalls:**
+
+| Pitfall | Description | Fix |
+|---------|-------------|-----|
+| **Tokenization dependence** | PPL is per-token; a 50k vocab BPE model vs a character-level model are not comparable | Normalize by bytes/characters (bits-per-byte) |
+| **Domain mismatch** | PPL on WikiText doesn't predict PPL on code or dialogue | Always report on target-domain held-out data |
+| **Context length effects** | Sliding-window stride affects PPL calculation | Use standard stride equal to context length for fair comparison |
+| **Weak downstream correlation** | Two models with identical PPL can have very different MMLU or HumanEval scores | Use PPL as a training signal, not a product metric |
+
+- Lower PPL generally correlates with better generation quality, but not reliably for instruction-following, factuality, or reasoning. Report PPL alongside downstream benchmark performance.
+
+</InterviewQuestion>
+
+<InterviewQuestion
+  number={3}
+  difficulty="Fundamentals"
+  company={["Meta", "Apple", "Databricks"]}
+  question="Explain byte-pair encoding. What are the tradeoffs between BPE, WordPiece, and byte-level BPE, and when would you choose each?"
+>
+
+- **BPE:** starts with a base vocabulary (characters or bytes), then iteratively merges the most frequent adjacent pair in the training corpus, adding the merged token to the vocabulary. Stop at a target vocab size (typically 32k–100k). At inference, apply the same merge rules greedily — deterministic and reversible.
+- **Byte-level BPE (GPT-2):** operates on raw UTF-8 bytes instead of Unicode code points. Guarantees zero OOV for any input (emoji, code, non-Latin scripts), at the cost of longer sequences for non-ASCII text. Standard for modern LLMs.
+- **WordPiece (BERT):** uses a likelihood-based merge criterion (maximizes training data likelihood) instead of frequency. Marginal quality difference vs BPE in practice. Uses `##` prefix for continuation subwords.
+- **SentencePiece with Unigram (T5, LLaMA):** trains a probabilistic model and prunes tokens; supports subword regularization (sampling different segmentations at training time) for robustness.
+
+| Scheme | OOV | Sequence length | Used in |
+|--------|-----|-----------------|---------|
+| BPE | Rare | Medium | Many older models |
+| Byte-level BPE | Never | Longer for non-ASCII | GPT-2, GPT-4 |
+| WordPiece | Rare (with `[UNK]`) | Medium | BERT, RoBERTa |
+| Unigram (SentencePiece) | Never | Medium | T5, LLaMA, Gemma |
+
+- **Known failure modes:** numbers tokenized inconsistently hurt arithmetic; trailing whitespace edge cases; rare vocabulary tokens can be undertrained ("SolidGoldMagikarp" problem where vocab slots receive near-zero gradient).
+
+</InterviewQuestion>
+
+<InterviewQuestion
+  number={4}
+  difficulty="Fundamentals"
+  company={["Google", "Meta", "Microsoft"]}
+  question="Compare temperature, top-k, and top-p (nucleus) sampling. How do they interact, and what would you use for code generation vs creative writing vs factual QA?"
+>
+
+- **Temperature T:** rescales logits before softmax: `p_i ∝ exp(z_i / T)`. T=1 is the model's native distribution; T→0 approaches greedy (argmax); T>1 flattens. Temperature alone keeps the full distribution's support — rare tokens still have nonzero probability.
+- **Top-k:** truncates to the k highest-probability tokens, renormalizes, then samples. Problem: k is fixed but context-appropriate k varies — after "The capital of France is" you want k=1; after "She opened the door and saw" you want k=50.
+- **Top-p (nucleus):** truncates to the smallest set whose cumulative probability exceeds p, then renormalizes. Adaptive — narrow distributions sample from few tokens, flat distributions from many. Generally preferred over top-k.
+- **Interaction order:** logits → temperature scaling → top-k → top-p → sample. Applying temperature after truncation changes behavior materially.
+
+| Task | Temperature | Sampling | Rationale |
+|------|------------|----------|-----------|
+| **Code generation** | 0–0.2 | Greedy or beam search | Want the mode; diversity introduces bugs |
+| **Factual QA** | 0.1–0.3 | Greedy + retrieval | Correctness over variety |
+| **Creative writing** | 0.7–0.9 | top-p ≈ 0.9 | Entropy needed to avoid repetition |
+| **Dialogue / chat** | 0.6–0.8 | top-p ≈ 0.9 | Natural conversational diversity |
+
+- **Production additions:** repetition penalty or frequency penalty to avoid loops; logit bias for format enforcement; constrained decoding (grammar or regex) for structured output (JSON, SQL) — much more reliable than hoping sampling produces valid syntax.
+
+</InterviewQuestion>
+
+---
+
+## Training, Debugging and Optimisation
+
+<InterviewQuestion
+  number={5}
+  difficulty="Training/Debugging"
+  company={["Google", "Meta", "Databricks"]}
+  question="Your GPT-2-sized pretraining run shows loss spiking and diverging around step 50k after previously looking healthy. Walk me through your debugging process."
+>
+
+- **Quantify first:** is it a single spike that recovers, or true divergence? Check gradient norms, activation magnitudes per layer, and whether any attention layer collapsed to uniform or degenerate patterns. Log `||∇||`, max activation, and loss per data shard before investigating further.
+- **Common causes:**
+  1. **Learning rate too high** at the current stage — especially after warmup when LR hits peak. Fix: lower peak LR or extend warmup. Cosine schedules with peak LR ~3e-4 to 6e-4 for GPT-2 scale.
+  2. **Bad data shard** — a shard with corrupted tokens, extreme repetition, or OOD content. Deterministically replay the batch at the spike and inspect. Filter long runs of repeated tokens.
+  3. **Numerical overflow in fp16/bf16** — attention logits can overflow. bf16 is far more forgiving. If stuck with fp16, use loss scaling and check for NaN in QK^T before softmax.
+  4. **Residual stream / LayerNorm growth** — activations in the residual stream can grow unboundedly without QK-norm or z-loss. Pre-norm helps; some teams add z-loss on output logits as a regularizer.
+- **Standard mitigations:** gradient clipping at 1.0; skip-batch-on-spike (if grad norm > 3× EMA, skip and log); weight decay 0.1.
+- **Recovery:** rewind to a checkpoint before the spike, skip or reshuffle the offending data range, resume with slightly lower LR. Don't just restart — the same batch will hit again.
+- **Prevention:** continuously monitor MFU, grad norms, per-parameter update norms, and a small eval PPL. Spikes are often visible in grad norm before loss moves.
+
+</InterviewQuestion>
+
+<InterviewQuestion
+  number={6}
+  difficulty="Training/Debugging"
+  company={["Google", "Microsoft", "Meta"]}
+  question="You have a fixed compute budget of 10²¹ FLOPs for pretraining. How do you decide model size and token count? Explain the Chinchilla result and when you'd deliberately deviate from it."
+>
+
+- **Chinchilla scaling (Hoffmann et al. 2022):** for compute-optimal training, model parameters N and training tokens D should scale roughly equally with compute C. Empirical rule: `D ≈ 20 × N`. The earlier Kaplan laws overestimated how much to scale N relative to D — leading to undertrained large models like GPT-3.
+- **FLOP accounting:** `C ≈ 6 × N × D` for a dense Transformer (2 forward + 4 backward per parameter per token). With C = 10²¹:
+  - Solving `6ND = 10²¹` with `D = 20N` gives `N ≈ 2.9B params`, `D ≈ 58B tokens`
+- **When to deviate — inference-optimal (LLaMA approach):** if the model will serve billions of inference requests, inference FLOPs dwarf training FLOPs over the model's lifetime. Train a smaller model on many more tokens. LLaMA-2 7B trained on 2T tokens is ~34× beyond Chinchilla-optimal — deliberately. Smaller model = cheaper and faster to serve.
+- **When to deviate — research (capability-optimal):** maximize peak capability per training dollar. Chinchilla is the right anchor — don't under-train.
+- **Caveats and nuances:**
+
+| Assumption | Reality |
+|-----------|---------|
+| Unlimited unique data | Data quality, repetition, and deduplication matter as much as token count |
+| All compute to training | Reserve budget for eval, ablations, and checkpoint selection |
+| Fixed inference cost | Quantization and distillation post-training shift the frontier |
+
+- **Practical answer:** for a product model, go 10–20× past Chinchilla on tokens for a given parameter count. For a pure capability research run, Chinchilla is a good anchor.
+
+</InterviewQuestion>
+
+<InterviewQuestion
+  number={7}
+  difficulty="Training/Debugging"
+  company={["Google", "Meta", "Apple"]}
+  question="Explain the RLHF pipeline: SFT → reward model → PPO. What are the common failure modes at each stage, and when would you choose DPO over PPO?"
+>
+
+- **SFT (Supervised Fine-Tuning):** fine-tune pretrained LLM on a dataset of (prompt, ideal response) pairs from human demonstrators. Goal: shift the model toward a desired behavior distribution before RL.
+  - Failure modes: low-quality or inconsistent demonstration data; overfitting to demonstration style rather than content; SFT data not covering the inference distribution.
+- **Reward Model (RM):** train a separate model to predict human preference scores from pairwise comparisons. Output is a scalar reward signal.
+  - Failure modes: reward hacking (model finds inputs that exploit RM blind spots without being genuinely better); annotation inconsistency; RM doesn't generalize to the policy distribution it will be used to train.
+- **PPO (Proximal Policy Optimization):** optimize the LLM policy to maximize RM reward while staying close to the SFT model (KL regularization term).
+  - Failure modes: KL divergence too low → reward hacking; too high → policy barely moves from SFT. Hyperparameter-sensitive. Reward over-optimization (Goodhart's Law: the RM becomes the target and gets gamed). Computationally expensive — requires 4 models in memory simultaneously.
+- **DPO (Direct Preference Optimization):** bypasses the RM entirely. Directly optimizes the policy on preference pairs using a closed-form objective derived from the RLHF objective. No separate reward model, no PPO loop.
+  - Pros: simpler, cheaper (2 models, not 4), more stable training.
+  - Cons: less flexible — can't online-sample new preferences; quality ceiling may be lower for complex tasks.
+- **When to choose:** DPO for most fine-tuning tasks with a fixed preference dataset. PPO when you need online exploration, have a reliable RM, or are targeting complex agentic behavior.
+
+</InterviewQuestion>
+
+<InterviewQuestion
+  number={8}
+  difficulty="Training/Debugging"
+  company={["Google", "Amazon", "Microsoft"]}
+  question="How would you optimize inference for a GPT-2-sized model (~124M parameters) to hit under 100ms p95 latency for an API serving 1,000 requests per minute? Walk through your prioritized optimization roadmap."
+>
+
+- **Baseline:** a GPT-2 124M in FP32 on CPU produces ~10–30 tokens/second — already borderline without optimization. Target is 100ms p95, which at typical output length (50–100 tokens) requires 500–1000 tokens/second system-wide across 1k rpm.
+- **Optimization roadmap (prioritized by impact):**
+
+| Priority | Optimization | Typical gain | Cost |
+|----------|-------------|--------------|------|
+| 1 | Move to GPU (even a V100 16GB) | 10–30× | Hardware |
+| 2 | FP16 precision | 1.5–2× memory, similar speed | Negligible |
+| 3 | INT8 quantization (bitsandbytes) | 2× memory reduction, ~1.2× speed | Minor quality |
+| 4 | Compile model (`torch.compile`) | 1.2–1.5× | Dev time |
+| 5 | Continuous batching | 3–5× throughput | Serving infra |
+| 6 | KV cache tuning (paged attention) | Memory efficiency | Serving infra |
+| 7 | INT4 quantization (GPTQ/AWQ) | 4× memory reduction | Quality tradeoff |
+
+- **Batching:** at 1k rpm with ~100ms latency budget, you have ~1.7 requests in flight at any time. Use continuous batching (vLLM) to process multiple requests concurrently — the GPU is underutilized with one request at a time.
+- **Prefill vs decode optimization:** if prompts are long, prefill (prompt processing) dominates latency. Cache system prompts; use speculative decoding if generation length is long and a smaller draft model is available.
+- **KV cache:** for GPT-2 124M, KV cache is small (< 1GB at 4k context) — not a bottleneck. Becomes critical at larger scales.
+- **Measurement:** always profile end-to-end (time-to-first-token + generation time), not just model forward pass time. Network, tokenization, and result serialization add real latency.
+
+</InterviewQuestion>
+
+---
+
+## System Design and Production
+
+<InterviewQuestion
+  number={9}
+  difficulty="System Design"
+  company={["Google", "Amazon", "Microsoft"]}
+  question="Design a production LLM API serving 10,000 requests per minute with varying prompt lengths, supporting both streaming and non-streaming responses."
+>
+
+**Key axes a strong answer must cover:**
+
+- **Serving stack:** vLLM or TGI (Text Generation Inference) with paged attention and continuous batching. These are the production standards — don't reinvent.
+- **Hardware tier:**
+  - 7B model: 1× A100 80GB for FP16; 2× for comfortable headroom with KV cache
+  - 70B model: 2–4× A100 with tensor parallelism; or pipeline parallelism across nodes
+- **Capacity math:** 10k rpm = ~167 requests/second. At 100 tokens/request and 5000 tokens/second throughput per A100 (typical for a 7B FP16 model with continuous batching), 1 A100 is sufficient at moderate utilization. Add 2× headroom → 2 GPUs minimum.
+- **Streaming:** SSE (Server-Sent Events) or WebSockets. Token-by-token delivery reduces perceived latency dramatically. Backend generates tokens incrementally; nginx or a dedicated streaming proxy forwards them.
+- **Request routing and load balancing:** model instances are stateless between requests. Use a load balancer (HAProxy or a service mesh) to distribute requests. Route long prompts to instances with more available KV cache.
+- **Rate limiting and quota:** implement at the API gateway level (per-user token-per-minute quotas). Protect against prompt injection and runaway context growth.
+- **Observability:** time-to-first-token, inter-token latency, tokens-per-second per request, KV cache utilization, queue depth, error rate. Alert on queue depth > 5s of work.
+
+</InterviewQuestion>
+
+<InterviewQuestion
+  number={10}
+  difficulty="System Design"
+  company={["Google", "Meta", "Microsoft"]}
+  question="Design a code generation and autocomplete system integrated into a developer IDE, targeting sub-50ms latency for single-line completions."
+>
+
+**Strong blueprint:**
+
+- **Two-tier model architecture:**
+  - *Fast tier:* a small quantized model (1B–3B, INT4) running on-device or on a nearby inference server. Handles single-line completions under 50ms. Lower quality acceptable — speed dominates.
+  - *Slow tier:* a larger model (7B–34B) for multi-line and function-level generation, triggered manually or on explicit request. 2–5 second latency acceptable.
+- **Context construction:** the context window for code completion includes the file above and below the cursor, open tabs, and repository structure. Smart context selection (retrieve relevant file snippets via BM25 or embedding search) is as important as the model itself.
+- **Fill-in-the-middle (FIM):** train or fine-tune with a special objective where the model fills a masked middle span given prefix and suffix. Dramatically better than prefix-only completion for real editing scenarios.
+- **Caching strategies:** cache completions for common prefix patterns (language keywords, common API calls). Skip inference entirely for exact cache hits.
+- **Evaluation:**
+  - HumanEval (pass@1, pass@10) for functional correctness
+  - Edit distance between generated and accepted completion (how much editing the user does after accepting)
+  - Acceptance rate and average accepted length (user behavior signals)
+- **Privacy:** code can contain secrets, PII, and proprietary logic. On-device inference for the fast tier avoids sending code to external servers — a hard requirement for many enterprise customers.
+
+</InterviewQuestion>
+
+<InterviewQuestion
+  number={11}
+  difficulty="System Design"
+  company={["Amazon", "Microsoft", "Databricks"]}
+  question="Design a RAG-based enterprise knowledge assistant that answers questions from a corpus of 500,000 internal documents with strict accuracy requirements."
+>
+
+**Architecture:**
+
+- **Indexing pipeline:**
+  1. Document ingestion (PDFs, Confluence, SharePoint, Slack) → text extraction and normalization
+  2. Chunking: 512-token chunks with 64-token overlap (preserves context at chunk boundaries)
+  3. Embedding: a domain-fine-tuned bi-encoder (e.g., `e5-large` or BAAI/bge) → dense vectors
+  4. Sparse index (BM25) in parallel for keyword recall
+  5. Hybrid search: combine dense + sparse retrieval (RRF fusion) for best recall
+- **Query path:** user query → hybrid retrieval (top-20) → cross-encoder re-ranking (top-5) → LLM generation with retrieved context → response with citations.
+- **Accuracy safeguards:**
+  - System prompt: "Answer only from the provided context. If the answer is not in the context, say so."
+  - Citation generation: require the model to cite specific chunk IDs; verify citations are real chunks (not hallucinated).
+  - Confidence routing: if no retrieved chunk has relevance score > threshold, return "I don't have reliable information on this" rather than generating.
+- **Access control:** enterprise documents have permissions. The retrieval layer must filter candidate chunks by the user's access permissions before passing to the LLM — never surface documents the user can't access.
+- **Evaluation:**
+  - Retrieval: recall@5 on a curated QA benchmark
+  - Generation: faithfulness (does the answer stay within the retrieved context?), factual correctness, citation accuracy
+  - Human evaluation: 100-question sample reviewed by subject matter experts quarterly
+
+</InterviewQuestion>
+
+<InterviewQuestion
+  number={12}
+  difficulty="System Design"
+  company={["Google", "Meta", "Stripe"]}
+  question="Design an LLM evaluation and quality assurance framework for a product team shipping GPT-2 fine-tuned models monthly."
+>
+
+**Key design axes:**
+
+- **Evaluation pyramid:**
+  1. **Automated benchmarks** (run on every commit): perplexity on held-out domain data; task-specific accuracy (classification, extraction); format compliance rate (is the output structured correctly?). Fast, cheap, runs in CI.
+  2. **LLM-as-judge** (run on every release candidate): use a stronger model (GPT-4 class) to rate quality, helpfulness, and safety on 200–500 curated prompts. Much cheaper than human eval, directionally reliable.
+  3. **Human evaluation** (monthly before major releases): 100–200 expert evaluations using a rubric (helpfulness, accuracy, tone, safety). Ground truth for calibrating LLM judge.
+
+- **Regression detection:** maintain a frozen "golden set" of 200 prompts with expected outputs. Any release must not degrade pass rate > 2% vs the previous release. Automated rollback gate.
+- **Safety evaluation:** red-teaming test suite (jailbreaks, prompt injections, harmful content requests); PII leakage tests; consistency checks across demographic groups.
+- **A/B testing for product decisions:** route 5% of live traffic to the new model; track downstream business metrics (task completion rate, user satisfaction score, support escalation rate) for 48–72 hours before full rollout.
+- **Versioning:** every evaluation run is tied to: model checkpoint hash + eval dataset version + prompt template version. Reproducibility is non-negotiable — you need to diagnose regressions weeks later.
+- **Monitoring in production:** track output length distribution, refusal rate, sentiment, and topic distribution over time. Shifts in these signals often indicate prompt injection attempts or distribution shift before user complaints arrive.
+
+</InterviewQuestion>
+
+---
+
+<div className="not-prose mt-10 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-6 dark:border-slate-700">
+  <a href="./decoder-only-transformer" className="text-sm font-medium text-slate-600 no-underline hover:text-emerald-700 hover:underline dark:text-slate-400 dark:hover:text-emerald-400">← Lesson 10 · Decoder-only Transformer</a>
+  <a href="./intro" className="text-sm font-semibold text-emerald-700 no-underline hover:underline dark:text-emerald-400">Course overview →</a>
+</div>

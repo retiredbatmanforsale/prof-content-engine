@@ -1,4 +1,4 @@
-import React, { useRef, useState, useEffect, useCallback } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 
 type Status = 'idle' | 'loading' | 'running' | 'done' | 'error';
 
@@ -21,10 +21,10 @@ export default function PythonPlayground({ starter = '', minLines = 12 }: Props)
   const [statusMsg, setStatusMsg] = useState('');
   const [result, setResult] = useState<RunResult | null>(null);
   const workerRef = useRef<Worker | null>(null);
+  const workerReadyRef = useRef(false);
   const pendingIdRef = useRef<number>(-1);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  // Cleanup worker on unmount
   useEffect(() => {
     return () => { workerRef.current?.terminate(); };
   }, []);
@@ -37,8 +37,8 @@ export default function PythonPlayground({ starter = '', minLines = 12 }: Props)
       if (id !== undefined && id !== pendingIdRef.current) return;
       switch (type) {
         case 'ready':
-          // Worker ready — if we were waiting to run, run now
-          if (pendingIdRef.current >= 0) runCode(w);
+          workerReadyRef.current = true;
+          setStatusMsg('Running…');
           break;
         case 'status':
           setStatusMsg(message);
@@ -62,19 +62,16 @@ export default function PythonPlayground({ starter = '', minLines = 12 }: Props)
     return w;
   }
 
-  function runCode(w: Worker) {
-    const id = ++runIdCounter;
-    pendingIdRef.current = id;
-    w.postMessage({ type: 'run', code, id });
-  }
-
   function handleRun() {
     setResult(null);
     setStatus('loading');
-    setStatusMsg('Initializing Python…');
+    setStatusMsg('Loading Python runtime…');
     const w = getOrCreateWorker();
-    // If worker is already ready (second run), post immediately
-    runCode(w);
+    const id = ++runIdCounter;
+    pendingIdRef.current = id;
+    // Post the run message — the worker buffers it if init is still in progress,
+    // or runs immediately if already ready (second+ run).
+    w.postMessage({ type: 'run', code, id });
   }
 
   function handleReset() {
@@ -85,7 +82,6 @@ export default function PythonPlayground({ starter = '', minLines = 12 }: Props)
     textareaRef.current?.focus();
   }
 
-  // Tab key → insert 4 spaces at cursor
   function handleKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
     if (e.key !== 'Tab') return;
     e.preventDefault();
@@ -101,7 +97,17 @@ export default function PythonPlayground({ starter = '', minLines = 12 }: Props)
 
   const lineCount = Math.max(minLines, code.split('\n').length + 1);
   const isWorking = status === 'loading' || status === 'running';
+  const isColdStart = isWorking && !workerReadyRef.current;
   const hasOutput = result && (result.stdout || result.stderr || result.figures.length > 0);
+
+  // Human-readable label for the Run button while working
+  const buttonLabel = statusMsg === 'Loading Python runtime…'
+    ? 'Starting up…'
+    : statusMsg === 'Installing packages…'
+    ? 'Loading packages…'
+    : statusMsg === 'Running…'
+    ? 'Running…'
+    : statusMsg || 'Working…';
 
   return (
     <div className="not-prose my-8">
@@ -132,7 +138,7 @@ export default function PythonPlayground({ starter = '', minLines = 12 }: Props)
             {isWorking ? (
               <>
                 <span className="inline-block w-3 h-3 border-2 border-slate-400 border-t-transparent rounded-full animate-spin" />
-                {statusMsg || 'Working…'}
+                {buttonLabel}
               </>
             ) : (
               <>▶ Run</>
@@ -142,7 +148,6 @@ export default function PythonPlayground({ starter = '', minLines = 12 }: Props)
 
         {/* Code editor */}
         <div className="relative">
-          {/* Line numbers */}
           <div
             aria-hidden
             className="absolute left-0 top-0 bottom-0 w-10 flex flex-col items-end pr-2 pt-3 pb-3 text-slate-700 select-none text-xs leading-6 overflow-hidden pointer-events-none"
@@ -167,10 +172,23 @@ export default function PythonPlayground({ starter = '', minLines = 12 }: Props)
           />
         </div>
 
+        {/* Cold-start loading banner */}
+        {isColdStart && (
+          <div className="border-t border-slate-800 px-4 py-3 flex items-start gap-3">
+            <span className="mt-0.5 flex-shrink-0 inline-block w-3.5 h-3.5 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
+            <div className="font-sans">
+              <p className="text-xs text-slate-300 leading-snug">Setting up your Python environment…</p>
+              <p className="text-[11px] text-slate-500 mt-0.5 leading-snug">
+                The Python runtime loads once per session directly in your browser — no server involved.
+                This takes about 5–10 seconds on first run. After that, execution is instant.
+              </p>
+            </div>
+          </div>
+        )}
+
         {/* Output */}
         {hasOutput && (
           <div className="border-t border-slate-800">
-            {/* Text output */}
             {(result.stdout || result.stderr) && (
               <div className="px-4 py-3 text-xs leading-relaxed overflow-x-auto whitespace-pre-wrap max-h-64 overflow-y-auto">
                 {result.stdout && (
@@ -181,7 +199,6 @@ export default function PythonPlayground({ starter = '', minLines = 12 }: Props)
                 )}
               </div>
             )}
-            {/* Matplotlib figures */}
             {result.figures.length > 0 && (
               <div className="px-4 pb-4 flex flex-wrap gap-3">
                 {result.figures.map((fig, i) => (
@@ -198,10 +215,10 @@ export default function PythonPlayground({ starter = '', minLines = 12 }: Props)
           </div>
         )}
 
-        {/* First-run note */}
+        {/* Idle hint */}
         {status === 'idle' && (
           <div className="px-4 py-2 border-t border-slate-800/50 text-[11px] text-slate-600 font-sans">
-            First run downloads the Python runtime (~10 MB). Subsequent runs are instant.
+            First run loads the Python runtime (~10 MB) — takes ~5–10 seconds. Subsequent runs are instant.
           </div>
         )}
       </div>

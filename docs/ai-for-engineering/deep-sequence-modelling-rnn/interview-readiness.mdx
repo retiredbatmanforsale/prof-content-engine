@@ -1,0 +1,307 @@
+---
+sidebar_label: '🎯 Interview Readiness'
+title: 'Interview Readiness — Deep Sequence Modelling (RNN)'
+description: >-
+  High-signal RNN and sequence modelling interview questions across Google, Amazon,
+  Microsoft, Meta, Apple, Netflix, Stripe, Snowflake, and Databricks, organized
+  by theme and difficulty.
+tutor_topic: "Interview Readiness — Deep Sequence Modelling (RNN)"
+tutor_concepts:
+  - "vanishing gradient problem in vanilla RNNs"
+  - "LSTM gating: forget, input, output gates and cell state"
+  - "GRU as simplified LSTM: what it removes and why it works"
+  - "backpropagation through time and truncated BPTT tradeoffs"
+  - "encoder-decoder with Bahdanau attention"
+  - "RNN vs Transformer: when each architecture wins"
+---
+
+# Interview Readiness — Deep Sequence Modelling (RNN)
+
+These questions are drawn from the RNN and sequence modelling interview research dataset, synthesizing signals from 9 top employers across ML Engineer, NLP Engineer, and Applied Scientist roles.  
+They cover vanishing gradients, LSTM mechanics, BPTT, attention, and production sequence model system design.
+
+**How to use this page:** Try answering each question out loud in 3–5 minutes. Then open the answer and evaluate your depth, tradeoff clarity, and production maturity.
+
+<div className="not-prose my-6 flex flex-wrap gap-3 text-xs font-semibold">
+  <span className="rounded-full bg-red-100 px-3 py-1 text-red-700 dark:bg-red-900/40 dark:text-red-300">Google</span>
+  <span className="rounded-full bg-yellow-100 px-3 py-1 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-300">Amazon</span>
+  <span className="rounded-full bg-teal-100 px-3 py-1 text-teal-700 dark:bg-teal-900/40 dark:text-teal-300">Microsoft</span>
+  <span className="rounded-full bg-blue-100 px-3 py-1 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300">Meta</span>
+  <span className="rounded-full bg-zinc-100 px-3 py-1 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">Apple</span>
+  <span className="rounded-full bg-rose-100 px-3 py-1 text-rose-700 dark:bg-rose-900/40 dark:text-rose-300">Netflix</span>
+  <span className="rounded-full bg-violet-100 px-3 py-1 text-violet-700 dark:bg-violet-900/40 dark:text-violet-300">Stripe</span>
+  <span className="rounded-full bg-cyan-100 px-3 py-1 text-cyan-700 dark:bg-cyan-900/40 dark:text-cyan-300">Snowflake</span>
+  <span className="rounded-full bg-indigo-100 px-3 py-1 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300">Databricks</span>
+  <span className="rounded-full bg-violet-100 px-3 py-1 text-violet-800 dark:bg-violet-900/40 dark:text-violet-300">Fundamentals</span>
+  <span className="rounded-full bg-orange-100 px-3 py-1 text-orange-800 dark:bg-orange-900/40 dark:text-orange-300">Training/Debugging</span>
+  <span className="rounded-full bg-fuchsia-100 px-3 py-1 text-fuchsia-800 dark:bg-fuchsia-900/40 dark:text-fuchsia-300">System Design</span>
+</div>
+
+---
+
+## Quick-Reference Coverage Table
+
+| Q | Question (abbreviated) | Section | Difficulty | Companies |
+|---|------------------------|---------|------------|-----------|
+| 1 | Derive the vanishing gradient problem in vanilla RNNs | Fundamentals | Fundamentals | Google, Meta, Apple |
+| 2 | LSTM gating equations and what GRU removes | Fundamentals | Fundamentals | Amazon, Microsoft, Apple |
+| 3 | BPTT and truncated BPTT: bias–variance–memory tradeoffs | Fundamentals | Fundamentals | Google, Meta, Netflix |
+| 4 | Encoder–decoder with Bahdanau attention | Fundamentals | Fundamentals | Google, Meta, Apple |
+| 5 | LSTM for fraud detection: validation plateaus vs GBM baseline | Training/Debugging | Training/Debugging | Stripe, Amazon, Netflix |
+| 6 | RNN language model loss spikes to NaN after 10k steps | Training/Debugging | Training/Debugging | Google, Microsoft, Apple |
+| 7 | LSTM demand forecasting: good backtest, production degradation | Training/Debugging | Training/Debugging | Amazon, Netflix, Databricks |
+| 8 | Handling variable-length sequences and padding in RNN training | Training/Debugging | Training/Debugging | Google, Amazon, Microsoft |
+| 9 | Design a real-time fraud detection pipeline with sequence models | System Design | System Design | Stripe, Amazon, Netflix |
+| 10 | Design a next-word prediction and autocomplete system at scale | System Design | System Design | Google, Meta, Apple |
+| 11 | Design a production time-series forecasting pipeline | System Design | System Design | Databricks, Snowflake, Amazon |
+| 12 | Design an NLP-based customer support routing system | System Design | System Design | Amazon, Microsoft, Stripe |
+
+---
+
+## Fundamentals and Core Mechanics
+
+<InterviewQuestion
+  number={1}
+  difficulty="Fundamentals"
+  company={["Google", "Meta", "Apple"]}
+  question="Derive the vanishing gradient problem in vanilla RNNs. Why does it happen mathematically, and why does LSTM mitigate it?"
+>
+
+- A vanilla RNN update: `h_t = tanh(W_h h_{t-1} + W_x x_t + b)`. During BPTT, the gradient of the loss at time T w.r.t. hidden state at time k involves the product `∏_{t=k+1}^{T} ∂h_t/∂h_{t-1} = ∏ diag(tanh'(·)) W_h`.
+- This is a product of T−k Jacobians. If the largest singular value of `diag(tanh'(·))·W_h` is < 1, gradients vanish exponentially; if > 1, they explode. Since `tanh'∈(0,1]`, vanishing is the dominant failure mode.
+- **Consequence:** the network cannot learn dependencies spanning more than ~10–20 steps. Loss plateaus; early timesteps receive no effective learning signal.
+- **LSTM fix:** introduces a cell state `c_t = f_t ⊙ c_{t-1} + i_t ⊙ g_t`. The gradient `∂c_t/∂c_{t-1} = f_t` — an elementwise product by the forget gate, not a repeated matrix multiplication. When `f_t ≈ 1`, gradients flow nearly unchanged across long horizons (the "constant error carousel").
+- This doesn't eliminate vanishing — gates can still saturate — but it makes long-range credit assignment tractable. Exploding gradients remain and are handled separately via **gradient clipping** (clip by global norm, typically 1.0–5.0).
+- Practical note: initialize forget gate bias to 1–2 (Jozefowicz et al. 2015) to bias the network toward remembering at the start of training.
+
+</InterviewQuestion>
+
+<InterviewQuestion
+  number={2}
+  difficulty="Fundamentals"
+  company={["Amazon", "Microsoft", "Apple"]}
+  question="Walk through the LSTM gating equations and explain the specific role of each gate. Then explain what GRU removes and why it often performs comparably."
+>
+
+**LSTM equations (gates are sigmoid, candidate is tanh):**
+
+| Gate | Equation | Role |
+|------|----------|------|
+| **Forget** | `f_t = σ(W_f [h_{t-1}, x_t] + b_f)` | Decides what to erase from cell state |
+| **Input** | `i_t = σ(W_i [h_{t-1}, x_t] + b_i)` | What new information to write |
+| **Candidate** | `g_t = tanh(W_g [h_{t-1}, x_t] + b_g)` | New candidate content to write |
+| **Cell update** | `c_t = f_t ⊙ c_{t-1} + i_t ⊙ g_t` | Updated long-term memory |
+| **Output** | `o_t = σ(W_o [h_{t-1}, x_t] + b_o)` | What to expose from cell state |
+| **Hidden** | `h_t = o_t ⊙ tanh(c_t)` | Short-term state passed to next step |
+
+- The cell state `c_t` is the long-term memory with linear self-recurrence; `h_t` is the exposed short-term state. This separation is what enables stable gradient flow.
+- **GRU simplification:** merges forget + input gates into a single **update gate** `z_t`, and uses a **reset gate** `r_t` to control prior state contribution. No separate cell state — `h_t = (1−z_t)⊙h_{t-1} + z_t⊙h̃_t`.
+- GRU has ~25% fewer parameters (3 gates vs 4) and trains faster. Empirically (Chung et al. 2014, Jozefowicz 2015), LSTM tends to win on tasks requiring fine-grained memory control; GRU is competitive or better on smaller datasets and shorter sequences.
+- In practice: default to GRU for prototyping and time-series; use LSTM when the extra memory capacity is needed and compute budget allows.
+
+</InterviewQuestion>
+
+<InterviewQuestion
+  number={3}
+  difficulty="Fundamentals"
+  company={["Google", "Meta", "Netflix"]}
+  question="Explain backpropagation through time (BPTT) and the truncated variant. What are the bias–variance–memory tradeoffs of truncation length?"
+>
+
+- **BPTT** unrolls the RNN across T timesteps into a feedforward graph and applies standard backprop. Memory is O(T·H), compute is O(T·H²) per sequence. For long sequences (T > 1000), full BPTT is infeasible.
+- **Truncated BPTT (TBPTT):** processes the sequence in chunks of length k. Forward pass carries hidden state across chunks (so the model sees full sequence context), but gradients only flow backward k steps before being detached.
+- **Tradeoffs of truncation length k:**
+
+| k | Gradient bias | Memory | Long-range learning |
+|---|--------------|--------|---------------------|
+| Small (20–50) | High — cannot learn dependencies > k | Low | Limited |
+| Large (200+) | Low — better credit assignment | High | Strong |
+
+- Rule of thumb: k should be ~2–3× the longest temporal dependency you care about. Char-level LM: 100–200; word-level: 35 (Mikolov). Implicit regularization effect of small k can be beneficial for noisy data.
+- Complementary techniques: **gradient checkpointing** trades compute for memory in full BPTT; **gradient clipping** (global norm) is non-negotiable with any BPTT variant.
+- At inference, none of this matters — RNNs run in O(T) compute with O(H) state, regardless of training truncation.
+
+</InterviewQuestion>
+
+<InterviewQuestion
+  number={4}
+  difficulty="Fundamentals"
+  company={["Google", "Meta", "Apple"]}
+  question="Explain encoder–decoder with attention (Bahdanau-style). Why was attention introduced, and how does it relate to the Transformer?"
+>
+
+- **Classic seq2seq bottleneck:** Sutskever 2014 encodes the full source sequence into a single fixed-size vector (the final encoder hidden state). For long sequences, this bottleneck destroys information — BLEU degrades sharply past ~30 tokens.
+- **Bahdanau attention (2015):** lets the decoder attend over *all* encoder hidden states at each decoding step:
+  - Scores: `e_{t,i} = v^T tanh(W_1 h_i^{enc} + W_2 s_{t-1}^{dec})`
+  - Weights: `α_{t,i} = softmax(e_{t,i})`
+  - Context: `c_t = Σ α_{t,i} h_i^{enc}`, fed into decoder along with previous output
+- **Three gains:** (1) removes the information bottleneck, (2) provides interpretable soft alignment heatmaps, (3) creates a shorter gradient path from decoder output to every encoder position.
+- **Luong attention:** simpler multiplicative variant (`s^T W h`), computationally cheaper, slightly less expressive.
+- **Relationship to Transformer:** Vaswani 2017 replaces recurrence *entirely* with self-attention in both encoder and decoder. RNN+attention is O(T) sequential; Transformer is O(T²) compute but fully parallel across time — hence the dominance on modern GPU/TPU hardware where parallelism matters more than sequential efficiency.
+
+</InterviewQuestion>
+
+---
+
+## Training, Debugging and Optimisation
+
+<InterviewQuestion
+  number={5}
+  difficulty="Training/Debugging"
+  company={["Stripe", "Amazon", "Netflix"]}
+  question="You're training an LSTM for fraud detection on transaction sequences. Training loss decreases but validation loss plateaus early and the model underperforms a gradient-boosted baseline. How do you debug?"
+>
+
+- **First, sanity-check the data and framing:** are sequences properly ordered per user? Are you leaking future information (e.g., using post-transaction labels in features)? Is the extreme class imbalance (~0.1% fraud) being handled — class weights, focal loss, or hard negative mining?
+- **Check sequence length distribution.** If most users have fewer than 5 transactions, an RNN has little signal to exploit and GBMs with aggregated features will win. RNNs shine when there are genuine temporal patterns: sequential velocity, session behaviour, multi-step fraud rings.
+- **Diagnose gradient flow:** log gradient norms per layer. Vanishing suggests increasing forget gate bias, switching to GRU, or shortening truncation. Exploding suggests lowering clip norm to 0.5–1.0.
+- **Regularization audit:** LSTMs overfit fast on tabular-style data. Try: (a) variational/recurrent dropout (Gal & Ghahramani — same mask across timesteps, not standard dropout on recurrent connections), (b) weight decay, (c) reducing hidden size (64–128 often beats 512 for fraud).
+- **Hybrid approach:** feed GBM-engineered features alongside LSTM sequence embeddings into a final head. Production fraud systems at Stripe-style companies frequently ensemble both — pure LSTM rarely dominates structured tabular features alone.
+- **If the baseline still wins:** accept it. Fraud detection rewards engineered features (velocity counters, merchant risk scores, device fingerprints). Use the RNN only where it measurably adds AUPRC lift on a held-out set, and justify the added latency.
+
+</InterviewQuestion>
+
+<InterviewQuestion
+  number={6}
+  difficulty="Training/Debugging"
+  company={["Google", "Microsoft", "Apple"]}
+  question="Your RNN language model's loss suddenly spikes to NaN after 10k steps. Walk through your diagnosis."
+>
+
+- **Reproduce deterministically:** fix seeds, save a checkpoint at step 9900, reload and step through. NaNs are often deterministic under fixed seeds.
+- **Most likely cause — exploding gradients** from a rare long sequence or unusual input. Is gradient clipping enabled? `clip_grad_norm_(params, max_norm=1.0)` is standard. Log the pre-clip gradient norm — if it spikes to 1e6, clipping is missing or the threshold is too high.
+- **Numerical instability in softmax/loss:** `log(0)` in cross-entropy if probabilities underflow. Use `log_softmax + nll_loss` rather than `log(softmax(...))`. Verify no unnormalized inputs to sigmoid in gate computations.
+- **Bad input data:** `inf`/`nan` in a specific batch. Add `assert torch.isfinite(x).all()` at the data loader level. A single corrupted sequence will nuke training.
+- **Learning rate too high post-warmup**, or Adam's second moment `v_t` underflowing when gradients are tiny then suddenly spiking. Try lowering LR or increasing Adam's epsilon to 1e-6.
+- **Mixed precision pitfalls:** fp16 overflow in the cell state accumulation. Use bf16 if available; otherwise apply loss scaling with fp16. LSTMs are finicky in fp16 due to tanh saturation amplifying numerical error.
+- **Fix and prevent:** lower clip norm to 0.5, add input assertions, log per-batch loss, restart from checkpoint. If the spike recurs, bisect on the data to isolate the offending batch.
+
+</InterviewQuestion>
+
+<InterviewQuestion
+  number={7}
+  difficulty="Training/Debugging"
+  company={["Amazon", "Netflix", "Databricks"]}
+  question="You're forecasting demand with an LSTM on multivariate time series. Results look good on backtests but degrade in production. What are the most common causes and fixes?"
+>
+
+- **Non-stationarity drift:** the distribution shifted post-training (new products, seasonality changes, external shocks). Test stationarity per series with ADF/KPSS; use differencing or log returns. Retrain on a rolling window, not a fixed historical slice.
+- **Data leakage in the backtest:** using future information in normalization (global mean/std computed over the whole dataset including validation). Normalize *causally* — rolling stats up to time t only. This single mistake often explains large train–prod gaps. Check if any feature uses end-of-period aggregates that wouldn't be available at prediction time.
+- **Label leakage in features:** if any feature uses information from time t+1 or later (e.g., end-of-day inventory as an input for a midday forecast), your backtest will look excellent but production will fail. Audit every feature against the prediction horizon explicitly.
+- **Sequence alignment errors:** if input lag features aren't consistently aligned to the same forecast horizon across train and serving, the model sees different lag structures in each context.
+- **Retraining frequency mismatch:** models trained on 3 years of history may not adapt to current seasonality. Use rolling-origin cross-validation — train on [T−n, T−k], validate on [T−k, T] — with k matching your actual deployment retrain cadence.
+- **Baseline reality check:** SARIMA or Prophet often beats LSTMs on standard retail time series with limited data. If the LSTM doesn't outperform these baselines on held-out data, the maintenance cost of the recurrent model is rarely justified.
+
+</InterviewQuestion>
+
+<InterviewQuestion
+  number={8}
+  difficulty="Training/Debugging"
+  company={["Google", "Amazon", "Microsoft"]}
+  question="How do you handle variable-length sequences and padding in RNN training? What are the practical implications of padding on loss computation and gradient updates?"
+>
+
+- **Padding strategy:** right-pad all sequences in a batch to the length of the longest sequence using a special `<PAD>` token. This allows batched matrix operations but introduces spurious tokens.
+- **PackedSequence (PyTorch):** `torch.nn.utils.rnn.pack_padded_sequence` removes padding before RNN computation and restores it after with `pad_packed_sequence`. This is the standard approach — it avoids running the RNN over padding tokens, saving compute and eliminating the gradient signal issue.
+- **Loss masking is non-negotiable:** compute cross-entropy loss *only* on non-padding positions. Without masking, padding tokens contribute to the loss (gradient says "predict `<PAD>` after `<PAD>`") — this corrupts training, especially for short sequences in a mixed-length batch.
+- **Sorting by length:** PyTorch's PackedSequence requires sequences sorted by length (descending). Libraries like `torch.nn.utils.rnn` handle the inverse permutation to restore original order.
+- **Truncation vs padding tradeoff:** for long-tail length distributions (most sequences short, a few very long), consider truncating outlier sequences rather than padding the entire batch to a very long length — the memory and compute cost of long padding can dominate.
+- **Attention masking:** when using RNN + attention (seq2seq), propagate the padding mask to the attention score matrix — mask out padding positions with −∞ before softmax to prevent attention from attending to `<PAD>` tokens.
+
+</InterviewQuestion>
+
+---
+
+## System Design and Production
+
+<InterviewQuestion
+  number={9}
+  difficulty="System Design"
+  company={["Stripe", "Amazon", "Netflix"]}
+  question="Design a real-time fraud detection pipeline using sequence models for transaction data, operating under strict latency constraints."
+>
+
+**Key axes a strong answer must cover:**
+
+- **Latency budget:** fraud scoring must complete in < 100ms to avoid degrading payment authorization UX. This drives the entire architecture — no deep LSTM at inference time unless you can cache sequence state.
+- **Online vs offline feature split:**
+  - *Offline:* user-level aggregate features (30/90-day velocity, merchant category spending profiles, device fingerprints) — precomputed and stored in a low-latency feature store (Redis/DynamoDB)
+  - *Online:* real-time transaction features (amount, merchant, time of day, geo) + current session sequence
+- **Sequence model serving:** maintain a rolling hidden state per user in a cache (last N=20 transactions). At inference, load cached state → run one LSTM step → score. Avoids full sequence replay on every transaction.
+- **Model cascade:** (1) rules/heuristics (&lt;1ms) → (2) lightweight GBM on tabular features (&lt;10ms) → (3) LSTM sequence model only for high-ambiguity cases requiring sequential context (&lt;80ms budget remaining).
+- **Label delay:** fraud labels arrive days to weeks late (chargebacks). Design a semi-supervised pipeline with soft labels from rules + delayed hard labels. Track AUPRC not accuracy — class imbalance makes accuracy meaningless.
+- **Monitoring:** feature drift (PSI on transaction amounts, geolocation distributions), score distribution drift, and false positive rate (decline rate on legitimate transactions). Rising false positives cost real revenue.
+
+</InterviewQuestion>
+
+<InterviewQuestion
+  number={10}
+  difficulty="System Design"
+  company={["Google", "Meta", "Apple"]}
+  question="Design a next-word prediction and autocomplete system at scale for a mobile keyboard serving 500 million users."
+>
+
+**Strong blueprint:**
+
+- **On-device vs server-side split:** for keyboard autocomplete, low latency is paramount and privacy is a concern. Small model (quantized LSTM or Transformer, < 50MB) runs on-device for most predictions. Server model handles complex/rare completions for users who opt in.
+- **On-device model:** 2-layer LSTM with 256 hidden units + embedding table, quantized to INT8. Loads in &lt;100MB memory. Runs in 2–5ms per token on modern mobile CPUs.
+- **Training pipeline:** large-scale corpus (web, books) → tokenization → distributed LSTM training. Federated Learning for fine-tuning on-device with aggregated gradients only (privacy-preserving).
+- **Personalization:** on-device cache of user's recent vocabulary, frequently used phrases, and app-specific context (contacts, calendar). Applied via local fine-tuning or simple retrieval augmentation.
+- **Ranking layer:** language model score × user behavior signal × context relevance → ranked top-3 suggestions. Blend N-gram retrieval for common bigrams/trigrams (< 1ms) with neural model for novel completions.
+- **A/B evaluation metrics:** next-word prediction accuracy on held-out test; typing speed (characters saved per minute); user acceptance rate of suggestions; latency p99 on target device tiers.
+
+</InterviewQuestion>
+
+<InterviewQuestion
+  number={11}
+  difficulty="System Design"
+  company={["Databricks", "Snowflake", "Amazon"]}
+  question="Design a production time-series forecasting pipeline for supply chain demand prediction across 10,000 SKUs and 500 store locations."
+>
+
+**Architecture:**
+
+- **Data layer:** 5M time series (10k SKUs × 500 locations). Store in a columnar format (Parquet on S3/ADLS); precompute lag features, rolling statistics, and calendar features in Spark/Databricks. Version datasets with Delta Lake for reproducibility.
+- **Model choices:**
+
+| Approach | When to use | Latency | Maintenance |
+|----------|-------------|---------|-------------|
+| SARIMA / Prophet | Low data, interpretable, few SKUs | Fast | Low |
+| LightGBM + lag features | Tabular + time features, good baseline | Fast | Medium |
+| Global LSTM / N-BEATS | Enough data, complex seasonality | Medium | High |
+| Transformer (TFT) | Long-range dependencies, multi-horizon | Slower | High |
+
+- **Global model approach:** train one model across all SKUs/locations (with SKU/location embeddings as inputs). Outperforms per-SKU models when individual series have limited history.
+- **Serving:** batch inference pipeline (daily/weekly); store forecasts in a DynamoDB/Redshift table. No need for real-time serving — supply chain decisions are made days in advance.
+- **Uncertainty quantification:** quantile regression (P10/P50/P90 forecasts) for safety stock calculation. Operations teams need prediction intervals, not just point estimates.
+- **Monitoring:** MAPE/SMAPE per SKU tier; forecast bias (systematic over/under-forecasting by category); coverage of prediction intervals vs realized actuals. Alert on MAPE degradation > 5% week-over-week.
+
+</InterviewQuestion>
+
+<InterviewQuestion
+  number={12}
+  difficulty="System Design"
+  company={["Amazon", "Microsoft", "Stripe"]}
+  question="Design an NLP-based customer support routing and intent classification system that handles 1 million tickets per day."
+>
+
+**Key design axes:**
+
+- **Intent taxonomy:** hierarchical classification — top-level intent (billing, technical, shipping, returns) → sub-intent (refund request, tracking lost, etc.). Design the taxonomy with ops teams, not just ML teams — misclassification cost is asymmetric across categories.
+- **Model pipeline:**
+  1. **Embedding:** BERT-based or a smaller distilled model (DistilBERT, MiniLM) for ticket text + metadata (channel, user tier, product). Fine-tuned on labeled support tickets.
+  2. **Intent classifier:** multi-label (a ticket can have multiple intents) with a softmax head per intent level.
+  3. **Urgency scorer:** separate regression head for triage priority (safety, churn risk, escalation flags).
+- **Routing logic:** model score → rule-based overrides (SLA guarantees for enterprise customers, keyword blacklist for safety escalation) → routing queue assignment.
+- **Human-in-the-loop:** low-confidence predictions (< threshold) go to a generalist queue. Track per-agent routing correction rate as model quality signal.
+- **Retraining loop:** new labeled tickets from agent corrections feed weekly retraining. Active learning: prioritize labeling near the decision boundary of the current model.
+- **Latency:** classification within 500ms of ticket submission. Use TorchServe or Triton with ONNX export; batch tickets at ingestion for throughput efficiency.
+
+</InterviewQuestion>
+
+---
+
+<div className="not-prose mt-10 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-6 dark:border-slate-700">
+  <a href="./training-an-rnn-in-pytorch" className="text-sm font-medium text-slate-600 no-underline hover:text-emerald-700 hover:underline dark:text-slate-400 dark:hover:text-emerald-400">← Lesson 6 · Training an RNN in PyTorch</a>
+  <a href="./intro" className="text-sm font-semibold text-emerald-700 no-underline hover:underline dark:text-emerald-400">Course overview →</a>
+</div>

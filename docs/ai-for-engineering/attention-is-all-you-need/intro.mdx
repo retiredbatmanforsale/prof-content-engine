@@ -3,11 +3,17 @@ title: Attention Is All You Need
 description: >-
   Transformer architecture from recurrence to attention: embeddings, multi-head
   attention, masking, residuals, layer norm, FFNs, and the encoder–decoder stack.
+access: public
 ---
+
+import CourseTopicTree from '@site/src/components/CourseTopicTree';
+import { attentionTopicTree } from '@site/src/data/topic-trees/attention-is-all-you-need';
 
 # Attention Is All You Need
 
 This course walks through the **transformer** architecture: why it replaced **RNNs/LSTMs** for many sequence tasks, how **token and positional embeddings** feed **attention**, and how **encoder** and **decoder** stacks combine into the model from [Vaswani et al. (2017)](https://arxiv.org/abs/1706.03762).
+
+<CourseTopicTree data={attentionTopicTree} />
 
 ---
 
