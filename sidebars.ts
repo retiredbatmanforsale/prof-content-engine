@@ -4,17 +4,6 @@ const sidebars: SidebarsConfig = {
   docsSidebar: [
     {
       type: 'category',
-      label: 'AI writing & talks',
-      className: 'sidebar-track',
-      link: { type: 'doc', id: 'ai-writing-and-talks/intro' },
-      items: [
-        'ai-writing-and-talks/intro',
-        'ai-writing-and-talks/from-statistical-models-to-modern-ai-systems',
-        'ai-writing-and-talks/what-should-we-learn-engineer-modern-ai',
-      ],
-    },
-    {
-      type: 'category',
       label: 'AI for Leaders',
       className: 'sidebar-track',
       link: { type: 'doc', id: 'ai-for-leaders/genai-for-everyone/intro' },
@@ -180,6 +169,9 @@ const sidebars: SidebarsConfig = {
         },
       ],
     },
+    { type: 'html', value: '<span class="sidebar-writing-header">Writing & Talks</span>' },
+    'ai-writing-and-talks/from-statistical-models-to-modern-ai-systems',
+    'ai-writing-and-talks/what-should-we-learn-engineer-modern-ai',
   ],
 };
 
