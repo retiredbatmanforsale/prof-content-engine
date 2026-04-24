@@ -28,3 +28,6 @@ yarn-error.log*
 # Webpack
 *.pack
 *.pack.old
+
+# Interview research — intermediate files, review before converting to MDX
+research/
