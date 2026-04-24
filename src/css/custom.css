@@ -89,23 +89,55 @@
   --docusaurus-highlighted-code-line-bg: rgba(15, 23, 42, 0.85);
 }
 
-/* Global styles */
+/* ===== Brand gradient background — matches prof-frontend Hero ===== */
+
 html {
   font-size: 16px;
   scroll-behavior: smooth;
+  /* Fixed so the gradient doesn't scroll away on long pages */
+  background: linear-gradient(135deg, #fff5f2 0%, #ffffff 50%, #fffbfa 100%);
+  background-attachment: fixed;
+}
+
+/* Grain texture overlay — same SVG noise as the landing page */
+html::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  opacity: 0.35;
+  pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-size: 256px 256px;
 }
 
 body {
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background-color: var(--lexai-bg-primary);
+  background: transparent !important;
   color: var(--lexai-content-primary);
 }
 
-[data-theme='dark'] body {
-  background-color: var(--ifm-background-color);
-  color: var(--ifm-font-color-base);
+/* Navbar — frosted glass so the gradient shows through beneath it */
+.navbar {
+  background: rgba(255, 248, 245, 0.82) !important;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(229, 229, 229, 0.5);
+  box-shadow: none !important;
+}
+
+/* Sidebar — transparent so gradient bleeds through */
+.theme-doc-sidebar-container,
+aside.theme-doc-sidebar-container {
+  background: transparent !important;
+}
+
+/* Main content wrapper — transparent */
+.main-wrapper {
+  background: transparent !important;
 }
 
 /* Heading styles - Instrument Serif for display, Plus Jakarta Sans for smaller */
