@@ -14,9 +14,13 @@ tutor_concepts:
   - "shared weights across timesteps"
 ---
 
+import VanishingGradient from '@site/src/components/viz/VanishingGradient';
+
 # Training RNNs: From Backpropagation to Backpropagation Through Time
 
 Even though sequence models like RNNs require <strong>special considerations</strong>, they&apos;re still trained using the same <strong>fundamental algorithm</strong> that underpins most of modern deep learning: <strong>backpropagation</strong>.
+
+<VanishingGradient />
 
 Let&apos;s revisit that core idea and then see how it extends to <strong>recurrent models</strong>.
 

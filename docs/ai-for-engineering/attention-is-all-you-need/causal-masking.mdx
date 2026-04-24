@@ -14,7 +14,11 @@ tutor_concepts:
   - "autoregressive structure enforcement"
 ---
 
+import CausalMask from '@site/src/components/viz/CausalMask';
+
 # Causal masking
+
+<CausalMask />
 
 Language models that predict **the next token** from **everything so far** must never be allowed to **peek** at the answer. **Self-attention** connects **all** pairs of positions in one layer—so without a **mask**, position **i** could attend to token **i + 1**, **i + 2**, … and the “prediction” would be **trivially** informed by the future. **Causal masking** enforces **autoregressive** structure: at each position you may only aggregate **past and current** tokens.
 

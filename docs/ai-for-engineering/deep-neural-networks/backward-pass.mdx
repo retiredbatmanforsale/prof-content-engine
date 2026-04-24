@@ -14,9 +14,13 @@ tutor_concepts:
   - "forward then backward pass order"
 ---
 
+import VanishingGradient from '@site/src/components/viz/VanishingGradient';
+
 # How neural networks learn: the **backward pass**
 
 Lesson 5 showed **prediction**: **x** flows **forward** through **W₁**, **b₁**, **σ**, **W₂**, **b₂**, **σ** to **y**. **Learning** adds a loop: after each forward pass you **measure error** with a **loss**, then **propagate sensitivity backward** to get **how to nudge** every **weight** and **bias**. That backward phase is **backpropagation**; it is **exactly** the **multivariate chain rule** applied along the **dependency graph** of intermediate variables.
+
+<VanishingGradient />
 
 We keep the same **3 → 4 → 2** net (**W₁**, **b₁**, **W₂**, **b₂**) so symbols match Lesson 5.
 

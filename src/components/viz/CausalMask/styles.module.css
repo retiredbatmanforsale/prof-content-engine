@@ -1,0 +1,452 @@
+/* ── Root ───────────────────────────────────────────────────────────────────── */
+
+.root {
+  background: #fff;
+  border: 1px solid #e5e5e5;
+  border-radius: 16px;
+  padding: 1.5rem;
+  margin: 2rem 0;
+  font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+  color: #171717;
+  overflow: hidden;
+}
+
+/* ── Header ─────────────────────────────────────────────────────────────────── */
+
+.header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-bottom: 1.25rem;
+}
+
+.titleRow {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.25rem;
+}
+
+.titleIcon {
+  font-size: 1rem;
+  color: #FF6B6B;
+  line-height: 1;
+}
+
+.title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #171717;
+  letter-spacing: -0.01em;
+}
+
+.subtitle {
+  font-size: 0.8rem;
+  color: #737373;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.presets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.presetBtn {
+  padding: 0.3rem 0.75rem;
+  border-radius: 99px;
+  border: 1px solid #e5e5e5;
+  background: #fafafa;
+  color: #525252;
+  font-size: 0.75rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s, color 0.15s;
+  font-family: inherit;
+  white-space: nowrap;
+}
+
+.presetBtn:hover {
+  border-color: #FF6B6B;
+  color: #FF6B6B;
+  background: #fff5f5;
+}
+
+.presetActive {
+  background: #171717 !important;
+  border-color: #171717 !important;
+  color: #fff !important;
+}
+
+/* ── Body ───────────────────────────────────────────────────────────────────── */
+
+.body {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 1.5rem;
+  align-items: start;
+}
+
+@media (max-width: 640px) {
+  .body {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ── Matrix section ─────────────────────────────────────────────────────────── */
+
+.matrixSection {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  overflow-x: auto;
+}
+
+.axisLabel {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #a3a3a3;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding-left: 64px; /* align with cells */
+  margin-bottom: 2px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: var(--cols);
+  gap: 4px;
+  width: fit-content;
+}
+
+/* ── Column header row ──────────────────────────────────────────────────────── */
+
+.corner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.65rem;
+  font-weight: 600;
+  color: #d4d4d4;
+  letter-spacing: 0.02em;
+  height: 36px;
+}
+
+.colHeader {
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #525252;
+  border-radius: 6px;
+  padding: 0 4px;
+  transition: color 0.2s, background-color 0.2s;
+}
+
+.colHeaderLit {
+  color: #FF6B6B;
+  background: #fff5f5;
+}
+
+/* ── Row label ──────────────────────────────────────────────────────────────── */
+
+.rowLabel {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding-right: 10px;
+  height: 52px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #525252;
+  border-radius: 6px;
+  cursor: default;
+  transition: color 0.15s, background-color 0.15s;
+  white-space: nowrap;
+}
+
+.rowLabelActive {
+  color: #FF6B6B;
+  background: #fff5f5;
+}
+
+/* ── Matrix cells ───────────────────────────────────────────────────────────── */
+
+.cell {
+  height: 52px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.7rem;
+  font-weight: 700;
+  position: relative;
+  cursor: default;
+  transition:
+    background-color 0.35s ease,
+    color 0.2s ease,
+    transform 0.15s ease,
+    outline 0.15s ease;
+}
+
+.cellAllowed {
+  /* color and background injected via style prop */
+}
+
+.cellMasked {
+  background-color: #0f172a !important;
+  color: rgba(255, 255, 255, 0.18) !important;
+}
+
+.cellRowHovered {
+  transform: scale(1.04);
+  z-index: 1;
+}
+
+.cellSelf {
+  /* self-attention (diagonal) — subtle ring added via style prop when hovered */
+}
+
+.infSymbol {
+  font-size: 0.65rem;
+  letter-spacing: -0.02em;
+}
+
+.scoreText {
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+}
+
+/* ── Info panel ─────────────────────────────────────────────────────────────── */
+
+.infoPanel {
+  min-height: 220px;
+  border: 1px solid #f0f0f0;
+  border-radius: 12px;
+  padding: 1rem;
+  background: #fafafa;
+}
+
+.placeholder {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 1rem;
+}
+
+.placeholderArrow {
+  font-size: 1.75rem;
+  color: #d4d4d4;
+}
+
+.placeholderText {
+  font-size: 0.8rem;
+  color: #a3a3a3;
+  text-align: center;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.infoContent {
+  display: flex;
+  flex-direction: column;
+  gap: 0.875rem;
+}
+
+.infoBadgeRow {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.infoPos {
+  width: 22px;
+  height: 22px;
+  background: #FF6B6B;
+  color: #fff;
+  border-radius: 50%;
+  font-size: 0.7rem;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.infoTokenName {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #171717;
+}
+
+.infoSection {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.infoSectionHead {
+  font-size: 0.68rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: #a3a3a3;
+  margin-bottom: 2px;
+}
+
+.infoSectionHeadBlocked {
+  color: #d4d4d4;
+}
+
+.infoRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.infoRowTok {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #171717;
+  width: 80px;
+  flex-shrink: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.infoBarTrack {
+  flex: 1;
+  height: 6px;
+  background: #f0f0f0;
+  border-radius: 99px;
+  overflow: hidden;
+}
+
+.infoBarFill {
+  height: 100%;
+  background: #FF6B6B;
+  border-radius: 99px;
+  transition: width 0.3s ease;
+}
+
+.infoRowPct {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #525252;
+  width: 32px;
+  text-align: right;
+  flex-shrink: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.infoRowBlocked {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  opacity: 0.5;
+}
+
+.blockedX {
+  font-size: 0.65rem;
+  color: #a3a3a3;
+  width: 12px;
+  flex-shrink: 0;
+}
+
+.infoRowPctZero {
+  color: #d4d4d4;
+}
+
+.infoNote {
+  font-size: 0.75rem;
+  color: #737373;
+  line-height: 1.55;
+  padding: 0.6rem 0.75rem;
+  background: #f5f5f5;
+  border-radius: 8px;
+  border-left: 3px solid #FF6B6B;
+}
+
+/* ── Footer ─────────────────────────────────────────────────────────────────── */
+
+.footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 1.25rem;
+  padding-top: 1rem;
+  border-top: 1px solid #f0f0f0;
+}
+
+.legend {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.legendDotAllowed {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border-radius: 3px;
+  background: rgba(255, 107, 107, 0.75);
+  flex-shrink: 0;
+}
+
+.legendDotMasked {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border-radius: 3px;
+  background: #0f172a;
+  flex-shrink: 0;
+}
+
+.legendText {
+  font-size: 0.72rem;
+  color: #737373;
+  margin-right: 6px;
+}
+
+.toggle {
+  display: flex;
+  background: #f0f0f0;
+  border-radius: 8px;
+  padding: 3px;
+  gap: 2px;
+}
+
+.toggleBtn {
+  padding: 0.35rem 0.9rem;
+  border-radius: 6px;
+  border: none;
+  background: transparent;
+  color: #737373;
+  font-size: 0.78rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+  font-family: inherit;
+  white-space: nowrap;
+}
+
+.toggleBtn:hover {
+  color: #171717;
+}
+
+.toggleActive {
+  background: #fff !important;
+  color: #171717 !important;
+  font-weight: 600;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}

@@ -1,0 +1,976 @@
+/* ── Root ───────────────────────────────────────────────────────────────────── */
+
+.root {
+  background: #0D0D14;
+  background-image:
+    radial-gradient(ellipse at 0% 0%, rgba(255,127,80,0.05) 0%, transparent 55%),
+    radial-gradient(ellipse at 100% 100%, rgba(59,130,246,0.05) 0%, transparent 55%);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 16px;
+  padding: 1.5rem;
+  margin: 2rem 0;
+  font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+  color: #e5e5e5;
+  overflow: hidden;
+}
+
+/* ── Header ─────────────────────────────────────────────────────────────────── */
+
+.hdr {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  margin-bottom: 1.25rem;
+}
+
+.hdrIcon {
+  font-size: 1.4rem;
+  line-height: 1;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.hdrTitle {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: -0.02em;
+}
+
+.hdrSub {
+  font-size: 0.76rem;
+  color: #737373;
+  line-height: 1.5;
+  margin-top: 2px;
+}
+
+/* ── Sequence Strip ─────────────────────────────────────────────────────────── */
+
+.strip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255,255,255,0.025);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 10px;
+  padding: 0.55rem 0.85rem;
+  margin-bottom: 1rem;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.strip::-webkit-scrollbar { display: none; }
+
+.stripLbl {
+  font-size: 0.6rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  color: #444;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.stripTokens {
+  display: flex;
+  gap: 4px;
+  flex: 1;
+  flex-wrap: nowrap;
+}
+
+.stripTok {
+  font-size: 0.7rem;
+  font-weight: 600;
+  font-family: 'SFMono-Regular', 'Consolas', monospace;
+  padding: 2px 8px;
+  border-radius: 5px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.stripTokNew {
+  animation: tokPop 0.55s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+@keyframes tokPop {
+  from { transform: scale(0.3) translateY(6px); opacity: 0; }
+  to   { transform: scale(1)   translateY(0);   opacity: 1; }
+}
+
+.stripCnt {
+  font-size: 0.6rem;
+  color: #444;
+  white-space: nowrap;
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
+/* ── Stage Navigation ───────────────────────────────────────────────────────── */
+
+.nav {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1.35rem;
+}
+
+.navBtn {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  border: 1px solid rgba(255,255,255,0.1);
+  background: rgba(255,255,255,0.04);
+  color: #ccc;
+  font-size: 1rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: background 0.15s, border-color 0.15s;
+}
+.navBtn:hover:not(:disabled) {
+  background: rgba(255,255,255,0.08);
+  border-color: rgba(255,255,255,0.2);
+  color: #fff;
+}
+.navBtn:disabled { opacity: 0.25; cursor: not-allowed; }
+
+.navMid {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+}
+
+.navDots {
+  display: flex;
+  gap: 5px;
+}
+
+.dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.12);
+  transition: background 0.2s, transform 0.2s;
+}
+.dotOn {
+  background: #FF7F50;
+  transform: scale(1.5);
+}
+
+.navNum {
+  font-size: 0.6rem;
+  color: #444;
+  font-weight: 500;
+}
+
+.navName {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #FF7F50;
+  letter-spacing: -0.01em;
+}
+
+/* ── Stage Wrapper ──────────────────────────────────────────────────────────── */
+
+.stageWrap {
+  min-height: 360px;
+  animation: stageFade 0.3s ease both;
+}
+
+@keyframes stageFade {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Common Stage Elements ──────────────────────────────────────────────────── */
+
+.stage {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.desc {
+  font-size: 0.78rem;
+  color: #888;
+  line-height: 1.65;
+  margin: 0;
+}
+.desc strong { color: #ccc; }
+
+/* ── Stage 1 ────────────────────────────────────────────────────────────────── */
+
+.s1Raw {
+  background: rgba(255,255,255,0.025);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 9px;
+  padding: 0.65rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.s1RawLbl {
+  font-size: 0.58rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  color: #444;
+}
+
+.s1RawTxt {
+  font-family: 'SFMono-Regular', monospace;
+  font-size: 1rem;
+  color: #ddd;
+  letter-spacing: 0.01em;
+}
+
+.s1Arrow {
+  text-align: center;
+  font-size: 0.75rem;
+  font-family: monospace;
+  color: #555;
+  padding: 0.1rem 0;
+  animation: arrowBounce 1.6s ease infinite;
+}
+
+@keyframes arrowBounce {
+  0%, 100% { transform: translateY(0); }
+  50%       { transform: translateY(3px); }
+}
+
+.s1Chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.s1Chip {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  border-radius: 9px;
+  padding: 0.4rem 0.75rem;
+  animation: chipIn 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+@keyframes chipIn {
+  from { transform: scale(0.4) translateY(12px); opacity: 0; }
+  to   { transform: scale(1)   translateY(0);    opacity: 1; }
+}
+
+.s1ChipTxt {
+  font-size: 0.88rem;
+  font-weight: 700;
+  font-family: 'SFMono-Regular', monospace;
+}
+
+.s1ChipId {
+  font-size: 0.58rem;
+  font-family: monospace;
+  margin-top: 2px;
+}
+
+.s1Stats {
+  display: flex;
+  background: rgba(255,255,255,0.025);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 9px;
+  overflow: hidden;
+}
+
+.stat {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0.5rem;
+  font-size: 0.65rem;
+  color: #666;
+  gap: 1px;
+}
+.stat strong {
+  font-size: 0.88rem;
+  color: #ddd;
+  font-weight: 700;
+}
+
+.statDiv {
+  width: 1px;
+  background: rgba(255,255,255,0.06);
+  flex-shrink: 0;
+}
+
+/* ── Stage 2 ────────────────────────────────────────────────────────────────── */
+
+.s2Row {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  overflow-x: auto;
+}
+
+.s2MatWrap, .s2VecWrap { display: flex; flex-direction: column; gap: 4px; flex-shrink: 0; }
+
+.s2MatLbl {
+  font-size: 0.6rem;
+  font-family: monospace;
+  color: #444;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+}
+
+.s2Mat {
+  background: rgba(255,255,255,0.02);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 8px;
+  padding: 5px;
+}
+
+.s2MatRow {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 1px 3px;
+  border-radius: 4px;
+  height: 16px;
+  transition: background 0.2s;
+  position: relative;
+}
+
+.s2MatRowHi { height: 28px; }
+
+.s2RowLbl {
+  position: absolute;
+  left: 4px;
+  font-size: 0.56rem;
+  font-family: monospace;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.s2Cell {
+  width: 13px;
+  height: 10px;
+  border-radius: 2px;
+  background: rgba(255,255,255,0.05);
+  flex-shrink: 0;
+}
+
+.s2CellHi {
+  animation: cellPulse 1.4s ease infinite;
+}
+
+@keyframes cellPulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.5; }
+}
+
+.s2Ellip {
+  font-size: 0.52rem;
+  color: #444;
+  font-family: monospace;
+  margin-left: 2px;
+}
+
+.s2Dots {
+  font-size: 0.58rem;
+  color: #444;
+  font-family: monospace;
+  text-align: center;
+  padding: 4px 2px 2px;
+}
+
+.s2Arr {
+  font-size: 1.3rem;
+  color: #444;
+  padding-top: 2.2rem;
+  flex-shrink: 0;
+}
+
+.s2Vec {
+  display: flex;
+  align-items: flex-end;
+  gap: 1px;
+  height: 80px;
+  width: 120px;
+  background: rgba(255,255,255,0.02);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 8px;
+  padding: 5px;
+  position: relative;
+  overflow: hidden;
+}
+
+.s2Dim {
+  flex: 1;
+  border-radius: 2px 2px 0 0;
+  min-width: 1px;
+  transition: height 0.45s ease, background 0.35s ease;
+}
+
+.s2VecHint {
+  font-size: 0.58rem;
+  color: #444;
+  font-style: italic;
+  text-align: center;
+}
+
+.s2HMore {
+  position: absolute;
+  bottom: 3px;
+  right: 4px;
+  font-size: 0.5rem;
+  color: #444;
+  font-family: monospace;
+}
+
+.s2Sel {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.s2SelLbl { font-size: 0.68rem; color: #666; font-weight: 600; }
+
+.s2SelBtn {
+  padding: 0.22rem 0.55rem;
+  border-radius: 6px;
+  border: 1px solid rgba(255,255,255,0.1);
+  background: rgba(255,255,255,0.04);
+  color: #888;
+  font-size: 0.7rem;
+  font-family: monospace;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.s2SelBtn:hover { background: rgba(255,255,255,0.08); color: #ccc; }
+.s2SelBtnOn { font-weight: 700; }
+
+/* ── Stage 3 ────────────────────────────────────────────────────────────────── */
+
+.s3HmWrap { display: flex; flex-direction: column; gap: 4px; overflow-x: auto; }
+
+.s3HmLbl {
+  font-size: 0.6rem;
+  font-family: monospace;
+  color: #444;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+}
+
+.s3Hm {
+  display: grid;
+  gap: 2px;
+  background: rgba(255,255,255,0.02);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 9px;
+  padding: 6px;
+  min-width: 240px;
+}
+
+.s3ColHdr {
+  font-size: 0.58rem;
+  color: #444;
+  font-family: monospace;
+  text-align: center;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding-bottom: 2px;
+  transition: color 0.2s;
+}
+
+.s3RowHdr {
+  font-size: 0.56rem;
+  color: #444;
+  font-family: monospace;
+  display: flex;
+  align-items: center;
+  white-space: nowrap;
+  padding-right: 4px;
+}
+
+.s3Cell {
+  height: 22px;
+  border-radius: 3px;
+  transition: background 0.3s ease;
+  cursor: default;
+}
+
+.s3Add {
+  background: rgba(255,255,255,0.02);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 10px;
+  padding: 0.75rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.s3AddTitle { font-size: 0.7rem; color: #666; font-weight: 600; }
+
+.s3AddRow {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+}
+
+.s3Block {
+  border-radius: 8px;
+  border: 1.5px solid;
+  padding: 0.4rem 0.7rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  min-width: 76px;
+}
+
+.s3BlockLbl { font-size: 0.68rem; font-weight: 700; font-family: monospace; }
+.s3BlockDim { font-size: 0.58rem; color: #666; }
+
+.s3Op { font-size: 1.1rem; color: #555; font-weight: 700; }
+
+/* ── Stage 4 ────────────────────────────────────────────────────────────────── */
+
+.s4BlockRow {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.s4BLbl { font-size: 0.68rem; color: #666; font-weight: 600; margin-right: 2px; }
+
+.s4BBtn {
+  width: 26px;
+  height: 26px;
+  border-radius: 5px;
+  border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(255,255,255,0.04);
+  color: #666;
+  font-size: 0.65rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.s4BBtn:hover { background: rgba(255,255,255,0.08); color: #ccc; }
+.s4BBtnOn { background: #FF7F50 !important; border-color: #FF7F50 !important; color: #fff !important; }
+
+.s4SvgWrap {
+  background: rgba(255,255,255,0.02);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 10px;
+  padding: 0.4rem 0.5rem 0.2rem;
+  overflow: hidden;
+}
+
+.s4Svg { display: block; width: 100%; }
+
+.s4Hint {
+  font-size: 0.62rem;
+  color: #444;
+  text-align: center;
+  margin-top: 2px;
+  margin-bottom: 4px;
+  font-style: italic;
+}
+
+.s4Res {
+  background: rgba(255,255,255,0.02);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 8px;
+  padding: 0.55rem 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.s4ResLbl {
+  font-size: 0.6rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: #444;
+}
+
+.s4ResRow {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.s4ResRow::-webkit-scrollbar { display: none; }
+
+.s4ResBlk {
+  width: 28px;
+  height: 26px;
+  border-radius: 5px;
+  border: 1px solid rgba(255,255,255,0.07);
+  background: rgba(255,255,255,0.03);
+  color: #444;
+  font-size: 0.58rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.2s;
+}
+
+.s4ResBlkDone {
+  background: rgba(16,185,129,0.1);
+  border-color: rgba(16,185,129,0.28);
+  color: #10B981;
+}
+
+.s4ResBlkOn {
+  background: rgba(255,127,80,0.15);
+  border-color: rgba(255,127,80,0.45);
+  color: #FF7F50;
+  transform: scale(1.12);
+  box-shadow: 0 0 10px rgba(255,127,80,0.25);
+}
+
+.s4ResArr { font-size: 0.58rem; color: #2a2a2a; flex-shrink: 0; }
+
+/* ── Stage 5 ────────────────────────────────────────────────────────────────── */
+
+.s5Layout {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.85rem;
+  overflow-x: auto;
+}
+
+.s5Col { display: flex; flex-direction: column; gap: 4px; flex-shrink: 0; }
+.s5MatWrap { display: flex; flex-direction: column; gap: 4px; flex-shrink: 0; }
+.s5LogWrap { display: flex; flex-direction: column; gap: 4px; flex: 1; min-width: 180px; }
+
+.s5Lbl {
+  font-size: 0.6rem;
+  font-family: monospace;
+  color: #444;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.s5HVec {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  background: rgba(255,255,255,0.02);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 8px;
+  padding: 5px;
+  width: 30px;
+  position: relative;
+}
+
+.s5HCell {
+  height: 14px;
+  border-radius: 3px;
+  animation: cellPulse 1.4s ease infinite;
+}
+.s5HCell:nth-child(odd) { animation-delay: 0.35s; }
+
+.s5HMore {
+  font-size: 0.5rem;
+  color: #444;
+  font-family: monospace;
+  text-align: center;
+  margin-top: 2px;
+}
+
+.s5Mat {
+  background: rgba(255,255,255,0.02);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 8px;
+  padding: 5px;
+  position: relative;
+}
+.s5MatRow { display: flex; gap: 2px; margin-bottom: 2px; }
+.s5MatCell { width: 12px; height: 10px; background: rgba(255,255,255,0.05); border-radius: 2px; }
+.s5MatNote { font-size: 0.5rem; color: #444; font-family: monospace; margin-top: 3px; }
+
+.s5Logs { display: flex; flex-direction: column; gap: 4px; }
+
+.s5LogRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 20px;
+}
+
+.s5LogTok {
+  font-size: 0.68rem;
+  font-family: monospace;
+  color: #888;
+  width: 62px;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.s5LogTrack {
+  flex: 1;
+  height: 9px;
+  background: rgba(255,255,255,0.04);
+  border-radius: 5px;
+  overflow: hidden;
+}
+
+.s5LogFill {
+  height: 100%;
+  border-radius: 5px;
+  transition: width 0.4s ease;
+}
+
+.s5LogVal {
+  font-size: 0.62rem;
+  font-family: monospace;
+  color: #555;
+  width: 26px;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.s5LogMore { font-size: 0.6rem; color: #444; font-style: italic; font-family: monospace; }
+
+/* ── Stage 6 ────────────────────────────────────────────────────────────────── */
+
+.s6Formula {
+  font-family: 'SFMono-Regular', monospace;
+  font-size: 0.76rem;
+  color: #888;
+  background: rgba(255,255,255,0.025);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 8px;
+  padding: 0.6rem 0.9rem;
+  line-height: 1.6;
+}
+
+.s6SlRow {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.s6SlEnd { font-size: 0.68rem; color: #666; font-family: monospace; flex-shrink: 0; }
+
+.s6Sl {
+  flex: 1;
+  height: 4px;
+  accent-color: #FF7F50;
+  cursor: pointer;
+}
+
+.s6Badge {
+  font-size: 0.63rem;
+  font-weight: 700;
+  color: #fff;
+  padding: 0.18rem 0.55rem;
+  border-radius: 99px;
+  transition: background 0.3s ease;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.s6Bars { display: flex; flex-direction: column; gap: 4px; }
+
+.s6BarRow {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 3px 5px;
+  border-radius: 6px;
+  border: 1px solid transparent;
+  transition: background 0.2s, border-color 0.2s;
+}
+
+.s6BarRowOn {
+  background: rgba(255,127,80,0.07);
+  border-color: rgba(255,127,80,0.22);
+}
+
+.s6BarTok {
+  font-size: 0.68rem;
+  font-family: monospace;
+  color: #888;
+  width: 70px;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.s6BarTrack {
+  flex: 1;
+  height: 11px;
+  background: rgba(255,255,255,0.04);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.s6BarFill {
+  height: 100%;
+  border-radius: 6px;
+  transition: width 0.16s ease, background 0.2s ease;
+}
+
+.s6BarVal {
+  font-size: 0.63rem;
+  font-family: monospace;
+  color: #555;
+  width: 38px;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+/* ── Stage 7 ────────────────────────────────────────────────────────────────── */
+
+.s7Row {
+  display: flex;
+  align-items: flex-start;
+  gap: 1.25rem;
+  flex-wrap: wrap;
+}
+
+.s7Right {
+  flex: 1;
+  min-width: 180px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  justify-content: center;
+}
+
+.s7Result {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  background: rgba(255,127,80,0.07);
+  border: 1px solid rgba(255,127,80,0.22);
+  border-radius: 10px;
+  padding: 0.75rem 1rem;
+  animation: resultPop 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+@keyframes resultPop {
+  from { transform: scale(0.75); opacity: 0; }
+  to   { transform: scale(1);    opacity: 1; }
+}
+
+.s7ResLbl { font-size: 0.62rem; color: #666; font-weight: 600; }
+
+.s7ResTok {
+  font-size: 1.3rem;
+  font-weight: 800;
+  font-family: monospace;
+  color: #FF7F50;
+}
+
+.s7ResId { font-size: 0.62rem; color: #555; font-family: monospace; }
+.s7ResP  { font-size: 0.7rem; color: #10B981; font-weight: 600; }
+
+.s7Hint {
+  font-size: 0.76rem;
+  color: #444;
+  font-style: italic;
+  padding: 0.75rem 0;
+}
+
+.s7BtnRow {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.5rem;
+}
+
+.s7SBtn {
+  background: linear-gradient(135deg, #FF7F50, #F97316);
+  border: none;
+  border-radius: 10px;
+  color: #fff;
+  font-size: 0.83rem;
+  font-weight: 700;
+  padding: 0.65rem 1.3rem;
+  cursor: pointer;
+  font-family: inherit;
+  box-shadow: 0 4px 18px rgba(255,127,80,0.35);
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+.s7SBtn:hover { transform: translateY(-2px); box-shadow: 0 6px 22px rgba(255,127,80,0.45); }
+.s7SBtn:active { transform: translateY(0); }
+
+.s7GBtn {
+  background: linear-gradient(135deg, #3B82F6, #2563EB);
+  border: none;
+  border-radius: 10px;
+  color: #fff;
+  font-size: 0.83rem;
+  font-weight: 700;
+  padding: 0.65rem 1.3rem;
+  cursor: pointer;
+  font-family: inherit;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  box-shadow: 0 4px 18px rgba(59,130,246,0.35);
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+.s7GBtn:hover { transform: translateY(-2px); box-shadow: 0 6px 22px rgba(59,130,246,0.45); }
+.s7GBtnSub { font-size: 0.58rem; opacity: 0.75; font-weight: 400; margin-top: 2px; }
+
+.s7Done {
+  font-size: 0.78rem;
+  color: #10B981;
+  font-weight: 600;
+  padding: 0.5rem 0;
+}
+
+.s7Loop {
+  background: rgba(255,255,255,0.02);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 10px;
+  padding: 0.75rem 1rem;
+}
+
+.s7LoopTitle { font-size: 0.68rem; color: #555; font-weight: 600; margin-bottom: 0.5rem; }
+
+.s7LoopSteps {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex-wrap: wrap;
+}
+
+.s7LStep {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 6px;
+  padding: 0.22rem 0.5rem;
+}
+
+.s7LNum {
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  background: rgba(255,127,80,0.15);
+  color: #FF7F50;
+  font-size: 0.58rem;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.s7LName { font-size: 0.6rem; color: #888; white-space: nowrap; }
