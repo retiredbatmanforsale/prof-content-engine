@@ -167,6 +167,7 @@ const sidebars: SidebarsConfig = {
             'ai-for-engineering/agentic-ai/04-planner',
             'ai-for-engineering/agentic-ai/05-parallel-executors',
             'ai-for-engineering/agentic-ai/06-shared-memory',
+            'ai-for-engineering/agentic-ai/07-critic',
           ],
         },
         { type: 'html', value: '<span class="sidebar-divider">Career</span>' },

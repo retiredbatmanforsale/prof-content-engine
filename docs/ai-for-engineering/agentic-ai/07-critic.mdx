@@ -1,0 +1,403 @@
+---
+sidebar_label: '7 · Critic'
+title: 'Lesson 7 — The Critic: validate before you deliver'
+description: >-
+  Add a Critic agent that audits the synthesised answer against the findings,
+  flags unsupported claims and gaps, and outputs a structured PASS/FAIL verdict.
+  Then discover that diagnosing a problem is not the same as fixing it.
+tutor_topic: "AI agents — critic agent and output validation"
+tutor_concepts:
+  - "critic as a separate validation agent"
+  - "structured output for machine-readable verdicts"
+  - "GAP vs UNSUPPORTED claim distinction"
+  - "PASS/FAIL verdict format"
+  - "parsing structured LLM output"
+  - "diagnosis without action is incomplete"
+---
+
+# The Critic: validate before you deliver
+
+Lesson 6 ended with a synthesiser that invented a confident claim — AlphaCode's approach influencing StarCoder and CodeLlama — from a sub-question that returned no data at all. Shared memory kept retrieval consistent. It said nothing about whether the answer was trustworthy.
+
+A **Critic** is an agent whose only job is to read the synthesised answer and audit it against the actual findings. It does not search, does not reason step by step, does not rewrite anything. It answers one question: *does this answer hold up?*
+
+---
+
+<div className="not-prose my-8 rounded-2xl border-2 border-rose-400 bg-gradient-to-br from-rose-50 to-orange-50 px-5 py-4 dark:border-rose-700 dark:from-rose-950/40 dark:to-orange-950/40">
+  <p className="m-0 text-xs font-bold uppercase tracking-widest text-rose-800 dark:text-rose-200">What you're building</p>
+  <p className="mt-2 mb-1 text-base font-bold text-slate-900 dark:text-slate-100">ResearchAgent — v0.7</p>
+  <p className="mt-0 mb-0 text-sm text-slate-700 dark:text-slate-300">After synthesis, the Critic reads the answer + findings and outputs a structured verdict. The system now knows when an answer is bad. It just can't fix it yet.</p>
+</div>
+
+## The verdict format
+
+The Critic outputs structured text that downstream code can parse. Three line types:
+
+```
+GAP: <sub-question that produced no useful data>
+UNSUPPORTED: <claim in the answer not backed by any finding>
+VERDICT: PASS
+VERDICT: FAIL
+```
+
+One `VERDICT:` line always appears last. `GAP:` and `UNSUPPORTED:` lines may appear zero or more times before it. A `VERDICT: FAIL` means at least one gap or unsupported claim was found.
+
+Structured output is a design choice — not a feature of LLMs. The system prompt instructs the Critic to use exactly these prefixes so the `CriticVerdict` class can parse them with simple string operations. No regex, no JSON schema required.
+
+---
+
+## The Critic prompt
+
+```python
+CRITIC_PROMPT = """You are a research critic. You receive:
+  1. The original research question
+  2. The findings for each sub-question (what was actually retrieved)
+  3. The synthesised answer to review
+
+Audit the synthesised answer for two types of problems:
+
+GAP: a sub-question whose finding contained no useful data, but the answer
+     treats as if the gap does not exist or invents information to fill it.
+
+UNSUPPORTED: a specific claim in the synthesised answer that does not appear
+             in any of the provided findings. Quote the claim exactly.
+
+Output one line per issue found (using the GAP: or UNSUPPORTED: prefix).
+Then output exactly one of:
+  VERDICT: PASS
+  VERDICT: FAIL
+
+VERDICT: FAIL if any GAP or UNSUPPORTED issue was found. PASS otherwise."""
+```
+
+---
+
+## CriticVerdict — parsing structured output
+
+```python
+class CriticVerdict:
+    def __init__(self, raw: str):
+        self.raw         = raw
+        self.passed      = "VERDICT: PASS" in raw
+        self.gaps        = [l[4:].strip()  for l in raw.splitlines() if l.startswith("GAP:")]
+        self.unsupported = [l[12:].strip() for l in raw.splitlines() if l.startswith("UNSUPPORTED:")]
+```
+
+Three fields derived from the raw text: `passed` (bool), `gaps` (list of strings), `unsupported` (list of strings). Any code downstream — like a retry loop in Lesson 8 — can read `verdict.passed` without touching the raw string.
+
+---
+
+<div className="not-prose my-6 rounded-xl border-l-4 border-rose-500 bg-rose-50/70 py-3 pl-4 pr-3 dark:bg-rose-950/25">
+  <p className="m-0 text-sm font-semibold text-rose-900 dark:text-rose-200">Your tasks</p>
+  <p className="mt-2 mb-0 text-sm text-slate-800 dark:text-slate-200">
+    1. Complete <code>CriticVerdict.__init__</code>: set <code>self.passed</code>, <code>self.gaps</code>, <code>self.unsupported</code> from the raw string. Add a <code>__str__</code> that prints a readable summary.<br/>
+    2. Write <code>Critic.review()</code>: build the critic messages, call the LLM, return a <code>CriticVerdict</code>.<br/>
+    3. Add <code>critic: Critic</code> to <code>ResearchAgent.__init__</code> and call <code>self.critic.review()</code> after synthesis in <code>run()</code>. Return both the answer and the verdict.
+  </p>
+</div>
+
+<PythonPlayground minLines={95} starter={`import asyncio
+
+# ── Interfaces ────────────────────────────────────────────────────────────────
+class LLMClient:
+    def chat(self, messages: list) -> str:
+        raise NotImplementedError
+class SearchTool:
+    def search(self, query: str) -> list:
+        raise NotImplementedError
+
+# ── Prompts ───────────────────────────────────────────────────────────────────
+PLANNER_PROMPT = "You are a research planner. Decompose into a numbered list. Output ONLY the list."
+REACT_PROMPT   = "You are a research assistant. Output SEARCH: <query> or ANSWER: <text> each step."
+SYNTHESIS_PROMPT = "You are a research synthesiser. Combine findings into a coherent answer. Acknowledge gaps."
+CRITIC_PROMPT  = """You are a research critic. Audit the synthesised answer against the findings.
+Output one line per issue:
+  GAP: <sub-question with no useful data that the answer ignores or invents around>
+  UNSUPPORTED: <exact claim in the answer not found in any finding>
+Then output exactly one of:  VERDICT: PASS  |  VERDICT: FAIL"""
+
+def parse_plan(text: str) -> list:
+    return [l.split('. ', 1)[1].strip() for l in text.strip().splitlines()
+            if l.strip() and l.strip()[0].isdigit() and '. ' in l]
+
+# ── MockLLM — four modes (given) ──────────────────────────────────────────────
+class MockLLM(LLMClient):
+    def chat(self, messages: list) -> str:
+        system = messages[0]["content"].lower()
+        if "planner"   in system or "decompose"  in system: return self._plan(messages[-1]["content"].lower())
+        if "synthesiser" in system or "synthesize" in system: return self._synth(messages[-1]["content"])
+        if "critic"    in system or "audit"       in system: return self._critic(messages[-1]["content"])
+        return self._react(messages)
+
+    def _plan(self, q: str) -> str:
+        return ("1. What benchmark did AlphaCode use and what were its results?\\n"
+                "2. How do AlphaCode and Codex differ algorithmically?\\n"
+                "3. What real-world research impact have both papers had by 2024?")
+
+    def _synth(self, content: str) -> str:
+        has_alpha = "codecontests" in content.lower()
+        has_algo  = "filter" in content.lower()
+        parts = ["Synthesised answer:"]
+        if has_alpha: parts.append("AlphaCode (DeepMind 2022) used CodeContests with a generate-and-filter strategy, matching median competitive programmer performance.")
+        if has_algo:  parts.append("AlphaCode filters sampled programs by test cases; Codex uses standard generation without filtering.")
+        # ⚠ This claim is NOT in any retrieved finding — the synthesiser invented it
+        parts.append("Both papers significantly influenced subsequent code generation research, with AlphaCode's filtering approach adopted in StarCoder and CodeLlama, and Codex's work underpinning GitHub Copilot.")
+        return " ".join(parts)
+
+    def _critic(self, content: str) -> str:
+        issues = []
+        c = content.lower()
+        # Detect gaps: sub-question with no retrieved data
+        if "no information retrieved" in c:
+            issues.append("GAP: Sub-question about real-world research impact — finding admitted 'No information retrieved', but the synthesised answer makes specific claims about this topic")
+        # Detect unsupported claims: appears in synthesised section but not in findings
+        if "synthesised answer:" in content:
+            synth_part   = content.split("Synthesised answer:")[1].lower()
+            findings_part = content.split("Synthesised answer:")[0].lower()
+            if ("starcoder" in synth_part or "codellama" in synth_part) and \
+               "starcoder" not in findings_part and "codellama" not in findings_part:
+                issues.append("UNSUPPORTED: 'AlphaCode's filtering approach adopted in StarCoder and CodeLlama' — this specific claim does not appear in any retrieved finding")
+        issues.append("VERDICT: FAIL" if issues else "VERDICT: PASS")
+        return "\\n".join(issues)
+
+    def _react(self, messages: list) -> str:
+        obs   = [m for m in messages if m["role"] == "user" and m["content"].startswith("OBSERVATION:")]
+        step  = len(obs)
+        query = messages[1]["content"].lower()
+        seen  = " ".join(m["content"] for m in obs).lower()
+        if step == 0:
+            if "benchmark"       in query: return "SEARCH: AlphaCode benchmark CodeContests evaluation"
+            if "algorithmically" in query or "differ" in query: return "SEARCH: AlphaCode Codex algorithmic comparison"
+            return "SEARCH: AlphaCode Codex research impact 2024"
+        if "codecontests" in seen or "generate-and-filter" in seen:
+            return "ANSWER: AlphaCode used CodeContests; generate-and-filter strategy; matched median competitive programmer."
+        if "comparison" in seen or "filter" in seen:
+            return "ANSWER: AlphaCode filters sampled programs by test cases. Codex uses standard generation without filtering."
+        if "no documents" in seen:
+            return "ANSWER: No information retrieved for this sub-question."
+        return f"ANSWER: {seen[:120] if seen else 'Nothing retrieved.'}"
+
+# ── MockSearchEngine (given) ──────────────────────────────────────────────────
+class MockSearchEngine(SearchTool):
+    DB = {"alphacode":  ["AlphaCode: CodeContests, generate-and-filter, matched median competitive programmer.",
+                         "AlphaCode training: filtered competitive-programming code from GitHub."],
+          "comparison": ["AlphaCode filters sampled programs by test cases; Codex uses standard generation."]}
+    def search(self, q: str) -> list:
+        results = []
+        for kw, docs in self.DB.items():
+            if kw in q.lower(): results.extend(docs)
+        return results or [f"No documents found for: '{q}'"]
+
+# ── SharedMemory (given — built in L6) ────────────────────────────────────────
+class SharedMemory:
+    def __init__(self): self._store = {}; self._lock = asyncio.Lock()
+    async def get(self, key: str): 
+        async with self._lock: return self._store.get(key)
+    async def set(self, key: str, value: list):
+        async with self._lock: self._store[key] = value
+    def snapshot(self) -> dict: return dict(self._store)
+
+# ── Planner (given) ───────────────────────────────────────────────────────────
+class Planner:
+    def __init__(self, llm): self.llm = llm
+    def plan(self, query: str) -> list:
+        return parse_plan(self.llm.chat([{"role": "system", "content": PLANNER_PROMPT},
+                                          {"role": "user",   "content": query}]))
+
+# ── Your turn: build the Critic ───────────────────────────────────────────────
+class CriticVerdict:
+    def __init__(self, raw: str):
+        self.raw = raw
+        # TODO: set self.passed  = True if "VERDICT: PASS" in raw
+        # TODO: set self.gaps    = list of strings from lines starting with "GAP:"
+        # TODO: set self.unsupported = list of strings from lines starting with "UNSUPPORTED:"
+        pass
+
+    def __str__(self):
+        # TODO: return a readable summary, e.g.:
+        # "Critic: ✓ PASS" or "Critic: ✗ FAIL"
+        # followed by "  GAP: ..." and "  UNSUPPORTED: ..." lines
+        pass
+
+class Critic:
+    def __init__(self, llm: LLMClient):
+        self.llm = llm
+
+    def review(self, original_query: str, findings: dict, answer: str) -> CriticVerdict:
+        # TODO:
+        # 1. Build findings_text: "Sub-question: ...\nFinding: ..." for each entry
+        # 2. Build messages: CRITIC_PROMPT as system, then user message with
+        #    original_query + findings_text + answer
+        # 3. Call self.llm.chat(messages) and return CriticVerdict(raw)
+        pass
+
+# ── ResearchAgent — add critic (your turn: add critic param + review call) ────
+class ResearchAgent:
+    def __init__(self, llm, search_tool, planner, critic, max_steps=6, verbose=False):
+        self.llm=llm; self.search_tool=search_tool; self.planner=planner
+        self.critic=critic; self.max_steps=max_steps; self.verbose=verbose
+
+    async def run(self, query: str):
+        sub_questions = self.planner.plan(query)
+        if self.verbose:
+            print(f"[Planner] {len(sub_questions)} sub-questions:")
+            for i, sq in enumerate(sub_questions, 1): print(f"  {i}. {sq}")
+            print()
+        memory  = SharedMemory()
+        results = await asyncio.gather(*[self._react(sq, memory) for sq in sub_questions])
+        findings = {sub_questions[i]: results[i] for i in range(len(sub_questions))}
+        answer  = self._synthesise(query, findings)
+        # TODO: call self.critic.review(query, findings, answer)
+        # TODO: if verbose, print the verdict
+        # TODO: return (answer, verdict)  ← tuple so caller can act on both
+        return answer  # ← replace with tuple when done
+
+    # ── Given helpers ─────────────────────────────────────────────────────────
+    async def _react(self, query: str, memory: SharedMemory) -> str:
+        messages = [{"role": "system", "content": REACT_PROMPT},
+                    {"role": "user",   "content": query}]
+        for step in range(self.max_steps):
+            await asyncio.sleep(0)
+            response = self.llm.chat(messages)
+            if response.startswith("SEARCH:"):
+                sq = response[len("SEARCH:"):].strip()
+                if self.verbose: print(f"    [{query[:30]}...] search: {sq}")
+                cached = await memory.get(sq)
+                results = cached if cached is not None else self.search_tool.search(sq)
+                if cached is None: await memory.set(sq, results)
+                obs = "\\n".join(f"- {r}" for r in results)
+                messages += [{"role": "assistant", "content": response},
+                             {"role": "user",      "content": f"OBSERVATION:\\n{obs}"}]
+            elif response.startswith("ANSWER:"):
+                return response[len("ANSWER:"):].strip()
+            else: return response
+        return "Max steps reached."
+
+    def _synthesise(self, q: str, findings: dict) -> str:
+        text = "\\n\\n".join(f"Sub-question: {sq}\\nFinding: {ans}" for sq,ans in findings.items())
+        return self.llm.chat([{"role": "system", "content": SYNTHESIS_PROMPT},
+                               {"role": "user",   "content": f"Original: {q}\\n\\nFindings:\\n{text}"}])
+
+# ── Test ──────────────────────────────────────────────────────────────────────
+async def main():
+    llm    = MockLLM()
+    agent  = ResearchAgent(
+        llm=llm, search_tool=MockSearchEngine(),
+        planner=Planner(llm), critic=Critic(llm), verbose=True,
+    )
+    result = await agent.run(
+        "Compare AlphaCode and Codex: benchmark, algorithmic approach, and research impact."
+    )
+    answer, verdict = result
+    print("\\n─── Synthesised answer ──────────────────────────────────────────")
+    print(answer)
+    print("\\n─── Critic verdict ──────────────────────────────────────────────")
+    print(verdict)
+
+await main()
+`} />
+
+---
+
+## Now look at what happens with VERDICT: FAIL
+
+The Critic found two problems and said FAIL. Read the output: the agent printed the verdict — and then returned the bad answer anyway.
+
+<div className="not-prose my-6 rounded-xl border-2 border-amber-300 bg-amber-50/90 p-4 dark:border-amber-700 dark:bg-amber-950/30">
+  <p className="m-0 text-sm font-semibold text-amber-900 dark:text-amber-200">The wall — diagnosis without action</p>
+  <p className="mt-2 mb-0 text-sm text-slate-800 dark:text-slate-200">
+    Run the cell below. The Critic correctly flags both issues. Read the final line: what did the agent actually return to the user?
+  </p>
+</div>
+
+<PythonPlayground minLines={50} starter={`import asyncio
+
+# Minimal self-contained demonstration of the wall
+# The Critic says FAIL. The agent still delivers the bad answer.
+
+CRITIC_VERDICT = """GAP: Sub-question about real-world research impact — finding admitted 'No information retrieved', but the synthesised answer makes specific claims about this topic
+UNSUPPORTED: 'AlphaCode's filtering approach adopted in StarCoder and CodeLlama' — this claim does not appear in any retrieved finding
+VERDICT: FAIL"""
+
+BAD_ANSWER = ("Synthesised answer: AlphaCode used CodeContests with generate-and-filter. "
+              "AlphaCode filters sampled programs; Codex does not. "
+              "Both papers significantly influenced subsequent research, with AlphaCode's "
+              "filtering approach adopted in StarCoder and CodeLlama.")
+
+class CriticVerdict:
+    def __init__(self, raw: str):
+        self.raw         = raw
+        self.passed      = "VERDICT: PASS" in raw
+        self.gaps        = [l[4:].strip()  for l in raw.splitlines() if l.startswith("GAP:")]
+        self.unsupported = [l[12:].strip() for l in raw.splitlines() if l.startswith("UNSUPPORTED:")]
+
+    def __str__(self):
+        status = "✓ PASS" if self.passed else "✗ FAIL"
+        lines  = [f"Critic: {status}"]
+        for g in self.gaps:        lines.append(f"  GAP:         {g[:80]}...")
+        for u in self.unsupported: lines.append(f"  UNSUPPORTED: {u[:80]}...")
+        return "\\n".join(lines)
+
+# Simulate what the current agent does
+verdict = CriticVerdict(CRITIC_VERDICT)
+
+print("Critic output:")
+print(verdict)
+print()
+print("What the agent returned to the user:")
+print(BAD_ANSWER)
+print()
+print("─── The gap ─────────────────────────────────────────────────────")
+print(f"Verdict passed:          {verdict.passed}")
+print(f"Gaps found:              {len(verdict.gaps)}")
+print(f"Unsupported claims:      {len(verdict.unsupported)}")
+print()
+print("The Critic correctly identified both problems.")
+print("The agent acknowledged them — then delivered the bad answer unchanged.")
+print()
+print("VERDICT: FAIL is diagnostic, not corrective.")
+print("For it to mean something, the orchestrator must act on it:")
+print("  • Re-search the GAP sub-questions with more focused queries")
+print("  • Re-synthesise without the UNSUPPORTED claims")
+print("  • Re-run the Critic on the revised answer")
+print("  • Accept when VERDICT: PASS  (or after max retries)")
+print()
+print("That feedback loop is Lesson 8.")
+`} />
+
+---
+
+## What the Critic does. What it can't do.
+
+The Critic has one job: audit. It reads, it reasons, it flags. It does not search, it does not rewrite, it does not retry. Its output is a structured verdict that *other code* is supposed to act on.
+
+<div className="not-prose my-6 rounded-xl border-l-4 border-rose-500 bg-rose-50/70 py-3 pl-4 pr-3 dark:bg-rose-950/25">
+  <p className="m-0 text-sm font-semibold text-rose-900 dark:text-rose-200">Why structured output matters here</p>
+  <p className="mt-2 mb-0 text-sm text-slate-800 dark:text-slate-200">
+    <code>verdict.passed</code> is a bool. <code>verdict.gaps</code> is a list. The orchestrator in Lesson 8 will check <code>if not verdict.passed</code>, iterate over <code>verdict.gaps</code> to re-search specific sub-questions, and pass <code>verdict.unsupported</code> to a revised synthesis call. None of this is possible if the Critic returns freeform prose — you cannot branch code on a paragraph.
+  </p>
+</div>
+
+This is a general principle for multi-agent systems: **agents that produce outputs consumed by other agents must produce structured outputs.** Freeform prose is for humans. Parseable formats are for systems.
+
+---
+
+## Where you are
+
+| Capability | Status |
+|-----------|--------|
+| LLM call | ✓ Lesson 1 |
+| Tool use + RAG | ✓ Lesson 2 |
+| Multi-step adaptive search | ✓ Lesson 3 |
+| Upfront decomposition | ✓ Lesson 4 |
+| Parallel concurrent execution | ✓ Lesson 5 |
+| Shared memory + deduplication | ✓ Lesson 6 |
+| Critic audit + structured verdict | ✓ This lesson |
+| Feedback loop on FAIL verdict | ✗ Lesson 8 |
+
+---
+
+<div className="not-prose mt-10 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-6 dark:border-slate-700">
+  <a href="./06-shared-memory" className="text-sm font-medium text-slate-600 no-underline hover:text-emerald-700 hover:underline dark:text-slate-400 dark:hover:text-emerald-400">← Lesson 6 · Shared memory</a>
+  <a href="./08-full-system" className="text-sm font-semibold text-emerald-700 no-underline hover:underline dark:text-emerald-400">Lesson 8 · Full system →</a>
+</div>
