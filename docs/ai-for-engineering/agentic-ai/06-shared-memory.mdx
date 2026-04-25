@@ -1,0 +1,460 @@
+---
+sidebar_label: '6 · Shared memory'
+title: 'Lesson 6 — Shared memory: one source of truth'
+description: >-
+  Give all parallel executors a shared cache. Eliminate duplicate searches and
+  contradictory findings. Then discover that consistency is not the same as
+  correctness — the synthesiser can still hallucinate from consistent facts.
+tutor_topic: "AI agents — shared memory and consistency"
+tutor_concepts:
+  - "shared memory as a deduplication layer"
+  - "race conditions in concurrent code"
+  - "asyncio.Lock for safe concurrent writes"
+  - "cache-before-search, write-after-fetch pattern"
+  - "consistency vs correctness"
+  - "synthesiser hallucination despite clean memory"
+---
+
+# Shared memory: one source of truth
+
+Lesson 5's parallel executors ran in complete isolation — each started with no knowledge of what others had already retrieved. Two executors needing the same documents searched independently, fetched the same results twice, and wrote separate local copies. Worse: if two searches returned slightly different phrasings of the same fact, the synthesiser received contradictory inputs with no way to reconcile them.
+
+**Shared memory** fixes this. Before searching, each executor asks: "has anyone already fetched this?" If yes, use the cached result. If no, search and write the result so others can benefit. Every executor reads from the same store — one consistent source of truth instead of N isolated caches.
+
+---
+
+<div className="not-prose my-8 rounded-2xl border-2 border-violet-400 bg-gradient-to-br from-violet-50 to-purple-50 px-5 py-4 dark:border-violet-700 dark:from-violet-950/40 dark:to-purple-950/40">
+  <p className="m-0 text-xs font-bold uppercase tracking-widest text-violet-800 dark:text-violet-200">What you're building</p>
+  <p className="mt-2 mb-1 text-base font-bold text-slate-900 dark:text-slate-100">ResearchAgent — v0.6</p>
+  <p className="mt-0 mb-0 text-sm text-slate-700 dark:text-slate-300">A <code>SharedMemory</code> store with an <code>asyncio.Lock</code>. Executors check before searching, write after fetching. The post-mortem shows exactly how many searches were deduped.</p>
+</div>
+
+## The race condition you must prevent
+
+Two coroutines check `memory.get("AlphaCode benchmark")` at the same instant. Both see `None`. Both decide to search. Both fetch. Both write. The dedup failed — not because the logic was wrong, but because the check and the write weren't atomic.
+
+```
+Without a lock:
+  Executor A:  get("AlphaCode") → None
+  Executor B:  get("AlphaCode") → None   ← both see None before either writes
+  Executor A:  search() → results
+  Executor B:  search() → results         ← duplicate fetch
+  Executor A:  set("AlphaCode", results)
+  Executor B:  set("AlphaCode", results)  ← duplicate write
+```
+
+An `asyncio.Lock` makes the check-and-write atomic: while one coroutine holds the lock, no other can enter the critical section.
+
+```
+With asyncio.Lock:
+  Executor A:  acquires lock
+  Executor A:  get("AlphaCode") → None → search → set → releases lock
+  Executor B:  acquires lock
+  Executor B:  get("AlphaCode") → [results]  ← cache hit, no search
+  Executor B:  releases lock
+```
+
+---
+
+## SharedMemory design
+
+```python
+class SharedMemory:
+    def __init__(self):
+        self._store = {}          # {search_query: [doc_strings]}
+        self._lock  = asyncio.Lock()
+
+    async def get(self, key: str):
+        async with self._lock:
+            return self._store.get(key)   # None if not cached
+
+    async def set(self, key: str, value: list) -> None:
+        async with self._lock:
+            self._store[key] = value
+
+    def snapshot(self) -> dict:           # for verbose trace — no lock needed (read-only copy)
+        return dict(self._store)
+```
+
+The `async with self._lock` block in `get` and `set` ensures only one coroutine runs the body at a time. `snapshot()` is called after all executors finish, so no lock is needed.
+
+---
+
+## The updated executor pattern
+
+```
+Before (L5):  search always
+After  (L6):  check memory → if hit, use cache  |  if miss, search + write
+```
+
+```python
+cached = await memory.get(search_query)
+if cached is not None:
+    results = cached           # free — no search call
+else:
+    results = search_tool.search(search_query)
+    await memory.set(search_query, results)
+```
+
+`run()` creates one `SharedMemory` instance and passes it into every `_react()` coroutine via `asyncio.gather`.
+
+---
+
+<div className="not-prose my-6 rounded-xl border-l-4 border-violet-500 bg-violet-50/70 py-3 pl-4 pr-3 dark:bg-violet-950/25">
+  <p className="m-0 text-sm font-semibold text-violet-900 dark:text-violet-200">Your tasks</p>
+  <p className="mt-2 mb-0 text-sm text-slate-800 dark:text-slate-200">
+    1. Write the <code>SharedMemory</code> class: <code>__init__</code>, <code>async get()</code>, <code>async set()</code>, <code>snapshot()</code>.<br/>
+    2. Update <code>_react(query, memory)</code>: before searching, <code>await memory.get()</code>; on a miss, search then <code>await memory.set()</code>.<br/>
+    3. Update <code>run()</code>: create one <code>SharedMemory()</code> and pass it to every <code>_react</code> coroutine in <code>asyncio.gather()</code>. Print the memory snapshot when verbose.
+  </p>
+</div>
+
+<PythonPlayground minLines={95} starter={`import asyncio
+
+# ── Interfaces ────────────────────────────────────────────────────────────────
+class LLMClient:
+    def chat(self, messages: list) -> str:
+        raise NotImplementedError
+
+class SearchTool:
+    def search(self, query: str) -> list:
+        raise NotImplementedError
+
+# ── Prompts ───────────────────────────────────────────────────────────────────
+PLANNER_PROMPT   = "You are a research planner. Decompose into a numbered list. Output ONLY the list."
+REACT_PROMPT     = "You are a research assistant. Output SEARCH: <query> or ANSWER: <text> each step."
+SYNTHESIS_PROMPT = "You are a research synthesiser. Combine all findings into a coherent answer. Acknowledge gaps clearly."
+
+def parse_plan(text: str) -> list:
+    return [l.split('. ', 1)[1].strip() for l in text.strip().splitlines()
+            if l.strip() and l.strip()[0].isdigit() and '. ' in l]
+
+# ── MockLLM (given) ───────────────────────────────────────────────────────────
+class MockLLM(LLMClient):
+    def chat(self, messages: list) -> str:
+        system = messages[0]["content"].lower()
+        if "planner" in system or "decompose" in system:
+            return self._plan(messages[-1]["content"].lower())
+        if "synthesiser" in system or "synthesize" in system:
+            return self._synth(messages[-1]["content"])
+        return self._react(messages)
+
+    def _plan(self, q: str) -> str:
+        return ("1. What benchmark did AlphaCode use and what were its results?\\n"
+                "2. How does AlphaCode compare to Codex algorithmically?\\n"
+                "3. What real-world research impact have AlphaCode and Codex had by 2024?")
+
+    def _react(self, messages: list) -> str:
+        obs   = [m for m in messages if m["role"] == "user" and m["content"].startswith("OBSERVATION:")]
+        step  = len(obs)
+        query = messages[1]["content"].lower()
+        seen  = " ".join(m["content"] for m in obs).lower()
+        if step == 0:
+            if "benchmark" in query and "alphacode" in query: return "SEARCH: AlphaCode benchmark CodeContests evaluation"
+            if "algorithmically" in query or "compare" in query: return "SEARCH: AlphaCode Codex algorithmic comparison"
+            if "impact" in query or "real-world" in query:    return "SEARCH: AlphaCode Codex research impact 2024"
+            return f"SEARCH: {messages[1]['content'][:60]}"
+        if "codecontests" in seen or "generate-and-filter" in seen:
+            return "ANSWER: AlphaCode used CodeContests; generate-and-filter strategy; matched median competitive programmer."
+        if "comparison" in seen or "differ" in seen:
+            return "ANSWER: AlphaCode filters sampled programs by test cases. Codex uses standard generation without filtering."
+        if "no documents" in seen:
+            return "ANSWER: No information retrieved for this sub-question."
+        return f"ANSWER: {seen[:120] if seen else 'Nothing retrieved.'}"
+
+    def _synth(self, content: str) -> str:
+        n         = content.count("Sub-question:")
+        has_alpha = "codecontests" in content.lower()
+        has_algo  = "filter" in content.lower()
+        parts     = [f"Synthesised from {n} sub-questions:"]
+        if has_alpha:
+            parts.append("AlphaCode (DeepMind 2022): CodeContests, generate-and-filter, median competitive programmer.")
+        if has_algo:
+            parts.append("AlphaCode filters sampled programs by test cases; Codex does not.")
+        # ⚠ This claim is not grounded in any retrieved document — the synthesiser invented it
+        parts.append("Both papers have had significant research impact, influencing StarCoder, CodeLlama, and GitHub Copilot X.")
+        return " ".join(parts)
+
+# ── MockSearchEngine with call counter (given) ────────────────────────────────
+class MockSearchEngine(SearchTool):
+    def __init__(self):
+        self.call_count = 0
+    DB = {
+        "alphacode": ["AlphaCode: CodeContests, generate-and-filter, median competitive programmer.",
+                      "AlphaCode training: filtered competitive-programming code from GitHub."],
+        "codex":     ["Codex: 54M GitHub files, HumanEval, ~72% pass@1."],
+        "comparison":["AlphaCode filters sampled programs by test cases; Codex uses standard generation."],
+    }
+    def search(self, q: str) -> list:
+        self.call_count += 1
+        results = []
+        for kw, docs in self.DB.items():
+            if kw in q.lower(): results.extend(docs)
+        return results or [f"No documents found for: '{q}'"]
+
+# ── Planner (given) ───────────────────────────────────────────────────────────
+class Planner:
+    def __init__(self, llm): self.llm = llm
+    def plan(self, query: str) -> list:
+        resp = self.llm.chat([{"role": "system", "content": PLANNER_PROMPT},
+                               {"role": "user",   "content": query}])
+        return parse_plan(resp)
+
+# ── Your turn: build SharedMemory ─────────────────────────────────────────────
+class SharedMemory:
+    def __init__(self):
+        self._store = {}
+        # TODO: create self._lock = asyncio.Lock()
+        pass
+
+    async def get(self, key: str):
+        # TODO: acquire self._lock and return self._store.get(key)
+        pass
+
+    async def set(self, key: str, value: list) -> None:
+        # TODO: acquire self._lock and write self._store[key] = value
+        pass
+
+    def snapshot(self) -> dict:
+        return dict(self._store)   # called after all coroutines finish — no lock needed
+
+# ── Your turn: update ResearchAgent ───────────────────────────────────────────
+class ResearchAgent:
+    def __init__(self, llm, search_tool, planner, max_steps=6, verbose=False):
+        self.llm=llm; self.search_tool=search_tool; self.planner=planner
+        self.max_steps=max_steps; self.verbose=verbose
+
+    async def run(self, query: str) -> str:
+        sub_questions = self.planner.plan(query)
+        if self.verbose:
+            print(f"[Planner] {len(sub_questions)} sub-questions:")
+            for i, sq in enumerate(sub_questions, 1): print(f"  {i}. {sq}")
+            print()
+        # TODO:
+        # 1. Create one SharedMemory() instance
+        # 2. Use asyncio.gather() passing (sq, memory) to each _react coroutine
+        # 3. Rebuild findings dict
+        # 4. Print memory snapshot if verbose
+        # 5. Return self._synthesise(query, findings)
+        pass
+
+    async def _react(self, query: str, memory: SharedMemory) -> str:
+        messages = [{"role": "system", "content": REACT_PROMPT},
+                    {"role": "user",   "content": query}]
+        for step in range(self.max_steps):
+            await asyncio.sleep(0)
+            response = self.llm.chat(messages)
+            if response.startswith("SEARCH:"):
+                sq = response[len("SEARCH:"):].strip()
+                # TODO:
+                # 1. Check cache: cached = await memory.get(sq)
+                # 2. If cached is not None → use it, print "[cache hit]" if verbose
+                # 3. Else → self.search_tool.search(sq), await memory.set(sq, results), print "[searched]"
+                # 4. Build obs string and append search + observation to messages
+                pass
+            elif response.startswith("ANSWER:"):
+                if self.verbose: print(f"    [answer] ✓")
+                return response[len("ANSWER:"):].strip()
+            else:
+                return response
+        return "Max steps reached."
+
+    def _synthesise(self, original_query: str, findings: dict) -> str:
+        text = "\\n\\n".join(f"Sub-question: {sq}\\nFinding: {ans}"
+                              for sq, ans in findings.items())
+        msgs = [{"role": "system", "content": SYNTHESIS_PROMPT},
+                {"role": "user",   "content": f"Original: {original_query}\\n\\nFindings:\\n{text}"}]
+        return self.llm.chat(msgs)
+
+# ── Test: three sub-questions, two share AlphaCode docs ──────────────────────
+async def main():
+    search_engine = MockSearchEngine()
+    llm           = MockLLM()
+    agent         = ResearchAgent(llm=llm, search_tool=search_engine,
+                                   planner=Planner(llm=llm), verbose=True)
+    query = "Compare AlphaCode and Codex: benchmark, algorithmic approach, and research impact."
+    answer = await agent.run(query)
+    print("Final answer:")
+    print(answer)
+    print()
+    print("─── Memory post-mortem ──────────────────────────────────────────")
+    print(f"Sub-questions:      3")
+    print(f"search() calls:     {search_engine.call_count}  (should be < 3 — shared memory deduped)")
+
+await main()
+`} />
+
+The trace shows `[cache hit]` lines and the search call count is less than 3 — shared memory deduped the overlapping retrieval. Every executor reads from the same store.
+
+---
+
+## Now read the final answer carefully
+
+<div className="not-prose my-6 rounded-xl border-2 border-amber-300 bg-amber-50/90 p-4 dark:border-amber-700 dark:bg-amber-950/30">
+  <p className="m-0 text-sm font-semibold text-amber-900 dark:text-amber-200">The new wall — spot what was never retrieved</p>
+  <p className="mt-2 mb-0 text-sm text-slate-800 dark:text-slate-200">
+    Sub-question 3 asked about real-world research impact. The search returned no documents. The executor's finding was "No information retrieved." Run the cell below and look at the final synthesised answer — does it say that? Or does it say something else?
+  </p>
+</div>
+
+<PythonPlayground minLines={55} starter={`import asyncio
+
+# Self-contained wall demonstration — shows synthesiser hallucination
+# despite perfect shared memory deduplication
+
+class LLMClient:
+    def chat(self, messages: list) -> str: raise NotImplementedError
+class SearchTool:
+    def search(self, query: str) -> list:  raise NotImplementedError
+
+PLANNER_PROMPT   = "You are a research planner. Output a numbered list of sub-questions."
+REACT_PROMPT     = "You are a research assistant. Output SEARCH: <query> or ANSWER: <text>."
+SYNTHESIS_PROMPT = "You are a research synthesiser. Combine findings. Acknowledge gaps clearly."
+
+def parse_plan(text):
+    return [l.split('. ',1)[1].strip() for l in text.strip().splitlines()
+            if l.strip() and l.strip()[0].isdigit() and '. ' in l]
+
+class MockLLM(LLMClient):
+    def chat(self, messages):
+        system = messages[0]["content"].lower()
+        if "planner" in system:
+            return ("1. What benchmark did AlphaCode use?\\n"
+                    "2. How do AlphaCode and Codex differ algorithmically?\\n"
+                    "3. What real-world research impact have both papers had by 2024?")
+        if "synthesiser" in system:
+            content = messages[-1]["content"]
+            has_alpha = "codecontests" in content.lower()
+            has_algo  = "filter" in content.lower()
+            parts = ["Synthesised answer:"]
+            if has_alpha: parts.append("AlphaCode used CodeContests with a generate-and-filter strategy.")
+            if has_algo:  parts.append("AlphaCode filters programs by test cases; Codex does not.")
+            # ⚠ Sub-question 3 returned "No information retrieved" but the
+            # synthesiser generates a confident claim anyway — not in any retrieved doc
+            parts.append("Both papers significantly influenced subsequent code generation "
+                         "research, with AlphaCode's filtering approach adopted in StarCoder "
+                         "and CodeLlama, and Codex's work underpinning GitHub Copilot.")
+            return " ".join(parts)
+        # ReAct
+        obs   = [m for m in messages if m["role"]=="user" and m["content"].startswith("OBSERVATION:")]
+        step  = len(obs); seen = " ".join(m["content"] for m in obs).lower()
+        query = messages[1]["content"].lower()
+        if step == 0:
+            if "benchmark" in query: return "SEARCH: AlphaCode benchmark CodeContests"
+            if "algorithmically" in query or "differ" in query: return "SEARCH: AlphaCode Codex comparison"
+            return "SEARCH: AlphaCode Codex research impact 2024"
+        if "codecontests" in seen:  return "ANSWER: AlphaCode: CodeContests, generate-and-filter."
+        if "comparison" in seen:    return "ANSWER: AlphaCode filters by tests; Codex does not."
+        if "no documents" in seen:  return "ANSWER: No information retrieved for this sub-question."
+        return f"ANSWER: {seen[:100] if seen else 'Nothing retrieved.'}"
+
+class MockSearchEngine(SearchTool):
+    DB = {"alphacode":  ["AlphaCode: CodeContests, generate-and-filter, matched median competitive programmer."],
+          "comparison": ["AlphaCode vs Codex: AlphaCode filters sampled programs; Codex uses standard generation."]}
+    def search(self, q):
+        results = []
+        for kw, docs in self.DB.items():
+            if kw in q.lower(): results.extend(docs)
+        return results or [f"No documents found for: '{q}'"]   # ← impact query hits this
+
+class SharedMemory:
+    def __init__(self): self._store = {}; self._lock = asyncio.Lock()
+    async def get(self, key):
+        async with self._lock: return self._store.get(key)
+    async def set(self, key, value):
+        async with self._lock: self._store[key] = value
+    def snapshot(self): return dict(self._store)
+
+class ResearchAgent:
+    def __init__(self, llm, search_tool, planner, max_steps=6): self.llm=llm; self.search_tool=search_tool; self.planner=planner; self.max_steps=max_steps
+    async def run(self, query):
+        sqs    = self.planner.plan(query)
+        memory = SharedMemory()
+        results = await asyncio.gather(*[self._react(sq, memory) for sq in sqs])
+        findings = {sqs[i]: results[i] for i in range(len(sqs))}
+        print("─── Individual findings (what each executor returned) ──────────")
+        for sq, finding in findings.items(): print(f"  · {sq}\\n    → {finding}")
+        print()
+        return self._synthesise(query, findings)
+    async def _react(self, query, memory):
+        messages = [{"role":"system","content":REACT_PROMPT},{"role":"user","content":query}]
+        for step in range(self.max_steps):
+            await asyncio.sleep(0)
+            response = self.llm.chat(messages)
+            if response.startswith("SEARCH:"):
+                sq = response[len("SEARCH:"):].strip()
+                cached = await memory.get(sq)
+                results = cached if cached is not None else self.search_tool.search(sq)
+                if cached is None: await memory.set(sq, results)
+                obs = "\\n".join(f"- {r}" for r in results)
+                messages += [{"role":"assistant","content":response},
+                             {"role":"user","content":f"OBSERVATION:\\n{obs}"}]
+            elif response.startswith("ANSWER:"): return response[len("ANSWER:"):].strip()
+            else: return response
+        return "Max steps reached."
+    def _synthesise(self, q, findings):
+        text = "\\n\\n".join(f"Sub-question: {sq}\\nFinding: {ans}" for sq,ans in findings.items())
+        return self.llm.chat([{"role":"system","content":SYNTHESIS_PROMPT},
+                               {"role":"user","content":f"Original: {q}\\n\\nFindings:\\n{text}"}])
+
+class Planner:
+    def __init__(self, llm): self.llm = llm
+    def plan(self, query): return parse_plan(self.llm.chat([{"role":"system","content":PLANNER_PROMPT},{"role":"user","content":query}]))
+
+async def main():
+    agent  = ResearchAgent(MockLLM(), MockSearchEngine(), Planner(MockLLM()))
+    answer = await agent.run("Compare AlphaCode and Codex: benchmark, algorithm, and research impact.")
+    print("─── Final synthesised answer ────────────────────────────────────")
+    print(answer)
+    print()
+    print("─── The problem ─────────────────────────────────────────────────")
+    print("Sub-question 3 finding:  'No information retrieved for this sub-question.'")
+    print("Synthesised answer says: '...AlphaCode's filtering approach adopted in")
+    print("                          StarCoder and CodeLlama...'")
+    print()
+    print("SharedMemory worked correctly — zero duplicate searches.")
+    print("The answer is still untrustworthy — the synthesiser hallucinated")
+    print("from a 'no data' finding. No quality gate exists to catch this.")
+
+await main()
+`} />
+
+---
+
+## What shared memory did. What it didn't.
+
+Shared memory eliminated duplicate retrieval and guaranteed a consistent source of truth for every executor. That is a real win.
+
+But read sub-question 3's finding, then read the final answer. The finding says "No information retrieved." The final answer claims AlphaCode's approach was adopted in StarCoder and CodeLlama. That sentence was not in any retrieved document. The synthesiser invented it — and shared memory had no opinion about it.
+
+<div className="not-prose my-6 rounded-xl border-l-4 border-red-500 bg-red-50/70 py-3 pl-4 pr-3 dark:bg-red-950/25">
+  <p className="m-0 text-sm font-semibold text-red-900 dark:text-red-200">Consistency is not correctness</p>
+  <p className="mt-2 mb-0 text-sm text-slate-800 dark:text-slate-200">
+    Shared memory ensures all executors agree on what was retrieved. It says nothing about whether that retrieval was sufficient, whether the findings were interpreted correctly, or whether the synthesised answer is grounded in evidence. A system can be perfectly consistent and still be wrong.
+  </p>
+</div>
+
+The fix is a **Critic** — an agent that reads the synthesised answer and explicitly validates it against the findings. It flags unsupported claims, gaps, and inconsistencies. Its job is not to find a better answer, but to surface what the answer is getting wrong.
+
+That is Lesson 7.
+
+---
+
+## Where you are
+
+| Capability | Status |
+|-----------|--------|
+| LLM call | ✓ Lesson 1 |
+| Tool use + RAG | ✓ Lesson 2 |
+| Multi-step adaptive search | ✓ Lesson 3 |
+| Upfront decomposition | ✓ Lesson 4 |
+| Parallel concurrent execution | ✓ Lesson 5 |
+| Shared memory + deduplication | ✓ This lesson |
+| Quality validation (Critic) | ✗ Lesson 7 |
+
+---
+
+<div className="not-prose mt-10 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-6 dark:border-slate-700">
+  <a href="./05-parallel-executors" className="text-sm font-medium text-slate-600 no-underline hover:text-emerald-700 hover:underline dark:text-slate-400 dark:hover:text-emerald-400">← Lesson 5 · Parallel executors</a>
+  <a href="./07-critic" className="text-sm font-semibold text-emerald-700 no-underline hover:underline dark:text-emerald-400">Lesson 7 · Critic →</a>
+</div>
