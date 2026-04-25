@@ -1,0 +1,369 @@
+---
+sidebar_label: '5 · Parallel executors'
+title: 'Lesson 5 — Parallel executors: run sub-questions concurrently'
+description: >-
+  Replace the sequential executor loop with asyncio.gather() so all
+  sub-questions run at the same time. Then discover that independent agents
+  duplicate work and contradict each other without shared state.
+tutor_topic: "AI agents — parallel execution with asyncio"
+tutor_concepts:
+  - "why independent sub-questions can run in parallel"
+  - "async/await and coroutines in Python"
+  - "asyncio.gather() for concurrent execution"
+  - "wall-clock time vs total compute time"
+  - "agents duplicating work without shared memory"
+  - "why isolation causes contradiction"
+---
+
+# Parallel executors: run sub-questions concurrently
+
+Lesson 4's executor loop looked like this:
+
+```python
+for sq in sub_questions:
+    findings[sq] = self._react(sq)   # executor 2 waits for executor 1
+```
+
+The sub-questions are independent — none of them need the results of any other. There is no reason executor 2 should wait for executor 1. With five sub-questions and two search steps each, sequential execution takes 10 time units. With parallel execution it takes 2 — the depth of one executor, run simultaneously with all the others.
+
+This lesson rewrites the executor loop with `asyncio.gather()`.
+
+---
+
+<div className="not-prose my-8 rounded-2xl border-2 border-sky-400 bg-gradient-to-br from-sky-50 to-cyan-50 px-5 py-4 dark:border-sky-700 dark:from-sky-950/40 dark:to-cyan-950/40">
+  <p className="m-0 text-xs font-bold uppercase tracking-widest text-sky-800 dark:text-sky-200">What you're building</p>
+  <p className="mt-2 mb-1 text-base font-bold text-slate-900 dark:text-slate-100">ResearchAgent — v0.5</p>
+  <p className="mt-0 mb-0 text-sm text-slate-700 dark:text-slate-300">All sub-question executors launch simultaneously. Wall-clock time shrinks from N × depth to depth (one executor's worth). Each executor still runs its own ReAct loop, fully isolated.</p>
+</div>
+
+## asyncio in 60 seconds
+
+`asyncio` is Python's built-in concurrency model for I/O-bound work. It runs on a single thread but switches between tasks when one is waiting (for a network call, a database read, a search API). That's exactly the pattern for LLM and search calls.
+
+```python
+import asyncio
+
+# A coroutine — defined with async def, called with await
+async def fetch(url):
+    result = await some_async_http_call(url)
+    return result
+
+# Run multiple coroutines concurrently
+results = await asyncio.gather(fetch(url1), fetch(url2), fetch(url3))
+# All three run at the same time; results is a list in the same order
+```
+
+Two rules:
+- Functions that use `await` must be declared with `async def`
+- `asyncio.gather(*coroutines)` runs all of them concurrently and waits for all to finish
+
+In this lesson, `_react()` becomes `async def _react()`, `run()` becomes `async def run()`, and the `for` loop becomes `asyncio.gather()`.
+
+---
+
+## The timing model
+
+```
+Lesson 4 (sequential):
+  Executor 1 ████████
+  Executor 2         ████████
+  Executor 3                 ████████
+  Executor 4                         ████████
+  Executor 5                                 ████████
+  Total wall time:  5 × 2 = 10 units
+
+Lesson 5 (parallel):
+  Executor 1 ████████
+  Executor 2 ████████
+  Executor 3 ████████
+  Executor 4 ████████
+  Executor 5 ████████
+  Total wall time:  2 units  (max depth of one executor)
+```
+
+Total compute is the same — 10 units of work. Wall-clock time collapses.
+
+---
+
+<div className="not-prose my-6 rounded-xl border-l-4 border-sky-500 bg-sky-50/70 py-3 pl-4 pr-3 dark:bg-sky-950/25">
+  <p className="m-0 text-sm font-semibold text-sky-900 dark:text-sky-200">Your tasks</p>
+  <p className="mt-2 mb-0 text-sm text-slate-800 dark:text-slate-200">
+    1. Add <code>import asyncio</code> at the top.<br/>
+    2. Change <code>_react()</code> to <code>async def _react()</code> — add <code>await asyncio.sleep(0)</code> before each LLM call to yield control to the event loop.<br/>
+    3. Change <code>run()</code> to <code>async def run()</code> and replace the <code>for</code> loop with <code>asyncio.gather()</code>.<br/>
+    4. Rebuild the findings dict from the results list (gather returns results in the same order as the input coroutines).<br/>
+    Run the cell — the trace should show all executors interleaved, not sequential.
+  </p>
+</div>
+
+<PythonPlayground minLines={90} starter={`import asyncio
+import time
+
+# ── Interfaces ────────────────────────────────────────────────────────────────
+class LLMClient:
+    def chat(self, messages: list) -> str:
+        raise NotImplementedError
+
+class SearchTool:
+    def search(self, query: str) -> list:
+        raise NotImplementedError
+
+# ── Prompts ───────────────────────────────────────────────────────────────────
+PLANNER_PROMPT   = "You are a research planner. Decompose into a numbered list. Output ONLY the list."
+REACT_PROMPT     = "You are a research assistant. Output SEARCH: <query> or ANSWER: <text> each step."
+SYNTHESIS_PROMPT = "You are a research synthesiser. Write a coherent answer from all findings. Acknowledge gaps."
+
+def parse_plan(text: str) -> list:
+    return [l.split('. ',1)[1].strip() for l in text.strip().splitlines()
+            if l.strip() and l.strip()[0].isdigit() and '. ' in l]
+
+# ── MockLLM (given) ───────────────────────────────────────────────────────────
+class MockLLM(LLMClient):
+    def chat(self, messages: list) -> str:
+        system = messages[0]["content"].lower()
+        if "planner" in system or "decompose" in system:
+            return ("1. What benchmark did AlphaCode use?\\n"
+                    "2. What was AlphaCode's training data?\\n"
+                    "3. What benchmark did Codex use?\\n"
+                    "4. How do they differ algorithmically?\\n"
+                    "5. What real-world impact has AlphaCode had?")
+        if "synthesiser" in system or "synthesize" in system:
+            n = messages[-1]["content"].count("Sub-question:")
+            return (f"Parallel synthesis from {n} findings: AlphaCode used CodeContests "
+                    "(generate-and-filter); Codex used HumanEval (~72% pass@1). "
+                    "Training data and real-world impact data had limited coverage.")
+        # ReAct mode
+        obs   = [m for m in messages if m["role"]=="user" and m["content"].startswith("OBSERVATION:")]
+        step  = len(obs)
+        query = messages[1]["content"].lower()
+        seen  = " ".join(m["content"] for m in obs).lower()
+        if step == 0:
+            if "benchmark" in query and "alphacode" in query: return "SEARCH: AlphaCode CodeContests evaluation"
+            if "training"  in query:                          return "SEARCH: AlphaCode Codex training dataset"
+            if "benchmark" in query and "codex" in query:    return "SEARCH: Codex HumanEval results"
+            if "algorithmically" in query or "differ" in query: return "SEARCH: AlphaCode Codex algorithmic comparison"
+            return "SEARCH: AlphaCode real-world adoption"
+        if "codecontests" in seen:    return "ANSWER: AlphaCode: CodeContests, generate-and-filter, median competitive programmer."
+        if "humaneval" in seen or "72%" in seen: return "ANSWER: Codex: HumanEval, ~72% pass@1."
+        if "54m" in seen or "filtered" in seen:  return "ANSWER: AlphaCode: filtered competitive code. Codex: 54M GitHub files."
+        if "comparison" in seen or "differ" in seen: return "ANSWER: Different benchmarks and strategies; AlphaCode filters, Codex does not."
+        if "no documents" in seen:    return "ANSWER: No data available for this sub-question."
+        return f"ANSWER: {seen[:120] if seen else 'Nothing retrieved.'}"
+
+# ── MockSearchEngine (given) ──────────────────────────────────────────────────
+class MockSearchEngine(SearchTool):
+    DB = {
+        "alphacode": ["AlphaCode: CodeContests, generate-and-filter, median competitive programmer.",
+                      "AlphaCode trained on filtered competitive-programming code from GitHub."],
+        "codex":     ["Codex: 54M GitHub files, HumanEval, ~72% pass@1.",
+                      "Codex (code-davinci-002) was integrated into GitHub Copilot."],
+        "comparison":["AlphaCode vs Codex: different benchmarks, strategies, target use cases."],
+    }
+    def search(self, q: str) -> list:
+        results = []
+        for kw, docs in self.DB.items():
+            if kw in q.lower(): results.extend(docs)
+        return results or [f"No documents found for: '{q}'"]
+
+# ── Planner (given) ───────────────────────────────────────────────────────────
+class Planner:
+    def __init__(self, llm): self.llm = llm
+    def plan(self, query: str) -> list:
+        resp = self.llm.chat([{"role":"system","content":PLANNER_PROMPT},
+                               {"role":"user","content":query}])
+        return parse_plan(resp)
+
+# ── Your turn: make ResearchAgent async ───────────────────────────────────────
+class ResearchAgent:
+    def __init__(self, llm, search_tool, planner, max_steps=6, verbose=False):
+        self.llm=llm; self.search_tool=search_tool; self.planner=planner
+        self.max_steps=max_steps; self.verbose=verbose
+
+    async def run(self, query: str) -> str:
+        sub_questions = self.planner.plan(query)
+        if self.verbose:
+            print(f"[Planner] {len(sub_questions)} sub-questions — launching all in parallel")
+            for i, sq in enumerate(sub_questions, 1): print(f"  {i}. {sq}")
+            print()
+
+        # TODO: use asyncio.gather() to run self._react(sq) for each sq concurrently
+        # Then rebuild: findings = {sub_questions[i]: results[i] for i in range(...)}
+        # Then call self._synthesise(query, findings) and return the result
+        pass  # ← replace this
+
+    async def _react(self, query: str) -> str:
+        # TODO: same ReAct loop as Lesson 4's _react(), but:
+        # - add "await asyncio.sleep(0)" before self.llm.chat() so the event loop
+        #   can switch between running executors
+        # - everything else is identical
+        pass  # ← replace this
+
+    def _synthesise(self, original_query: str, findings: dict) -> str:
+        text = "\\n\\n".join(f"Sub-question: {sq}\\nFinding: {ans}"
+                              for sq, ans in findings.items())
+        msgs = [{"role":"system","content":SYNTHESIS_PROMPT},
+                {"role":"user","content":f"Original: {original_query}\\n\\nFindings:\\n{text}"}]
+        return self.llm.chat(msgs)
+
+# ── Run the async agent ───────────────────────────────────────────────────────
+async def main():
+    llm   = MockLLM()
+    agent = ResearchAgent(llm=llm, search_tool=MockSearchEngine(),
+                          planner=Planner(llm=llm), verbose=True)
+    query = "Compare AlphaCode and Codex: benchmark, training data, algorithm, impact."
+    t0 = time.time()
+    answer = await agent.run(query)
+    elapsed = time.time() - t0
+    print("Final answer:")
+    print(answer)
+    print()
+    print(f"Wall-clock time: {elapsed:.3f}s  (mock is instant; real searches would overlap)")
+    print("With real 1s-per-search latency:")
+    print("  Sequential (L4):  ~10s   (5 executors × 2 steps)")
+    print("  Parallel  (L5):   ~ 2s   (max depth per executor)")
+
+await main()
+`} />
+
+---
+
+## Now look at what isolation costs
+
+The parallel executors run faster. But they run in complete isolation — each starts with an empty messages list, no knowledge of what the others are retrieving.
+
+<div className="not-prose my-6 rounded-xl border-2 border-amber-300 bg-amber-50/90 p-4 dark:border-amber-700 dark:bg-amber-950/30">
+  <p className="m-0 text-sm font-semibold text-amber-900 dark:text-amber-200">The new wall — run and count the searches</p>
+  <p className="mt-2 mb-0 text-sm text-slate-800 dark:text-slate-200">
+    The query below has two sub-questions that need the same AlphaCode docs. Run the cell and read the post-mortem: how many times was AlphaCode searched?
+  </p>
+</div>
+
+<PythonPlayground minLines={70} starter={`import asyncio
+
+class LLMClient:
+    def chat(self, messages: list) -> str: raise NotImplementedError
+class SearchTool:
+    def search(self, query: str) -> list: raise NotImplementedError
+
+PLANNER_PROMPT   = "You are a research planner. Decompose into a numbered list. Output ONLY the list."
+REACT_PROMPT     = "You are a research assistant. Output SEARCH: <query> or ANSWER: <text>."
+SYNTHESIS_PROMPT = "You are a research synthesiser. Write a coherent answer from all findings."
+
+def parse_plan(text):
+    return [l.split('. ',1)[1].strip() for l in text.strip().splitlines()
+            if l.strip() and l.strip()[0].isdigit() and '. ' in l]
+
+search_call_log = []  # track every search call
+
+class MockLLM(LLMClient):
+    def chat(self, messages):
+        system = messages[0]["content"].lower()
+        if "planner" in system:
+            return ("1. What benchmark did AlphaCode use?\\n"
+                    "2. What was AlphaCode's performance on its benchmark?")  # both need AlphaCode docs
+        if "synthesiser" in system: return "Synthesis: AlphaCode used CodeContests and achieved median competitive programmer performance."
+        obs  = [m for m in messages if m["role"]=="user" and m["content"].startswith("OBSERVATION:")]
+        step = len(obs)
+        seen = " ".join(m["content"] for m in obs).lower()
+        if step == 0: return "SEARCH: AlphaCode benchmark evaluation"  # BOTH executors search this
+        return "ANSWER: AlphaCode used CodeContests; generate-and-filter; median competitive programmer."
+
+class MockSearchEngine(SearchTool):
+    def search(self, q):
+        search_call_log.append(q)  # record every call
+        return ["AlphaCode: CodeContests, generate-and-filter, median competitive programmer.",
+                "AlphaCode training: filtered competitive-programming code from GitHub."]
+
+class Planner:
+    def __init__(self, llm): self.llm = llm
+    def plan(self, query):
+        return parse_plan(self.llm.chat([{"role":"system","content":PLANNER_PROMPT},{"role":"user","content":query}]))
+
+class ResearchAgent:
+    def __init__(self, llm, search_tool, planner, max_steps=6, verbose=False):
+        self.llm=llm; self.search_tool=search_tool; self.planner=planner
+        self.max_steps=max_steps; self.verbose=verbose
+
+    async def run(self, query):
+        sqs     = self.planner.plan(query)
+        results = await asyncio.gather(*[self._react(sq) for sq in sqs])
+        findings = {sqs[i]: results[i] for i in range(len(sqs))}
+        return self._synthesise(query, findings)
+
+    async def _react(self, query):
+        messages = [{"role":"system","content":REACT_PROMPT},{"role":"user","content":query}]
+        for step in range(self.max_steps):
+            await asyncio.sleep(0)
+            response = self.llm.chat(messages)
+            if response.startswith("SEARCH:"):
+                sq = response[len("SEARCH:"):].strip()
+                results = self.search_tool.search(sq)
+                obs = "\\n".join(f"- {r}" for r in results)
+                messages += [{"role":"assistant","content":response},
+                             {"role":"user","content":f"OBSERVATION:\\n{obs}"}]
+            elif response.startswith("ANSWER:"):
+                return response[len("ANSWER:"):].strip()
+            else: return response
+        return "Max steps reached."
+
+    def _synthesise(self, q, findings):
+        text = "\\n\\n".join(f"Sub-question: {sq}\\nFinding: {ans}" for sq,ans in findings.items())
+        return self.llm.chat([{"role":"system","content":SYNTHESIS_PROMPT},
+                               {"role":"user","content":f"Original: {q}\\n\\nFindings:\\n{text}"}])
+
+async def main():
+    agent = ResearchAgent(MockLLM(), MockSearchEngine(), Planner(MockLLM()), verbose=True)
+    answer = await agent.run("Describe AlphaCode's benchmark and its performance on that benchmark.")
+    print("Answer:", answer)
+    print()
+    print("─── Post-mortem ──────────────────────────────────────────────────")
+    print(f"Sub-questions planned:  2")
+    print(f"Total search() calls:   {len(search_call_log)}")
+    print(f"Unique search queries:  {len(set(search_call_log))}")
+    print(f"Duplicate searches:     {len(search_call_log) - len(set(search_call_log))}")
+    print()
+    print("Searches issued:")
+    for i, q in enumerate(search_call_log, 1): print(f"  {i}. {q}")
+    print()
+    print("Both executors searched for the same documents independently.")
+    print("Without shared memory, neither knows what the other already retrieved.")
+
+await main()
+`} />
+
+---
+
+## What just happened
+
+Both executors searched for the same AlphaCode documents. Neither knew the other had already done so. They ran in parallel, which is fast — but they also both paid the cost of the same retrieval.
+
+For five executors with overlapping sub-topics, this gets worse. And it is not just about efficiency: if two executors retrieve slightly different versions of the same fact (different documents, different phrasings), the synthesiser gets contradictory inputs.
+
+<div className="not-prose my-6 rounded-xl border-l-4 border-violet-500 bg-violet-50/70 py-3 pl-4 pr-3 dark:bg-violet-950/25">
+  <p className="m-0 text-sm font-semibold text-violet-900 dark:text-violet-200">The isolation problem</p>
+  <p className="mt-2 mb-0 text-sm text-slate-800 dark:text-slate-200">
+    Parallel executors are isolated by design — that is what makes them safe to run concurrently. But isolation means each executor starts from zero knowledge. A shared memory layer changes this: executors check before searching ("has anyone already retrieved AlphaCode docs?"), post their findings as they go, and the synthesiser reads from one consistent source of truth instead of N independent caches.
+  </p>
+</div>
+
+That is Lesson 6.
+
+---
+
+## Where you are
+
+| Capability | Status |
+|-----------|--------|
+| LLM call | ✓ Lesson 1 |
+| Tool use + RAG | ✓ Lesson 2 |
+| Multi-step adaptive search | ✓ Lesson 3 |
+| Upfront decomposition | ✓ Lesson 4 |
+| Parallel concurrent execution | ✓ This lesson |
+| Shared memory across executors | ✗ Lesson 6 |
+
+---
+
+<div className="not-prose mt-10 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-6 dark:border-slate-700">
+  <a href="./04-planner" className="text-sm font-medium text-slate-600 no-underline hover:text-emerald-700 hover:underline dark:text-slate-400 dark:hover:text-emerald-400">← Lesson 4 · Planner</a>
+  <a href="./06-shared-memory" className="text-sm font-semibold text-emerald-700 no-underline hover:underline dark:text-emerald-400">Lesson 6 · Shared memory →</a>
+</div>
