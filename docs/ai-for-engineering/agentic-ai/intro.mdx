@@ -1,0 +1,62 @@
+---
+sidebar_label: 'Course intro'
+title: 'Build a Multi-Agent Research Assistant'
+description: >-
+  A nine-lesson, project-first course on AI agents and multi-agent systems.
+  Every lesson adds one capability to the same codebase — no video, no slides,
+  just code running in your browser.
+tutor_topic: "AI agents and multi-agent systems — course overview"
+tutor_concepts:
+  - "what an AI agent is"
+  - "project-first learning"
+  - "multi-agent system architecture"
+  - "mock LLM for learning"
+---
+
+# Build a Multi-Agent Research Assistant
+
+This course has one rule: **you build one thing, lesson by lesson.**
+
+By Lesson 9 you will have a working multi-agent research assistant — a system where a planner breaks down a research question, parallel executors gather information, a synthesiser combines results, and a critic validates quality. You build it from scratch, in Python, running entirely in your browser.
+
+Every lesson adds exactly one capability. Concepts appear at the moment you need them — not before.
+
+---
+
+## The arc
+
+| Lesson | What you add | What breaks without it |
+|--------|-------------|----------------------|
+| **1** | Bare LLM loop | Nothing runs yet |
+| **2** | Tool use | Agent hallucinates facts it can't verify |
+| **3** | ReAct reasoning | Complex queries produce incoherent rambling |
+| **4** | Planner | Agent answers shallowly — misses sub-topics |
+| **5** | Parallel executors | Sequential research is too slow for N sub-questions |
+| **6** | Shared memory | Agents duplicate work and contradict each other |
+| **7** | Critic | Output has unchallenged contradictions |
+| **8** | Full wiring | Agents talk past each other at integration |
+| **9** | Observability | No way to tell which agent is the bottleneck |
+
+---
+
+## What you need
+
+- A browser (Chrome or Firefox recommended)
+- No API key, no installation, no accounts
+- Python runs directly in the browser via Pyodide
+
+We use a `MockLLM` for the first lessons — scripted, deterministic, offline. Later lessons will show you exactly how to swap in a real model (one line of code, nothing else changes).
+
+---
+
+## What this course is not
+
+It does not teach LangChain, CrewAI, or any other framework. It teaches the underlying patterns — ReAct, message passing, shared state, critic loops — so that when you look at any agentic framework, you already understand what it is doing and why it makes the tradeoffs it does.
+
+---
+
+<div className="not-prose mt-8 flex justify-end">
+  <a href="./01-bare-llm-loop" className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white no-underline hover:bg-emerald-500">
+    Start Lesson 1 →
+  </a>
+</div>

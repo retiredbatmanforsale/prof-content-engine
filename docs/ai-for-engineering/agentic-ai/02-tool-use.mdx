@@ -1,0 +1,301 @@
+---
+sidebar_label: '2 · Tool use'
+title: 'Lesson 2 — Give it a tool'
+description: >-
+  Add a search tool to ground the agent's answers in retrieved facts. Watch
+  hallucination disappear — then discover the new limit: one search is brittle
+  for multi-step questions.
+tutor_topic: "AI agents — tool use and retrieval augmented generation"
+tutor_concepts:
+  - "tool use in agents"
+  - "search tool as grounding mechanism"
+  - "retrieval augmented generation (RAG)"
+  - "context window as the agent's working memory"
+  - "why one search is not enough for complex queries"
+  - "tool interface abstraction"
+---
+
+# Give it a tool
+
+In Lesson 1 your agent confidently invented a benchmark that doesn't exist. The root cause: it had no way to look anything up. It could only pattern-match against its training data.
+
+The fix is a **tool** — a Python function the agent can call to retrieve real information before it answers. This lesson adds the simplest possible tool: a search function. You will see hallucination disappear. Then you will discover a new, subtler problem.
+
+---
+
+<div className="not-prose my-8 rounded-2xl border-2 border-sky-400 bg-gradient-to-br from-sky-50 to-cyan-50 px-5 py-4 dark:border-sky-700 dark:from-sky-950/40 dark:to-cyan-950/40">
+  <p className="m-0 text-xs font-bold uppercase tracking-widest text-sky-800 dark:text-sky-200">What you're building</p>
+  <p className="mt-2 mb-1 text-base font-bold text-slate-900 dark:text-slate-100">ResearchAgent — v0.2</p>
+  <p className="mt-0 mb-0 text-sm text-slate-700 dark:text-slate-300">Before answering, the agent searches for relevant documents and passes them as context to the LLM. The LLM answers only from that context — no invented facts.</p>
+</div>
+
+## What a tool is
+
+A tool is just a Python function with a clean interface:
+
+```python
+class SearchTool:
+    def search(self, query: str) -> list[str]:
+        raise NotImplementedError
+```
+
+The agent calls `self.search_tool.search(query)` and gets a list of text snippets back. Whether the real implementation hits a vector database, a web API, or a local index does not matter — the agent only sees the interface.
+
+Same pattern as `LLMClient`: define the shape, swap the implementation.
+
+---
+
+## The new agent loop
+
+Without tools:
+
+```
+query → LLM → answer (hallucinated)
+```
+
+With a search tool:
+
+```
+query → search(query) → retrieved docs → LLM(docs + query) → grounded answer
+```
+
+This pattern has a name: **Retrieval Augmented Generation (RAG)**. You are building it from scratch in about 10 lines.
+
+---
+
+<div className="not-prose my-6 rounded-xl border-l-4 border-sky-500 bg-sky-50/70 py-3 pl-4 pr-3 dark:bg-sky-950/25">
+  <p className="m-0 text-sm font-semibold text-sky-900 dark:text-sky-200">Your tasks</p>
+  <p className="mt-2 mb-0 text-sm text-slate-800 dark:text-slate-200">
+    1. Write the <code>SearchTool</code> abstract class (one method: <code>search</code>).<br/>
+    2. Update <code>ResearchAgent.__init__</code> to accept a <code>search_tool</code>.<br/>
+    3. Update <code>ResearchAgent.run()</code>: search first → build context string → call the LLM with context + question.<br/>
+    Run the test at the bottom — the AlphaCode answer should now be grounded in retrieved facts.
+  </p>
+</div>
+
+<PythonPlayground minLines={60} starter={`# ── Shared interfaces ─────────────────────────────────────────────────────────
+class LLMClient:
+    def chat(self, messages: list) -> str:
+        raise NotImplementedError
+
+# TODO: write SearchTool — one method: search(self, query: str) -> list[str]
+class SearchTool:
+    pass  # ← replace this
+
+# ── MockLLM — now context-aware (given, do not modify) ────────────────────────
+class MockLLM(LLMClient):
+    def chat(self, messages: list) -> str:
+        user = messages[-1]["content"]
+
+        # Grounded mode: context was injected
+        if "Context:" in user and "Question:" in user:
+            context = user.split("Context:")[1].split("Question:")[0].strip().lower()
+            question = user.split("Question:")[1].strip().lower()
+            has_alphacode = "alphacode" in context or "codecontests" in context
+            asks_codex    = "codex" in question
+
+            if has_alphacode and asks_codex:
+                return (
+                    "Based on retrieved context: AlphaCode (DeepMind, 2022) benchmarked on "
+                    "CodeContests using a generate-and-filter approach. However, my retrieved "
+                    "context does not include Codex data — I cannot compare them accurately."
+                )
+            if has_alphacode:
+                return (
+                    "Based on retrieved context: AlphaCode evaluated on CodeContests (not "
+                    "HumanEval), used generate-and-filter with test-case reranking, and "
+                    "matched the median competitive programmer's performance."
+                )
+            return f"Based on retrieved context: {user.split('Context:')[1].split('Question:')[0].strip()[:180]}..."
+
+        # No context injected — hallucination mode (same as Lesson 1)
+        return "Based on my training: [confident but unverifiable — no retrieval was done]"
+
+# ── MockSearchEngine (given, do not modify) ───────────────────────────────────
+class MockSearchEngine(SearchTool):
+    DB = {
+        "alphacode": [
+            "AlphaCode (DeepMind, 2022) was evaluated on CodeContests, not HumanEval.",
+            "AlphaCode used a generate-and-filter strategy: sample many programs, then "
+            "filter by test cases and rerank by a separate model.",
+            "AlphaCode achieved performance comparable to the median competitive programmer.",
+        ],
+        "codex": [
+            "OpenAI Codex was trained on public GitHub code and evaluated on HumanEval.",
+            "HumanEval consists of 164 hand-written Python programming problems.",
+            "Codex (code-davinci-002) achieved ~72% pass@1 on HumanEval.",
+        ],
+    }
+
+    def search(self, query: str) -> list[str]:
+        query_lower = query.lower()
+        results = []
+        for keyword, docs in self.DB.items():
+            if keyword in query_lower:
+                results.extend(docs)
+        return results if results else [f"No documents found for: '{query}'"]
+
+# ── Your turn: update ResearchAgent ───────────────────────────────────────────
+class ResearchAgent:
+    def __init__(self, llm: LLMClient, search_tool: SearchTool):
+        self.llm         = llm
+        self.search_tool = search_tool
+
+    def run(self, query: str) -> str:
+        # Step 1: retrieve relevant documents
+        docs = self.search_tool.search(query)
+
+        # Step 2: format them as a context string
+        context = "\\n".join(f"- {d}" for d in docs)
+
+        # Step 3: call the LLM with context + question
+        # Use this message format:
+        #   system: "Answer based ONLY on the provided context. If the context
+        #            doesn't cover the question, say so."
+        #   user:   f"Context:\\n{context}\\n\\nQuestion: {query}"
+        pass  # ← replace this
+
+# ── Test: AlphaCode query (the Lesson 1 hallucination case) ───────────────────
+agent = ResearchAgent(llm=MockLLM(), search_tool=MockSearchEngine())
+result = agent.run("What did the AlphaCode paper report about its benchmark?")
+print(result)
+`} />
+
+The answer now references CodeContests — not the invented HumanEval figure from Lesson 1. The agent is grounded.
+
+---
+
+## Now try a two-entity question
+
+Your agent can search once. That works when one query fetches everything needed. Research rarely works that way.
+
+<div className="not-prose my-6 rounded-xl border-2 border-amber-300 bg-amber-50/90 p-4 dark:border-amber-700 dark:bg-amber-950/30">
+  <p className="m-0 text-sm font-semibold text-amber-900 dark:text-amber-200">The new wall</p>
+  <p className="mt-2 mb-0 text-sm text-slate-800 dark:text-slate-200">
+    Run the cell below. The question asks about two papers. Notice what the agent says about the one it can't find in context.
+  </p>
+</div>
+
+<PythonPlayground minLines={42} starter={`# Self-contained — includes the full working agent from above
+
+class LLMClient:
+    def chat(self, messages: list) -> str:
+        raise NotImplementedError
+
+class SearchTool:
+    def search(self, query: str) -> list[str]:
+        raise NotImplementedError
+
+class MockLLM(LLMClient):
+    def chat(self, messages: list) -> str:
+        user = messages[-1]["content"]
+        if "Context:" in user and "Question:" in user:
+            context  = user.split("Context:")[1].split("Question:")[0].strip().lower()
+            question = user.split("Question:")[1].strip().lower()
+            has_alphacode = "alphacode" in context or "codecontests" in context
+            has_codex     = "codex" in context
+            asks_codex    = "codex" in question
+
+            if has_alphacode and not has_codex and asks_codex:
+                return (
+                    "Based on retrieved context: AlphaCode used CodeContests and a "
+                    "generate-and-filter approach. However, my retrieved context does "
+                    "not contain information about Codex — I cannot compare them."
+                )
+            if has_alphacode and has_codex:
+                return (
+                    "Based on retrieved context: AlphaCode (CodeContests, generate-and-filter) "
+                    "vs Codex (HumanEval, ~72% pass@1). Both are code generation models "
+                    "using different benchmarks and training strategies."
+                )
+        return "No context retrieved — cannot answer reliably."
+
+class MockSearchEngine(SearchTool):
+    DB = {
+        "alphacode": [
+            "AlphaCode evaluated on CodeContests, not HumanEval.",
+            "AlphaCode used a generate-and-filter approach with test-case reranking.",
+        ],
+        "codex": [
+            "Codex evaluated on HumanEval (164 Python problems).",
+            "Codex (code-davinci-002) achieved ~72% pass@1.",
+        ],
+    }
+    def search(self, query: str) -> list[str]:
+        results = []
+        for kw, docs in self.DB.items():
+            if kw in query.lower():
+                results.extend(docs)
+        return results or [f"No documents found for: '{query}'"]
+
+class ResearchAgent:
+    def __init__(self, llm, search_tool):
+        self.llm         = llm
+        self.search_tool = search_tool
+    def run(self, query: str) -> str:
+        docs    = self.search_tool.search(query)
+        context = "\\n".join(f"- {d}" for d in docs)
+        messages = [
+            {"role": "system", "content": "Answer ONLY from the provided context. If context is insufficient, say so."},
+            {"role": "user",   "content": f"Context:\\n{context}\\n\\nQuestion: {query}"},
+        ]
+        return self.llm.chat(messages)
+
+agent = ResearchAgent(llm=MockLLM(), search_tool=MockSearchEngine())
+
+# ── The wall: two papers, one search ──────────────────────────────────────────
+query = "Compare AlphaCode and Codex — what benchmark did each use and what was the core algorithmic difference?"
+print("Query:", query)
+print()
+
+# What did the search actually retrieve?
+docs = MockSearchEngine().search(query)
+print("Retrieved docs:")
+for d in docs: print(" ", d)
+print()
+
+print("Agent answer:")
+print(agent.run(query))
+`} />
+
+---
+
+## What just happened
+
+The search matched `"alphacode"` in the query and returned AlphaCode docs — but `"codex"` also appears in the query, so Codex docs were returned too.
+
+Run it again and look at the retrieved docs section. Both papers were found this time — because both keywords happened to be in the single query string.
+
+Now imagine a query where the two topics have no lexical overlap. Or a question that requires three sub-searches with different keywords. A single `search(full_query)` call is brittle:
+
+- **No control over what to search**: the query is whatever the user typed, verbatim
+- **No iteration**: the agent cannot look at search results, notice a gap, and search again
+- **No decomposition**: multi-part questions become one undifferentiated search blob
+
+<div className="not-prose my-6 rounded-xl border-l-4 border-violet-500 bg-violet-50/70 py-3 pl-4 pr-3 dark:bg-violet-950/25">
+  <p className="m-0 text-sm font-semibold text-violet-900 dark:text-violet-200">The pattern you just built has a name</p>
+  <p className="mt-2 mb-0 text-sm text-slate-800 dark:text-slate-200">
+    <strong>Retrieval Augmented Generation (RAG)</strong> — retrieve relevant documents, inject them as context, let the LLM answer from context only. It eliminates hallucination for covered topics. The limitation is that it retrieves once, blindly, before any reasoning happens. The agent cannot adapt its search strategy based on what it finds.
+  </p>
+</div>
+
+The fix requires the agent to **think before searching**, **observe what it got**, and **search again if needed**. That is a loop — and it has a name too: **ReAct**.
+
+---
+
+## Where you are
+
+| Capability | Status |
+|-----------|--------|
+| LLM call | ✓ Lesson 1 |
+| Tool interface | ✓ This lesson |
+| Search + RAG | ✓ This lesson |
+| Adaptive, multi-step search | ✗ Lesson 3 |
+| Planning and decomposition | ✗ Lesson 4 |
+
+---
+
+<div className="not-prose mt-10 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-6 dark:border-slate-700">
+  <a href="./01-bare-llm-loop" className="text-sm font-medium text-slate-600 no-underline hover:text-emerald-700 hover:underline dark:text-slate-400 dark:hover:text-emerald-400">← Lesson 1 · Bare LLM loop</a>
+  <a href="./03-react-reasoning" className="text-sm font-semibold text-emerald-700 no-underline hover:underline dark:text-emerald-400">Lesson 3 · ReAct reasoning →</a>
+</div>

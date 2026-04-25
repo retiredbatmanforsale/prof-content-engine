@@ -1,0 +1,489 @@
+---
+sidebar_label: '4 · Planner'
+title: 'Lesson 4 — The Planner: decompose before you search'
+description: >-
+  Add a Planner that decomposes the research question into an explicit sub-question
+  list before any searching begins. Coverage becomes structural. Then discover
+  that all those sub-questions still run one at a time.
+tutor_topic: "AI agents — planning and task decomposition"
+tutor_concepts:
+  - "task decomposition before execution"
+  - "planner as a separate LLM call"
+  - "sub-question list as an explicit plan"
+  - "orchestration: plan → execute → synthesise"
+  - "three LLM modes: planning, ReAct, synthesis"
+  - "sequential execution bottleneck"
+---
+
+# The Planner: decompose before you search
+
+Lesson 3 revealed the structural gap in ReAct: the agent improvises its search sequence. It searches for what it thinks of at each step, answers when it feels ready, and has no guarantee of covering everything the question asked.
+
+The fix is a **Planner** — a dedicated step that reads the full question and produces an explicit numbered list of sub-questions *before* any searching begins. The agent then executes each sub-question with a focused ReAct loop. Coverage is guaranteed by the plan, not by the LLM's step-by-step intuition.
+
+---
+
+<div className="not-prose my-8 rounded-2xl border-2 border-emerald-400 bg-gradient-to-br from-emerald-50 to-teal-50 px-5 py-4 dark:border-emerald-700 dark:from-emerald-950/40 dark:to-teal-950/40">
+  <p className="m-0 text-xs font-bold uppercase tracking-widest text-emerald-800 dark:text-emerald-200">What you're building</p>
+  <p className="mt-2 mb-1 text-base font-bold text-slate-900 dark:text-slate-100">ResearchAgent — v0.4</p>
+  <p className="mt-0 mb-0 text-sm text-slate-700 dark:text-slate-300">Three phases: <strong>Plan</strong> (decompose query into sub-questions) → <strong>Execute</strong> (run a focused ReAct loop per sub-question) → <strong>Synthesise</strong> (combine all findings into a final answer).</p>
+</div>
+
+## The new architecture
+
+```
+Lesson 3 (ReAct only):
+  query ──→ ReAct loop (improvised) ──→ answer
+
+Lesson 4 (Planner + ReAct):
+  query ──→ Planner ──→ [sq₁, sq₂, sq₃, …, sqₙ]
+                               │
+               ┌───────────────┼───────────────┐
+               ▼               ▼               ▼
+           ReAct(sq₁)      ReAct(sq₂)  … ReAct(sqₙ)
+               │               │               │
+               └───────────────┴───────────────┘
+                               │
+                          Synthesise
+                               │
+                             answer
+```
+
+Each sub-question gets its own focused ReAct loop. The loops are independent — they share no state. That independence is important for Lesson 5.
+
+---
+
+## Three LLM modes, one interface
+
+The same `LLMClient` interface handles three different call types. The system prompt determines the mode:
+
+| System prompt says | LLM role | Output format |
+|-------------------|---------|---------------|
+| "research planner" | Planner | Numbered list of sub-questions |
+| "research assistant … step by step" | ReAct executor | `SEARCH:` or `ANSWER:` |
+| "research synthesiser" | Synthesiser | Prose answer combining all findings |
+
+The agent routes to the right mode by using the right system prompt. The LLM never needs to know which role it is playing across the conversation.
+
+---
+
+## New prompts (given)
+
+```python
+PLANNER_PROMPT = """You are a research planner. Given a research question, decompose it
+into a numbered list of focused sub-questions that together fully answer the original.
+
+Rules:
+- Each sub-question must be independently answerable by a single search.
+- Cover every distinct aspect of the original question.
+- Output ONLY the numbered list — no preamble, no explanation."""
+
+SYNTHESIS_PROMPT = """You are a research synthesiser. Given an original question and a
+set of findings for each sub-question, write a single coherent answer that addresses
+the original question completely. Be concise and factual. Acknowledge gaps where
+findings were unavailable."""
+```
+
+---
+
+<div className="not-prose my-6 rounded-xl border-l-4 border-emerald-500 bg-emerald-50/70 py-3 pl-4 pr-3 dark:bg-emerald-950/25">
+  <p className="m-0 text-sm font-semibold text-emerald-900 dark:text-emerald-200">Your tasks</p>
+  <p className="mt-2 mb-0 text-sm text-slate-800 dark:text-slate-200">
+    1. Write <code>Planner.plan(query)</code>: call the LLM with <code>PLANNER_PROMPT</code>, pass the query as the user message, then use the given <code>parse_plan()</code> helper to extract the list of sub-questions.<br/>
+    2. Write <code>ResearchAgent.run(query)</code>: call the planner, loop through sub-questions calling <code>self._react(sq)</code> for each, collect findings, then call <code>self._synthesise()</code>. Print the plan and each executor step when <code>self.verbose</code> is True.
+  </p>
+</div>
+
+<PythonPlayground minLines={95} starter={`# ── Interfaces ────────────────────────────────────────────────────────────────
+class LLMClient:
+    def chat(self, messages: list) -> str:
+        raise NotImplementedError
+
+class SearchTool:
+    def search(self, query: str) -> list[str]:
+        raise NotImplementedError
+
+# ── Prompts (given) ────────────────────────────────────────────────────────────
+PLANNER_PROMPT = """You are a research planner. Decompose the question into a
+numbered list of focused sub-questions that together fully answer it.
+Output ONLY the numbered list."""
+
+REACT_PROMPT = """You are a research assistant that works step by step.
+At every step output exactly one of:
+  SEARCH: <a focused search query>
+  ANSWER: <your final answer>
+Never hallucinate. Admit when retrieved context is insufficient."""
+
+SYNTHESIS_PROMPT = """You are a research synthesiser. Given an original question
+and findings for each sub-question, write a single coherent answer. Be concise
+and factual. Acknowledge gaps where findings were unavailable."""
+
+# ── Helper: parse the planner's numbered list (given) ─────────────────────────
+def parse_plan(text: str) -> list:
+    questions = []
+    for line in text.strip().splitlines():
+        line = line.strip()
+        if line and line[0].isdigit() and '. ' in line:
+            questions.append(line.split('. ', 1)[1].strip())
+    return questions
+
+# ── MockLLM — three modes (given, do not modify) ───────────────────────────────
+class MockLLM(LLMClient):
+    def chat(self, messages: list) -> str:
+        system = messages[0]["content"].lower()
+        if "planner" in system or "decompose" in system:
+            return self._plan(messages[-1]["content"].lower())
+        if "synthesiser" in system or "synthesize" in system:
+            return self._synthesise(messages[-1]["content"])
+        return self._react(messages)   # default: ReAct mode
+
+    def _plan(self, query: str) -> str:
+        if "alphacode" in query or "codex" in query:
+            return (
+                "1. What benchmark did AlphaCode use and what were its results?\\n"
+                "2. What was AlphaCode's training data?\\n"
+                "3. What benchmark did Codex use and what were its results?\\n"
+                "4. How do AlphaCode and Codex differ algorithmically?\\n"
+                "5. What real-world impact has AlphaCode had?"
+            )
+        return (
+            "1. What is the core claim of the question?\\n"
+            "2. What evidence or data is needed?\\n"
+            "3. Are there relevant comparisons to draw?"
+        )
+
+    def _react(self, messages: list) -> str:
+        obs   = [m for m in messages if m["role"] == "user" and m["content"].startswith("OBSERVATION:")]
+        step  = len(obs)
+        query = messages[1]["content"].lower()
+        seen  = " ".join(m["content"] for m in obs).lower()
+        if step == 0:
+            if "benchmark" in query and "alphacode" in query: return "SEARCH: AlphaCode benchmark evaluation CodeContests"
+            if "training" in query and "alphacode" in query:  return "SEARCH: AlphaCode training dataset"
+            if "benchmark" in query and "codex" in query:     return "SEARCH: Codex HumanEval benchmark results"
+            if "algorithmically" in query or "differ" in query: return "SEARCH: AlphaCode Codex algorithmic comparison"
+            if "impact" in query or "real-world" in query:    return "SEARCH: AlphaCode real-world adoption GitHub Copilot"
+            return f"SEARCH: {messages[1]['content'][:60]}"
+        if "codecontests" in seen or "generate-and-filter" in seen:
+            return "ANSWER: AlphaCode used CodeContests; generate-and-filter strategy; matched median competitive programmer."
+        if "humaneval" in seen or "72%" in seen:
+            return "ANSWER: Codex used HumanEval (164 Python problems); achieved ~72% pass@1."
+        if "54m" in seen or "159 gb" in seen or "filtered" in seen:
+            return "ANSWER: AlphaCode trained on filtered competitive-programming code from GitHub. Codex trained on 54M public GitHub files (~159 GB)."
+        if "generate-and-filter" in seen or "rerank" in seen:
+            return "ANSWER: AlphaCode samples many programs then filters by test cases. Codex uses standard next-token generation with no filtering."
+        if "no documents" in seen:
+            return "ANSWER: No information found for this sub-question in available sources."
+        return f"ANSWER: Retrieved context: {seen[:150] if seen else 'nothing found.'}"
+
+    def _synthesise(self, content: str) -> str:
+        n = content.count("Sub-question:")
+        has_alpha = "codecontests" in content.lower()
+        has_codex = "humaneval" in content.lower() or "72%" in content
+        has_train = "github" in content.lower() and "training" in content.lower()
+        parts = [f"Comprehensive answer (from {n} sub-questions):"]
+        if has_alpha:
+            parts.append("AlphaCode (DeepMind 2022): CodeContests benchmark, generate-and-filter approach, median competitive programmer level.")
+        if has_codex:
+            parts.append("Codex (OpenAI): HumanEval benchmark, ~72% pass@1 on 164 Python problems.")
+        if has_train:
+            parts.append("Training: AlphaCode used filtered competitive-programming code; Codex used 54M GitHub files (~159 GB).")
+        parts.append("Real-world impact data was not retrievable from available sources.")
+        return " ".join(parts)
+
+# ── MockSearchEngine (given) ───────────────────────────────────────────────────
+class MockSearchEngine(SearchTool):
+    DB = {
+        "alphacode": [
+            "AlphaCode (DeepMind, 2022) evaluated on CodeContests competition problems.",
+            "AlphaCode uses generate-and-filter: sample many programs, filter by test cases, rerank.",
+            "AlphaCode achieves performance comparable to the median competitive programmer.",
+        ],
+        "codex": [
+            "Codex trained on 54 million public GitHub files (~159 GB of code).",
+            "HumanEval: 164 hand-written Python problems by OpenAI researchers.",
+            "Codex (code-davinci-002) achieved ~72% pass@1 on HumanEval.",
+        ],
+        "comparison": [
+            "AlphaCode and Codex differ primarily in benchmark choice and filtering strategy.",
+            "AlphaCode targets algorithmic competition; Codex targets general code completion.",
+        ],
+    }
+    def search(self, query: str) -> list[str]:
+        q = query.lower()
+        results = []
+        for kw, docs in self.DB.items():
+            if kw in q:
+                results.extend(docs)
+        return results or [f"No documents found for: '{query}'"]
+
+# ── Your turn: build the Planner ──────────────────────────────────────────────
+class Planner:
+    def __init__(self, llm: LLMClient):
+        self.llm = llm
+
+    def plan(self, query: str) -> list:
+        # Call self.llm.chat() with PLANNER_PROMPT as system and query as user.
+        # Then use parse_plan() to return a list of sub-question strings.
+        pass  # ← replace this
+
+# ── Your turn: update ResearchAgent ───────────────────────────────────────────
+class ResearchAgent:
+    def __init__(self, llm: LLMClient, search_tool: SearchTool,
+                 planner: Planner, max_steps: int = 6, verbose: bool = False):
+        self.llm         = llm
+        self.search_tool = search_tool
+        self.planner     = planner
+        self.max_steps   = max_steps
+        self.verbose     = verbose
+
+    def run(self, query: str) -> str:
+        # Step 1: get the plan
+        # Step 2: loop through sub-questions, call self._react(sq) for each,
+        #         collect findings in a dict: {sub_question: answer}
+        # Step 3: call self._synthesise(query, findings) and return the result
+        # Print progress when self.verbose is True
+        pass  # ← replace this
+
+    # ── Given helpers — do not modify ─────────────────────────────────────────
+    def _react(self, query: str) -> str:
+        messages = [
+            {"role": "system", "content": REACT_PROMPT},
+            {"role": "user",   "content": query},
+        ]
+        for step in range(self.max_steps):
+            response = self.llm.chat(messages)
+            if response.startswith("SEARCH:"):
+                sq = response[len("SEARCH:"):].strip()
+                if self.verbose: print(f"    [step {step+1}] search: {sq}")
+                results = self.search_tool.search(sq)
+                obs = "\\n".join(f"- {r}" for r in results)
+                messages.append({"role": "assistant", "content": response})
+                messages.append({"role": "user",      "content": f"OBSERVATION:\\n{obs}"})
+            elif response.startswith("ANSWER:"):
+                if self.verbose: print(f"    [step {step+1}] answer ✓")
+                return response[len("ANSWER:"):].strip()
+            else:
+                return response
+        return "Max steps reached."
+
+    def _synthesise(self, original_query: str, findings: dict) -> str:
+        findings_text = "\\n\\n".join(
+            f"Sub-question: {sq}\\nFinding: {ans}"
+            for sq, ans in findings.items()
+        )
+        messages = [
+            {"role": "system", "content": SYNTHESIS_PROMPT},
+            {"role": "user",   "content": f"Original question: {original_query}\\n\\nFindings:\\n{findings_text}"},
+        ]
+        return self.llm.chat(messages)
+
+# ── Test: the Lesson 3 wall — now all 3 sub-questions are covered ──────────────
+llm    = MockLLM()
+agent  = ResearchAgent(
+    llm=llm, search_tool=MockSearchEngine(),
+    planner=Planner(llm=llm), verbose=True,
+)
+
+print("=== Lesson 3 wall query ===")
+answer = agent.run(
+    "Compare AlphaCode and Codex on three dimensions: "
+    "benchmark used, training data size, and algorithmic approach."
+)
+print()
+print(answer)
+`} />
+
+Three sub-questions, three executors, three findings — all covered. Compare that to Lesson 3 where only two were searched and training data was never touched.
+
+---
+
+## Now scale it up
+
+<div className="not-prose my-6 rounded-xl border-2 border-amber-300 bg-amber-50/90 p-4 dark:border-amber-700 dark:bg-amber-950/30">
+  <p className="m-0 text-sm font-semibold text-amber-900 dark:text-amber-200">The new wall — count the steps</p>
+  <p className="mt-2 mb-0 text-sm text-slate-800 dark:text-slate-200">
+    The planner produces 5 sub-questions. Each needs 1–2 ReAct steps. Run the cell and read the trace: how many total steps execute, and in what order?
+  </p>
+</div>
+
+<PythonPlayground minLines={60} starter={`# Self-contained wall test — paste your Planner.plan() and ResearchAgent.run() here
+
+class LLMClient:
+    def chat(self, messages: list) -> str: raise NotImplementedError
+class SearchTool:
+    def search(self, query: str) -> list: raise NotImplementedError
+
+PLANNER_PROMPT  = "You are a research planner. Decompose into a numbered list. Output ONLY the list."
+REACT_PROMPT    = "You are a research assistant. Output SEARCH: <query> or ANSWER: <text> each step."
+SYNTHESIS_PROMPT= "You are a research synthesiser. Write a coherent answer from the findings. Acknowledge gaps."
+
+def parse_plan(text: str) -> list:
+    return [l.split('. ',1)[1].strip() for l in text.strip().splitlines()
+            if l.strip() and l.strip()[0].isdigit() and '. ' in l]
+
+class MockLLM(LLMClient):
+    def chat(self, messages: list) -> str:
+        system = messages[0]["content"].lower()
+        if "planner" in system or "decompose" in system: return self._plan(messages[-1]["content"].lower())
+        if "synthesiser" in system or "synthesize" in system: return self._synth(messages[-1]["content"])
+        return self._react(messages)
+
+    def _plan(self, q: str) -> str:
+        return ("1. What benchmark did AlphaCode use and what were its results?\\n"
+                "2. What was AlphaCode's training data?\\n"
+                "3. What benchmark did Codex use and what were its results?\\n"
+                "4. How do AlphaCode and Codex differ algorithmically?\\n"
+                "5. What real-world impact has AlphaCode had?")
+
+    def _react(self, messages: list) -> str:
+        obs   = [m for m in messages if m["role"]=="user" and m["content"].startswith("OBSERVATION:")]
+        step  = len(obs)
+        query = messages[1]["content"].lower()
+        seen  = " ".join(m["content"] for m in obs).lower()
+        if step == 0:
+            if "benchmark" in query and "alphacode" in query: return "SEARCH: AlphaCode benchmark CodeContests"
+            if "training"  in query and "alphacode" in query: return "SEARCH: AlphaCode training dataset"
+            if "benchmark" in query and "codex"     in query: return "SEARCH: Codex HumanEval benchmark"
+            if "algorithmically" in query or "differ" in query: return "SEARCH: AlphaCode Codex comparison"
+            return "SEARCH: AlphaCode real-world adoption"
+        if "codecontests" in seen or "generate-and-filter" in seen:
+            return "ANSWER: AlphaCode: CodeContests, generate-and-filter, median competitive programmer."
+        if "humaneval" in seen or "72%" in seen:
+            return "ANSWER: Codex: HumanEval, ~72% pass@1."
+        if "filtered" in seen or "54m" in seen: return "ANSWER: AlphaCode: filtered competitive-programming code. Codex: 54M GitHub files."
+        if "differ" in seen or "comparison" in seen: return "ANSWER: AlphaCode filters by test cases; Codex does not. Different benchmarks and target tasks."
+        if "no documents" in seen: return "ANSWER: No data found for this sub-question."
+        return f"ANSWER: {seen[:100] if seen else 'No data retrieved.'}"
+
+    def _synth(self, content: str) -> str:
+        n = content.count("Sub-question:")
+        return (f"Synthesised from {n} findings: AlphaCode (CodeContests, generate-and-filter) vs "
+                "Codex (HumanEval, 72% pass@1). Different training data, benchmarks, and algorithmic approaches. "
+                "Real-world impact data was not retrievable.")
+
+class MockSearchEngine(SearchTool):
+    DB = {"alphacode": ["AlphaCode: CodeContests, generate-and-filter, median competitive programmer.",
+                        "AlphaCode training: filtered competitive-programming code from GitHub."],
+          "codex":     ["Codex: 54M GitHub files, HumanEval, ~72% pass@1."],
+          "comparison":["AlphaCode vs Codex: different benchmarks, strategies, and target use cases."]}
+    def search(self, q: str) -> list:
+        results = []
+        for kw, docs in self.DB.items():
+            if kw in q.lower(): results.extend(docs)
+        return results or [f"No documents found for: '{q}'"]
+
+def parse_plan(text: str) -> list:
+    return [l.split('. ',1)[1].strip() for l in text.strip().splitlines()
+            if l.strip() and l.strip()[0].isdigit() and '. ' in l]
+
+class Planner:
+    def __init__(self, llm): self.llm = llm
+    def plan(self, query: str) -> list:
+        resp = self.llm.chat([{"role":"system","content":PLANNER_PROMPT},{"role":"user","content":query}])
+        return parse_plan(resp)
+
+class ResearchAgent:
+    def __init__(self, llm, search_tool, planner, max_steps=6, verbose=False):
+        self.llm=llm; self.search_tool=search_tool; self.planner=planner
+        self.max_steps=max_steps; self.verbose=verbose
+
+    def run(self, query: str) -> str:
+        sub_questions = self.planner.plan(query)
+        if self.verbose:
+            print(f"[Planner] {len(sub_questions)} sub-questions:")
+            for i, sq in enumerate(sub_questions, 1): print(f"  {i}. {sq}")
+            print()
+        findings = {}
+        for i, sq in enumerate(sub_questions, 1):
+            if self.verbose: print(f"[Executor {i}/{len(sub_questions)}] {sq}")
+            findings[sq] = self._react(sq)
+            if self.verbose: print()
+        if self.verbose: print("[Synthesiser] combining findings...")
+        return self._synthesise(query, findings)
+
+    def _react(self, query: str) -> str:
+        messages = [{"role":"system","content":REACT_PROMPT},{"role":"user","content":query}]
+        for step in range(self.max_steps):
+            response = self.llm.chat(messages)
+            if response.startswith("SEARCH:"):
+                sq = response[len("SEARCH:"):].strip()
+                if self.verbose: print(f"    [step {step+1}] search: {sq}")
+                results = self.search_tool.search(sq)
+                obs = "\\n".join(f"- {r}" for r in results)
+                messages += [{"role":"assistant","content":response},
+                             {"role":"user","content":f"OBSERVATION:\\n{obs}"}]
+            elif response.startswith("ANSWER:"):
+                if self.verbose: print(f"    [step {step+1}] answer ✓")
+                return response[len("ANSWER:"):].strip()
+            else: return response
+        return "Max steps reached."
+
+    def _synthesise(self, q: str, findings: dict) -> str:
+        text = "\\n\\n".join(f"Sub-question: {sq}\\nFinding: {ans}" for sq,ans in findings.items())
+        msgs = [{"role":"system","content":SYNTHESIS_PROMPT},
+                {"role":"user","content":f"Original: {q}\\n\\nFindings:\\n{text}"}]
+        return self.llm.chat(msgs)
+
+# ── Wall test ──────────────────────────────────────────────────────────────────
+import time
+
+llm   = MockLLM()
+agent = ResearchAgent(llm=llm, search_tool=MockSearchEngine(),
+                      planner=Planner(llm=llm), verbose=True)
+
+query = "Comprehensively compare AlphaCode and Codex: benchmark, training data, algorithm, and real-world impact."
+t0 = time.time()
+answer = agent.run(query)
+elapsed = time.time() - t0
+
+print()
+print("Final answer:")
+print(answer)
+print()
+print("─── Execution profile ──────────────────────────────────────────")
+print(f"Sub-questions:      5  (all planned upfront, all executed)")
+print(f"Executors:          5  (ran one after another — sequential)")
+print(f"Execution order:    1 → 2 → 3 → 4 → 5  (executor 2 waited for 1 to finish)")
+print(f"Wall-clock time:    {elapsed:.2f}s  (mock is instant; real searches ≈ 1s each)")
+print()
+print("If each search took 1 second:")
+print("  Sequential (now):  ~10 steps × 1s = 10 seconds")
+print("  Parallel (next):    ~2 steps × 1s =  2 seconds  (max depth per executor)")
+`} />
+
+---
+
+## What you built. What's still slow.
+
+The Planner solved the coverage problem. Every sub-question in the plan gets answered — not because the LLM was lucky mid-search, but because the plan was explicit from the start.
+
+But look at the execution trace: Executor 2 waited for Executor 1. Executor 3 waited for Executor 2. The sub-questions are **independent** — none of them need results from the others. There is no reason to run them sequentially except that the loop goes one at a time.
+
+<div className="not-prose my-6 rounded-xl border-l-4 border-sky-500 bg-sky-50/70 py-3 pl-4 pr-3 dark:bg-sky-950/25">
+  <p className="m-0 text-sm font-semibold text-sky-900 dark:text-sky-200">The bottleneck</p>
+  <p className="mt-2 mb-0 text-sm text-slate-800 dark:text-slate-200">
+    Sequential execution means total time = sum of all executor times. With N sub-questions and k steps each, that is N × k steps. If the sub-questions are truly independent — and for a research planner, they usually are — the wall-clock time could be just k steps: the depth of one executor, run in parallel with all others.
+  </p>
+</div>
+
+Parallel execution is Lesson 5.
+
+---
+
+## Where you are
+
+| Capability | Status |
+|-----------|--------|
+| LLM call | ✓ Lesson 1 |
+| Tool use + RAG | ✓ Lesson 2 |
+| Multi-step adaptive search | ✓ Lesson 3 |
+| Upfront decomposition + guaranteed coverage | ✓ This lesson |
+| Parallel sub-question execution | ✗ Lesson 5 |
+
+---
+
+<div className="not-prose mt-10 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-6 dark:border-slate-700">
+  <a href="./03-react-reasoning" className="text-sm font-medium text-slate-600 no-underline hover:text-emerald-700 hover:underline dark:text-slate-400 dark:hover:text-emerald-400">← Lesson 3 · ReAct reasoning</a>
+  <a href="./05-parallel-executors" className="text-sm font-semibold text-emerald-700 no-underline hover:underline dark:text-emerald-400">Lesson 5 · Parallel executors →</a>
+</div>

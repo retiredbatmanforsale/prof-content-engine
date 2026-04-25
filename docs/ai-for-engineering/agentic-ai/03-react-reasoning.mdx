@@ -1,0 +1,431 @@
+---
+sidebar_label: '3 · ReAct reasoning'
+title: 'Lesson 3 — ReAct: reason before you act'
+description: >-
+  Replace blind single-shot retrieval with an adaptive loop: the LLM decides
+  what to search for, observes results, and searches again if needed. Then
+  discover why an improvised loop still misses systematic coverage.
+tutor_topic: "AI agents — ReAct reasoning loop"
+tutor_concepts:
+  - "ReAct pattern: Reason, Act, Observe"
+  - "SEARCH / ANSWER protocol"
+  - "conversation history as agent memory"
+  - "max_steps guard against infinite loops"
+  - "why ReAct without a plan misses systematic coverage"
+  - "verbose trace for observability"
+---
+
+# ReAct: reason before you act
+
+Lesson 2 gave your agent a search tool. The agent used it once — blindly, with the raw user query — then answered. That worked until the question had multiple sub-topics.
+
+The root cause: the agent had no say in *what* to search for. It just forwarded the user query to the search function and hoped the results were sufficient.
+
+**ReAct** fixes this. Instead of one search-then-answer pass, the LLM drives a loop: it reasons about what it needs, outputs a focused search query, observes the result, and decides whether to search again or answer. The loop continues until the LLM is satisfied — or until a safety limit stops it.
+
+---
+
+<div className="not-prose my-8 rounded-2xl border-2 border-violet-400 bg-gradient-to-br from-violet-50 to-purple-50 px-5 py-4 dark:border-violet-700 dark:from-violet-950/40 dark:to-purple-950/40">
+  <p className="m-0 text-xs font-bold uppercase tracking-widest text-violet-800 dark:text-violet-200">What you're building</p>
+  <p className="mt-2 mb-1 text-base font-bold text-slate-900 dark:text-slate-100">ResearchAgent — v0.3</p>
+  <p className="mt-0 mb-0 text-sm text-slate-700 dark:text-slate-300">The LLM controls the search loop. It outputs <code>SEARCH: &lt;query&gt;</code> or <code>ANSWER: &lt;text&gt;</code>. The agent executes searches and feeds observations back until the LLM signals it is done.</p>
+</div>
+
+## The protocol
+
+The LLM and the agent communicate through a simple two-token protocol:
+
+| LLM output | Agent action |
+|-----------|-------------|
+| `SEARCH: <query>` | Call `search_tool.search(query)`, append result to conversation, loop |
+| `ANSWER: <text>` | Return `text` — done |
+
+Everything else stays the same: the same `LLMClient` interface, the same `SearchTool`, the same messages list. The only new thing is the loop.
+
+---
+
+## Why the messages list is the memory
+
+In Lessons 1 and 2, each `run()` call built a fresh messages list. In ReAct, the messages list **accumulates across steps** — each search query and its observation get appended. By step 3, the LLM can see everything it has already looked up and reason about what is still missing.
+
+```
+messages after two search steps:
+
+  system:      REACT_PROMPT
+  user:        "Compare AlphaCode and Codex..."
+  assistant:   "SEARCH: AlphaCode benchmark evaluation"
+  user:        "OBSERVATION:\n- AlphaCode evaluated on CodeContests\n..."
+  assistant:   "SEARCH: Codex HumanEval results"
+  user:        "OBSERVATION:\n- Codex ~72% pass@1 on HumanEval\n..."
+  → LLM call → "ANSWER: ..."
+```
+
+The conversation history is the agent's working memory for this task.
+
+---
+
+## The system prompt (given)
+
+The system prompt tells the LLM about the protocol. It must be exact — a single word out of place and the LLM outputs freeform text instead of `SEARCH:` / `ANSWER:`.
+
+```python
+REACT_PROMPT = """You are a research assistant that works step by step.
+
+At every step you MUST output exactly one of:
+  SEARCH: <a focused search query>
+  ANSWER: <your final answer>
+
+Rules:
+- Use SEARCH when you need information not yet in your observations.
+- Use ANSWER only when your retrieved observations are sufficient to answer.
+- Keep each SEARCH query short and focused — one topic per search.
+- Never hallucinate. If retrieved context is insufficient, say so in ANSWER.
+- Do not repeat a search you have already done."""
+```
+
+---
+
+<div className="not-prose my-6 rounded-xl border-l-4 border-violet-500 bg-violet-50/70 py-3 pl-4 pr-3 dark:bg-violet-950/25">
+  <p className="m-0 text-sm font-semibold text-violet-900 dark:text-violet-200">Your task</p>
+  <p className="mt-2 mb-0 text-sm text-slate-800 dark:text-slate-200">
+    Write <code>ResearchAgent.run()</code>: the ReAct loop. The skeleton is in the cell below.
+    Handle three cases per step: <code>SEARCH:</code> (search + append observation),
+    <code>ANSWER:</code> (extract text + return), and anything else (return as-is).
+    Add a <code>max_steps</code> guard. Print a trace line when <code>self.verbose</code> is True.
+  </p>
+</div>
+
+<PythonPlayground minLines={80} starter={`# ── Interfaces (unchanged from previous lessons) ──────────────────────────────
+class LLMClient:
+    def chat(self, messages: list) -> str:
+        raise NotImplementedError
+
+class SearchTool:
+    def search(self, query: str) -> list[str]:
+        raise NotImplementedError
+
+# ── System prompt (given) ──────────────────────────────────────────────────────
+REACT_PROMPT = """You are a research assistant that works step by step.
+
+At every step you MUST output exactly one of:
+  SEARCH: <a focused search query>
+  ANSWER: <your final answer>
+
+Rules:
+- Use SEARCH when you need information not yet in your observations.
+- Use ANSWER only when your retrieved observations are sufficient to answer.
+- Keep each SEARCH query short and focused — one topic per search.
+- Never hallucinate. If retrieved context is insufficient, say so in ANSWER.
+- Do not repeat a search you have already done."""
+
+# ── MockLLM — ReAct-aware (given, do not modify) ──────────────────────────────
+class MockLLM(LLMClient):
+    def chat(self, messages: list) -> str:
+        obs = [m for m in messages
+               if m["role"] == "user" and m["content"].startswith("OBSERVATION:")]
+        step  = len(obs)
+        query = messages[1]["content"].lower()
+        seen  = " ".join(m["content"] for m in obs).lower()
+
+        if step == 0:
+            if "alphacode" in query or "compare" in query:
+                return "SEARCH: AlphaCode benchmark and evaluation strategy"
+            if "react" in query and "pattern" in query:
+                return "SEARCH: ReAct prompting paper Yao 2022"
+            return f"SEARCH: {messages[1]['content'][:55]}"
+
+        if step == 1:
+            # Need Codex data if asked and not yet retrieved
+            if "codex" in query and "codex" not in seen and "humaneval" not in seen:
+                return "SEARCH: Codex HumanEval benchmark results OpenAI"
+            # Otherwise synthesise from what we have
+            return "ANSWER: " + _synthesise(seen, query)
+
+        return "ANSWER: " + _synthesise(seen, query)
+
+def _synthesise(seen: str, query: str) -> str:
+    has_alpha = "alphacode" in seen or "codecontests" in seen
+    has_codex = "codex" in seen or "humaneval" in seen
+    if has_alpha and has_codex:
+        return (
+            "AlphaCode (DeepMind 2022): CodeContests benchmark, generate-and-filter "
+            "approach, median competitive programmer performance.\\n"
+            "Codex (OpenAI): HumanEval benchmark (164 Python problems), ~72% pass@1.\\n"
+            "Key difference: AlphaCode targets algorithmic competition; "
+            "Codex targets general code completion from natural language.\\n"
+            "Note: training data sizes and citation counts were not retrieved — "
+            "those sub-questions were not searched."
+        )
+    if has_alpha:
+        return "AlphaCode: CodeContests, generate-and-filter. Codex data not retrieved."
+    return f"Based on retrieved context: {seen[:200]}"
+
+# ── MockSearchEngine — expanded (given, do not modify) ────────────────────────
+class MockSearchEngine(SearchTool):
+    DB = {
+        "alphacode": [
+            "AlphaCode (DeepMind, 2022) evaluated on CodeContests competition problems.",
+            "AlphaCode uses generate-and-filter: sample programs, filter by test cases, rerank.",
+            "AlphaCode achieves performance comparable to the median competitive programmer.",
+        ],
+        "codex": [
+            "OpenAI Codex trained on 54 million public GitHub files (~159 GB of code).",
+            "HumanEval: 164 hand-written Python problems designed by OpenAI researchers.",
+            "Codex (code-davinci-002) achieved ~72% pass@1 on HumanEval.",
+        ],
+        "react": [
+            "ReAct (Yao et al., 2022) interleaves reasoning traces with actions in LLM agents.",
+            "ReAct outperforms chain-of-thought on multi-step tasks requiring external information.",
+            "ReAct evaluated on HotpotQA, FEVER, WebShop, and ALFWorld benchmarks.",
+        ],
+        "chain-of-thought": [
+            "Chain-of-thought (CoT) generates intermediate reasoning steps before a final answer.",
+            "CoT limitation: no external information access — reasoning can drift from facts.",
+            "CoT excels at math and logic; struggles with factual recall tasks.",
+        ],
+    }
+
+    def search(self, query: str) -> list[str]:
+        q = query.lower()
+        results = []
+        for keyword, docs in self.DB.items():
+            if keyword in q:
+                results.extend(docs)
+        return results if results else [f"No documents found for: '{query}'"]
+
+# ── Your turn: write the ReAct loop ───────────────────────────────────────────
+class ResearchAgent:
+    def __init__(self, llm: LLMClient, search_tool: SearchTool,
+                 max_steps: int = 6, verbose: bool = False):
+        self.llm         = llm
+        self.search_tool = search_tool
+        self.max_steps   = max_steps
+        self.verbose     = verbose
+
+    def run(self, query: str) -> str:
+        messages = [
+            {"role": "system", "content": REACT_PROMPT},
+            {"role": "user",   "content": query},
+        ]
+
+        for step in range(self.max_steps):
+            response = self.llm.chat(messages)
+
+            if response.startswith("SEARCH:"):
+                search_query = response[len("SEARCH:"):].strip()
+                # TODO:
+                # 1. Print trace if self.verbose: "[Step N] SEARCH: ..."
+                # 2. Call self.search_tool.search(search_query) → results list
+                # 3. Join results into an observation string
+                # 4. Append {"role": "assistant", "content": response} to messages
+                # 5. Append {"role": "user", "content": "OBSERVATION:\\n" + observation}
+                pass
+
+            elif response.startswith("ANSWER:"):
+                answer = response[len("ANSWER:"):].strip()
+                # TODO:
+                # 1. Print trace if self.verbose: "[Step N] ANSWER"
+                # 2. Return the answer
+                pass
+
+            else:
+                return response  # Unexpected format — return as-is
+
+        return "Reached maximum steps without a final answer."
+
+# ── Success test: the Lesson 2 wall, now handled ──────────────────────────────
+agent = ResearchAgent(
+    llm=MockLLM(),
+    search_tool=MockSearchEngine(),
+    verbose=True,
+)
+print("=== AlphaCode vs Codex comparison ===")
+answer = agent.run("Compare AlphaCode and Codex — what benchmark did each use?")
+print()
+print(answer)
+`} />
+
+The trace shows two targeted searches — each scoped to one paper — followed by a synthesised answer. This is what the Lesson 2 agent could not do: it could only pass the verbatim user query to search.
+
+---
+
+## Now look at what the agent *doesn't* search for
+
+The agent fixed the Lesson 2 wall. But it introduces a new problem that is harder to see: the agent has no plan. It improvises the search sequence step by step, which means it searches for what it *thinks to search for* — not necessarily everything the question asked.
+
+<div className="not-prose my-6 rounded-xl border-2 border-amber-300 bg-amber-50/90 p-4 dark:border-amber-700 dark:bg-amber-950/30">
+  <p className="m-0 text-sm font-semibold text-amber-900 dark:text-amber-200">The new wall — read the trace carefully</p>
+  <p className="mt-2 mb-0 text-sm text-slate-800 dark:text-slate-200">
+    The query below has three distinct sub-questions. Run the cell and count how many the agent actually searched for. Then read the ANSWER — does it cover all three?
+  </p>
+</div>
+
+<PythonPlayground minLines={60} starter={`# Self-contained — includes the full working agent (paste your run() here)
+
+class LLMClient:
+    def chat(self, messages: list) -> str:
+        raise NotImplementedError
+
+class SearchTool:
+    def search(self, query: str) -> list[str]:
+        raise NotImplementedError
+
+REACT_PROMPT = """You are a research assistant that works step by step.
+At every step output exactly one of:
+  SEARCH: <a focused search query>
+  ANSWER: <your final answer>
+Never hallucinate. If retrieved context is insufficient, say so in ANSWER."""
+
+class MockLLM(LLMClient):
+    def chat(self, messages: list) -> str:
+        obs = [m for m in messages
+               if m["role"] == "user" and m["content"].startswith("OBSERVATION:")]
+        step  = len(obs)
+        query = messages[1]["content"].lower()
+        seen  = " ".join(m["content"] for m in obs).lower()
+
+        if step == 0:
+            return "SEARCH: AlphaCode benchmark and evaluation strategy"
+        if step == 1:
+            if "codex" not in seen:
+                return "SEARCH: Codex HumanEval benchmark results OpenAI"
+            return "ANSWER: " + _synthesise(seen, query)
+        return "ANSWER: " + _synthesise(seen, query)
+
+def _synthesise(seen: str, query: str) -> str:
+    has_alpha = "alphacode" in seen or "codecontests" in seen
+    has_codex = "codex" in seen or "humaneval" in seen
+    if has_alpha and has_codex:
+        return (
+            "AlphaCode (DeepMind 2022): CodeContests benchmark, generate-and-filter approach.\\n"
+            "Codex (OpenAI): HumanEval benchmark, ~72% pass@1.\\n"
+            "Note: training data sizes and citation counts were not retrieved — "
+            "those sub-questions were not searched."
+        )
+    return f"Based on retrieved context: {seen[:200]}"
+
+class MockSearchEngine(SearchTool):
+    DB = {
+        "alphacode": [
+            "AlphaCode evaluated on CodeContests, not HumanEval.",
+            "AlphaCode uses generate-and-filter with test-case reranking.",
+            "AlphaCode matches the median competitive programmer.",
+        ],
+        "codex": [
+            "Codex trained on 54M public GitHub files (~159 GB).",
+            "HumanEval: 164 hand-written Python problems.",
+            "Codex (code-davinci-002): ~72% pass@1 on HumanEval.",
+        ],
+    }
+    def search(self, query: str) -> list[str]:
+        q = query.lower()
+        results = []
+        for kw, docs in self.DB.items():
+            if kw in q:
+                results.extend(docs)
+        return results or [f"No documents found for: '{query}'"]
+
+class ResearchAgent:
+    def __init__(self, llm, search_tool, max_steps=6, verbose=False):
+        self.llm = llm; self.search_tool = search_tool
+        self.max_steps = max_steps; self.verbose = verbose
+
+    def run(self, query: str) -> str:
+        messages = [
+            {"role": "system", "content": REACT_PROMPT},
+            {"role": "user",   "content": query},
+        ]
+        for step in range(self.max_steps):
+            response = self.llm.chat(messages)
+            if response.startswith("SEARCH:"):
+                sq = response[len("SEARCH:"):].strip()
+                if self.verbose: print(f"[Step {step+1}] SEARCH: {sq}")
+                results = self.search_tool.search(sq)
+                obs = "\\n".join(f"- {r}" for r in results)
+                if self.verbose: print(f"         → {results[0][:65]}..." if results else "         → (no results)")
+                messages.append({"role": "assistant", "content": response})
+                messages.append({"role": "user",      "content": f"OBSERVATION:\\n{obs}"})
+            elif response.startswith("ANSWER:"):
+                if self.verbose: print(f"[Step {step+1}] ANSWER")
+                return response[len("ANSWER:"):].strip()
+            else:
+                return response
+        return "Reached maximum steps without a final answer."
+
+# ── The wall: three sub-questions, but how many does the agent search for? ─────
+query = (
+    "Compare AlphaCode and Codex on three dimensions: "
+    "(1) which benchmark each used, "
+    "(2) their training data size, "
+    "(3) their approximate citation count by 2024."
+)
+agent = ResearchAgent(llm=MockLLM(), search_tool=MockSearchEngine(), verbose=True)
+print("Query:", query)
+print()
+answer = agent.run(query)
+print()
+print("Answer:")
+print(answer)
+print()
+print("─── Post-mortem ───────────────────────────────────")
+print("Sub-questions in the query:  3  (benchmark, training data, citations)")
+print("Searches the agent issued:   2  (AlphaCode benchmark, Codex benchmark)")
+print("Sub-questions answered:      1  (benchmark — partially)")
+print("Never searched:              training data size, citation counts")
+print()
+print("The agent did not miss these by accident.")
+print("It never had a list of what needed answering.")
+`} />
+
+---
+
+## What just happened
+
+The agent searched twice and answered — but the answer explicitly says training data and citation counts were not retrieved. Read the post-mortem at the bottom of the output.
+
+The agent did not forget to search for those things. It never had a list of what needed answering in the first place. It improvised: searched for what came to mind first, checked if it could answer, and answered.
+
+<div className="not-prose my-6 rounded-xl border-l-4 border-amber-500 bg-amber-50/70 py-3 pl-4 pr-3 dark:bg-amber-950/25">
+  <p className="m-0 text-sm font-semibold text-amber-900 dark:text-amber-200">The structural gap in ReAct</p>
+  <p className="mt-2 mb-0 text-sm text-slate-800 dark:text-slate-200">
+    ReAct decides what to search for <strong>one step at a time</strong>, with no upfront inventory of what the question requires. For simple questions this is fine. For systematic research — where coverage matters and every sub-question must be answered — improvisation is unreliable. The agent answers when it <em>feels</em> ready, not when it has actually covered the question.
+  </p>
+</div>
+
+## The fix: decompose before you search
+
+The solution is a **Planner** — a separate step that reads the full question and produces an explicit list of sub-questions before any searching begins:
+
+```
+Query: "Compare AlphaCode and Codex on benchmark, training data, and citations"
+
+Planner output:
+  1. What benchmark did AlphaCode use and what were its results?
+  2. What benchmark did Codex use and what were its results?
+  3. What was the training dataset size for AlphaCode?
+  4. What was the training dataset size for Codex?
+  5. What is the approximate citation count for each paper by 2024?
+```
+
+Then the agent executes each sub-question in order. Coverage is guaranteed — not because the LLM is lucky in its improvisation, but because the plan was explicit from the start.
+
+That is Lesson 4.
+
+---
+
+## Where you are
+
+| Capability | Status |
+|-----------|--------|
+| LLM call | ✓ Lesson 1 |
+| Tool use + RAG | ✓ Lesson 2 |
+| Multi-step adaptive search | ✓ This lesson |
+| Verbose trace | ✓ This lesson |
+| Upfront decomposition + guaranteed coverage | ✗ Lesson 4 |
+
+---
+
+<div className="not-prose mt-10 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-6 dark:border-slate-700">
+  <a href="./02-tool-use" className="text-sm font-medium text-slate-600 no-underline hover:text-emerald-700 hover:underline dark:text-slate-400 dark:hover:text-emerald-400">← Lesson 2 · Tool use</a>
+  <a href="./04-planner" className="text-sm font-semibold text-emerald-700 no-underline hover:underline dark:text-emerald-400">Lesson 4 · Planner →</a>
+</div>

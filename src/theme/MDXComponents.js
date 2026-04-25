@@ -10,6 +10,9 @@ import AttentionHeatmapViz from '@site/src/components/viz/AttentionHeatmapViz';
 import DecisionBoundaryViz from '@site/src/components/viz/DecisionBoundaryViz';
 import NeuralNetForwardViz from '@site/src/components/viz/NeuralNetForwardViz';
 import PythonPlayground from '@site/src/components/viz/PythonPlayground';
+import ResidualConnectionFlowViz from '@site/src/components/viz/ResidualConnectionFlow';
+import LossLandscapeViz from '@site/src/components/viz/LossLandscape';
+import ChainRuleViz from '@site/src/components/viz/ChainRuleViz';
 
 export default {
   ...MDXComponents,
@@ -23,4 +26,7 @@ export default {
   DecisionBoundaryViz,
   NeuralNetForwardViz,
   PythonPlayground,
+  ResidualConnectionFlowViz,
+  LossLandscapeViz,
+  ChainRuleViz,
 };

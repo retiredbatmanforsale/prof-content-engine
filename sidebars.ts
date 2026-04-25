@@ -153,6 +153,20 @@ const sidebars: SidebarsConfig = {
             'ai-for-engineering/build-and-train-your-own-gpt2-model/interview-readiness',
           ],
         },
+        { type: 'html', value: '<span class="sidebar-divider">Agentic AI</span>' },
+        {
+          type: 'category',
+          label: 'Build a Multi-Agent Research Assistant',
+          className: 'sidebar-course',
+          link: { type: 'doc', id: 'ai-for-engineering/agentic-ai/intro' },
+          items: [
+            'ai-for-engineering/agentic-ai/intro',
+            'ai-for-engineering/agentic-ai/01-bare-llm-loop',
+            'ai-for-engineering/agentic-ai/02-tool-use',
+            'ai-for-engineering/agentic-ai/03-react-reasoning',
+            'ai-for-engineering/agentic-ai/04-planner',
+          ],
+        },
         { type: 'html', value: '<span class="sidebar-divider">Career</span>' },
         {
           type: 'category',
