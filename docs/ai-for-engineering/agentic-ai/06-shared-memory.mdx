@@ -1,4 +1,5 @@
 ---
+hide_title: true
 sidebar_label: '6 · Shared memory'
 title: 'Lesson 6 — Shared memory: one source of truth'
 description: >-
@@ -15,7 +16,7 @@ tutor_concepts:
   - "synthesiser hallucination despite clean memory"
 ---
 
-# Shared memory: one source of truth
+<LessonHero course="Build a Multi-Agent Research Assistant" number="6" title="Shared memory" subtitle="One source of truth — stop agents contradicting each other" />
 
 Lesson 5's parallel executors ran in complete isolation — each started with no knowledge of what others had already retrieved. Two executors needing the same documents searched independently, fetched the same results twice, and wrote separate local copies. Worse: if two searches returned slightly different phrasings of the same fact, the synthesiser received contradictory inputs with no way to reconcile them.
 
@@ -455,6 +456,6 @@ That is Lesson 7.
 ---
 
 <div className="not-prose mt-10 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-6 dark:border-slate-700">
-  <a href="./05-parallel-executors" className="text-sm font-medium text-slate-600 no-underline hover:text-emerald-700 hover:underline dark:text-slate-400 dark:hover:text-emerald-400">← Lesson 5 · Parallel executors</a>
-  <a href="./07-critic" className="text-sm font-semibold text-emerald-700 no-underline hover:underline dark:text-emerald-400">Lesson 7 · Critic →</a>
+  <a href="./parallel-executors" className="text-sm font-medium text-slate-600 no-underline hover:text-emerald-700 hover:underline dark:text-slate-400 dark:hover:text-emerald-400">← Lesson 5 · Parallel executors</a>
+  <a href="./critic" className="text-sm font-semibold text-emerald-700 no-underline hover:underline dark:text-emerald-400">Lesson 7 · Critic →</a>
 </div>

@@ -1,4 +1,5 @@
 ---
+hide_title: true
 sidebar_label: '1 · Perceptron & neuron'
 title: 'Lesson 1 — From linear regression to the perceptron'
 description: >-
@@ -15,7 +16,19 @@ tutor_concepts:
 access: public
 ---
 
-# From linear regression to the perceptron
+<LessonHero number="1" title="From linear regression to the perceptron" subtitle="The smallest unit: a weighted sum, a bias, and an activation" />
+
+<div className="not-prose my-6" style={{padding:'54.37% 0 0 0',position:'relative'}}>
+  <iframe
+    src="https://player.vimeo.com/video/1184748073?badge=0&autopause=0&player_id=0&app_id=58479"
+    frameBorder="0"
+    allow="autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media; web-share"
+    referrerPolicy="strict-origin-when-cross-origin"
+    style={{position:'absolute',top:0,left:0,width:'100%',height:'100%'}}
+    title="Perceptron and Sigmoid"
+  />
+</div>
+
 
 **Deep neural networks** are built from **layers** of **simple units**. Before depth or convolutions, it pays to understand the **smallest** piece: one **weighted sum of inputs**, plus **bias**, optionally passed through an **activation**. This lesson walks from **linear regression** → **logistic regression** → **perceptron**, then clarifies what people mean by a **neuron** today—and how that story fits the **connectionist** view researchers like **Geoffrey Hinton** championed: **intelligence from many adjustable units** learning from **data**, not hand-written rules alone.
 
@@ -26,6 +39,8 @@ access: public
   </p>
   <p className="mt-2 mb-0 text-center text-xs text-slate-600 dark:text-slate-400">Change only <strong>f</strong> and the <strong>loss</strong>—you move from regression to classification to a modern building block.</p>
 </div>
+
+<PerceptronDiagram caption="One neuron: three weighted inputs, a bias, and the sigmoid activation give a binary prediction ŷ." />
 
 ---
 
@@ -181,20 +196,11 @@ People use **“neuron”** loosely. In **current** frameworks, a **neuron** alm
 
 ---
 
-## Flow chart (conceptual)
+## Your whiteboard
 
-<div className="not-prose my-6 rounded-xl border border-slate-200 bg-slate-900 p-4 dark:border-slate-600">
-  <pre className="m-0 overflow-x-auto whitespace-pre-wrap font-mono text-[11px] leading-relaxed text-slate-100 sm:text-xs">{`  Features x
-      │
-      ▼
-  z = wᵀx + b     ← same in all three stories
-      │
-      ├──────────────────┬──────────────────┐
-      ▼                  ▼                  ▼
-   ŷ = z            ŷ = σ(z)          ŷ = sign(z)
- linear reg.      logistic reg.       perceptron
- (identity)       (smooth, prob.)      (hard class)`}</pre>
-</div>
+Sketch your own version of the neuron, annotate the parts you want to remember, or draw a comparison with the perceptron's step function. Changes live in your browser only.
+
+<PerceptronDiagram editable height={460} />
 
 ---
 

@@ -1,4 +1,5 @@
 ---
+hide_title: true
 sidebar_label: '1 · RNNs & LSTMs limits'
 title: 'Lesson 1 — Problem with RNNs and LSTMs'
 description: >-
@@ -15,7 +16,19 @@ tutor_concepts:
 access: public
 ---
 
-# Why attention? Moving beyond RNNs
+<LessonHero course="Attention Is All You Need" number="1" title="Why attention? Moving beyond RNNs" subtitle="Sequential processing limits scale — attention fixes that" />
+
+<div className="not-prose my-6" style={{padding:'54.37% 0 0 0',position:'relative'}}>
+  <iframe
+    src="https://player.vimeo.com/video/1184752541?badge=0&autopause=0&player_id=0&app_id=58479"
+    frameBorder="0"
+    allow="autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media; web-share"
+    referrerPolicy="strict-origin-when-cross-origin"
+    style={{position:'absolute',top:0,left:0,width:'100%',height:'100%'}}
+    title="The Problem with RNNs"
+  />
+</div>
+
 
 Before **transformers**, **RNNs** and **LSTMs** were the main architectures for sequences. They read text **one token at a time**, like turning pages in order: each new word updates a **hidden state** that is supposed to compress everything seen so far.
 

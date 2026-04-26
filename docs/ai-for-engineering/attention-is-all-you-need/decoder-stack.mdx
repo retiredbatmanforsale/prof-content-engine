@@ -1,4 +1,5 @@
 ---
+hide_title: true
 sidebar_label: '13 · Decoder stack'
 title: 'Lesson 13 — The decoder stack'
 description: >-
@@ -14,7 +15,7 @@ tutor_concepts:
   - "right-shifted target inputs"
 ---
 
-# The decoder stack
+<LessonHero course="Attention Is All You Need" number="13" title="The decoder stack" subtitle="Generating output one token at a time with masked self-attention" />
 
 The **decoder** generates the **target** sequence (e.g. the translation) **one token at a time**. Unlike the **encoder**, it must **not** see future target tokens when computing representations—that is the job of **causal (masked) self-attention**. It must also **read** the **source** that the encoder produced—that is **cross-attention**. Finally, each position still runs a **feed-forward** block. [Vaswani et al. (2017)](https://arxiv.org/abs/1706.03762) stack **three** sublayers per decoder layer, each wrapped in **Add &amp; Norm**, in a **fixed order**. The [Lex AI walkthrough](https://aiayn.aiseekhegaindia.com/) mirrors this decoder diagram.
 

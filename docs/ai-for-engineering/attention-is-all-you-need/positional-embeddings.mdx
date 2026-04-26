@@ -1,4 +1,5 @@
 ---
+hide_title: true
 sidebar_label: '3 · Positional embeddings'
 title: 'Lesson 3 — Positional embeddings & positional encodings'
 description: >-
@@ -13,7 +14,19 @@ tutor_concepts:
   - "position signal not query key value"
 ---
 
-# Positional embeddings & positional encodings
+<LessonHero course="Attention Is All You Need" number="3" title="Positional embeddings & encodings" subtitle="Telling the model where each token sits in the sequence" />
+
+<div className="not-prose my-6" style={{padding:'54.37% 0 0 0',position:'relative'}}>
+  <iframe
+    src="https://player.vimeo.com/video/1184755506?badge=0&autopause=0&player_id=0&app_id=58479"
+    frameBorder="0"
+    allow="autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media; web-share"
+    referrerPolicy="strict-origin-when-cross-origin"
+    style={{position:'absolute',top:0,left:0,width:'100%',height:'100%'}}
+    title="Positional Embeddings"
+  />
+</div>
+
 
 **Self-attention** compares tokens using inner products and softmax—it treats the sequence as a **set of vectors** unless you tell it otherwise. Swap two rows of embeddings and, without position information, the attention pattern can be **the same**: the mechanism is **permutation-invariant** over positions. Real language is **not**—*cat sat the* is not *the cat sat*.
 

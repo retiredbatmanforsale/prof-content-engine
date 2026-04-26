@@ -1,0 +1,412 @@
+---
+hide_title: true
+sidebar_label: '8 · Orchestrator'
+title: 'Lesson 8 — Close the loop: the Orchestrator'
+description: >-
+  Wire a feedback loop between the Critic and the executors. When the Critic
+  returns VERDICT: FAIL, the Orchestrator re-searches the flagged gaps,
+  re-synthesises, and re-runs the Critic — up to max_retries times.
+tutor_topic: "AI agents — orchestrator and retry feedback loop"
+tutor_concepts:
+  - "orchestrator as control-flow layer"
+  - "acting on structured verdict output"
+  - "targeted retry — re-search only gaps, not all sub-questions"
+  - "accumulating findings across attempts"
+  - "graceful degradation on max retries"
+---
+
+<LessonHero course="Build a Multi-Agent Research Assistant" number="8" title="Close the loop: the Orchestrator" subtitle="Wire everything together and handle failures automatically" />
+
+Lesson 7 ended with a `VERDICT: FAIL` that went nowhere. The Critic found a gap and an unsupported claim, printed them clearly — and then the agent delivered the bad answer unchanged.
+
+The Critic can only diagnose. Something else has to act. The **Orchestrator** is that something: a control-flow layer that sits above the whole pipeline and owns the retry loop. When the Critic says FAIL, the Orchestrator re-searches the flagged gaps, feeds the new findings back into synthesis, and re-runs the Critic. It stops when the verdict passes, or when `max_retries` runs out.
+
+---
+
+<div className="not-prose my-8 rounded-2xl border-2 border-rose-400 bg-gradient-to-br from-rose-50 to-orange-50 px-5 py-4 dark:border-rose-700 dark:from-rose-950/40 dark:to-orange-950/40">
+  <p className="m-0 text-xs font-bold uppercase tracking-widest text-rose-800 dark:text-rose-200">What you're building</p>
+  <p className="mt-2 mb-1 text-base font-bold text-slate-900 dark:text-slate-100">ResearchAgent — v0.8</p>
+  <p className="mt-0 mb-0 text-sm text-slate-700 dark:text-slate-300">An <code>Orchestrator</code> class that coordinates the full pipeline — plan, execute, synthesise, critique — and acts on <code>VERDICT: FAIL</code> by re-searching only the flagged gaps and re-running the critic.</p>
+</div>
+
+## The feedback loop
+
+```
+Query
+  │
+  ▼
+Planner ──► sub_questions
+                 │
+          ┌──────▼────────────────────────────────┐
+          │  Executors (parallel) + SharedMemory  │
+          └──────┬────────────────────────────────┘
+                 │ findings (accumulated)
+                 ▼
+           Synthesiser ──► answer
+                 │
+                 ▼
+            Critic ──► CriticVerdict
+                 │
+        ┌────────┴───────────────────┐
+ passed │                             │ failed
+        ▼                             ▼
+     return                   sub_questions = verdict.gaps
+                               attempt += 1  →  back to Executors
+                               (or return after max_retries)
+```
+
+Three decisions per loop iteration:
+
+1. **What to execute** — on retry, only the gap sub-questions, not all of them
+2. **What to synthesise from** — all findings accumulated across all attempts (new results fill the gaps without discarding what already worked on attempt 1)
+3. **When to stop** — `verdict.passed` is True, `verdict.gaps` is empty, or `max_retries` exhausted
+
+---
+
+## Why re-search only the gaps?
+
+On attempt 1, two sub-questions were answered correctly. Sub-question 1 (AlphaCode's benchmark) retrieved solid data. Sub-question 2 (algorithmic comparison) retrieved solid data. Only sub-question 3 (research impact) came back empty.
+
+Re-running all three sub-questions on attempt 2 would re-fetch data that is already correct. The gap is specific. The Critic told us exactly which sub-question failed. `verdict.gaps` is a list — use it.
+
+The Orchestrator keeps a running `all_findings` dict. New results from the retry are merged in. The synthesiser on attempt 2 sees sub-questions 1, 2, and 3 — the first two from the original pass, the third freshly retrieved. A strictly better picture than attempt 1.
+
+---
+
+## MockLLM and MockSearchEngine get one update
+
+The `MockSearchEngine` gains an `"impact"` entry. When the gap sub-question is re-searched with a query containing `"impact"`, it now returns real data instead of `"No documents found"`.
+
+The synthesiser (`_synth`) checks whether `"copilot"` or `"1000"` appears in the findings. If it does, it uses the retrieved impact data instead of inventing the StarCoder/CodeLlama claim. The Critic on attempt 2 finds no gap and no unsupported claim — `VERDICT: PASS`.
+
+This makes the main playground deterministic: attempt 1 fails, attempt 2 passes.
+
+---
+
+<div className="not-prose my-6 rounded-xl border-l-4 border-rose-500 bg-rose-50/70 py-3 pl-4 pr-3 dark:bg-rose-950/25">
+  <p className="m-0 text-sm font-semibold text-rose-900 dark:text-rose-200">Your tasks</p>
+  <p className="mt-2 mb-0 text-sm text-slate-800 dark:text-slate-200">
+    Fill in <code>Orchestrator.run()</code>. The seven TODOs map directly to the loop diagram above.<br/><br/>
+    1. Print the attempt header (if verbose).<br/>
+    2. Create a fresh <code>SharedMemory()</code> per attempt; run <code>self._react</code> for each sub-question with <code>asyncio.gather</code>; accumulate results into <code>all_findings</code>.<br/>
+    3. Synthesise from all accumulated findings.<br/>
+    4. Critique the answer.<br/>
+    5. Print the verdict if verbose.<br/>
+    6. Return <code>(answer, verdict, attempt + 1)</code> if verdict passed or no gaps remain.<br/>
+    7. Set <code>sub_questions = verdict.gaps</code> for the next attempt.
+  </p>
+</div>
+
+<PythonPlayground minLines={130} starter={`import asyncio
+
+# ── Interfaces ────────────────────────────────────────────────────────────────
+class LLMClient:
+    def chat(self, messages: list) -> str:
+        raise NotImplementedError
+
+class SearchTool:
+    def search(self, query: str) -> list:
+        raise NotImplementedError
+
+# ── Prompts ───────────────────────────────────────────────────────────────────
+PLANNER_PROMPT   = "You are a research planner. Decompose into a numbered list. Output ONLY the list."
+REACT_PROMPT     = "You are a research assistant. Output SEARCH: <query> or ANSWER: <text> each step."
+SYNTHESIS_PROMPT = "You are a research synthesiser. Combine findings into a coherent answer. Acknowledge gaps."
+CRITIC_PROMPT    = """You are a research critic. Audit the synthesised answer against the findings.
+Output one line per issue:
+  GAP: <sub-question with no useful data that the answer ignores or invents around>
+  UNSUPPORTED: <exact claim in the answer not found in any finding>
+Then output exactly one of:  VERDICT: PASS  |  VERDICT: FAIL"""
+
+def parse_plan(text: str) -> list:
+    return [l.split('. ', 1)[1].strip() for l in text.strip().splitlines()
+            if l.strip() and l.strip()[0].isdigit() and '. ' in l]
+
+# ── MockLLM ───────────────────────────────────────────────────────────────────
+class MockLLM(LLMClient):
+    def chat(self, messages: list) -> str:
+        system = messages[0]["content"].lower()
+        if "planner" in system or "decompose" in system:      return self._plan(messages[-1]["content"].lower())
+        if "synthesiser" in system or "synthesize" in system: return self._synth(messages[-1]["content"])
+        if "critic" in system or "audit" in system:           return self._critic(messages[-1]["content"])
+        return self._react(messages)
+
+    def _plan(self, q: str) -> str:
+        return ("1. What benchmark did AlphaCode use and what were its results?\\n"
+                "2. How do AlphaCode and Codex differ algorithmically?\\n"
+                "3. What real-world research impact have both papers had by 2024?")
+
+    def _synth(self, content: str) -> str:
+        has_alpha  = "codecontests" in content.lower()
+        has_algo   = "filter" in content.lower()
+        has_impact = "copilot" in content.lower() or "1000" in content.lower()
+        parts = ["Synthesised answer:"]
+        if has_alpha:  parts.append("AlphaCode (DeepMind 2022) used CodeContests with a generate-and-filter strategy, matching median competitive programmer performance.")
+        if has_algo:   parts.append("AlphaCode filters sampled programs by test cases; Codex uses standard generation without filtering.")
+        if has_impact: parts.append("Codex underpins GitHub Copilot (2021); both AlphaCode and Codex have been cited over 1000 times by 2024.")
+        else:          parts.append("Both papers significantly influenced subsequent code generation research, with AlphaCode's filtering approach adopted in StarCoder and CodeLlama.")
+        return " ".join(parts)
+
+    def _critic(self, content: str) -> str:
+        issues = []
+        c = content.lower()
+        if "no information retrieved" in c:
+            issues.append("GAP: Sub-question about real-world research impact — finding admitted 'No information retrieved', but the synthesised answer makes specific claims about this topic")
+        if "synthesised answer:" in content:
+            synth_part    = content.split("Synthesised answer:")[1].lower()
+            findings_part = content.split("Synthesised answer:")[0].lower()
+            if ("starcoder" in synth_part or "codellama" in synth_part) and \\
+               "starcoder" not in findings_part and "codellama" not in findings_part:
+                issues.append("UNSUPPORTED: 'AlphaCode's filtering approach adopted in StarCoder and CodeLlama' — this claim does not appear in any retrieved finding")
+        issues.append("VERDICT: FAIL" if issues else "VERDICT: PASS")
+        return "\\n".join(issues)
+
+    def _react(self, messages: list) -> str:
+        obs   = [m for m in messages if m["role"] == "user" and m["content"].startswith("OBSERVATION:")]
+        step  = len(obs)
+        query = messages[1]["content"].lower()
+        seen  = " ".join(m["content"] for m in obs).lower()
+        if step == 0:
+            if "benchmark" in query:                               return "SEARCH: AlphaCode benchmark CodeContests evaluation"
+            if "algorithmically" in query or "differ" in query:   return "SEARCH: AlphaCode Codex algorithmic comparison"
+            return "SEARCH: AlphaCode Codex research impact 2024"
+        if "codecontests" in seen or "generate-and-filter" in seen:
+            return "ANSWER: AlphaCode used CodeContests; generate-and-filter strategy; matched median competitive programmer."
+        if "comparison" in seen or "filter" in seen:
+            return "ANSWER: AlphaCode filters sampled programs by test cases. Codex uses standard generation without filtering."
+        if "copilot" in seen or "1000" in seen:
+            return "ANSWER: Both papers had major impact: Codex underpins GitHub Copilot; both cited 1000+ times by 2024."
+        if "no documents" in seen:
+            return "ANSWER: No information retrieved for this sub-question."
+        return f"ANSWER: {seen[:120] if seen else 'Nothing retrieved.'}"
+
+# ── MockSearchEngine — with impact data ───────────────────────────────────────
+class MockSearchEngine(SearchTool):
+    DB = {
+        "alphacode":  ["AlphaCode: CodeContests, generate-and-filter, matched median competitive programmer.",
+                       "AlphaCode training: filtered competitive-programming code from GitHub."],
+        "comparison": ["AlphaCode filters sampled programs by test cases; Codex uses standard generation."],
+        "impact":     ["AlphaCode and Codex both widely cited by 2024; Codex underpins GitHub Copilot (2021)."],
+    }
+    def search(self, q: str) -> list:
+        results = []
+        for kw, docs in self.DB.items():
+            if kw in q.lower(): results.extend(docs)
+        return results or [f"No documents found for: '{q}'"]
+
+# ── From previous lessons (given) ─────────────────────────────────────────────
+class CriticVerdict:
+    def __init__(self, raw: str):
+        self.raw         = raw
+        self.passed      = "VERDICT: PASS" in raw
+        self.gaps        = [l[4:].strip()  for l in raw.splitlines() if l.startswith("GAP:")]
+        self.unsupported = [l[12:].strip() for l in raw.splitlines() if l.startswith("UNSUPPORTED:")]
+    def __str__(self):
+        status = "✓ PASS" if self.passed else "✗ FAIL"
+        lines  = [f"Critic: {status}"]
+        for g in self.gaps:        lines.append(f"  GAP:         {g[:80]}...")
+        for u in self.unsupported: lines.append(f"  UNSUPPORTED: {u[:80]}...")
+        return "\\n".join(lines)
+
+class SharedMemory:
+    def __init__(self): self._store = {}; self._lock = asyncio.Lock()
+    async def get(self, key: str):
+        async with self._lock: return self._store.get(key)
+    async def set(self, key: str, value: list):
+        async with self._lock: self._store[key] = value
+    def snapshot(self) -> dict: return dict(self._store)
+
+class Planner:
+    def __init__(self, llm): self.llm = llm
+    def plan(self, query: str) -> list:
+        return parse_plan(self.llm.chat([{"role": "system", "content": PLANNER_PROMPT},
+                                          {"role": "user",   "content": query}]))
+
+class Critic:
+    def __init__(self, llm): self.llm = llm
+    def review(self, original_query: str, findings: dict, answer: str) -> CriticVerdict:
+        text = "\\n\\n".join(f"Sub-question: {sq}\\nFinding: {ans}" for sq,ans in findings.items())
+        user = f"Original query: {original_query}\\n\\nFindings:\\n{text}\\n\\nSynthesised answer:\\n{answer}"
+        return CriticVerdict(self.llm.chat([{"role": "system", "content": CRITIC_PROMPT},
+                                             {"role": "user",   "content": user}]))
+
+# ── Your turn: build the Orchestrator ────────────────────────────────────────
+class Orchestrator:
+    def __init__(self, llm: LLMClient, search_tool: SearchTool, max_retries: int = 2, verbose: bool = False):
+        self.llm         = llm
+        self.planner     = Planner(llm)
+        self.search_tool = search_tool
+        self.critic      = Critic(llm)
+        self.max_retries = max_retries
+        self.verbose     = verbose
+
+    async def run(self, query: str):
+        sub_questions = self.planner.plan(query)
+        if self.verbose:
+            print(f"[Planner] {len(sub_questions)} sub-questions:")
+            for i, sq in enumerate(sub_questions, 1): print(f"  {i}. {sq}")
+
+        all_findings = {}
+        answer  = ""
+        verdict = None
+
+        for attempt in range(self.max_retries + 1):
+            # TODO 1: if self.verbose, print attempt header
+            #   attempt == 0  →  "\\n── Attempt 1 ──────────────────────────────────────"
+            #   attempt  > 0  →  "\\n── Attempt {attempt+1} — re-searching {len(sub_questions)} gap(s) ──"
+
+            # TODO 2: memory = SharedMemory()
+            #   results = await asyncio.gather(*[self._react(sq, memory) for sq in sub_questions])
+            #   for i, sq in enumerate(sub_questions): all_findings[sq] = results[i]
+
+            # TODO 3: answer = self._synthesise(query, all_findings)
+
+            # TODO 4: verdict = self.critic.review(query, all_findings, answer)
+
+            # TODO 5: if self.verbose: print(verdict)
+
+            # TODO 6: if verdict.passed or not verdict.gaps:
+            #           return (answer, verdict, attempt + 1)
+
+            # TODO 7: sub_questions = verdict.gaps
+
+        return answer, verdict, self.max_retries + 1
+
+    # ── Given helpers ──────────────────────────────────────────────────────────
+    async def _react(self, query: str, memory: SharedMemory) -> str:
+        messages = [{"role": "system", "content": REACT_PROMPT},
+                    {"role": "user",   "content": query}]
+        for _ in range(6):
+            await asyncio.sleep(0)
+            response = self.llm.chat(messages)
+            if response.startswith("SEARCH:"):
+                sq      = response[len("SEARCH:"):].strip()
+                cached  = await memory.get(sq)
+                results = cached if cached is not None else self.search_tool.search(sq)
+                if cached is None: await memory.set(sq, results)
+                obs = "\\n".join(f"- {r}" for r in results)
+                messages += [{"role": "assistant", "content": response},
+                             {"role": "user",      "content": f"OBSERVATION:\\n{obs}"}]
+            elif response.startswith("ANSWER:"):
+                return response[len("ANSWER:"):].strip()
+            else:
+                return response
+        return "Max steps reached."
+
+    def _synthesise(self, query: str, findings: dict) -> str:
+        text = "\\n\\n".join(f"Sub-question: {sq}\\nFinding: {ans}" for sq,ans in findings.items())
+        return self.llm.chat([{"role": "system", "content": SYNTHESIS_PROMPT},
+                               {"role": "user",   "content": f"Original: {query}\\n\\nFindings:\\n{text}"}])
+
+# ── Test ──────────────────────────────────────────────────────────────────────
+async def main():
+    llm  = MockLLM()
+    orch = Orchestrator(llm=llm, search_tool=MockSearchEngine(), max_retries=2, verbose=True)
+    answer, verdict, attempts = await orch.run(
+        "Compare AlphaCode and Codex: benchmark, algorithmic approach, and research impact."
+    )
+    print("\\n─── Final answer ─────────────────────────────────────────────")
+    print(answer)
+    print(f"\\n─── Finished in {attempts} attempt(s) ───────────────────────")
+    print(verdict)
+
+await main()
+`} />
+
+---
+
+## Now look at what the loop can't tell you
+
+The Orchestrator on the happy path (attempt 1 fails, attempt 2 passes) gives you a correct answer and a `VERDICT: PASS`. That's good. But what happens on a query where the gap *never* resolves — where the search engine genuinely has no data, and three attempts all return the same empty result?
+
+<div className="not-prose my-6 rounded-xl border-2 border-amber-300 bg-amber-50/90 p-4 dark:border-amber-700 dark:bg-amber-950/30">
+  <p className="m-0 text-sm font-semibold text-amber-900 dark:text-amber-200">The wall — three attempts, no visibility</p>
+  <p className="mt-2 mb-0 text-sm text-slate-800 dark:text-slate-200">
+    Run the cell below. The Orchestrator correctly retries twice. Read the output, then read the "What you did NOT see" section that follows.
+  </p>
+</div>
+
+<PythonPlayground minLines={48} starter={`# Simulated Orchestrator run where the gap never resolves.
+# (Search engine has no data for the "research impact" sub-question —
+#  the gap persists across all three attempts.)
+
+print("[Planner] 3 sub-questions:")
+print("  1. What benchmark did AlphaCode use and what were its results?")
+print("  2. How do AlphaCode and Codex differ algorithmically?")
+print("  3. What real-world research impact have both papers had by 2024?")
+
+log = [
+    {"n": 1, "label": "Attempt 1",
+     "gaps": ["Sub-question about real-world research impact (no data retrieved)"],
+     "unsupported": ["AlphaCode's filtering approach adopted in StarCoder and CodeLlama"]},
+    {"n": 2, "label": "Attempt 2 — re-searching 1 gap",
+     "gaps": ["Sub-question about real-world research impact (no data retrieved)"],
+     "unsupported": []},
+    {"n": 3, "label": "Attempt 3 — re-searching 1 gap",
+     "gaps": ["Sub-question about real-world research impact (no data retrieved)"],
+     "unsupported": []},
+]
+
+for entry in log:
+    bar = "─" * max(0, 52 - len(entry["label"]))
+    print(f"\\n── {entry['label']} {bar}")
+    print("Critic: ✗ FAIL")
+    for g in entry["gaps"]:        print(f"  GAP:         {g}")
+    for u in entry["unsupported"]: print(f"  UNSUPPORTED: {u[:72]}...")
+
+print("\\n" + "─" * 65)
+print("3 attempts exhausted — still VERDICT: FAIL")
+print("Returning best-effort answer.")
+print()
+print("What you saw:  3 × ✗ FAIL")
+print()
+print("What you did NOT see:")
+print("  ✗  How long did each attempt take?")
+print("  ✗  Which executor caused the recurring gap?")
+print("  ✗  How many total LLM calls were made across all three attempts?")
+print("  ✗  Was attempt 3 meaningfully different from attempt 2?")
+print("  ✗  Is the gap caused by a missing search index or a badly framed sub-question?")
+print()
+print("The loop ran correctly. You cannot tell why it kept failing.")
+print("You cannot fix what you cannot observe. That is Lesson 9.")
+`} />
+
+---
+
+## The system is complete. You can't debug it.
+
+Every component exists and works in isolation. The Planner decomposes queries. The Executors retrieve and reason in parallel. SharedMemory deduplicates. The Synthesiser assembles. The Critic audits. The Orchestrator retries. The pipeline runs end to end.
+
+What you have no visibility into:
+
+- **Per-agent timing** — which executor takes 3× as long as the others on every run
+- **LLM call count** — how many calls the system made in total (hint: more than you think)
+- **Retry diagnostics** — whether gap sub-questions were re-searched with different queries or identical ones
+- **Verdict progression** — whether each retry attempt improved (fewer gaps, different unsupported claims) or was identical to the last
+
+Without this, tuning the system is guesswork. You can't know whether `max_retries=2` is too low or wasteful, whether the Planner is generating resolvable sub-questions, or where to focus optimization effort.
+
+Observability is not optional in multi-agent systems. It's the instrumentation layer that makes everything else debuggable. That's Lesson 9.
+
+---
+
+## Where you are
+
+| Capability | Status |
+|-----------|--------|
+| LLM call | ✓ Lesson 1 |
+| Tool use + RAG | ✓ Lesson 2 |
+| Multi-step adaptive search | ✓ Lesson 3 |
+| Upfront decomposition | ✓ Lesson 4 |
+| Parallel concurrent execution | ✓ Lesson 5 |
+| Shared memory + deduplication | ✓ Lesson 6 |
+| Critic audit + structured verdict | ✓ Lesson 7 |
+| Orchestrator feedback loop | ✓ This lesson |
+| Observability — trace, eval, debug | ✗ Lesson 9 |
+
+---
+
+<div className="not-prose mt-10 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-6 dark:border-slate-700">
+  <a href="./critic" className="text-sm font-medium text-slate-600 no-underline hover:text-emerald-700 hover:underline dark:text-slate-400 dark:hover:text-emerald-400">← Lesson 7 · Critic</a>
+  <a href="./observability" className="text-sm font-semibold text-emerald-700 no-underline hover:underline dark:text-emerald-400">Lesson 9 · Observability →</a>
+</div>

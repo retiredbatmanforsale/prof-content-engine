@@ -1,4 +1,5 @@
 ---
+hide_title: true
 sidebar_label: '12 · Encoder stack'
 title: 'Lesson 12 — The encoder stack'
 description: >-
@@ -14,7 +15,7 @@ tutor_concepts:
   - "token embeddings plus positional encodings"
 ---
 
-# The encoder stack
+<LessonHero course="Attention Is All You Need" number="12" title="The encoder stack" subtitle="Stacking attention + feed-forward blocks to build representations" />
 
 The **encoder** is where the **source** sentence (or any input sequence) is turned into a **stack of contextual vectors**—one row per token—that the **decoder** will later **read** through **cross-attention**. Every lesson so far was a **piece** of this machine; this page **wires them in the exact order** used in [Vaswani et al. (2017), *Attention Is All You Need*](https://arxiv.org/abs/1706.03762). The [Lex AI interactive diagram](https://aiayn.aiseekhegaindia.com/) follows the same stacking.
 

@@ -1,0 +1,569 @@
+{
+  "1183463005": {
+    "title": "sample-vimeo",
+    "video_id": "1183463005",
+    "h_hash": "e7a4304817",
+    "vimeo_link": "https://vimeo.com/1183463005/e7a4304817",
+    "created_time": "2026-04-15T17:22:37+00:00",
+    "duration_seconds": 36,
+    "mdx_embed": "<div className=\"not-prose my-6\" style={{padding:'54.37% 0 0 0',position:'relative'}}>\n  <iframe\n    src=\"https://player.vimeo.com/video/1183463005?h=e7a4304817&badge=0&autopause=0&player_id=0&app_id=58479\"\n    frameBorder=\"0\"\n    allow=\"autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media; web-share\"\n    referrerPolicy=\"strict-origin-when-cross-origin\"\n    style={{position:'absolute',top:0,left:0,width:'100%',height:'100%'}}\n    title=\"sample-vimeo\"\n  />\n</div>"
+  },
+  "1184299522": {
+    "title": "l1-ga4e-Introduction-to-Generative-AI-and-AI-Literacy.mp4",
+    "video_id": "1184299522",
+    "h_hash": "edaf4dd583",
+    "vimeo_link": "https://vimeo.com/1184299522/edaf4dd583",
+    "created_time": "2026-04-18T04:28:38+00:00",
+    "duration_seconds": 1950,
+    "mdx_embed": "<div className=\"not-prose my-6\" style={{padding:'54.37% 0 0 0',position:'relative'}}>\n  <iframe\n    src=\"https://player.vimeo.com/video/1184299522?h=edaf4dd583&badge=0&autopause=0&player_id=0&app_id=58479\"\n    frameBorder=\"0\"\n    allow=\"autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media; web-share\"\n    referrerPolicy=\"strict-origin-when-cross-origin\"\n    style={{position:'absolute',top:0,left:0,width:'100%',height:'100%'}}\n    title=\"l1-ga4e-Introduction-to-Generative-AI-and-AI-Literacy.mp4\"\n  />\n</div>"
+  },
+  "1184720548": {
+    "title": "l7-deep-research-agent.mp4",
+    "video_id": "1184720548",
+    "h_hash": null,
+    "vimeo_link": "https://vimeo.com/1184720548",
+    "created_time": "2026-04-20T07:30:16+00:00",
+    "duration_seconds": 848,
+    "mdx_embed": "<div className=\"not-prose my-6\" style={{padding:'54.37% 0 0 0',position:'relative'}}>\n  <iframe\n    src=\"https://player.vimeo.com/video/1184720548?badge=0&autopause=0&player_id=0&app_id=58479\"\n    frameBorder=\"0\"\n    allow=\"autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media; web-share\"\n    referrerPolicy=\"strict-origin-when-cross-origin\"\n    style={{position:'absolute',top:0,left:0,width:'100%',height:'100%'}}\n    title=\"l7-deep-research-agent.mp4\"\n  />\n</div>"
+  },
+  "1184726928": {
+    "title": "l6-voice-cloning-11-labs.mp4",
+    "video_id": "1184726928",
+    "h_hash": null,
+    "vimeo_link": "https://vimeo.com/1184726928",
+    "created_time": "2026-04-20T07:52:22+00:00",
+    "duration_seconds": 682,
+    "mdx_embed": "<div className=\"not-prose my-6\" style={{padding:'54.37% 0 0 0',position:'relative'}}>\n  <iframe\n    src=\"https://player.vimeo.com/video/1184726928?badge=0&autopause=0&player_id=0&app_id=58479\"\n    frameBorder=\"0\"\n    allow=\"autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media; web-share\"\n    referrerPolicy=\"strict-origin-when-cross-origin\"\n    style={{position:'absolute',top:0,left:0,width:'100%',height:'100%'}}\n    title=\"l6-voice-cloning-11-labs.mp4\"\n  />\n</div>"
+  },
+  "1184730426": {
+    "title": "l5-build-personal-portfolio-application.mp4",
+    "video_id": "1184730426",
+    "h_hash": null,
+    "vimeo_link": "https://vimeo.com/1184730426",
+    "created_time": "2026-04-20T08:05:31+00:00",
+    "duration_seconds": 2224,
+    "mdx_embed": "<div className=\"not-prose my-6\" style={{padding:'54.37% 0 0 0',position:'relative'}}>\n  <iframe\n    src=\"https://player.vimeo.com/video/1184730426?badge=0&autopause=0&player_id=0&app_id=58479\"\n    frameBorder=\"0\"\n    allow=\"autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media; web-share\"\n    referrerPolicy=\"strict-origin-when-cross-origin\"\n    style={{position:'absolute',top:0,left:0,width:'100%',height:'100%'}}\n    title=\"l5-build-personal-portfolio-application.mp4\"\n  />\n</div>"
+  },
+  "1184731773": {
+    "title": "l2-ga4e-AI-Stack-by-Jensen.mp4",
+    "video_id": "1184731773",
+    "h_hash": null,
+    "vimeo_link": "https://vimeo.com/1184731773",
+    "created_time": "2026-04-20T08:11:21+00:00",
+    "duration_seconds": 422,
+    "mdx_embed": "<div className=\"not-prose my-6\" style={{padding:'54.37% 0 0 0',position:'relative'}}>\n  <iframe\n    src=\"https://player.vimeo.com/video/1184731773?badge=0&autopause=0&player_id=0&app_id=58479\"\n    frameBorder=\"0\"\n    allow=\"autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media; web-share\"\n    referrerPolicy=\"strict-origin-when-cross-origin\"\n    style={{position:'absolute',top:0,left:0,width:'100%',height:'100%'}}\n    title=\"l2-ga4e-AI-Stack-by-Jensen.mp4\"\n  />\n</div>"
+  },
+  "1184732362": {
+    "title": "l4-ga4e-design-of-an-llm.mp4",
+    "video_id": "1184732362",
+    "h_hash": null,
+    "vimeo_link": "https://vimeo.com/1184732362",
+    "created_time": "2026-04-20T08:13:44+00:00",
+    "duration_seconds": 2129,
+    "mdx_embed": "<div className=\"not-prose my-6\" style={{padding:'54.37% 0 0 0',position:'relative'}}>\n  <iframe\n    src=\"https://player.vimeo.com/video/1184732362?badge=0&autopause=0&player_id=0&app_id=58479\"\n    frameBorder=\"0\"\n    allow=\"autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media; web-share\"\n    referrerPolicy=\"strict-origin-when-cross-origin\"\n    style={{position:'absolute',top:0,left:0,width:'100%',height:'100%'}}\n    title=\"l4-ga4e-design-of-an-llm.mp4\"\n  />\n</div>"
+  },
+  "1184733402": {
+    "title": "l3-ga4e-AIModelLifecycle.mp4",
+    "video_id": "1184733402",
+    "h_hash": null,
+    "vimeo_link": "https://vimeo.com/1184733402",
+    "created_time": "2026-04-20T08:17:33+00:00",
+    "duration_seconds": 1587,
+    "mdx_embed": "<div className=\"not-prose my-6\" style={{padding:'54.37% 0 0 0',position:'relative'}}>\n  <iframe\n    src=\"https://player.vimeo.com/video/1184733402?badge=0&autopause=0&player_id=0&app_id=58479\"\n    frameBorder=\"0\"\n    allow=\"autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media; web-share\"\n    referrerPolicy=\"strict-origin-when-cross-origin\"\n    style={{position:'absolute',top:0,left:0,width:'100%',height:'100%'}}\n    title=\"l3-ga4e-AIModelLifecycle.mp4\"\n  />\n</div>"
+  },
+  "1184735583": {
+    "title": "linear-regression-till-intro+model-eq+loss-function.mp4",
+    "video_id": "1184735583",
+    "h_hash": null,
+    "vimeo_link": "https://vimeo.com/1184735583",
+    "created_time": "2026-04-20T08:26:56+00:00",
+    "duration_seconds": 1441,
+    "mdx_embed": "<div className=\"not-prose my-6\" style={{padding:'54.37% 0 0 0',position:'relative'}}>\n  <iframe\n    src=\"https://player.vimeo.com/video/1184735583?badge=0&autopause=0&player_id=0&app_id=58479\"\n    frameBorder=\"0\"\n    allow=\"autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media; web-share\"\n    referrerPolicy=\"strict-origin-when-cross-origin\"\n    style={{position:'absolute',top:0,left:0,width:'100%',height:'100%'}}\n    title=\"linear-regression-till-intro+model-eq+loss-function.mp4\"\n  />\n</div>"
+  },
+  "1184748073": {
+    "title": "dnn-l1-Perceptron-And-Sigmoid.mp4",
+    "video_id": "1184748073",
+    "h_hash": null,
+    "vimeo_link": "https://vimeo.com/1184748073",
+    "created_time": "2026-04-20T09:13:47+00:00",
+    "duration_seconds": 306,
+    "mdx_embed": "<div className=\"not-prose my-6\" style={{padding:'54.37% 0 0 0',position:'relative'}}>\n  <iframe\n    src=\"https://player.vimeo.com/video/1184748073?badge=0&autopause=0&player_id=0&app_id=58479\"\n    frameBorder=\"0\"\n    allow=\"autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media; web-share\"\n    referrerPolicy=\"strict-origin-when-cross-origin\"\n    style={{position:'absolute',top:0,left:0,width:'100%',height:'100%'}}\n    title=\"dnn-l1-Perceptron-And-Sigmoid.mp4\"\n  />\n</div>"
+  },
+  "1184750649": {
+    "title": "dnn-l2-Why-Linear-Models-Are-Not-Enough.mp4",
+    "video_id": "1184750649",
+    "h_hash": null,
+    "vimeo_link": "https://vimeo.com/1184750649",
+    "created_time": "2026-04-20T09:22:34+00:00",
+    "duration_seconds": 218,
+    "mdx_embed": "<div className=\"not-prose my-6\" style={{padding:'54.37% 0 0 0',position:'relative'}}>\n  <iframe\n    src=\"https://player.vimeo.com/video/1184750649?badge=0&autopause=0&player_id=0&app_id=58479\"\n    frameBorder=\"0\"\n    allow=\"autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media; web-share\"\n    referrerPolicy=\"strict-origin-when-cross-origin\"\n    style={{position:'absolute',top:0,left:0,width:'100%',height:'100%'}}\n    title=\"dnn-l2-Why-Linear-Models-Are-Not-Enough.mp4\"\n  />\n</div>"
+  },
+  "1184752541": {
+    "title": "l1-problem-with-rnns.mp4",
+    "video_id": "1184752541",
+    "h_hash": null,
+    "vimeo_link": "https://vimeo.com/1184752541",
+    "created_time": "2026-04-20T09:29:21+00:00",
+    "duration_seconds": 660,
+    "mdx_embed": "<div className=\"not-prose my-6\" style={{padding:'54.37% 0 0 0',position:'relative'}}>\n  <iframe\n    src=\"https://player.vimeo.com/video/1184752541?badge=0&autopause=0&player_id=0&app_id=58479\"\n    frameBorder=\"0\"\n    allow=\"autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media; web-share\"\n    referrerPolicy=\"strict-origin-when-cross-origin\"\n    style={{position:'absolute',top:0,left:0,width:'100%',height:'100%'}}\n    title=\"l1-problem-with-rnns.mp4\"\n  />\n</div>"
+  },
+  "1184754254": {
+    "title": "l2-token-embeddings.mp4",
+    "video_id": "1184754254",
+    "h_hash": null,
+    "vimeo_link": "https://vimeo.com/1184754254",
+    "created_time": "2026-04-20T09:35:25+00:00",
+    "duration_seconds": 704,
+    "mdx_embed": "<div className=\"not-prose my-6\" style={{padding:'54.37% 0 0 0',position:'relative'}}>\n  <iframe\n    src=\"https://player.vimeo.com/video/1184754254?badge=0&autopause=0&player_id=0&app_id=58479\"\n    frameBorder=\"0\"\n    allow=\"autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media; web-share\"\n    referrerPolicy=\"strict-origin-when-cross-origin\"\n    style={{position:'absolute',top:0,left:0,width:'100%',height:'100%'}}\n    title=\"l2-token-embeddings.mp4\"\n  />\n</div>"
+  },
+  "1184755506": {
+    "title": "l3-Positional-Embeddings.mp4",
+    "video_id": "1184755506",
+    "h_hash": null,
+    "vimeo_link": "https://vimeo.com/1184755506",
+    "created_time": "2026-04-20T09:40:02+00:00",
+    "duration_seconds": 394,
+    "mdx_embed": "<div className=\"not-prose my-6\" style={{padding:'54.37% 0 0 0',position:'relative'}}>\n  <iframe\n    src=\"https://player.vimeo.com/video/1184755506?badge=0&autopause=0&player_id=0&app_id=58479\"\n    frameBorder=\"0\"\n    allow=\"autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media; web-share\"\n    referrerPolicy=\"strict-origin-when-cross-origin\"\n    style={{position:'absolute',top:0,left:0,width:'100%',height:'100%'}}\n    title=\"l3-Positional-Embeddings.mp4\"\n  />\n</div>"
+  },
+  "1184758543": {
+    "title": "l4-l5 self-attention&multi-head-attention.mp4",
+    "video_id": "1184758543",
+    "h_hash": null,
+    "vimeo_link": "https://vimeo.com/1184758543",
+    "created_time": "2026-04-20T09:51:07+00:00",
+    "duration_seconds": 1507,
+    "mdx_embed": "<div className=\"not-prose my-6\" style={{padding:'54.37% 0 0 0',position:'relative'}}>\n  <iframe\n    src=\"https://player.vimeo.com/video/1184758543?badge=0&autopause=0&player_id=0&app_id=58479\"\n    frameBorder=\"0\"\n    allow=\"autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media; web-share\"\n    referrerPolicy=\"strict-origin-when-cross-origin\"\n    style={{position:'absolute',top:0,left:0,width:'100%',height:'100%'}}\n    title=\"l4-l5 self-attention&multi-head-attention.mp4\"\n  />\n</div>"
+  },
+  "1184761004": {
+    "title": "l6-causal-masking.mp4",
+    "video_id": "1184761004",
+    "h_hash": null,
+    "vimeo_link": "https://vimeo.com/1184761004",
+    "created_time": "2026-04-20T09:59:07+00:00",
+    "duration_seconds": 297,
+    "mdx_embed": "<div className=\"not-prose my-6\" style={{padding:'54.37% 0 0 0',position:'relative'}}>\n  <iframe\n    src=\"https://player.vimeo.com/video/1184761004?badge=0&autopause=0&player_id=0&app_id=58479\"\n    frameBorder=\"0\"\n    allow=\"autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media; web-share\"\n    referrerPolicy=\"strict-origin-when-cross-origin\"\n    style={{position:'absolute',top:0,left:0,width:'100%',height:'100%'}}\n    title=\"l6-causal-masking.mp4\"\n  />\n</div>"
+  },
+  "1185099528": {
+    "title": "DLT - Welcome - with Captions",
+    "video_id": "1185099528",
+    "h_hash": null,
+    "vimeo_link": "https://vimeo.com/1185099528",
+    "created_time": "2026-04-21T09:33:48+00:00",
+    "duration_seconds": 280,
+    "mdx_embed": "<div className=\"not-prose my-6\" style={{padding:'54.37% 0 0 0',position:'relative'}}>\n  <iframe\n    src=\"https://player.vimeo.com/video/1185099528?badge=0&autopause=0&player_id=0&app_id=58479\"\n    frameBorder=\"0\"\n    allow=\"autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media; web-share\"\n    referrerPolicy=\"strict-origin-when-cross-origin\"\n    style={{position:'absolute',top:0,left:0,width:'100%',height:'100%'}}\n    title=\"DLT - Welcome - with Captions\"\n  />\n</div>"
+  },
+  "1185103134": {
+    "title": "Predict Future.mp4",
+    "video_id": "1185103134",
+    "h_hash": null,
+    "vimeo_link": "https://vimeo.com/1185103134",
+    "created_time": "2026-04-21T09:46:58+00:00",
+    "duration_seconds": 198,
+    "mdx_embed": "<div className=\"not-prose my-6\" style={{padding:'54.37% 0 0 0',position:'relative'}}>\n  <iframe\n    src=\"https://player.vimeo.com/video/1185103134?badge=0&autopause=0&player_id=0&app_id=58479\"\n    frameBorder=\"0\"\n    allow=\"autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media; web-share\"\n    referrerPolicy=\"strict-origin-when-cross-origin\"\n    style={{position:'absolute',top:0,left:0,width:'100%',height:'100%'}}\n    title=\"Predict Future.mp4\"\n  />\n</div>"
+  },
+  "1185104313": {
+    "title": "Deep Learning Talks.mp4",
+    "video_id": "1185104313",
+    "h_hash": null,
+    "vimeo_link": "https://vimeo.com/1185104313",
+    "created_time": "2026-04-21T09:51:58+00:00",
+    "duration_seconds": 595,
+    "mdx_embed": "<div className=\"not-prose my-6\" style={{padding:'54.37% 0 0 0',position:'relative'}}>\n  <iframe\n    src=\"https://player.vimeo.com/video/1185104313?badge=0&autopause=0&player_id=0&app_id=58479\"\n    frameBorder=\"0\"\n    allow=\"autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media; web-share\"\n    referrerPolicy=\"strict-origin-when-cross-origin\"\n    style={{position:'absolute',top:0,left:0,width:'100%',height:'100%'}}\n    title=\"Deep Learning Talks.mp4\"\n  />\n</div>"
+  },
+  "1185105196": {
+    "title": "The $100 Billion Bet_ Transformers Won.mp4",
+    "video_id": "1185105196",
+    "h_hash": null,
+    "vimeo_link": "https://vimeo.com/1185105196",
+    "created_time": "2026-04-21T09:55:45+00:00",
+    "duration_seconds": 1117,
+    "mdx_embed": "<div className=\"not-prose my-6\" style={{padding:'54.37% 0 0 0',position:'relative'}}>\n  <iframe\n    src=\"https://player.vimeo.com/video/1185105196?badge=0&autopause=0&player_id=0&app_id=58479\"\n    frameBorder=\"0\"\n    allow=\"autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media; web-share\"\n    referrerPolicy=\"strict-origin-when-cross-origin\"\n    style={{position:'absolute',top:0,left:0,width:'100%',height:'100%'}}\n    title=\"The $100 Billion Bet_ Transformers Won.mp4\"\n  />\n</div>"
+  },
+  "1185107689": {
+    "title": "Episode 5",
+    "video_id": "1185107689",
+    "h_hash": null,
+    "vimeo_link": "https://vimeo.com/1185107689",
+    "created_time": "2026-04-21T10:05:32+00:00",
+    "duration_seconds": 672,
+    "mdx_embed": "<div className=\"not-prose my-6\" style={{padding:'54.37% 0 0 0',position:'relative'}}>\n  <iframe\n    src=\"https://player.vimeo.com/video/1185107689?badge=0&autopause=0&player_id=0&app_id=58479\"\n    frameBorder=\"0\"\n    allow=\"autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media; web-share\"\n    referrerPolicy=\"strict-origin-when-cross-origin\"\n    style={{position:'absolute',top:0,left:0,width:'100%',height:'100%'}}\n    title=\"Episode 5\"\n  />\n</div>"
+  },
+  "1185108655": {
+    "title": "Why Your _Modern_ AI Still Uses 1950s Math.mp4",
+    "video_id": "1185108655",
+    "h_hash": null,
+    "vimeo_link": "https://vimeo.com/1185108655",
+    "created_time": "2026-04-21T10:09:39+00:00",
+    "duration_seconds": 454,
+    "mdx_embed": "<div className=\"not-prose my-6\" style={{padding:'54.37% 0 0 0',position:'relative'}}>\n  <iframe\n    src=\"https://player.vimeo.com/video/1185108655?badge=0&autopause=0&player_id=0&app_id=58479\"\n    frameBorder=\"0\"\n    allow=\"autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media; web-share\"\n    referrerPolicy=\"strict-origin-when-cross-origin\"\n    style={{position:'absolute',top:0,left:0,width:'100%',height:'100%'}}\n    title=\"Why Your _Modern_ AI Still Uses 1950s Math.mp4\"\n  />\n</div>"
+  },
+  "1185110034": {
+    "title": "video-output-C0AA4946-66EC-497D-986E-6E5572F0BD64-2.mp4",
+    "video_id": "1185110034",
+    "h_hash": null,
+    "vimeo_link": "https://vimeo.com/1185110034",
+    "created_time": "2026-04-21T10:15:03+00:00",
+    "duration_seconds": 1343,
+    "mdx_embed": "<div className=\"not-prose my-6\" style={{padding:'54.37% 0 0 0',position:'relative'}}>\n  <iframe\n    src=\"https://player.vimeo.com/video/1185110034?badge=0&autopause=0&player_id=0&app_id=58479\"\n    frameBorder=\"0\"\n    allow=\"autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media; web-share\"\n    referrerPolicy=\"strict-origin-when-cross-origin\"\n    style={{position:'absolute',top:0,left:0,width:'100%',height:'100%'}}\n    title=\"video-output-C0AA4946-66EC-497D-986E-6E5572F0BD64-2.mp4\"\n  />\n</div>"
+  },
+  "1185112277": {
+    "title": "The Simple Math That Rules Every AI (Linear Regression).mp4",
+    "video_id": "1185112277",
+    "h_hash": null,
+    "vimeo_link": "https://vimeo.com/1185112277",
+    "created_time": "2026-04-21T10:24:03+00:00",
+    "duration_seconds": 1019,
+    "mdx_embed": "<div className=\"not-prose my-6\" style={{padding:'54.37% 0 0 0',position:'relative'}}>\n  <iframe\n    src=\"https://player.vimeo.com/video/1185112277?badge=0&autopause=0&player_id=0&app_id=58479\"\n    frameBorder=\"0\"\n    allow=\"autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media; web-share\"\n    referrerPolicy=\"strict-origin-when-cross-origin\"\n    style={{position:'absolute',top:0,left:0,width:'100%',height:'100%'}}\n    title=\"The Simple Math That Rules Every AI (Linear Regression).mp4\"\n  />\n</div>"
+  },
+  "1185113960": {
+    "title": "The First Real Classification Algorithm.mp4",
+    "video_id": "1185113960",
+    "h_hash": null,
+    "vimeo_link": "https://vimeo.com/1185113960",
+    "created_time": "2026-04-21T10:30:25+00:00",
+    "duration_seconds": 829,
+    "mdx_embed": "<div className=\"not-prose my-6\" style={{padding:'54.37% 0 0 0',position:'relative'}}>\n  <iframe\n    src=\"https://player.vimeo.com/video/1185113960?badge=0&autopause=0&player_id=0&app_id=58479\"\n    frameBorder=\"0\"\n    allow=\"autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media; web-share\"\n    referrerPolicy=\"strict-origin-when-cross-origin\"\n    style={{position:'absolute',top:0,left:0,width:'100%',height:'100%'}}\n    title=\"The First Real Classification Algorithm.mp4\"\n  />\n</div>"
+  },
+  "1185114420": {
+    "title": "How Machines Teach Themselves.mp4",
+    "video_id": "1185114420",
+    "h_hash": null,
+    "vimeo_link": "https://vimeo.com/1185114420",
+    "created_time": "2026-04-21T10:32:22+00:00",
+    "duration_seconds": 795,
+    "mdx_embed": "<div className=\"not-prose my-6\" style={{padding:'54.37% 0 0 0',position:'relative'}}>\n  <iframe\n    src=\"https://player.vimeo.com/video/1185114420?badge=0&autopause=0&player_id=0&app_id=58479\"\n    frameBorder=\"0\"\n    allow=\"autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media; web-share\"\n    referrerPolicy=\"strict-origin-when-cross-origin\"\n    style={{position:'absolute',top:0,left:0,width:'100%',height:'100%'}}\n    title=\"How Machines Teach Themselves.mp4\"\n  />\n</div>"
+  },
+  "1185114975": {
+    "title": "What Transformers Actually See (Tokens vs Embeddings).mp4",
+    "video_id": "1185114975",
+    "h_hash": null,
+    "vimeo_link": "https://vimeo.com/1185114975",
+    "created_time": "2026-04-21T10:34:26+00:00",
+    "duration_seconds": 609,
+    "mdx_embed": "<div className=\"not-prose my-6\" style={{padding:'54.37% 0 0 0',position:'relative'}}>\n  <iframe\n    src=\"https://player.vimeo.com/video/1185114975?badge=0&autopause=0&player_id=0&app_id=58479\"\n    frameBorder=\"0\"\n    allow=\"autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media; web-share\"\n    referrerPolicy=\"strict-origin-when-cross-origin\"\n    style={{position:'absolute',top:0,left:0,width:'100%',height:'100%'}}\n    title=\"What Transformers Actually See (Tokens vs Embeddings).mp4\"\n  />\n</div>"
+  },
+  "1185115731": {
+    "title": "How Attention Sees Language (Multi-Head Intuition).mp4",
+    "video_id": "1185115731",
+    "h_hash": null,
+    "vimeo_link": "https://vimeo.com/1185115731",
+    "created_time": "2026-04-21T10:37:30+00:00",
+    "duration_seconds": 802,
+    "mdx_embed": "<div className=\"not-prose my-6\" style={{padding:'54.37% 0 0 0',position:'relative'}}>\n  <iframe\n    src=\"https://player.vimeo.com/video/1185115731?badge=0&autopause=0&player_id=0&app_id=58479\"\n    frameBorder=\"0\"\n    allow=\"autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media; web-share\"\n    referrerPolicy=\"strict-origin-when-cross-origin\"\n    style={{position:'absolute',top:0,left:0,width:'100%',height:'100%'}}\n    title=\"How Attention Sees Language (Multi-Head Intuition).mp4\"\n  />\n</div>"
+  },
+  "1185125595": {
+    "title": "The Hidden Learnable Parts of Transformers.mp4",
+    "video_id": "1185125595",
+    "h_hash": null,
+    "vimeo_link": "https://vimeo.com/1185125595",
+    "created_time": "2026-04-21T11:14:14+00:00",
+    "duration_seconds": 293,
+    "mdx_embed": "<div className=\"not-prose my-6\" style={{padding:'54.37% 0 0 0',position:'relative'}}>\n  <iframe\n    src=\"https://player.vimeo.com/video/1185125595?badge=0&autopause=0&player_id=0&app_id=58479\"\n    frameBorder=\"0\"\n    allow=\"autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media; web-share\"\n    referrerPolicy=\"strict-origin-when-cross-origin\"\n    style={{position:'absolute',top:0,left:0,width:'100%',height:'100%'}}\n    title=\"The Hidden Learnable Parts of Transformers.mp4\"\n  />\n</div>"
+  },
+  "1185126730": {
+    "title": "Why Attention Can’t Think (Feed-Forward Networks).mp4",
+    "video_id": "1185126730",
+    "h_hash": null,
+    "vimeo_link": "https://vimeo.com/1185126730",
+    "created_time": "2026-04-21T11:18:21+00:00",
+    "duration_seconds": 381,
+    "mdx_embed": "<div className=\"not-prose my-6\" style={{padding:'54.37% 0 0 0',position:'relative'}}>\n  <iframe\n    src=\"https://player.vimeo.com/video/1185126730?badge=0&autopause=0&player_id=0&app_id=58479\"\n    frameBorder=\"0\"\n    allow=\"autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media; web-share\"\n    referrerPolicy=\"strict-origin-when-cross-origin\"\n    style={{position:'absolute',top:0,left:0,width:'100%',height:'100%'}}\n    title=\"Why Attention Can’t Think (Feed-Forward Networks).mp4\"\n  />\n</div>"
+  },
+  "1185128763": {
+    "title": "GPT-2_ The Model That Was Too “Dangerous” to Release.mp4",
+    "video_id": "1185128763",
+    "h_hash": null,
+    "vimeo_link": "https://vimeo.com/1185128763",
+    "created_time": "2026-04-21T11:25:39+00:00",
+    "duration_seconds": 989,
+    "mdx_embed": "<div className=\"not-prose my-6\" style={{padding:'54.37% 0 0 0',position:'relative'}}>\n  <iframe\n    src=\"https://player.vimeo.com/video/1185128763?badge=0&autopause=0&player_id=0&app_id=58479\"\n    frameBorder=\"0\"\n    allow=\"autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media; web-share\"\n    referrerPolicy=\"strict-origin-when-cross-origin\"\n    style={{position:'absolute',top:0,left:0,width:'100%',height:'100%'}}\n    title=\"GPT-2_ The Model That Was Too “Dangerous” to Release.mp4\"\n  />\n</div>"
+  },
+  "1185131894": {
+    "title": "Why BERT is Smarter Than GPT (at Reading).mp4",
+    "video_id": "1185131894",
+    "h_hash": null,
+    "vimeo_link": "https://vimeo.com/1185131894",
+    "created_time": "2026-04-21T11:36:51+00:00",
+    "duration_seconds": 641,
+    "mdx_embed": "<div className=\"not-prose my-6\" style={{padding:'54.37% 0 0 0',position:'relative'}}>\n  <iframe\n    src=\"https://player.vimeo.com/video/1185131894?badge=0&autopause=0&player_id=0&app_id=58479\"\n    frameBorder=\"0\"\n    allow=\"autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media; web-share\"\n    referrerPolicy=\"strict-origin-when-cross-origin\"\n    style={{position:'absolute',top:0,left:0,width:'100%',height:'100%'}}\n    title=\"Why BERT is Smarter Than GPT (at Reading).mp4\"\n  />\n</div>"
+  },
+  "1185134120": {
+    "title": "Why BERT is Smarter Than GPT (at Reading).mp4",
+    "video_id": "1185134120",
+    "h_hash": null,
+    "vimeo_link": "https://vimeo.com/1185134120",
+    "created_time": "2026-04-21T11:45:52+00:00",
+    "duration_seconds": 641,
+    "mdx_embed": "<div className=\"not-prose my-6\" style={{padding:'54.37% 0 0 0',position:'relative'}}>\n  <iframe\n    src=\"https://player.vimeo.com/video/1185134120?badge=0&autopause=0&player_id=0&app_id=58479\"\n    frameBorder=\"0\"\n    allow=\"autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media; web-share\"\n    referrerPolicy=\"strict-origin-when-cross-origin\"\n    style={{position:'absolute',top:0,left:0,width:'100%',height:'100%'}}\n    title=\"Why BERT is Smarter Than GPT (at Reading).mp4\"\n  />\n</div>"
+  },
+  "1185135138": {
+    "title": "What Is an LLM, Really_ (A First-Principles Explanation).mp4",
+    "video_id": "1185135138",
+    "h_hash": null,
+    "vimeo_link": "https://vimeo.com/1185135138",
+    "created_time": "2026-04-21T11:49:37+00:00",
+    "duration_seconds": 568,
+    "mdx_embed": "<div className=\"not-prose my-6\" style={{padding:'54.37% 0 0 0',position:'relative'}}>\n  <iframe\n    src=\"https://player.vimeo.com/video/1185135138?badge=0&autopause=0&player_id=0&app_id=58479\"\n    frameBorder=\"0\"\n    allow=\"autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media; web-share\"\n    referrerPolicy=\"strict-origin-when-cross-origin\"\n    style={{position:'absolute',top:0,left:0,width:'100%',height:'100%'}}\n    title=\"What Is an LLM, Really_ (A First-Principles Explanation).mp4\"\n  />\n</div>"
+  },
+  "1185136749": {
+    "title": "Why AI Suddenly Got So Good (LLM Scaling Laws).mp4",
+    "video_id": "1185136749",
+    "h_hash": null,
+    "vimeo_link": "https://vimeo.com/1185136749",
+    "created_time": "2026-04-21T11:55:45+00:00",
+    "duration_seconds": 668,
+    "mdx_embed": "<div className=\"not-prose my-6\" style={{padding:'54.37% 0 0 0',position:'relative'}}>\n  <iframe\n    src=\"https://player.vimeo.com/video/1185136749?badge=0&autopause=0&player_id=0&app_id=58479\"\n    frameBorder=\"0\"\n    allow=\"autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media; web-share\"\n    referrerPolicy=\"strict-origin-when-cross-origin\"\n    style={{position:'absolute',top:0,left:0,width:'100%',height:'100%'}}\n    title=\"Why AI Suddenly Got So Good (LLM Scaling Laws).mp4\"\n  />\n</div>"
+  },
+  "1185137758": {
+    "title": "What Actually Happens Inside an LLM (Forward Pass Explained).mp4",
+    "video_id": "1185137758",
+    "h_hash": null,
+    "vimeo_link": "https://vimeo.com/1185137758",
+    "created_time": "2026-04-21T11:59:42+00:00",
+    "duration_seconds": 651,
+    "mdx_embed": "<div className=\"not-prose my-6\" style={{padding:'54.37% 0 0 0',position:'relative'}}>\n  <iframe\n    src=\"https://player.vimeo.com/video/1185137758?badge=0&autopause=0&player_id=0&app_id=58479\"\n    frameBorder=\"0\"\n    allow=\"autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media; web-share\"\n    referrerPolicy=\"strict-origin-when-cross-origin\"\n    style={{position:'absolute',top:0,left:0,width:'100%',height:'100%'}}\n    title=\"What Actually Happens Inside an LLM (Forward Pass Explained).mp4\"\n  />\n</div>"
+  },
+  "1185138191": {
+    "title": "Training an LLM is Simpler Than You Think.mp4",
+    "video_id": "1185138191",
+    "h_hash": null,
+    "vimeo_link": "https://vimeo.com/1185138191",
+    "created_time": "2026-04-21T12:01:24+00:00",
+    "duration_seconds": 933,
+    "mdx_embed": "<div className=\"not-prose my-6\" style={{padding:'54.37% 0 0 0',position:'relative'}}>\n  <iframe\n    src=\"https://player.vimeo.com/video/1185138191?badge=0&autopause=0&player_id=0&app_id=58479\"\n    frameBorder=\"0\"\n    allow=\"autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media; web-share\"\n    referrerPolicy=\"strict-origin-when-cross-origin\"\n    style={{position:'absolute',top:0,left:0,width:'100%',height:'100%'}}\n    title=\"Training an LLM is Simpler Than You Think.mp4\"\n  />\n</div>"
+  },
+  "1185141220": {
+    "title": "AGI 2",
+    "video_id": "1185141220",
+    "h_hash": null,
+    "vimeo_link": "https://vimeo.com/1185141220",
+    "created_time": "2026-04-21T12:08:00+00:00",
+    "duration_seconds": 866,
+    "mdx_embed": "<div className=\"not-prose my-6\" style={{padding:'54.37% 0 0 0',position:'relative'}}>\n  <iframe\n    src=\"https://player.vimeo.com/video/1185141220?badge=0&autopause=0&player_id=0&app_id=58479\"\n    frameBorder=\"0\"\n    allow=\"autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media; web-share\"\n    referrerPolicy=\"strict-origin-when-cross-origin\"\n    style={{position:'absolute',top:0,left:0,width:'100%',height:'100%'}}\n    title=\"AGI 2\"\n  />\n</div>"
+  },
+  "1185142026": {
+    "title": "AGI HyperScaling",
+    "video_id": "1185142026",
+    "h_hash": null,
+    "vimeo_link": "https://vimeo.com/1185142026",
+    "created_time": "2026-04-21T12:10:29+00:00",
+    "duration_seconds": 516,
+    "mdx_embed": "<div className=\"not-prose my-6\" style={{padding:'54.37% 0 0 0',position:'relative'}}>\n  <iframe\n    src=\"https://player.vimeo.com/video/1185142026?badge=0&autopause=0&player_id=0&app_id=58479\"\n    frameBorder=\"0\"\n    allow=\"autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media; web-share\"\n    referrerPolicy=\"strict-origin-when-cross-origin\"\n    style={{position:'absolute',top:0,left:0,width:'100%',height:'100%'}}\n    title=\"AGI HyperScaling\"\n  />\n</div>"
+  },
+  "1185142783": {
+    "title": "Agentic AI to AGI",
+    "video_id": "1185142783",
+    "h_hash": null,
+    "vimeo_link": "https://vimeo.com/1185142783",
+    "created_time": "2026-04-21T12:13:19+00:00",
+    "duration_seconds": 539,
+    "mdx_embed": "<div className=\"not-prose my-6\" style={{padding:'54.37% 0 0 0',position:'relative'}}>\n  <iframe\n    src=\"https://player.vimeo.com/video/1185142783?badge=0&autopause=0&player_id=0&app_id=58479\"\n    frameBorder=\"0\"\n    allow=\"autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media; web-share\"\n    referrerPolicy=\"strict-origin-when-cross-origin\"\n    style={{position:'absolute',top:0,left:0,width:'100%',height:'100%'}}\n    title=\"Agentic AI to AGI\"\n  />\n</div>"
+  },
+  "1185144709": {
+    "title": "META Acquiring Manus",
+    "video_id": "1185144709",
+    "h_hash": null,
+    "vimeo_link": "https://vimeo.com/1185144709",
+    "created_time": "2026-04-21T12:20:53+00:00",
+    "duration_seconds": 346,
+    "mdx_embed": "<div className=\"not-prose my-6\" style={{padding:'54.37% 0 0 0',position:'relative'}}>\n  <iframe\n    src=\"https://player.vimeo.com/video/1185144709?badge=0&autopause=0&player_id=0&app_id=58479\"\n    frameBorder=\"0\"\n    allow=\"autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media; web-share\"\n    referrerPolicy=\"strict-origin-when-cross-origin\"\n    style={{position:'absolute',top:0,left:0,width:'100%',height:'100%'}}\n    title=\"META Acquiring Manus\"\n  />\n</div>"
+  },
+  "1185145410": {
+    "title": "DLT 23",
+    "video_id": "1185145410",
+    "h_hash": null,
+    "vimeo_link": "https://vimeo.com/1185145410",
+    "created_time": "2026-04-21T12:23:35+00:00",
+    "duration_seconds": 519,
+    "mdx_embed": "<div className=\"not-prose my-6\" style={{padding:'54.37% 0 0 0',position:'relative'}}>\n  <iframe\n    src=\"https://player.vimeo.com/video/1185145410?badge=0&autopause=0&player_id=0&app_id=58479\"\n    frameBorder=\"0\"\n    allow=\"autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media; web-share\"\n    referrerPolicy=\"strict-origin-when-cross-origin\"\n    style={{position:'absolute',top:0,left:0,width:'100%',height:'100%'}}\n    title=\"DLT 23\"\n  />\n</div>"
+  },
+  "1185146176": {
+    "title": "video-output-904E7362-51F6-4CE3-AC51-75634EA63F20-2.mp4",
+    "video_id": "1185146176",
+    "h_hash": null,
+    "vimeo_link": "https://vimeo.com/1185146176",
+    "created_time": "2026-04-21T12:26:38+00:00",
+    "duration_seconds": 558,
+    "mdx_embed": "<div className=\"not-prose my-6\" style={{padding:'54.37% 0 0 0',position:'relative'}}>\n  <iframe\n    src=\"https://player.vimeo.com/video/1185146176?badge=0&autopause=0&player_id=0&app_id=58479\"\n    frameBorder=\"0\"\n    allow=\"autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media; web-share\"\n    referrerPolicy=\"strict-origin-when-cross-origin\"\n    style={{position:'absolute',top:0,left:0,width:'100%',height:'100%'}}\n    title=\"video-output-904E7362-51F6-4CE3-AC51-75634EA63F20-2.mp4\"\n  />\n</div>"
+  },
+  "1185146639": {
+    "title": "Tesla 2",
+    "video_id": "1185146639",
+    "h_hash": null,
+    "vimeo_link": "https://vimeo.com/1185146639",
+    "created_time": "2026-04-21T12:28:40+00:00",
+    "duration_seconds": 391,
+    "mdx_embed": "<div className=\"not-prose my-6\" style={{padding:'54.37% 0 0 0',position:'relative'}}>\n  <iframe\n    src=\"https://player.vimeo.com/video/1185146639?badge=0&autopause=0&player_id=0&app_id=58479\"\n    frameBorder=\"0\"\n    allow=\"autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media; web-share\"\n    referrerPolicy=\"strict-origin-when-cross-origin\"\n    style={{position:'absolute',top:0,left:0,width:'100%',height:'100%'}}\n    title=\"Tesla 2\"\n  />\n</div>"
+  },
+  "1185147927": {
+    "title": "video-output-01B5A08B-5721-4D65-84D2-85B39D2B8C02-1.mp4",
+    "video_id": "1185147927",
+    "h_hash": null,
+    "vimeo_link": "https://vimeo.com/1185147927",
+    "created_time": "2026-04-21T12:32:55+00:00",
+    "duration_seconds": 677,
+    "mdx_embed": "<div className=\"not-prose my-6\" style={{padding:'54.37% 0 0 0',position:'relative'}}>\n  <iframe\n    src=\"https://player.vimeo.com/video/1185147927?badge=0&autopause=0&player_id=0&app_id=58479\"\n    frameBorder=\"0\"\n    allow=\"autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media; web-share\"\n    referrerPolicy=\"strict-origin-when-cross-origin\"\n    style={{position:'absolute',top:0,left:0,width:'100%',height:'100%'}}\n    title=\"video-output-01B5A08B-5721-4D65-84D2-85B39D2B8C02-1.mp4\"\n  />\n</div>"
+  },
+  "1185148304": {
+    "title": "video-output-58CD9D86-6933-437A-92F0-8E2864DA7D03-2.mp4",
+    "video_id": "1185148304",
+    "h_hash": null,
+    "vimeo_link": "https://vimeo.com/1185148304",
+    "created_time": "2026-04-21T12:34:24+00:00",
+    "duration_seconds": 569,
+    "mdx_embed": "<div className=\"not-prose my-6\" style={{padding:'54.37% 0 0 0',position:'relative'}}>\n  <iframe\n    src=\"https://player.vimeo.com/video/1185148304?badge=0&autopause=0&player_id=0&app_id=58479\"\n    frameBorder=\"0\"\n    allow=\"autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media; web-share\"\n    referrerPolicy=\"strict-origin-when-cross-origin\"\n    style={{position:'absolute',top:0,left:0,width:'100%',height:'100%'}}\n    title=\"video-output-58CD9D86-6933-437A-92F0-8E2864DA7D03-2.mp4\"\n  />\n</div>"
+  },
+  "1185150781": {
+    "title": "DeepMinds AGI",
+    "video_id": "1185150781",
+    "h_hash": null,
+    "vimeo_link": "https://vimeo.com/1185150781",
+    "created_time": "2026-04-21T12:43:25+00:00",
+    "duration_seconds": 544,
+    "mdx_embed": "<div className=\"not-prose my-6\" style={{padding:'54.37% 0 0 0',position:'relative'}}>\n  <iframe\n    src=\"https://player.vimeo.com/video/1185150781?badge=0&autopause=0&player_id=0&app_id=58479\"\n    frameBorder=\"0\"\n    allow=\"autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media; web-share\"\n    referrerPolicy=\"strict-origin-when-cross-origin\"\n    style={{position:'absolute',top:0,left:0,width:'100%',height:'100%'}}\n    title=\"DeepMinds AGI\"\n  />\n</div>"
+  },
+  "1185151054": {
+    "title": "video-output-7874F830-B24D-43AA-9EC9-5362C120C850-2.mp4",
+    "video_id": "1185151054",
+    "h_hash": null,
+    "vimeo_link": "https://vimeo.com/1185151054",
+    "created_time": "2026-04-21T12:44:31+00:00",
+    "duration_seconds": 916,
+    "mdx_embed": "<div className=\"not-prose my-6\" style={{padding:'54.37% 0 0 0',position:'relative'}}>\n  <iframe\n    src=\"https://player.vimeo.com/video/1185151054?badge=0&autopause=0&player_id=0&app_id=58479\"\n    frameBorder=\"0\"\n    allow=\"autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media; web-share\"\n    referrerPolicy=\"strict-origin-when-cross-origin\"\n    style={{position:'absolute',top:0,left:0,width:'100%',height:'100%'}}\n    title=\"video-output-7874F830-B24D-43AA-9EC9-5362C120C850-2.mp4\"\n  />\n</div>"
+  },
+  "1185151682": {
+    "title": "video-output-11D0F9BF-BAA9-45FB-BDC9-9D7B8FC0F279-1.mp4",
+    "video_id": "1185151682",
+    "h_hash": null,
+    "vimeo_link": "https://vimeo.com/1185151682",
+    "created_time": "2026-04-21T12:46:48+00:00",
+    "duration_seconds": 333,
+    "mdx_embed": "<div className=\"not-prose my-6\" style={{padding:'54.37% 0 0 0',position:'relative'}}>\n  <iframe\n    src=\"https://player.vimeo.com/video/1185151682?badge=0&autopause=0&player_id=0&app_id=58479\"\n    frameBorder=\"0\"\n    allow=\"autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media; web-share\"\n    referrerPolicy=\"strict-origin-when-cross-origin\"\n    style={{position:'absolute',top:0,left:0,width:'100%',height:'100%'}}\n    title=\"video-output-11D0F9BF-BAA9-45FB-BDC9-9D7B8FC0F279-1.mp4\"\n  />\n</div>"
+  },
+  "1185154577": {
+    "title": "ClawdBot",
+    "video_id": "1185154577",
+    "h_hash": null,
+    "vimeo_link": "https://vimeo.com/1185154577",
+    "created_time": "2026-04-21T12:57:09+00:00",
+    "duration_seconds": 586,
+    "mdx_embed": "<div className=\"not-prose my-6\" style={{padding:'54.37% 0 0 0',position:'relative'}}>\n  <iframe\n    src=\"https://player.vimeo.com/video/1185154577?badge=0&autopause=0&player_id=0&app_id=58479\"\n    frameBorder=\"0\"\n    allow=\"autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media; web-share\"\n    referrerPolicy=\"strict-origin-when-cross-origin\"\n    style={{position:'absolute',top:0,left:0,width:'100%',height:'100%'}}\n    title=\"ClawdBot\"\n  />\n</div>"
+  },
+  "1185156107": {
+    "title": "output_20260205_185839085.mp4",
+    "video_id": "1185156107",
+    "h_hash": null,
+    "vimeo_link": "https://vimeo.com/1185156107",
+    "created_time": "2026-04-21T13:02:18+00:00",
+    "duration_seconds": 464,
+    "mdx_embed": "<div className=\"not-prose my-6\" style={{padding:'54.37% 0 0 0',position:'relative'}}>\n  <iframe\n    src=\"https://player.vimeo.com/video/1185156107?badge=0&autopause=0&player_id=0&app_id=58479\"\n    frameBorder=\"0\"\n    allow=\"autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media; web-share\"\n    referrerPolicy=\"strict-origin-when-cross-origin\"\n    style={{position:'absolute',top:0,left:0,width:'100%',height:'100%'}}\n    title=\"output_20260205_185839085.mp4\"\n  />\n</div>"
+  },
+  "1185156845": {
+    "title": "Project Genie",
+    "video_id": "1185156845",
+    "h_hash": null,
+    "vimeo_link": "https://vimeo.com/1185156845",
+    "created_time": "2026-04-21T13:04:39+00:00",
+    "duration_seconds": 766,
+    "mdx_embed": "<div className=\"not-prose my-6\" style={{padding:'54.37% 0 0 0',position:'relative'}}>\n  <iframe\n    src=\"https://player.vimeo.com/video/1185156845?badge=0&autopause=0&player_id=0&app_id=58479\"\n    frameBorder=\"0\"\n    allow=\"autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media; web-share\"\n    referrerPolicy=\"strict-origin-when-cross-origin\"\n    style={{position:'absolute',top:0,left:0,width:'100%',height:'100%'}}\n    title=\"Project Genie\"\n  />\n</div>"
+  },
+  "1185158048": {
+    "title": "video-output-FFEDBE2A-C1DB-40FC-ACD3-4A30C12B787B-1.mp4",
+    "video_id": "1185158048",
+    "h_hash": null,
+    "vimeo_link": "https://vimeo.com/1185158048",
+    "created_time": "2026-04-21T13:08:33+00:00",
+    "duration_seconds": 812,
+    "mdx_embed": "<div className=\"not-prose my-6\" style={{padding:'54.37% 0 0 0',position:'relative'}}>\n  <iframe\n    src=\"https://player.vimeo.com/video/1185158048?badge=0&autopause=0&player_id=0&app_id=58479\"\n    frameBorder=\"0\"\n    allow=\"autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media; web-share\"\n    referrerPolicy=\"strict-origin-when-cross-origin\"\n    style={{position:'absolute',top:0,left:0,width:'100%',height:'100%'}}\n    title=\"video-output-FFEDBE2A-C1DB-40FC-ACD3-4A30C12B787B-1.mp4\"\n  />\n</div>"
+  },
+  "1185159425": {
+    "title": "video-output-5880D814-8B11-4588-8B9F-0FA39212B570-1.mp4",
+    "video_id": "1185159425",
+    "h_hash": null,
+    "vimeo_link": "https://vimeo.com/1185159425",
+    "created_time": "2026-04-21T13:13:47+00:00",
+    "duration_seconds": 1062,
+    "mdx_embed": "<div className=\"not-prose my-6\" style={{padding:'54.37% 0 0 0',position:'relative'}}>\n  <iframe\n    src=\"https://player.vimeo.com/video/1185159425?badge=0&autopause=0&player_id=0&app_id=58479\"\n    frameBorder=\"0\"\n    allow=\"autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media; web-share\"\n    referrerPolicy=\"strict-origin-when-cross-origin\"\n    style={{position:'absolute',top:0,left:0,width:'100%',height:'100%'}}\n    title=\"video-output-5880D814-8B11-4588-8B9F-0FA39212B570-1.mp4\"\n  />\n</div>"
+  },
+  "1185162002": {
+    "title": "Output_20260210_143717569.mp4",
+    "video_id": "1185162002",
+    "h_hash": null,
+    "vimeo_link": "https://vimeo.com/1185162002",
+    "created_time": "2026-04-21T13:21:55+00:00",
+    "duration_seconds": 396,
+    "mdx_embed": "<div className=\"not-prose my-6\" style={{padding:'54.37% 0 0 0',position:'relative'}}>\n  <iframe\n    src=\"https://player.vimeo.com/video/1185162002?badge=0&autopause=0&player_id=0&app_id=58479\"\n    frameBorder=\"0\"\n    allow=\"autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media; web-share\"\n    referrerPolicy=\"strict-origin-when-cross-origin\"\n    style={{position:'absolute',top:0,left:0,width:'100%',height:'100%'}}\n    title=\"Output_20260210_143717569.mp4\"\n  />\n</div>"
+  },
+  "1185163189": {
+    "title": "video-output-55C9E724-B20F-4ED3-A106-EFCB88B7FB99-1.mp4",
+    "video_id": "1185163189",
+    "h_hash": null,
+    "vimeo_link": "https://vimeo.com/1185163189",
+    "created_time": "2026-04-21T13:25:21+00:00",
+    "duration_seconds": 696,
+    "mdx_embed": "<div className=\"not-prose my-6\" style={{padding:'54.37% 0 0 0',position:'relative'}}>\n  <iframe\n    src=\"https://player.vimeo.com/video/1185163189?badge=0&autopause=0&player_id=0&app_id=58479\"\n    frameBorder=\"0\"\n    allow=\"autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media; web-share\"\n    referrerPolicy=\"strict-origin-when-cross-origin\"\n    style={{position:'absolute',top:0,left:0,width:'100%',height:'100%'}}\n    title=\"video-output-55C9E724-B20F-4ED3-A106-EFCB88B7FB99-1.mp4\"\n  />\n</div>"
+  },
+  "1185163823": {
+    "title": "video-output-3ABA9922-111F-4F9C-AEF1-3BC29F5718DC-1.mp4",
+    "video_id": "1185163823",
+    "h_hash": null,
+    "vimeo_link": "https://vimeo.com/1185163823",
+    "created_time": "2026-04-21T13:27:20+00:00",
+    "duration_seconds": 642,
+    "mdx_embed": "<div className=\"not-prose my-6\" style={{padding:'54.37% 0 0 0',position:'relative'}}>\n  <iframe\n    src=\"https://player.vimeo.com/video/1185163823?badge=0&autopause=0&player_id=0&app_id=58479\"\n    frameBorder=\"0\"\n    allow=\"autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media; web-share\"\n    referrerPolicy=\"strict-origin-when-cross-origin\"\n    style={{position:'absolute',top:0,left:0,width:'100%',height:'100%'}}\n    title=\"video-output-3ABA9922-111F-4F9C-AEF1-3BC29F5718DC-1.mp4\"\n  />\n</div>"
+  },
+  "1185164739": {
+    "title": "IMG_7894.mov",
+    "video_id": "1185164739",
+    "h_hash": null,
+    "vimeo_link": "https://vimeo.com/1185164739",
+    "created_time": "2026-04-21T13:30:06+00:00",
+    "duration_seconds": 486,
+    "mdx_embed": "<div className=\"not-prose my-6\" style={{padding:'54.37% 0 0 0',position:'relative'}}>\n  <iframe\n    src=\"https://player.vimeo.com/video/1185164739?badge=0&autopause=0&player_id=0&app_id=58479\"\n    frameBorder=\"0\"\n    allow=\"autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media; web-share\"\n    referrerPolicy=\"strict-origin-when-cross-origin\"\n    style={{position:'absolute',top:0,left:0,width:'100%',height:'100%'}}\n    title=\"IMG_7894.mov\"\n  />\n</div>"
+  },
+  "1185165554": {
+    "title": "US vs China",
+    "video_id": "1185165554",
+    "h_hash": null,
+    "vimeo_link": "https://vimeo.com/1185165554",
+    "created_time": "2026-04-21T13:32:04+00:00",
+    "duration_seconds": 1102,
+    "mdx_embed": "<div className=\"not-prose my-6\" style={{padding:'54.37% 0 0 0',position:'relative'}}>\n  <iframe\n    src=\"https://player.vimeo.com/video/1185165554?badge=0&autopause=0&player_id=0&app_id=58479\"\n    frameBorder=\"0\"\n    allow=\"autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media; web-share\"\n    referrerPolicy=\"strict-origin-when-cross-origin\"\n    style={{position:'absolute',top:0,left:0,width:'100%',height:'100%'}}\n    title=\"US vs China\"\n  />\n</div>"
+  },
+  "1185167323": {
+    "title": "WTH is Continual Learning _ (2).mp4",
+    "video_id": "1185167323",
+    "h_hash": null,
+    "vimeo_link": "https://vimeo.com/1185167323",
+    "created_time": "2026-04-21T13:36:53+00:00",
+    "duration_seconds": 978,
+    "mdx_embed": "<div className=\"not-prose my-6\" style={{padding:'54.37% 0 0 0',position:'relative'}}>\n  <iframe\n    src=\"https://player.vimeo.com/video/1185167323?badge=0&autopause=0&player_id=0&app_id=58479\"\n    frameBorder=\"0\"\n    allow=\"autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media; web-share\"\n    referrerPolicy=\"strict-origin-when-cross-origin\"\n    style={{position:'absolute',top:0,left:0,width:'100%',height:'100%'}}\n    title=\"WTH is Continual Learning _ (2).mp4\"\n  />\n</div>"
+  },
+  "1185168032": {
+    "title": "Mental models",
+    "video_id": "1185168032",
+    "h_hash": null,
+    "vimeo_link": "https://vimeo.com/1185168032",
+    "created_time": "2026-04-21T13:39:00+00:00",
+    "duration_seconds": 327,
+    "mdx_embed": "<div className=\"not-prose my-6\" style={{padding:'54.37% 0 0 0',position:'relative'}}>\n  <iframe\n    src=\"https://player.vimeo.com/video/1185168032?badge=0&autopause=0&player_id=0&app_id=58479\"\n    frameBorder=\"0\"\n    allow=\"autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media; web-share\"\n    referrerPolicy=\"strict-origin-when-cross-origin\"\n    style={{position:'absolute',top:0,left:0,width:'100%',height:'100%'}}\n    title=\"Mental models\"\n  />\n</div>"
+  },
+  "1185168916": {
+    "title": "Breakdown _Attention Is All You Need_ _ Weekend White Paper Series.mp4",
+    "video_id": "1185168916",
+    "h_hash": null,
+    "vimeo_link": "https://vimeo.com/1185168916",
+    "created_time": "2026-04-21T13:42:00+00:00",
+    "duration_seconds": 3028,
+    "mdx_embed": "<div className=\"not-prose my-6\" style={{padding:'54.37% 0 0 0',position:'relative'}}>\n  <iframe\n    src=\"https://player.vimeo.com/video/1185168916?badge=0&autopause=0&player_id=0&app_id=58479\"\n    frameBorder=\"0\"\n    allow=\"autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media; web-share\"\n    referrerPolicy=\"strict-origin-when-cross-origin\"\n    style={{position:'absolute',top:0,left:0,width:'100%',height:'100%'}}\n    title=\"Breakdown _Attention Is All You Need_ _ Weekend White Paper Series.mp4\"\n  />\n</div>"
+  },
+  "1185171412": {
+    "title": "decoderonlyvideo",
+    "video_id": "1185171412",
+    "h_hash": null,
+    "vimeo_link": "https://vimeo.com/1185171412",
+    "created_time": "2026-04-21T13:49:45+00:00",
+    "duration_seconds": 1257,
+    "mdx_embed": "<div className=\"not-prose my-6\" style={{padding:'54.37% 0 0 0',position:'relative'}}>\n  <iframe\n    src=\"https://player.vimeo.com/video/1185171412?badge=0&autopause=0&player_id=0&app_id=58479\"\n    frameBorder=\"0\"\n    allow=\"autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media; web-share\"\n    referrerPolicy=\"strict-origin-when-cross-origin\"\n    style={{position:'absolute',top:0,left:0,width:'100%',height:'100%'}}\n    title=\"decoderonlyvideo\"\n  />\n</div>"
+  }
+}

@@ -1,4 +1,5 @@
 ---
+hide_title: true
 sidebar_label: '2 · Layers in a DNN'
 title: 'Lesson 2 — Layers in a deep neural network'
 description: >-
@@ -15,7 +16,19 @@ tutor_concepts:
 access: free
 ---
 
-# Layers in a deep neural network
+<LessonHero number="2" title="Layers in a deep neural network" subtitle="Input, hidden, and output — how stacking neurons creates depth" />
+
+<div className="not-prose my-6" style={{padding:'54.37% 0 0 0',position:'relative'}}>
+  <iframe
+    src="https://player.vimeo.com/video/1184750649?badge=0&autopause=0&player_id=0&app_id=58479"
+    frameBorder="0"
+    allow="autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media; web-share"
+    referrerPolicy="strict-origin-when-cross-origin"
+    style={{position:'absolute',top:0,left:0,width:'100%',height:'100%'}}
+    title="Why Linear Models Are Not Enough"
+  />
+</div>
+
 
 In **Lesson 1**, one **neuron** was a single **linear score** plus an **activation**. A **deep neural network** is what you get when you **stack** many neurons **in layers**, **vertically**: raw **inputs** enter at the **bottom** (or **top**, depending on the diagram—here we draw **input → hidden → output** left to right), **hidden** layers build **intermediate** representations, and the **output** layer produces **predictions**. Researchers including **Geoffrey Hinton** helped popularize the view that **depth** lets a network learn **distributed**, **hierarchical** features—**simple** patterns in early layers, **composed** patterns deeper in—without hand-crafting rules.
 
@@ -240,19 +253,6 @@ If you **only** stacked **linear** maps, the whole network would **collapse** to
 ## Connectionist story (Hinton’s angle, in one breath)
 
 **Geoffrey Hinton** and colleagues pushed the idea that **intelligence** can emerge from **many simple units** adjusting **weights** from **data**—**layers** let those units build **abstractions** without a human listing every rule. You are not memorizing a formula; you are seeing **why** the **stack** is shaped like a **column** of **transformations** from **input** to **output**.
-
----
-
-## ASCII map (fully connected)
-
-<div className="not-prose my-6 rounded-xl border border-slate-200 bg-slate-900 p-4 dark:border-slate-600">
-  <pre className="m-0 overflow-x-auto whitespace-pre-wrap font-mono text-[10px] leading-relaxed text-slate-100 sm:text-xs">{`  INPUT          HIDDEN 1         HIDDEN 2         OUTPUT
- (features)    (n₁ neurons)      (n₂ neurons)     (predictions)
-    ○ ○ ○  ────►  ○ ○ ○ ○  ────►  ○ ○ ○ ○  ────►  ○ ○
-    │ │ │        all-to-all       all-to-all       logits / ŷ
-    └─┴─┘        each edge        each edge        (task-dependent)
-     x           has W,b          has W,b`}</pre>
-</div>
 
 ---
 

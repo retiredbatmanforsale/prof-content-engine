@@ -1,4 +1,5 @@
 ---
+hide_title: true
 sidebar_label: '6 · Backward pass'
 title: 'Lesson 6 — How neural networks learn (backward pass)'
 description: >-
@@ -16,7 +17,7 @@ tutor_concepts:
 
 import VanishingGradient from '@site/src/components/viz/VanishingGradient';
 
-# How neural networks learn: the **backward pass**
+<LessonHero number="6" title="How neural networks learn" subtitle="Chain rule, gradients, and how weights update step by step" />
 
 Lesson 5 showed **prediction**: **x** flows **forward** through **W₁**, **b₁**, **σ**, **W₂**, **b₂**, **σ** to **y**. **Learning** adds a loop: after each forward pass you **measure error** with a **loss**, then **propagate sensitivity backward** to get **how to nudge** every **weight** and **bias**. That backward phase is **backpropagation**; it is **exactly** the **multivariate chain rule** applied along the **dependency graph** of intermediate variables.
 

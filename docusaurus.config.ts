@@ -69,6 +69,21 @@ const config: Config = {
     mermaid: true,
   },
 
+  plugins: [
+    function roughjsEsmFix() {
+      return {
+        name: 'roughjs-esm-fix',
+        configureWebpack() {
+          return {
+            module: {
+              rules: [{ test: /\.m?js$/, resolve: { fullySpecified: false } }],
+            },
+          };
+        },
+      };
+    },
+  ],
+
   themeConfig: {
     image: 'img/social-card.jpg',
     navbar: {

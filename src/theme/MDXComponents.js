@@ -13,6 +13,12 @@ import PythonPlayground from '@site/src/components/viz/PythonPlayground';
 import ResidualConnectionFlowViz from '@site/src/components/viz/ResidualConnectionFlow';
 import LossLandscapeViz from '@site/src/components/viz/LossLandscape';
 import ChainRuleViz from '@site/src/components/viz/ChainRuleViz';
+import VanishingGradient from '@site/src/components/viz/VanishingGradient';
+import CausalMask from '@site/src/components/viz/CausalMask';
+import PromptJourney from '@site/src/components/viz/PromptJourney';
+import ExcalidrawScene from '@site/src/components/ExcalidrawScene';
+import PerceptronDiagram from '@site/src/components/ExcalidrawScene/PerceptronDiagram';
+import LessonHero from '@site/src/components/LessonHero';
 
 export default {
   ...MDXComponents,
@@ -29,4 +35,10 @@ export default {
   ResidualConnectionFlowViz,
   LossLandscapeViz,
   ChainRuleViz,
+  VanishingGradient,
+  CausalMask,
+  PromptJourney,
+  ExcalidrawScene,
+  PerceptronDiagram,
+  LessonHero,
 };
