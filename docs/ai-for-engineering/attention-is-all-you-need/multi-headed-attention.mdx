@@ -18,16 +18,10 @@ tutor_concepts:
 
 <LessonHero course="Attention Is All You Need" number="6" title="Multi-headed attention" subtitle="Running multiple attention patterns in parallel" />
 
-<div className="not-prose my-6" style={{padding:'56.25% 0 0 0',position:'relative'}}>
-  <iframe
-    src="https://player.vimeo.com/video/1185115731?h=2d7019c8ba&badge=0&autopause=0&player_id=0&app_id=58479"
-    frameBorder="0"
-    allow="autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media; web-share"
-    referrerPolicy="strict-origin-when-cross-origin"
-    style={{position:'absolute',top:0,left:0,width:'100%',height:'100%'}}
-    title="How Attention Sees Language — Multi-Head Intuition"
-  />
-</div>
+<LessonVideo
+  src="https://player.vimeo.com/video/1185115731?h=2d7019c8ba&badge=0&autopause=0&player_id=0&app_id=58479"
+  title="How Attention Sees Language — Multi-Head Intuition"
+/>
 
 
 A **single** self-attention head computes **one** matrix of pairwise weights: for each position, **how much to read** from every other position. That is powerful—but **one** softmax competition can only shape **one** pattern at a time. **Multi-head attention** runs **h** attentions **in parallel** on **different learned projections**, then **merges** them so the model can hold **several relationship hypotheses** at once—syntax near the word, agreement far away, coreference, and more.

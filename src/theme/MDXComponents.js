@@ -19,6 +19,7 @@ import PromptJourney from '@site/src/components/viz/PromptJourney';
 import ExcalidrawScene from '@site/src/components/ExcalidrawScene';
 import PerceptronDiagram from '@site/src/components/ExcalidrawScene/PerceptronDiagram';
 import LessonHero from '@site/src/components/LessonHero';
+import LessonVideo from '@site/src/components/LessonVideo';
 
 export default {
   ...MDXComponents,
@@ -41,4 +42,5 @@ export default {
   ExcalidrawScene,
   PerceptronDiagram,
   LessonHero,
+  LessonVideo,
 };

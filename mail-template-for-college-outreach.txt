@@ -1,0 +1,181 @@
+Dear {Name},
+
+
+Colleges today are enrolling heavily into AI/ML programs but very few students actually graduate as AI engineers.
+
+
+We partner with colleges across India as ex-Google AI experts to bridge the gap between rapidly evolving AI industry needs and outdated academic delivery. We empower faculty, modernize curriculum, and guide students with the right tools, systems, and placement roadmaps. 
+
+
+As a result, institutions see stronger branding, increased admissions, and significantly improved placement outcomes.
+
+
+Here’s a comprehensive overview of our offerings and pricing for your quick reference:- 
+
+
+AI Education Across Students & Faculty 
+
+
+What is included as Part of AI Education ?
+	Track1: AI Engineering 
+	Track2: AI For Leaders
+	
+
+ AI Engineering (for engineers) 
+	
+
+
+
+ML
+Foundations of Regression
+Build rock-solid intuition for supervised learning by deriving linear and logistic regression from first principles  including loss, gradients, and a from-scratch implementation.
+	
+
+	
+
+DL
+Mastering Deep Neural Networks
+From a single neuron to multi-layer networks: forward pass, backprop, and the practical tooling needed to train networks reliably.
+	
+
+	
+
+DL
+Deep Computer Vision
+Convolutions, classic architectures, transfer learning, and detection  build intuition for how deep networks see.
+	
+
+	
+
+DL
+Deep Sequence Modelling
+Model text and time with RNNs, LSTMs, and seq2seq architectures the pre-Transformer foundations every ML engineer should know.
+	
+
+
+
+	
+
+ML
+Tree Based ML Algorithms
+Move beyond linear models with decision trees, ensembling, and gradient boosting the workhorses of structured-data machine learning.
+	
+
+
+
+	
+
+GenAI
+Build Your Own Mini-GPT
+Implement a decoder-only Transformer from scratch, train a small GPT, and build intuition for every block inside it.
+	
+
+
+
+	
+
+GenAI
+Agentic AI 
+Systems
+Design, build, and evaluate agents that plan, use tools, and collaborate the modern production pattern for AI applications.
+	
+
+
+
+	
+
+GenAI
+AI Research Breakdowns
+A deep reading of the original Transformer paper with careful re-derivations and an end-to-end encoder–decoder implementation. 
+	
+
+
+
+	
+
+
+
+
+
+	..⅀.. 
+
+
+Math-First
+
+
+	{..} 
+
+
+Code-Backed
+	.💡. 
+
+
+No Black-Box
+	
+
+	
+
+ AI 4 Leaders  (for everyone)
+	
+
+
+
+
+
+AI Literacy 4 Everyone
+Build a clear, practical understanding of AI by learning core concepts, real-world applications, and responsible usage
+	
+
+	
+
+
+
+Generative AI 4 Everyone
+Understand how generative AI works and learn to use tools like text, image, and code generators effectively to create, automate, and solve real-world problems.
+	
+
+	
+
+
+
+Prompt Engineering
+Learn how to craft effective prompts to guide AI models for accurate, creative, and reliable outputs across tasks like writing, coding, and problem-solving.
+	
+
+	
+
+	Who will benefit from AI Education? 
+	Who 
+	Faculty can leverage this and get certified in   Applied AI (Machine Learning to Generative AI). 
+	Students can leverage this to Master AI Engineering (ML to GPTs & agents)
+	Pricing
+	Empower your faculty for as low as ₹10k per faculty, with flexible plans starting at just ₹2.4L
+	Empower your campus for as low as ₹1500 per student, with flexible plans starting at just ₹4L per year.
+	Delivery
+	Hybrid (online, self-paced, live)
+	Online
+	Outcome
+	Engineering Students → Master AI Engineering (ML to GPTs & agents)
+	Faculty receive a   Lex AI Certification in Applied AI (ML to Generative AI).
+	
+
+
+
+Placement & Interview Readiness Support
+	Focus Area
+	What We Do
+	Student Readiness
+	Guide and coach students on the right roadmap for placements, including interview strategy and career direction. 
+	Industry Connections
+	Support colleges in partnering with the right set of companies for internships and placement drives. 
+	Hiring Partnership
+	Lex AI acts as an official hiring partner, facilitating structured recruitment opportunities during your internship and placement drive.
+	
+
+
+
+Feel free to book a slot, suggest a convenient time, or share your contact number. I'd be happy to connect.
+Meeting booking here:-
+Link
+Looking forward to your thoughts.
+Best,

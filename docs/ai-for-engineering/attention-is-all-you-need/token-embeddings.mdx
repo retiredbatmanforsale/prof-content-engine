@@ -18,16 +18,10 @@ access: free
 
 <LessonHero course="Attention Is All You Need" number="2" title="Token embeddings" subtitle="Turning words into vectors the model can reason over" />
 
-<div className="not-prose my-6" style={{padding:'56.25% 0 0 0',position:'relative'}}>
-  <iframe
-    src="https://player.vimeo.com/video/1185114975?h=a013d9a2d3&badge=0&autopause=0&player_id=0&app_id=58479"
-    frameBorder="0"
-    allow="autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media; web-share"
-    referrerPolicy="strict-origin-when-cross-origin"
-    style={{position:'absolute',top:0,left:0,width:'100%',height:'100%'}}
-    title="What Transformers Actually See — Tokens vs Embeddings"
-  />
-</div>
+<LessonVideo
+  src="https://player.vimeo.com/video/1185114975?h=a013d9a2d3&badge=0&autopause=0&player_id=0&app_id=58479"
+  title="What Transformers Actually See — Tokens vs Embeddings"
+/>
 
 
 Neural networks need **numbers they can multiply and add**. Raw text is **symbols**; the first step is to turn it into **tokens**, then into **vectors** the transformer can process. **Token embeddings** are those vectors: they are **not** the discrete IDs the tokenizer prints—they are **learned, continuous points in a high-dimensional space** that stand in for “what this token means” inside the model.
