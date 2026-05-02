@@ -243,6 +243,38 @@ This sets the stage for understanding <strong>Recurrent Neural Networks (RNNs)</
 
 ---
 
+<Quiz
+  lessonId="ai-for-engineering/deep-sequence-modelling-rnn/foundations-of-deep-sequence-modeling"
+  questions={[
+    {
+      id: "seqfound-q1",
+      prompt: "What distinguishes sequence data from i.i.d. tabular data?",
+      options: ["Sequence data is always larger", "Order matters: each element depends on what came before, so observations are not independent", "Sequence data has no labels", "Sequence data is only used in NLP"],
+      correctIndex: 1,
+    },
+    {
+      id: "seqfound-q2",
+      prompt: "Which of these is a 'many-to-one' sequence task?",
+      options: ["Translation (English → French)", "Sentiment classification of a sentence (read all tokens, output one label)", "Image classification", "Generating text token-by-token"],
+      correctIndex: 1,
+    },
+    {
+      id: "seqfound-q3",
+      prompt: "Why doesn't a vanilla feed-forward MLP work well as the default for sequence modeling?",
+      options: ["MLPs cannot output classes", "MLPs require fixed-size inputs and have no built-in mechanism to maintain state across elements of a variable-length sequence", "MLPs only work on images", "MLPs cannot use ReLU"],
+      correctIndex: 1,
+    },
+    {
+      id: "seqfound-q4",
+      prompt: "Which of these problems is naturally a sequence-modeling problem?",
+      options: ["Predicting house price from square footage", "Predicting the next word in a sentence", "Classifying handwritten digits from independent images", "Computing the mean of a list"],
+      correctIndex: 1,
+    },
+  ]}
+/>
+
+---
+
 <div className="not-prose mt-10 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-6 dark:border-slate-700">
   <a href="./intro" className="text-sm font-medium text-slate-600 no-underline hover:text-indigo-700 hover:underline dark:text-slate-400 dark:hover:text-indigo-400">← Course overview</a>
   <a href="./from-static-networks-to-time-aware" className="text-sm font-semibold text-indigo-700 no-underline hover:underline dark:text-indigo-400">Next: Lesson 2 — Static → time-aware →</a>

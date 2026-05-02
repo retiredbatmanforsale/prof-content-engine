@@ -144,6 +144,38 @@ Binary classification with one hidden layer: **features** in, a **nonlinear hidd
 
 ---
 
+<Quiz
+  lessonId="ai-for-engineering/deep-neural-networks/neural-network-architecture"
+  questions={[
+    {
+      id: "arch-q1",
+      prompt: "For a standard binary-classification head, the recommended output activation is:",
+      options: ["ReLU", "Sigmoid (produces a probability in (0, 1))", "Softmax over 1 class", "Tanh"],
+      correctIndex: 1,
+    },
+    {
+      id: "arch-q2",
+      prompt: "For hidden layers of a deep classifier, the conventional default activation is:",
+      options: ["Sigmoid (because it's smooth)", "ReLU (fast, sparse, gradients don't vanish for positive z)", "Linear (so depth helps)", "Softmax (so each layer outputs probabilities)"],
+      correctIndex: 1,
+    },
+    {
+      id: "arch-q3",
+      prompt: "In the binary-classification recap network with sigmoid output and BCE loss, the trainable parameters are:",
+      options: ["W₁, b₁, W₂, b₂", "Only W₁ and W₂", "Only the activations", "The learning rate η"],
+      correctIndex: 0,
+    },
+    {
+      id: "arch-q4",
+      prompt: "Which of these is a hyperparameter that shapes the architecture, NOT a trainable parameter?",
+      options: ["The bias b₁", "The number of hidden units in layer 1", "The weight W₂[0, 3]", "The output ŷ for a given input"],
+      correctIndex: 1,
+    },
+  ]}
+/>
+
+---
+
 <div className="not-prose mt-10 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-6 dark:border-slate-700">
   <a href="./overfitting-in-neural-networks" className="text-sm font-medium text-slate-600 no-underline hover:text-emerald-700 hover:underline dark:text-slate-400 dark:hover:text-emerald-400">← Lesson 8 · Overfitting</a>
   <a href="./neural-network-from-scratch" className="text-sm font-semibold text-emerald-700 no-underline hover:underline dark:text-emerald-400">Lesson 10 · From scratch →</a>

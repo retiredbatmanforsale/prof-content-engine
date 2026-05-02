@@ -131,6 +131,38 @@ Overfitting is great on the training set but weak on new data; you respond with 
 
 ---
 
+<Quiz
+  lessonId="ai-for-engineering/deep-neural-networks/overfitting-in-neural-networks"
+  questions={[
+    {
+      id: "overfit-q1",
+      prompt: "A network that achieves 99% training accuracy but only 60% validation accuracy is showing:",
+      options: ["High bias / underfitting", "High variance / overfitting", "A learning rate that is too low", "A bug in the loss function"],
+      correctIndex: 1,
+    },
+    {
+      id: "overfit-q2",
+      prompt: "How does dropout help reduce overfitting?",
+      options: ["It adds more parameters to the model", "It randomly zeros activations during training, forcing the network to learn redundant, more robust representations", "It increases the learning rate", "It removes the bias term"],
+      correctIndex: 1,
+    },
+    {
+      id: "overfit-q3",
+      prompt: "L2 regularization adds a term λ‖W‖² to the loss. Its primary effect is:",
+      options: ["Forces all weights to zero", "Penalizes large weight magnitudes, encouraging simpler / smoother decision boundaries", "Increases the learning rate adaptively", "Replaces the activation function"],
+      correctIndex: 1,
+    },
+    {
+      id: "overfit-q4",
+      prompt: "Early stopping prevents overfitting by:",
+      options: ["Stopping training when training loss is zero", "Stopping training when validation loss starts increasing, even if training loss is still decreasing", "Skipping every other epoch", "Stopping after a fixed wall-clock time"],
+      correctIndex: 1,
+    },
+  ]}
+/>
+
+---
+
 <div className="not-prose mt-10 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-6 dark:border-slate-700">
   <a href="./trainable-parameters-and-hyperparameters" className="text-sm font-medium text-slate-600 no-underline hover:text-emerald-700 hover:underline dark:text-slate-400 dark:hover:text-emerald-400">← Lesson 7 · Parameters &amp; hyperparameters</a>
   <a href="./neural-network-architecture" className="text-sm font-semibold text-emerald-700 no-underline hover:underline dark:text-emerald-400">Lesson 9 · Architecture recap →</a>

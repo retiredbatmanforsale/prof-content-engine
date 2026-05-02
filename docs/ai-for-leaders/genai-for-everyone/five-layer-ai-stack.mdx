@@ -173,3 +173,36 @@ This is where **software products and agents** sit: copilots, CRM assistants, co
 The “five-layer cake” is a **communication tool**, not a law of physics. Real deployments blur lines (on-device silicon, private power deals, hybrid cloud). Still, the stack answers a question executives actually need: **Where is the risk concentrated, and where is the margin?** Often—not always—the further **down** you go, the **slower** things move—and the **harder** they are to substitute.
 
 Next in this course, we keep connecting **models and applications** to the **decisions** you make on data, evaluation, and prompting—now with a clearer picture of **what sits underneath** when something breaks or gets expensive.
+
+---
+
+<Quiz
+  lessonId="ai-for-leaders/genai-for-everyone/five-layer-ai-stack"
+  questions={[
+    {
+      id: "stack-q1",
+      prompt: "In the five-layer AI stack framing (energy → silicon → infrastructure → models → applications), which layer is the most visible to end users?",
+      options: ["Energy", "Silicon", "Infrastructure (cloud)", "Applications"],
+      correctIndex: 3,
+    },
+    {
+      id: "stack-q2",
+      prompt: "If a chip shortage hits the silicon layer, which layers are downstream affected?",
+      options: ["Only silicon — the layers above are independent", "Infrastructure, models, and applications — every layer above silicon depends on it", "Only applications", "None — software is decoupled from chips"],
+      correctIndex: 1,
+    },
+    {
+      id: "stack-q3",
+      prompt: "The 'five-layer cake' is best described as:",
+      options: ["A strict mathematical model", "A communication tool that helps executives reason about where risk and margin sit in an AI value chain — not a hard physical law", "A list of AI products", "A roadmap for building one company"],
+      correctIndex: 1,
+    },
+    {
+      id: "stack-q4",
+      prompt: "Which is a typical reason 'further down the stack' is slower to change?",
+      options: ["Lower layers have more cute icons", "Building chips, power agreements, and data centers takes years and large capital — apps can ship in days", "The further down, the fewer engineers", "It's a coincidence"],
+      correctIndex: 1,
+    },
+  ]}
+/>
+

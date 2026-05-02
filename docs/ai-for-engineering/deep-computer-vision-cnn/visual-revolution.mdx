@@ -105,6 +105,32 @@ These problems usually need more than a single **class label**; they need **wher
 
 ---
 
+<Quiz
+  lessonId="ai-for-engineering/deep-computer-vision-cnn/visual-revolution"
+  questions={[
+    {
+      id: "visrev-q1",
+      prompt: "Why do real-world vision tasks usually need more than a single class label?",
+      options: ["Class labels are computationally expensive", "Many real systems also need 'where' (boxes/segmentation), 'how it's changing' (tracking), and 'what to do next' (action) — often in real time", "Class labels don't generalize", "Models cannot output single labels efficiently"],
+      correctIndex: 1,
+    },
+    {
+      id: "visrev-q2",
+      prompt: "Which historical milestone marked the modern deep-learning era for vision?",
+      options: ["The invention of the convolution operator in 1965", "The 2012 ImageNet competition where AlexNet (a deep CNN) substantially beat hand-crafted-feature pipelines", "The invention of the perceptron", "The release of OpenCV"],
+      correctIndex: 1,
+    },
+    {
+      id: "visrev-q3",
+      prompt: "What's the practical difference between offline-benchmark vision and production vision?",
+      options: ["Production runs on CPUs, offline runs on GPUs", "Production must handle noise, distribution drift, latency budgets, and edge cases that benchmark datasets typically do not represent", "There is no difference", "Production uses smaller models always"],
+      correctIndex: 1,
+    },
+  ]}
+/>
+
+---
+
 <div className="not-prose mt-10 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-6 dark:border-slate-700">
   <a href="./intro" className="text-sm font-medium text-slate-600 no-underline hover:text-teal-700 hover:underline dark:text-slate-400 dark:hover:text-teal-400">← Course overview</a>
   <a href="./transformative-deep-learning-vision" className="text-sm font-semibold text-teal-700 no-underline hover:underline dark:text-teal-400">Next: Lesson 2 — Deep learning’s role →</a>

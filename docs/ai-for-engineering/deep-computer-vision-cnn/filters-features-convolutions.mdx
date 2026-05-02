@@ -354,6 +354,38 @@ Let&apos;s consolidate what we&apos;ve covered:
 
 ---
 
+<Quiz
+  lessonId="ai-for-engineering/deep-computer-vision-cnn/filters-features-convolutions"
+  questions={[
+    {
+      id: "conv-q1",
+      prompt: "For an input of height H, kernel size K, padding P, and stride S, the output spatial dimension is:",
+      options: ["H + K", "(H - K + 2P) / S + 1, rounded down", "H × K × S", "H / S"],
+      correctIndex: 1,
+    },
+    {
+      id: "conv-q2",
+      prompt: "An input of 32 × 32, a 3 × 3 kernel, padding 1, stride 1 produces an output of:",
+      options: ["30 × 30", "32 × 32", "34 × 34", "16 × 16"],
+      correctIndex: 1,
+    },
+    {
+      id: "conv-q3",
+      prompt: "If a layer has 64 input channels and 128 output channels with a 3 × 3 kernel, how many filter weights does it have (excluding bias)?",
+      options: ["64 × 128 = 8,192", "3 × 3 × 64 × 128 = 73,728", "3 × 3 × 128 = 1,152", "3 × 3 = 9"],
+      correctIndex: 1,
+    },
+    {
+      id: "conv-q4",
+      prompt: "What is a 'feature map' in a CNN?",
+      options: ["The input image itself", "The 2D output produced by sliding one filter over the input — its activations indicate where in the input that filter's pattern appears", "A list of class labels", "The bias terms"],
+      correctIndex: 1,
+    },
+  ]}
+/>
+
+---
+
 <div className="not-prose mt-10 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-6 dark:border-slate-700">
   <a href="./preserving-spatial-structure-cnns" className="text-sm font-medium text-slate-600 no-underline hover:text-teal-700 hover:underline dark:text-slate-400 dark:hover:text-teal-400">← Lesson 6 · Spatial structure & CNNs</a>
   <a href="./learning-to-see-cnns" className="text-sm font-semibold text-teal-700 no-underline hover:underline dark:text-teal-400">Next: Lesson 8 — Inner workings →</a>

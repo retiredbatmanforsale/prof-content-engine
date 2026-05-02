@@ -1,7 +1,7 @@
 ---
 hide_title: true
-sidebar_label: '6 · Multi-head attention'
-title: 'Lesson 6 — Multi-headed attention'
+sidebar_label: '5 · Multi-head attention'
+title: 'Lesson 5 — Multi-headed attention'
 description: >-
   Paper-accurate multi-head formulas, per-head attention maps, why several
   heads beat one self-attention, and links to language structure.
@@ -16,7 +16,7 @@ tutor_concepts:
   - "why multiple heads outperform a single wide head"
 ---
 
-<LessonHero course="Attention Is All You Need" number="6" title="Multi-headed attention" subtitle="Running multiple attention patterns in parallel" />
+<LessonHero course="Attention Is All You Need" number="5" title="Multi-headed attention" subtitle="Running multiple attention patterns in parallel" />
 
 <LessonVideo
   src="https://player.vimeo.com/video/1185115731?h=2d7019c8ba&badge=0&autopause=0&player_id=0&app_id=58479"
@@ -244,7 +244,39 @@ Below, each cell is **darker** = **higher** attention weight **(illustrative, no
 
 ---
 
+<Quiz
+  lessonId="ai-for-engineering/attention-is-all-you-need/multi-headed-attention"
+  questions={[
+    {
+      id: "mha-q1",
+      prompt: "Why use multiple attention heads instead of one large head?",
+      options: ["It saves parameters", "Each head can attend to different relationships in parallel (e.g., syntactic vs semantic), and concatenating their outputs gives the model richer representations", "Single-head attention is mathematically broken", "Multiple heads are required for backpropagation"],
+      correctIndex: 1,
+    },
+    {
+      id: "mha-q2",
+      prompt: "In the original paper with d_model = 512 and h = 8 heads, what is d_k (the key dim per head)?",
+      options: ["8", "64", "256", "512"],
+      correctIndex: 1,
+    },
+    {
+      id: "mha-q3",
+      prompt: "After running the h heads in parallel, what does the multi-head attention layer do with their outputs?",
+      options: ["It averages them", "It concatenates them along the feature dimension and applies a final linear projection W^O", "It picks the head with the highest score", "It softmaxes across heads"],
+      correctIndex: 1,
+    },
+    {
+      id: "mha-q4",
+      prompt: "Why does the total compute of multi-head attention NOT grow proportionally with h?",
+      options: ["Because heads share weights", "Because d_k is set to d_model / h, so the total work across h heads stays approximately the same as one full-size head", "Because heads run on separate GPUs", "Because softmax is parallelizable"],
+      correctIndex: 1,
+    },
+  ]}
+/>
+
+---
+
 <div className="not-prose mt-10 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-6 dark:border-slate-700">
-  <a href="./self-attention" className="text-sm font-medium text-slate-600 no-underline hover:text-emerald-700 hover:underline dark:text-slate-400 dark:hover:text-emerald-400">← Lesson 5 · Self-attention</a>
-  <a href="./causal-masking" className="text-sm font-semibold text-emerald-700 no-underline hover:underline dark:text-emerald-400">Lesson 7 · Causal masking →</a>
+  <a href="./self-attention" className="text-sm font-medium text-slate-600 no-underline hover:text-emerald-700 hover:underline dark:text-slate-400 dark:hover:text-emerald-400">← Lesson 4 · Self-attention</a>
+  <a href="./cross-attention" className="text-sm font-semibold text-emerald-700 no-underline hover:underline dark:text-emerald-400">Lesson 6 · Cross-attention →</a>
 </div>

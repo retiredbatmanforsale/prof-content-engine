@@ -1,0 +1,154 @@
+---
+hide_title: true
+sidebar_label: '9 · From encoder–decoder to GPT'
+title: 'Lesson 9 — From encoder–decoder to GPT'
+description: >-
+  How the 2017 encoder–decoder transformer evolved into BERT, GPT, and T5,
+  and where each modern family sits relative to the original architecture.
+tutor_topic: "From encoder-decoder to GPT"
+tutor_concepts:
+  - "BERT as encoder-only"
+  - "GPT as decoder-only"
+  - "T5 as encoder-decoder unified"
+  - "scaling laws and decoder-only dominance"
+  - "instruction tuning and RLHF"
+  - "from translation to general-purpose generation"
+---
+
+<LessonHero course="Attention Is All You Need" number="9" title="From encoder–decoder to GPT" subtitle="What happened next — BERT, GPT, T5, and the road to modern LLMs" />
+
+The 2017 paper presented a transformer for **machine translation**: encoder reads the source, decoder writes the target, cross-attention bridges the two. Within two years, the field had taken every component apart and reassembled them into three distinct families — and only one of them looks like the original. This lesson is the **map** of what happened next, and where to go to actually build one.
+
+---
+
+## The split
+
+The encoder and decoder of the 2017 paper were originally inseparable: each was useless for translation without the other. But researchers quickly noticed that the **encoder alone** is a powerful representation learner, and the **decoder alone** — given causal masking — is a perfectly good language model. Once you remove the requirement that input and output be different sequences, the architecture splits in three.
+
+<div className="not-prose my-8 grid gap-4 md:grid-cols-3">
+  <div className="rounded-2xl border-2 border-sky-300 bg-sky-50/80 p-5 dark:border-sky-700 dark:bg-sky-950/30">
+    <p className="m-0 text-xs font-bold uppercase tracking-wide text-sky-800 dark:text-sky-300">Encoder-only</p>
+    <p className="mt-2 mb-1 text-base font-semibold text-slate-900 dark:text-slate-100">BERT (2018)</p>
+    <p className="m-0 text-sm text-slate-700 dark:text-slate-300">Bidirectional self-attention. Trained with masked language modelling. Best at <em>understanding</em>: classification, embeddings, retrieval.</p>
+  </div>
+  <div className="rounded-2xl border-2 border-emerald-400 bg-emerald-50/80 p-5 dark:border-emerald-600 dark:bg-emerald-950/30">
+    <p className="m-0 text-xs font-bold uppercase tracking-wide text-emerald-800 dark:text-emerald-300">Decoder-only</p>
+    <p className="mt-2 mb-1 text-base font-semibold text-slate-900 dark:text-slate-100">GPT-2, GPT-3, modern LLMs</p>
+    <p className="m-0 text-sm text-slate-700 dark:text-slate-300">Causal masked self-attention. Trained on next-token prediction. Best at <em>generation</em>: chat, completion, instruction-following.</p>
+  </div>
+  <div className="rounded-2xl border-2 border-violet-300 bg-violet-50/80 p-5 dark:border-violet-700 dark:bg-violet-950/30">
+    <p className="m-0 text-xs font-bold uppercase tracking-wide text-violet-800 dark:text-violet-300">Encoder–decoder</p>
+    <p className="mt-2 mb-1 text-base font-semibold text-slate-900 dark:text-slate-100">T5, BART (2019–2020)</p>
+    <p className="m-0 text-sm text-slate-700 dark:text-slate-300">The original 2017 layout. Unifies "any task" as text-in/text-out. Strong on translation, summarization, span-corruption pretraining.</p>
+  </div>
+</div>
+
+---
+
+## A short timeline
+
+| Year | Model | Family | Why it mattered |
+|------|-------|--------|-----------------|
+| 2017 | **Transformer** (Vaswani et al.) | Encoder–decoder | The paper this course is about. Beat seq2seq+attention RNNs on translation. |
+| 2018 | **GPT-1** (Radford et al.) | Decoder-only | Showed transformer LMs work as a *general* pretraining objective, not just translation. |
+| 2018 | **BERT** (Devlin et al.) | Encoder-only | Masked language modelling on the encoder. Took over the NLP benchmarks for two years. |
+| 2019 | **GPT-2** (Radford et al.) | Decoder-only | Scaled to 1.5B parameters. Showed convincing zero-shot generation. *This is the model the [companion course](../build-and-train-your-own-gpt2-model/intro) builds.* |
+| 2019 | **T5** (Raffel et al.) | Encoder–decoder | Unified every NLP task as text-to-text. The 2017 architecture, scaled and unified. |
+| 2020 | **GPT-3** | Decoder-only | 175B parameters. Few-shot learning emerged at scale. |
+| 2022 | **InstructGPT / ChatGPT** | Decoder-only + RLHF | Made decoder-only LMs follow instructions and stay on-topic in conversation. |
+| 2023+ | Frontier LLMs | Mostly decoder-only | The pattern won. Most production assistants today are scaled decoder-only transformers. |
+
+---
+
+## Why decoder-only won
+
+By 2020 the field had a clear answer to "which family scales best?" — and the answer was **decoder-only**. Three reasons:
+
+1. **One stream, one objective.** Next-token prediction is a single, dense, self-supervising signal you can run on any text. No paired source/target needed, no special masking schedule. You point the model at the internet and it trains.
+2. **Tasks reframe as prompts.** Translation? Prompt: *"Translate to French: ___"*. Summarization? *"Summarize: ___"*. Once you accept this framing, the encoder side is no longer required — the model just continues the sequence.
+3. **Scaling laws favoured it.** Empirically, decoder-only models showed cleaner loss-vs-compute curves at large parameter counts. A simpler, more uniform architecture is easier to scale on thousands of GPUs.
+
+This does **not** mean encoder-decoder is dead. T5-style models still win on tasks where you have a clearly delineated *source* and *target* (translation, summarization with a long source, multimodal pipelines where one tower encodes audio or images). But the cultural and economic centre of gravity shifted decisively to decoder-only.
+
+---
+
+## What the 2017 paper still gives you
+
+Even if you spend the rest of your career working with decoder-only models, the 2017 architecture is worth understanding because:
+
+- **The mechanisms are the same.** Self-attention, multi-head attention, residuals, layer norm, FFN — every one of them is in GPT-2, GPT-4, Claude, and every other modern LLM.
+- **Cross-attention is reappearing.** In multimodal models (Flamingo, GPT-4V, modern speech systems), cross-attention is back — one tower encodes the image or audio, another generates the response. The 2017 design is the template.
+- **Encoder-only models are still load-bearing.** Every embedding-based retrieval system, every reranker, every BERT-style classifier in production today descends directly from the encoder you just learned.
+
+---
+
+## Where to go next
+
+You now understand **what** transformers are and **why** they're shaped the way they are. The natural next step is to **build** one.
+
+<div className="not-prose my-8 rounded-2xl border-2 border-emerald-400 bg-gradient-to-br from-emerald-50 to-white p-6 dark:border-emerald-600 dark:from-emerald-950/40 dark:to-slate-900">
+  <p className="m-0 text-xs font-bold uppercase tracking-widest text-emerald-700 dark:text-emerald-300">Companion course</p>
+  <a href="../build-and-train-your-own-gpt2-model/intro" className="mt-2 mb-2 block text-2xl font-bold text-slate-900 no-underline hover:text-emerald-700 dark:text-slate-100 dark:hover:text-emerald-400">Build and Train Your Own GPT-2 →</a>
+  <p className="m-0 text-sm text-slate-700 dark:text-slate-300">Implements every component you've seen here in PyTorch — token embeddings, causal masking, multi-head attention, residuals, layer norm, feed-forward — and trains the assembled decoder-only transformer end-to-end on real text.</p>
+</div>
+
+For the **encoder-only** side of the family (BERT, embeddings, retrieval), see the **MLE Interview** course's coverage of representation learning, or wait for the dedicated retrieval course in the platform roadmap.
+
+---
+
+<Quiz
+  lessonId="ai-for-engineering/attention-is-all-you-need/from-encoder-decoder-to-gpt"
+  questions={[
+    {
+      id: "fed-q1",
+      prompt: "Which transformer family is most modern production LLMs (GPT-4, Claude, Gemini) based on?",
+      options: [
+        "Encoder-only (BERT-style)",
+        "Decoder-only — masked self-attention + FFN, trained on next-token prediction",
+        "Encoder–decoder (the 2017 paper architecture)",
+        "RNN-attention hybrids"
+      ],
+      correctIndex: 1,
+    },
+    {
+      id: "fed-q2",
+      prompt: "What is BERT's architectural relationship to the 2017 transformer?",
+      options: [
+        "BERT uses only the encoder stack with bidirectional self-attention, trained with masked language modelling",
+        "BERT uses only the decoder stack",
+        "BERT replaces attention with convolutions",
+        "BERT and the 2017 transformer are unrelated"
+      ],
+      correctIndex: 0,
+    },
+    {
+      id: "fed-q3",
+      prompt: "Why did decoder-only models become the dominant family for general-purpose language modelling?",
+      options: [
+        "They are mathematically more expressive than encoder-decoder models",
+        "Next-token prediction provides a single dense self-supervising signal that scales cleanly, and most tasks can be reframed as prompts",
+        "They use less memory than encoders",
+        "Cross-attention is computationally infeasible at scale"
+      ],
+      correctIndex: 1,
+    },
+    {
+      id: "fed-q4",
+      prompt: "T5 is best described as:",
+      options: [
+        "A decoder-only model",
+        "An encoder-only model",
+        "An encoder–decoder model that frames every NLP task as text-to-text",
+        "A non-transformer architecture"
+      ],
+      correctIndex: 2,
+    },
+  ]}
+/>
+
+---
+
+<div className="not-prose mt-10 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-6 dark:border-slate-700">
+  <a href="./encoder-decoder-transformer" className="text-sm font-medium text-slate-600 no-underline hover:text-emerald-700 hover:underline dark:text-slate-400 dark:hover:text-emerald-400">← Lesson 8 · Encoder–decoder transformer</a>
+  <a href="./interview-readiness" className="text-sm font-semibold text-emerald-700 no-underline hover:underline dark:text-emerald-400">Interview Readiness →</a>
+</div>

@@ -352,6 +352,38 @@ This aligns **perfectly** with how humans understand vision — as a **compositi
 
 ---
 
+<Quiz
+  lessonId="ai-for-engineering/deep-computer-vision-cnn/preserving-spatial-structure-cnns"
+  questions={[
+    {
+      id: "spatial-q1",
+      prompt: "A 100×100 image fed into a fully-connected layer with 1000 hidden units would have how many weight parameters in that layer?",
+      options: ["1,000", "100,000", "10,000,000 (10M)", "1 billion"],
+      correctIndex: 2,
+    },
+    {
+      id: "spatial-q2",
+      prompt: "What is the central idea behind a convolutional layer that solves the parameter explosion?",
+      options: ["Use bigger GPUs", "Apply the SAME small filter (a few hundred to a few thousand parameters) at every spatial location, sharing weights across the image", "Train each pixel separately", "Use a much smaller image"],
+      correctIndex: 1,
+    },
+    {
+      id: "spatial-q3",
+      prompt: "Why does weight sharing in convolutions make sense for natural images?",
+      options: ["It doesn't — it's a hack", "Visual features (an edge, a corner, a texture) are statistically similar regardless of where they appear; the same detector is useful at every location", "It saves only memory, not compute", "Weight sharing is required by hardware"],
+      correctIndex: 1,
+    },
+    {
+      id: "spatial-q4",
+      prompt: "What does it mean that convolution 'preserves spatial structure'?",
+      options: ["It outputs images of the same size", "Output activations form a 2D feature map where each location corresponds to a region in the input — neighborhood relationships are kept, unlike a flattened MLP", "Spatial dimensions are unchanged forever", "Pixels are simply copied through"],
+      correctIndex: 1,
+    },
+  ]}
+/>
+
+---
+
 <div className="not-prose mt-10 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-6 dark:border-slate-700">
   <a href="./learning-features-from-data" className="text-sm font-medium text-slate-600 no-underline hover:text-teal-700 hover:underline dark:text-slate-400 dark:hover:text-teal-400">← Lesson 5 · Learned features from data</a>
   <a href="./filters-features-convolutions" className="text-sm font-semibold text-teal-700 no-underline hover:underline dark:text-teal-400">Next: Lesson 7 — Filters & features →</a>

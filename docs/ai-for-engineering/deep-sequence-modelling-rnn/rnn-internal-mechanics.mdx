@@ -282,6 +282,38 @@ This last setting, <strong>many-to-many modeling</strong>, is foundational to ho
 
 ---
 
+<Quiz
+  lessonId="ai-for-engineering/deep-sequence-modelling-rnn/rnn-internal-mechanics"
+  questions={[
+    {
+      id: "mech-q1",
+      prompt: "The vanilla RNN hidden-state update is h_t = σ(W_xh · x_t + W_hh · h_{t-1} + b_h). What is the role of W_hh?",
+      options: ["It maps input to hidden", "It maps the previous hidden state into the current hidden state — the recurrent / time-mixing matrix", "It maps hidden to output", "It is the bias"],
+      correctIndex: 1,
+    },
+    {
+      id: "mech-q2",
+      prompt: "And W_xh?",
+      options: ["It maps the previous hidden state to the current hidden state", "It maps the input vector x_t into the hidden-state space", "It maps hidden to output", "It is the loss function"],
+      correctIndex: 1,
+    },
+    {
+      id: "mech-q3",
+      prompt: "How is the output y_t typically produced from h_t?",
+      options: ["Directly: y_t = h_t", "Via an output projection y_t = W_hy · h_t (+ activation/softmax for classification)", "Sampling from h_{t+1}", "Concatenating all previous hidden states"],
+      correctIndex: 1,
+    },
+    {
+      id: "mech-q4",
+      prompt: "For a vanilla RNN with input dim 10, hidden dim 32, output dim 5, how many parameters does the recurrent weight matrix W_hh have?",
+      options: ["10 × 32 = 320", "32 × 32 = 1,024", "32 × 5 = 160", "10 × 5 = 50"],
+      correctIndex: 1,
+    },
+  ]}
+/>
+
+---
+
 <div className="not-prose mt-10 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-6 dark:border-slate-700">
   <a href="./from-static-networks-to-time-aware" className="text-sm font-medium text-slate-600 no-underline hover:text-indigo-700 hover:underline dark:text-slate-400 dark:hover:text-indigo-400">← Lesson 2 · Static → time-aware</a>
   <a href="./bringing-sequence-modeling-real-world" className="text-sm font-semibold text-indigo-700 no-underline hover:underline dark:text-indigo-400">Lesson 4 · Real world →</a>

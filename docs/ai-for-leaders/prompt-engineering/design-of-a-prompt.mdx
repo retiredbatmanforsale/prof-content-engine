@@ -174,3 +174,36 @@ Combine **role + structure + constraints** when stakes are high (compliance, cus
 | Multi-persona | Debate trade-offs, then synthesize |
 | Iterate | Fix one thing per follow-up |
 | Constraints | Make outputs narrower and more testable |
+
+---
+
+<Quiz
+  lessonId="ai-for-leaders/prompt-engineering/design-of-a-prompt"
+  questions={[
+    {
+      id: "design-q1",
+      prompt: "The four core building blocks of a well-designed prompt are:",
+      options: ["Tone, style, length, brand", "Instruction, context, input, output format", "Role, audience, task, deadline", "Question, answer, citation, follow-up"],
+      correctIndex: 1,
+    },
+    {
+      id: "design-q2",
+      prompt: "Which prompt is more likely to produce a usable result?",
+      options: ["'Write something about onboarding.'", "'Write a 200-word email to new hires explaining how to access Slack and the wiki, friendly tone, three short paragraphs.'", "'Be helpful.'", "'Make it good.'"],
+      correctIndex: 1,
+    },
+    {
+      id: "design-q3",
+      prompt: "Why ask the model for a specific output format (e.g., JSON, table, numbered list)?",
+      options: ["For aesthetics", "Structured outputs are easier to consume by both humans and downstream tools, and they reduce ambiguity in what 'done' looks like", "It saves tokens", "It is required by all APIs"],
+      correctIndex: 1,
+    },
+    {
+      id: "design-q4",
+      prompt: "What is chain-of-thought (CoT) prompting?",
+      options: ["A way to disable creativity", "Asking the model to write its reasoning steps before the final answer — often improves accuracy on multi-step problems", "A way to chain multiple models together", "A token-saving format"],
+      correctIndex: 1,
+    },
+  ]}
+/>
+

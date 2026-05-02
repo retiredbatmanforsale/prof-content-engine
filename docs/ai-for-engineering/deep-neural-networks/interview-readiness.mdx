@@ -88,20 +88,23 @@ In interviews, go beyond definition and state diagnosis flow:
   number={3}
   difficulty="Fundamentals"
   company={["OpenAI", "Google", "Meta", "Microsoft"]}
-  question="Explain self-attention and why the scaling factor 1/sqrt(d_k) is necessary."
+  question="Why does Xavier (Glorot) initialization use variance 1/n_in for sigmoid/tanh while He initialization uses 2/n_in for ReLU? What breaks if you use the wrong one?"
 >
 
-Self-attention computes:
+The goal of weight init is to keep activation and gradient variance roughly constant as signals flow through layers. The math depends on the activation:
 
-`Attention(Q, K, V) = softmax(QK^T / sqrt(d_k)) V`
+- **Xavier / Glorot** assumes a roughly linear activation around 0 (sigmoid, tanh near origin). Drawing weights from a distribution with variance `1/n_in` (or the symmetric form `2/(n_in + n_out)`) keeps the output variance ≈ input variance.
+- **He / Kaiming** accounts for the fact that **ReLU zeros out half the inputs in expectation**, halving the post-activation variance. To compensate, init variance is doubled to `2/n_in`.
 
-Without scaling, dot-product magnitudes grow with `d_k`, pushing softmax into saturation where gradients are tiny and training becomes unstable.  
-Scaling keeps logits in a trainable regime and stabilizes optimization in deeper transformers.
+What breaks if you mismatch:
 
-Good follow-up signal:
-- distinguish self-attention vs cross-attention
-- explain causal mask in decoder-only models
-- mention memory/runtime cost of `O(n^2)`
+- **Xavier with ReLU**: variances shrink by ½ at every layer. After 30 ReLU layers, activations and gradients collapse toward zero — vanishing gradients, stalled learning.
+- **He with sigmoid/tanh**: the doubled variance pushes pre-activations into the saturation tails, where σ' ≈ 0. Same end-state — vanishing gradients, but for the opposite reason.
+
+Strong candidates also mention:
+- LSUV / orthogonal init for very deep stacks
+- Why batch-norm / layer-norm partially absorbs init mistakes (but doesn't make init irrelevant)
+- That residual connections (He et al. 2015) reduce sensitivity to init by giving gradients a direct path
 
 </InterviewQuestion>
 

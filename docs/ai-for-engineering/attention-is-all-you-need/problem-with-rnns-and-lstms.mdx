@@ -237,7 +237,33 @@ That shift—**parallelizable**, **direct paths**, **shorter gradient routes**�
 
 ---
 
+<Quiz
+  lessonId="ai-for-engineering/attention-is-all-you-need/problem-with-rnns-and-lstms"
+  questions={[
+    {
+      id: "rnn-prob-q1",
+      prompt: "Why are RNNs and LSTMs fundamentally sequential during training?",
+      options: ["They use too many parameters", "Each hidden state h_t depends on h_{t-1}, so token t can't be computed until token t-1 is done", "They only run on CPUs", "They cannot use minibatches"],
+      correctIndex: 1,
+    },
+    {
+      id: "rnn-prob-q2",
+      prompt: "Long-range dependencies are hard for vanilla RNNs primarily because:",
+      options: ["The vocabulary is too small", "Gradients vanish (or explode) when backpropagated through many time steps", "RNNs cannot use embeddings", "The activation function is always tanh"],
+      correctIndex: 1,
+    },
+    {
+      id: "rnn-prob-q3",
+      prompt: "What is the key architectural advantage of attention over recurrence?",
+      options: ["Attention has fewer parameters", "Attention provides direct, parallelizable paths between any two tokens — no information has to flow through intermediate steps", "Attention requires no embeddings", "Attention is only for vision tasks"],
+      correctIndex: 1,
+    },
+  ]}
+/>
+
+---
+
 <div className="not-prose mt-10 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-6 dark:border-slate-700">
   <a href="./intro" className="text-sm font-medium text-slate-600 no-underline hover:text-emerald-700 hover:underline dark:text-slate-400 dark:hover:text-emerald-400">← Course overview</a>
-  <a href="./token-embeddings" className="text-sm font-semibold text-emerald-700 no-underline hover:underline dark:text-emerald-400">Lesson 2 · Token embeddings →</a>
+  <a href="./positional-embeddings" className="text-sm font-semibold text-emerald-700 no-underline hover:underline dark:text-emerald-400">Lesson 2 · Positional embeddings →</a>
 </div>

@@ -1,7 +1,7 @@
 ---
 hide_title: true
-sidebar_label: '4 · Attention'
-title: 'Lesson 4 — Attention'
+sidebar_label: '3 · Attention'
+title: 'Lesson 3 — Attention'
 description: >-
   Queries, keys, values, and scaled dot-product attention as a differentiable
   weighted sum over values.
@@ -14,9 +14,11 @@ tutor_concepts:
   - "square root dk scaling purpose"
 ---
 
-<LessonHero course="Attention Is All You Need" number="4" title="Attention" subtitle="The core operation: which tokens should attend to which" />
+<LessonHero course="Attention Is All You Need" number="3" title="Attention" subtitle="The core operation: which tokens should attend to which" />
 
-**Attention** selects **what to read** from a set of vectors. You have a **query** (“what am I looking for?”) and a collection of **keys** and **values** (“what is available?” / “what do I get if I pick this?”). A **similarity** between query and keys yields **weights**; the output is a **weighted sum** of values.
+**Attention** is a way to look up information by **content, not position**. You hold a **query** (“what am I looking for?”) and you have a collection of **keys** (labels for what's available) and **values** (the actual content behind each label). The query is compared against every key, the comparison scores are turned into weights, and the answer is a **weighted sum of the values**.
+
+This single mechanism — and the variants built from it — replaces the recurrence in RNNs with a parallel, content-addressable read. The rest of the transformer is plumbing around this idea.
 
 <div className="not-prose my-6 grid gap-3 sm:grid-cols-3">
   <div className="rounded-xl border border-emerald-300 bg-emerald-50/80 p-3 text-center text-sm dark:border-emerald-800 dark:bg-emerald-950/25">
@@ -35,34 +37,140 @@ tutor_concepts:
 
 ---
 
+## A library analogy
+
+Imagine a library where every book has two parts: a **catalogue card** describing it (the *key*) and the **book itself** (the *value*). You walk in with a **search query**.
+
+1. The librarian compares your query against **every catalogue card** in parallel.
+2. Cards that match well get a high score; mismatched cards get a low score.
+3. The librarian doesn't hand you one book — she hands you a **blend** of all the books, with each book contributing in proportion to how well its card matched.
+
+That blend is the output of attention. You never asked for *book #3*; you described what you wanted, and the relevant content surfaced.
+
+---
+
 ## Scaled dot-product attention
 
-For one query vector **q** and key–value pairs **(kⱼ, vⱼ)**:
+For a single query vector **q** and a set of key–value pairs **(kⱼ, vⱼ)** with **kⱼ, q ∈ ℝ^{d_k}**:
 
 $$
-\text{Attention}(q, K, V) = \sum_j \underbrace{\frac{\exp(q \cdot k_j / \sqrt{d_k})}{\sum_{j'} \exp(q \cdot k_{j'} / \sqrt{d_k})}}_{\text{softmax weights}} v_j
+\text{Attention}(q, K, V) = \sum_j \underbrace{\frac{\exp(q \cdot k_j / \sqrt{d_k})}{\sum_{j'} \exp(q \cdot k_{j'} / \sqrt{d_k})}}_{\text{softmax weights } \alpha_j} v_j
 $$
 
-In matrix form (batch of queries):
+In matrix form, when **Q** is a stack of queries (one row per query token):
 
 $$
 \text{Attention}(Q, K, V) = \text{softmax}\left(\frac{QK^\top}{\sqrt{d_k}}\right) V
 $$
 
-The **√d_k** scale keeps dot products from growing too large as dimension increases, so softmax stays **sharp but not saturated**.
+Three operations, in order:
+
+1. **Score** — `QKᵀ` produces an `(n_q × n_k)` matrix of raw similarity scores. Each entry is a single dot product.
+2. **Normalize** — divide by `√d_k`, then softmax along each query's row to get weights that are positive and sum to 1.
+3. **Aggregate** — multiply by `V` to get a `(n_q × d_v)` output: each query's answer is a convex combination of the value vectors.
 
 ---
 
-## Intuition
+## Worked example
 
-- High **q · k** → large weight on that **v**.
-- Softmax → weights are **positive** and **sum to 1** (convex combination of values).
+Take `d_k = 4`, three keys, three values, one query.
 
-**Next:** when **Q, K, V** all come from the **same** sequence, you get <strong>self-attention</strong>.
+```
+q  = [1, 0, 1, 0]
+
+k_1 = [1, 0, 1, 0]   v_1 = [10, 0]   (close match to q)
+k_2 = [0, 1, 0, 1]   v_2 = [ 0, 5]   (orthogonal — no match)
+k_3 = [1, 0, 0, 0]   v_3 = [ 2, 2]   (partial match)
+```
+
+**Step 1 — raw scores.** `q · k_j`:
+
+```
+q · k_1 = 1·1 + 0·0 + 1·1 + 0·0 = 2
+q · k_2 = 1·0 + 0·1 + 1·0 + 0·1 = 0
+q · k_3 = 1·1 + 0·0 + 1·0 + 0·0 = 1
+```
+
+**Step 2 — scale by `√d_k = 2`.**
+
+```
+scaled = [2/2, 0/2, 1/2] = [1.0, 0.0, 0.5]
+```
+
+**Step 3 — softmax.** `exp(1.0)=2.72, exp(0.0)=1.00, exp(0.5)=1.65`, sum ≈ 5.37:
+
+```
+α = [2.72/5.37, 1.00/5.37, 1.65/5.37] ≈ [0.506, 0.186, 0.308]
+```
+
+The weights are positive, sum to 1, and concentrate mass on `k_1` (the best match) without ignoring the others.
+
+**Step 4 — weighted sum of values.**
+
+```
+output = 0.506 · [10, 0] + 0.186 · [0, 5] + 0.308 · [2, 2]
+       ≈ [5.06 + 0 + 0.62,  0 + 0.93 + 0.62]
+       ≈ [5.68, 1.55]
+```
+
+The output borrows mostly from `v_1`, a touch from `v_3`, and almost nothing from `v_2`. **No discrete choice was made** — the answer is differentiable, so gradients flow back into Q, K, V projections during training.
+
+---
+
+## Why divide by √d_k?
+
+If **q** and **k** have entries with mean 0 and variance 1, the dot product `q · k = Σᵢ qᵢ kᵢ` has variance `d_k`. As `d_k` grows, scores grow with it. Large positive scores push softmax toward a one-hot distribution; one weight saturates at ≈ 1 and the rest collapse to ≈ 0, which **kills gradients on the suppressed terms**.
+
+Dividing by `√d_k` rescales the variance back to ≈ 1, keeping softmax in a region where it's **sharp but not saturated** — confident enough to focus, soft enough to learn.
+
+---
+
+## Intuition cheat-sheet
+
+- **High `q · k`** → large weight on that `v`.
+- **Softmax** → weights are non-negative and sum to 1 (a *convex combination*).
+- **No argmax** → fully differentiable; the network can learn what to attend to.
+- **`√d_k` scale** → keeps logits from saturating as `d_k` grows.
+
+---
+
+**Next:** when **Q, K, V** are all derived from the **same** sequence, every token attends to every other token in that sequence. That's <strong>self-attention</strong>.
+
+---
+
+<Quiz
+  lessonId="ai-for-engineering/attention-is-all-you-need/attention"
+  questions={[
+    {
+      id: "attn-q1",
+      prompt: "The output of attention for a single query is:",
+      options: ["The single value v_j with the highest q · k_j score (argmax)", "A weighted sum of all values v_j, where the weights come from softmax over scaled query-key dot products", "The query vector q itself", "The product q · K · V without softmax"],
+      correctIndex: 1,
+    },
+    {
+      id: "attn-q2",
+      prompt: "Why divide raw QKᵀ scores by √d_k before softmax?",
+      options: ["To make the math look more elegant", "Because as d_k grows, dot-product variance grows; large logits saturate softmax and kill gradients on the suppressed terms", "To enforce that weights sum to 1", "To avoid negative numbers"],
+      correctIndex: 1,
+    },
+    {
+      id: "attn-q3",
+      prompt: "After softmax, the attention weights α_j satisfy which property?",
+      options: ["They are non-negative and sum to 1 (a convex combination)", "They are zero-mean and unit-variance", "They are exactly 0 or 1 (one-hot)", "They are unbounded reals"],
+      correctIndex: 0,
+    },
+    {
+      id: "attn-q4",
+      prompt: "Why is attention preferred over a discrete argmax 'which-key-wins' lookup?",
+      options: ["Argmax is too slow on GPUs", "Argmax is non-differentiable, blocking gradient flow; the softmax-weighted sum is fully differentiable so the model can learn what to attend to", "Argmax cannot handle multiple keys", "Argmax requires labeled data"],
+      correctIndex: 1,
+    },
+  ]}
+/>
 
 ---
 
 <div className="not-prose mt-10 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-6 dark:border-slate-700">
-  <a href="./positional-embeddings" className="text-sm font-medium text-slate-600 no-underline hover:text-emerald-700 hover:underline dark:text-slate-400 dark:hover:text-emerald-400">← Lesson 3 · Positional embeddings</a>
-  <a href="./self-attention" className="text-sm font-semibold text-emerald-700 no-underline hover:underline dark:text-emerald-400">Lesson 5 · Self-attention →</a>
+  <a href="./positional-embeddings" className="text-sm font-medium text-slate-600 no-underline hover:text-emerald-700 hover:underline dark:text-slate-400 dark:hover:text-emerald-400">← Lesson 2 · Positional embeddings</a>
+  <a href="./self-attention" className="text-sm font-semibold text-emerald-700 no-underline hover:underline dark:text-emerald-400">Lesson 4 · Self-attention →</a>
 </div>

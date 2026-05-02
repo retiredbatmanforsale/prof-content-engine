@@ -254,6 +254,32 @@ In our <strong>next step</strong>, we&apos;ll dive deeper into those limitations
 
 ---
 
+<Quiz
+  lessonId="ai-for-engineering/deep-sequence-modelling-rnn/bringing-sequence-modeling-real-world"
+  questions={[
+    {
+      id: "real-q1",
+      prompt: "A vocabulary V = {token_1, ..., token_|V|}. A one-hot encoding for token i has what shape?",
+      options: ["A scalar i", "A vector of length |V| with a single 1 at position i and zeros elsewhere", "A matrix of shape |V| × d", "A learned d-dim vector"],
+      correctIndex: 1,
+    },
+    {
+      id: "real-q2",
+      prompt: "Why are learned embeddings preferred over one-hot vectors as input to RNN/transformer language models?",
+      options: ["One-hot is illegal in PyTorch", "Embeddings are dense, low-dimensional, and place semantically similar tokens nearby in vector space — one-hot does none of that", "One-hot uses more compute on GPUs", "Embeddings are not actually preferred"],
+      correctIndex: 1,
+    },
+    {
+      id: "real-q3",
+      prompt: "Which is NOT a typical real-world sequence task?",
+      options: ["Speech-to-text", "Stock-price forecasting", "Static image classification (single label, single image)", "Machine translation"],
+      correctIndex: 2,
+    },
+  ]}
+/>
+
+---
+
 <div className="not-prose mt-10 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-6 dark:border-slate-700">
   <a href="./rnn-internal-mechanics" className="text-sm font-medium text-slate-600 no-underline hover:text-indigo-700 hover:underline dark:text-slate-400 dark:hover:text-indigo-400">← Lesson 3 · RNN mechanics</a>
   <a href="./training-rnn-backprop-through-time" className="text-sm font-semibold text-indigo-700 no-underline hover:underline dark:text-indigo-400">Lesson 5 · BPTT →</a>

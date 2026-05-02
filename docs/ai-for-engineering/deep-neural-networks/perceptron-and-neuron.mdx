@@ -199,6 +199,38 @@ Sketch your own version of the neuron, annotate the parts you want to remember, 
 
 ---
 
+<Quiz
+  lessonId="ai-for-engineering/deep-neural-networks/perceptron-and-neuron"
+  questions={[
+    {
+      id: "perceptron-q1",
+      prompt: "Rosenblatt's perceptron uses a threshold (step) activation. Why does the modern artificial neuron replace it with sigmoid (or ReLU)?",
+      options: ["The step function is computationally expensive", "The step function has zero gradient almost everywhere, so gradient-based learning cannot flow through it", "Step functions cannot represent linear separators", "Sigmoid uses fewer parameters than step"],
+      correctIndex: 1,
+    },
+    {
+      id: "perceptron-q2",
+      prompt: "In z = wᵀx + b, what role does b play?",
+      options: ["A scaling factor on each input feature", "A learning-rate offset during gradient descent", "A bias that shifts the linear score, allowing the decision boundary to not pass through the origin", "A regularization term that prevents overfitting"],
+      correctIndex: 2,
+    },
+    {
+      id: "perceptron-q3",
+      prompt: "How does a logistic-regression unit differ from a single sigmoid neuron?",
+      options: ["Logistic regression has no bias term", "They are mathematically the same — z = wᵀx + b followed by σ(z)", "Logistic regression uses ReLU, not sigmoid", "Logistic regression has multiple hidden layers by default"],
+      correctIndex: 1,
+    },
+    {
+      id: "perceptron-q4",
+      prompt: "Hinton's connectionist framing argues that intelligence emerges from:",
+      options: ["A single very large logistic unit", "Many simple differentiable units whose weights are adjusted from data", "Hand-crafted features fed into a linear model", "Symbolic rules over a knowledge graph"],
+      correctIndex: 1,
+    },
+  ]}
+/>
+
+---
+
 <div className="not-prose mt-10 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-6 dark:border-slate-700">
   <a href="./intro" className="text-sm font-medium text-slate-600 no-underline hover:text-emerald-700 hover:underline dark:text-slate-400 dark:hover:text-emerald-400">← Course overview</a>
   <a href="./layers-in-deep-neural-networks" className="text-sm font-semibold text-emerald-700 no-underline hover:underline dark:text-emerald-400">Lesson 2 · Layers in a DNN →</a>

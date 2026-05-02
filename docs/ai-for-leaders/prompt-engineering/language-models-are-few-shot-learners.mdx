@@ -196,3 +196,30 @@ These are not formal theorems; they are **wisdom extracted from a long experimen
 You live in the world this paper helped **name**. When you choose **few-shot** over **zero-shot**, you are doing something the curves already told us: **investing tokens in examples** buys **disproportionate** behavior change—especially on large models. When you explain to a teammate why a **tiny** prompt rewrite failed, you can point to **ambiguity** *and* to **missing demonstrations**. When someone asks whether the model “**learned**” from your chat, you can answer with care: **not** the way SGD learns, but **yes**—the **forward pass** on that context is a real computational **adaptation**.
 
 The paper is long; the graphs are dense. The through-line of the video—and of this lesson—is friendlier: **same architecture, new scale, new respect for what a prompt can carry**, and a invitation to read **every benchmark plot** as a **story about a task**, not as a single number called “intelligence.”
+
+---
+
+<Quiz
+  lessonId="ai-for-leaders/prompt-engineering/language-models-are-few-shot-learners"
+  questions={[
+    {
+      id: "fewshot-q1",
+      prompt: "Zero-shot, one-shot, few-shot prompting differ in:",
+      options: ["The model size", "How many worked examples you include in the prompt before asking the model to perform the task: 0, 1, or a handful", "The temperature setting", "The token limit"],
+      correctIndex: 1,
+    },
+    {
+      id: "fewshot-q2",
+      prompt: "Does few-shot prompting actually update the model's weights?",
+      options: ["Yes, every example fine-tunes the model", "No — the weights are frozen at inference; the model adapts its forward-pass behavior using the examples in the prompt as context only", "Only on certain APIs", "Only if you opt in"],
+      correctIndex: 1,
+    },
+    {
+      id: "fewshot-q3",
+      prompt: "When does few-shot prompting tend to outperform zero-shot most dramatically?",
+      options: ["Never — they're identical", "On larger models and on tasks where the desired output format or reasoning pattern is unusual or hard to specify in pure instruction", "Only on coding tasks", "Only with temperature = 0"],
+      correctIndex: 1,
+    },
+  ]}
+/>
+

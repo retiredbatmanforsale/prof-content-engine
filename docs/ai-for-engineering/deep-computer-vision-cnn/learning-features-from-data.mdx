@@ -207,6 +207,32 @@ Over time, the network builds a **hierarchy of features** tuned specifically to 
 
 ---
 
+<Quiz
+  lessonId="ai-for-engineering/deep-computer-vision-cnn/learning-features-from-data"
+  questions={[
+    {
+      id: "learnfeat-q1",
+      prompt: "What is the key shift from classical computer vision to deep learning?",
+      options: ["Using more pixels per image", "Replacing hand-engineered features with features learned end-to-end from labeled data via gradient descent", "Switching from grayscale to RGB", "Using more cameras at inference time"],
+      correctIndex: 1,
+    },
+    {
+      id: "learnfeat-q2",
+      prompt: "What does 'depth' (more layers) buy you in feature learning?",
+      options: ["Larger images", "The ability to compose simple features into progressively more abstract ones — depth = layers of abstraction", "Faster training time", "Smaller models"],
+      correctIndex: 1,
+    },
+    {
+      id: "learnfeat-q3",
+      prompt: "What's the cost of going deeper?",
+      options: ["Nothing", "More parameters, more compute, harder optimization, and a bigger appetite for labeled data — without enough data, deeper models overfit", "Lower accuracy", "Worse interpretability only"],
+      correctIndex: 1,
+    },
+  ]}
+/>
+
+---
+
 <div className="not-prose mt-10 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-6 dark:border-slate-700">
   <a href="./feature-detection-hierarchy" className="text-sm font-medium text-slate-600 no-underline hover:text-teal-700 hover:underline dark:text-slate-400 dark:hover:text-teal-400">← Lesson 4 · Feature hierarchy</a>
   <a href="./preserving-spatial-structure-cnns" className="text-sm font-semibold text-teal-700 no-underline hover:underline dark:text-teal-400">Next: Lesson 6 — Spatial structure & CNNs →</a>

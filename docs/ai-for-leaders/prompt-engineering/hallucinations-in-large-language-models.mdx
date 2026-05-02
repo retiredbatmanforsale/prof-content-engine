@@ -148,3 +148,36 @@ Because the core is **probabilistic** and **stochastic**, you should plan for **
 ---
 
 When you leave this lesson, the habit to keep is **truth-seeking by design**: assume the model will **try** to be helpful and fluent; your prompts and your **review** teach it **where** being silent, narrow, or source-bound is the **better** kind of helpful.
+
+---
+
+<Quiz
+  lessonId="ai-for-leaders/prompt-engineering/hallucinations-in-large-language-models"
+  questions={[
+    {
+      id: "halluc-q1",
+      prompt: "What is a hallucination in LLM output?",
+      options: ["A typo", "A statement that sounds confident and fluent but is factually false or fabricated", "Any creative output", "An error message from the API"],
+      correctIndex: 1,
+    },
+    {
+      id: "halluc-q2",
+      prompt: "Which prompt pattern most directly reduces hallucination on factual questions?",
+      options: ["Adding a friendly tone", "Grounding: providing the source documents or facts in the prompt and instructing the model to answer only from those sources", "Setting temperature to maximum", "Asking the model to be confident"],
+      correctIndex: 1,
+    },
+    {
+      id: "halluc-q3",
+      prompt: "Why does 'zero hallucinations' make a poor product goal?",
+      options: ["It's expensive", "Generative models are probabilistic — residual hallucination risk is structural; mature products design for verification, narrowing, and human review rather than promising perfection", "Hallucinations help creativity", "It's mathematically impossible to verify"],
+      correctIndex: 1,
+    },
+    {
+      id: "halluc-q4",
+      prompt: "In a high-stakes domain (medicine, law), the safer design pattern is:",
+      options: ["Trust the LLM output and ship it", "Use the LLM as an assistant whose output is reviewed, cited to sources, and bounded to narrow tasks — never as a sole authoritative answer", "Add more emojis to the prompt", "Skip evaluation entirely"],
+      correctIndex: 1,
+    },
+  ]}
+/>
+

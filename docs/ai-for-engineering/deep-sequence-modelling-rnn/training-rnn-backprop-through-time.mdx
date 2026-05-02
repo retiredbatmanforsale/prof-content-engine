@@ -322,6 +322,38 @@ for epoch in range(201):
 
 ---
 
+<Quiz
+  lessonId="ai-for-engineering/deep-sequence-modelling-rnn/training-rnn-backprop-through-time"
+  questions={[
+    {
+      id: "bptt-q1",
+      prompt: "What is BPTT (Backpropagation Through Time)?",
+      options: ["A second-order optimizer", "Standard backpropagation applied to the RNN unrolled across time — gradients flow backward through every timestep", "A regularization technique", "A type of dropout"],
+      correctIndex: 1,
+    },
+    {
+      id: "bptt-q2",
+      prompt: "Why do vanishing gradients arise in BPTT for vanilla RNNs?",
+      options: ["The forward pass is too slow", "The gradient ∂h_T/∂h_0 is a product of many Jacobians (W_hh · diag(σ')) — when their norms are < 1, the product collapses to zero exponentially in sequence length", "Backprop is non-deterministic", "The labels are wrong"],
+      correctIndex: 1,
+    },
+    {
+      id: "bptt-q3",
+      prompt: "What is gradient clipping and why is it used?",
+      options: ["A way to drop the bias term", "A trick that caps the gradient norm at a max value before the optimizer step — prevents exploding gradients (the opposite failure mode of vanishing) from destabilizing training", "A regularizer that multiplies gradients by 0.5", "A way to speed up backprop"],
+      correctIndex: 1,
+    },
+    {
+      id: "bptt-q4",
+      prompt: "Why do LSTM and GRU help mitigate vanishing gradients vs vanilla RNNs?",
+      options: ["They have more parameters", "Their gating mechanisms maintain an additive cell state with a near-identity gradient path, so gradients can flow over long distances without collapsing", "They use ReLU instead of tanh", "They process sequences in reverse"],
+      correctIndex: 1,
+    },
+  ]}
+/>
+
+---
+
 <div className="not-prose mt-10 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-6 dark:border-slate-700">
   <a href="./bringing-sequence-modeling-real-world" className="text-sm font-medium text-slate-600 no-underline hover:text-indigo-700 hover:underline dark:text-slate-400 dark:hover:text-indigo-400">← Lesson 4 · Real world</a>
   <a href="./training-an-rnn-in-pytorch" className="text-sm font-semibold text-indigo-700 no-underline hover:underline dark:text-indigo-400">Lesson 6 · PyTorch lab →</a>

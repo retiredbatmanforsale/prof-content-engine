@@ -1,7 +1,7 @@
 ---
 hide_title: true
-sidebar_label: '3 · Positional embeddings'
-title: 'Lesson 3 — Positional embeddings & positional encodings'
+sidebar_label: '2 · Positional embeddings'
+title: 'Lesson 2 — Positional embeddings & positional encodings'
 description: >-
   Why attention is order-blind without position, sinusoidal vs learned continuous
   vectors, addition with token embeddings, and why PE is not Q, K, or V.
@@ -14,7 +14,7 @@ tutor_concepts:
   - "position signal not query key value"
 ---
 
-<LessonHero course="Attention Is All You Need" number="3" title="Positional embeddings & encodings" subtitle="Telling the model where each token sits in the sequence" />
+<LessonHero course="Attention Is All You Need" number="2" title="Positional embeddings & encodings" subtitle="Telling the model where each token sits in the sequence" />
 
 <LessonVideo
   src="https://player.vimeo.com/video/1184755506?h=acc3918398&badge=0&autopause=0&player_id=0&app_id=58479"
@@ -159,7 +159,39 @@ The original design **adds** so the dimension stays **d_model** and a single str
 
 ---
 
+<Quiz
+  lessonId="ai-for-engineering/attention-is-all-you-need/positional-embeddings"
+  questions={[
+    {
+      id: "pe-q1",
+      prompt: "Why does the transformer architecture need explicit positional encodings?",
+      options: ["To reduce memory usage", "Self-attention is permutation-invariant — without positions, 'cat ate fish' and 'fish ate cat' would be indistinguishable", "To compress the input", "To add randomness for regularization"],
+      correctIndex: 1,
+    },
+    {
+      id: "pe-q2",
+      prompt: "In the original 'Attention Is All You Need' paper, positional encodings are added to token embeddings using:",
+      options: ["Element-wise multiplication", "Concatenation along a new axis", "Element-wise addition: z = x + p", "Replacement (overwriting the token embedding)"],
+      correctIndex: 2,
+    },
+    {
+      id: "pe-q3",
+      prompt: "The sinusoidal PE uses sin and cos with frequencies that vary across dimensions because:",
+      options: ["It's computationally fastest", "Different frequencies allow the model to attend to relative positions at multiple scales — high-frequency dims encode short distances, low-frequency dims encode long distances", "Sinusoids are mandatory in PyTorch", "It's the only way to make PEs differentiable"],
+      correctIndex: 1,
+    },
+    {
+      id: "pe-q4",
+      prompt: "Why must token embeddings and positional encodings have the same dimensionality d_model?",
+      options: ["By convention only", "So they can be added element-wise (vectors must match dim for addition)", "To reduce computation cost", "PyTorch enforces it at runtime"],
+      correctIndex: 1,
+    },
+  ]}
+/>
+
+---
+
 <div className="not-prose mt-10 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-6 dark:border-slate-700">
-  <a href="./token-embeddings" className="text-sm font-medium text-slate-600 no-underline hover:text-emerald-700 hover:underline dark:text-slate-400 dark:hover:text-emerald-400">← Lesson 2 · Token embeddings</a>
-  <a href="./attention" className="text-sm font-semibold text-emerald-700 no-underline hover:underline dark:text-emerald-400">Lesson 4 · Attention →</a>
+  <a href="./problem-with-rnns-and-lstms" className="text-sm font-medium text-slate-600 no-underline hover:text-emerald-700 hover:underline dark:text-slate-400 dark:hover:text-emerald-400">← Lesson 1 · Problem with RNNs & LSTMs</a>
+  <a href="./attention" className="text-sm font-semibold text-emerald-700 no-underline hover:underline dark:text-emerald-400">Lesson 3 · Attention →</a>
 </div>

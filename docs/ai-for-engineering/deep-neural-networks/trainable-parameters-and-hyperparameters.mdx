@@ -133,6 +133,38 @@ Our **3 → 4 → 2** example has **n = 26**, which is tiny. The same split—**
 
 ---
 
+<Quiz
+  lessonId="ai-for-engineering/deep-neural-networks/trainable-parameters-and-hyperparameters"
+  questions={[
+    {
+      id: "params-q1",
+      prompt: "Which of these is a trainable parameter (updated by backprop)?",
+      options: ["The learning rate η", "The weight matrix W₁", "The number of hidden layers", "The batch size"],
+      correctIndex: 1,
+    },
+    {
+      id: "params-q2",
+      prompt: "Which of these is a hyperparameter (set before training, not learned)?",
+      options: ["The bias b₂ of the output layer", "The weight W₁[0, 0]", "The learning rate η", "The activation a₁ at runtime"],
+      correctIndex: 2,
+    },
+    {
+      id: "params-q3",
+      prompt: "Empirical scaling laws (Kaplan et al., Hoffmann et al.) describe quality as a function of:",
+      options: ["Only the number of parameters n", "Only the dataset size", "Parameters n, dataset size, and compute jointly — increasing one without the others gives diminishing returns", "The depth of the network only"],
+      correctIndex: 2,
+    },
+    {
+      id: "params-q4",
+      prompt: "For a 3 → 4 → 2 dense network with biases, how many trainable parameters are there?",
+      options: ["20", "26", "32", "14"],
+      correctIndex: 1,
+    },
+  ]}
+/>
+
+---
+
 <div className="not-prose mt-10 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-6 dark:border-slate-700">
   <a href="./backward-pass" className="text-sm font-medium text-slate-600 no-underline hover:text-emerald-700 hover:underline dark:text-slate-400 dark:hover:text-emerald-400">← Lesson 6 · Backward pass</a>
   <a href="./overfitting-in-neural-networks" className="text-sm font-semibold text-emerald-700 no-underline hover:underline dark:text-emerald-400">Lesson 8 · Overfitting →</a>

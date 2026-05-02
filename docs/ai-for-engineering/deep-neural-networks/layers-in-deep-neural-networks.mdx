@@ -265,6 +265,38 @@ If you **only** stacked **linear** maps, the whole network would **collapse** to
 
 ---
 
+<Quiz
+  lessonId="ai-for-engineering/deep-neural-networks/layers-in-deep-neural-networks"
+  questions={[
+    {
+      id: "layers-q1",
+      prompt: "A dense (fully-connected) layer maps n_in = 5 inputs to n_out = 3 outputs. How many trainable parameters does it have?",
+      options: ["8", "15", "18", "30"],
+      correctIndex: 2,
+    },
+    {
+      id: "layers-q2",
+      prompt: "What does \"dense\" or \"fully-connected\" mean for a layer?",
+      options: ["Every neuron in the layer takes input from every neuron in the previous layer", "All neurons share the same weight matrix", "The layer has no bias term", "Inputs are normalized to sum to 1"],
+      correctIndex: 0,
+    },
+    {
+      id: "layers-q3",
+      prompt: "Why are intermediate layers called \"hidden\"?",
+      options: ["Their weights are encrypted", "They are not directly observed in the input or output — only their effect on the final prediction is", "They are randomly dropped during training", "They run on a separate GPU"],
+      correctIndex: 1,
+    },
+    {
+      id: "layers-q4",
+      prompt: "When we say a network is \"deep,\" we mean it has:",
+      options: ["Many parameters", "Many hidden layers stacked between input and output", "A single very wide hidden layer", "Convolutional rather than dense layers"],
+      correctIndex: 1,
+    },
+  ]}
+/>
+
+---
+
 <div className="not-prose mt-10 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-6 dark:border-slate-700">
   <a href="./perceptron-and-neuron" className="text-sm font-medium text-slate-600 no-underline hover:text-emerald-700 hover:underline dark:text-slate-400 dark:hover:text-emerald-400">← Lesson 1 · Perceptron &amp; neuron</a>
   <a href="./activation-functions" className="text-sm font-semibold text-emerald-700 no-underline hover:underline dark:text-emerald-400">Lesson 3 · Activation functions →</a>

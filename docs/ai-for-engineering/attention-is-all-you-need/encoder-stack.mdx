@@ -1,7 +1,7 @@
 ---
 hide_title: true
-sidebar_label: '12 · Encoder stack'
-title: 'Lesson 12 — The encoder stack'
+sidebar_label: '7 · Encoder stack'
+title: 'Lesson 7 — The encoder stack'
 description: >-
   End-to-end encoder flow: embeddings, then N identical layers of multi-head
   self-attention and FFN each wrapped in Add & Norm—as in Vaswani et al. 2017.
@@ -15,7 +15,7 @@ tutor_concepts:
   - "token embeddings plus positional encodings"
 ---
 
-<LessonHero course="Attention Is All You Need" number="12" title="The encoder stack" subtitle="Stacking attention + feed-forward blocks to build representations" />
+<LessonHero course="Attention Is All You Need" number="7" title="The encoder stack" subtitle="Stacking attention + feed-forward blocks to build representations" />
 
 The **encoder** is where the **source** sentence (or any input sequence) is turned into a **stack of contextual vectors**—one row per token—that the **decoder** will later **read** through **cross-attention**. Every lesson so far was a **piece** of this machine; this page **wires them in the exact order** used in [Vaswani et al. (2017), *Attention Is All You Need*](https://arxiv.org/abs/1706.03762). The [Lex AI interactive diagram](https://aiayn.aiseekhegaindia.com/) follows the same stacking.
 
@@ -168,7 +168,39 @@ The final tensor has shape **(batch, source_length, d_model)**. For the full **e
 
 ---
 
+<Quiz
+  lessonId="ai-for-engineering/attention-is-all-you-need/encoder-stack"
+  questions={[
+    {
+      id: "enc-q1",
+      prompt: "Each encoder block contains which sublayers (in the original Vaswani et al. design)?",
+      options: ["1 — multi-head attention only", "2 — multi-head self-attention, then position-wise FFN", "3 — attention, FFN, softmax", "4 — embedding, attention, FFN, output"],
+      correctIndex: 1,
+    },
+    {
+      id: "enc-q2",
+      prompt: "How many encoder blocks does the original transformer paper stack (N)?",
+      options: ["2", "4", "6", "12"],
+      correctIndex: 2,
+    },
+    {
+      id: "enc-q3",
+      prompt: "In post-norm form, each encoder sublayer's output is computed as:",
+      options: ["LayerNorm(Sublayer(x))", "LayerNorm(x + Sublayer(x))", "x + Sublayer(x), no normalization", "Sublayer(x) - LayerNorm(x)"],
+      correctIndex: 1,
+    },
+    {
+      id: "enc-q4",
+      prompt: "Is encoder self-attention causally masked?",
+      options: ["Yes — encoders always use causal masks", "No — encoder self-attention is bidirectional; each position attends to all positions in the source sequence", "Only the first encoder layer is masked", "Only during inference"],
+      correctIndex: 1,
+    },
+  ]}
+/>
+
+---
+
 <div className="not-prose mt-10 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-6 dark:border-slate-700">
-  <a href="./cross-attention" className="text-sm font-medium text-slate-600 no-underline hover:text-emerald-700 hover:underline dark:text-slate-400 dark:hover:text-emerald-400">← Lesson 11 · Cross-attention</a>
-  <a href="./decoder-stack" className="text-sm font-semibold text-emerald-700 no-underline hover:underline dark:text-emerald-400">Lesson 13 · Decoder stack →</a>
+  <a href="./cross-attention" className="text-sm font-medium text-slate-600 no-underline hover:text-emerald-700 hover:underline dark:text-slate-400 dark:hover:text-emerald-400">← Lesson 6 · Cross-attention</a>
+  <a href="./encoder-decoder-transformer" className="text-sm font-semibold text-emerald-700 no-underline hover:underline dark:text-emerald-400">Lesson 8 · Encoder–decoder transformer →</a>
 </div>

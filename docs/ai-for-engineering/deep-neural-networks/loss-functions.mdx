@@ -229,6 +229,38 @@ So **sigmoid + BCE** is **not** a random pairing—it is a **designed** match be
 
 ---
 
+<Quiz
+  lessonId="ai-for-engineering/deep-neural-networks/loss-functions"
+  questions={[
+    {
+      id: "loss-q1",
+      prompt: "Which loss function is the standard pairing for a network whose final layer is sigmoid and produces a single probability?",
+      options: ["MSE (mean squared error)", "BCE (binary cross-entropy)", "Hinge loss", "L1 loss"],
+      correctIndex: 1,
+    },
+    {
+      id: "loss-q2",
+      prompt: "What does the loss function actually measure during training?",
+      options: ["The number of parameters in the model", "How wrong the model's current predictions are on a batch of labeled examples", "The compute cost per forward pass", "The variance of the input features"],
+      correctIndex: 1,
+    },
+    {
+      id: "loss-q3",
+      prompt: "Binary cross-entropy is mathematically equivalent to maximum likelihood estimation under which assumption about the labels?",
+      options: ["Labels are drawn from a Gaussian", "Labels are Bernoulli random variables (0/1) given the predicted probability", "Labels are uniformly distributed", "Labels are independent across features but not across examples"],
+      correctIndex: 1,
+    },
+    {
+      id: "loss-q4",
+      prompt: "Why would using MSE on a sigmoid output for binary classification be problematic during training?",
+      options: ["MSE can't be computed in PyTorch", "It produces a non-convex loss surface and gradients vanish where σ saturates", "MSE always outputs negative numbers", "MSE requires the output to be exactly 0 or 1"],
+      correctIndex: 1,
+    },
+  ]}
+/>
+
+---
+
 <div className="not-prose mt-10 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-6 dark:border-slate-700">
   <a href="./activation-functions" className="text-sm font-medium text-slate-600 no-underline hover:text-emerald-700 hover:underline dark:text-slate-400 dark:hover:text-emerald-400">← Lesson 3 · Activation functions</a>
   <a href="./forward-pass" className="text-sm font-semibold text-emerald-700 no-underline hover:underline dark:text-emerald-400">Lesson 5 · Forward pass →</a>

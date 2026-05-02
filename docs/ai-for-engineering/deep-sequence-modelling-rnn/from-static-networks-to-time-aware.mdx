@@ -292,6 +292,38 @@ Although <strong>vanilla RNNs</strong> are limited in their ability to capture <
 
 ---
 
+<Quiz
+  lessonId="ai-for-engineering/deep-sequence-modelling-rnn/from-static-networks-to-time-aware"
+  questions={[
+    {
+      id: "timeaware-q1",
+      prompt: "The core RNN recurrence is h_t = f(x_t, h_{t-1}). What does h_{t-1} represent?",
+      options: ["The next input", "The hidden state from the previous timestep — a summary of everything seen so far", "The output prediction", "The loss"],
+      correctIndex: 1,
+    },
+    {
+      id: "timeaware-q2",
+      prompt: "What is the practical meaning of the 'unrolled' view of an RNN?",
+      options: ["A different model", "The same RNN cell drawn at each timestep with the recurrent connection laid out as a chain — useful for visualizing computation, identical weights at every step", "An RNN with no shared weights", "A way to make RNNs deterministic"],
+      correctIndex: 1,
+    },
+    {
+      id: "timeaware-q3",
+      prompt: "What does it mean that RNN weights are SHARED across time?",
+      options: ["The weights change every step", "The same W_xh, W_hh, W_hy matrices are applied at every timestep — the network has a fixed parameter budget regardless of sequence length", "Weights are doubled at each step", "Weights are randomized each step"],
+      correctIndex: 1,
+    },
+    {
+      id: "timeaware-q4",
+      prompt: "How does an RNN handle variable-length inputs?",
+      options: ["It pads everything to the longest sequence", "It can iterate the recurrence for as many timesteps as the input has — the same cell handles short and long inputs alike", "It cannot — only fixed-length inputs are supported", "It segments the input into fixed chunks"],
+      correctIndex: 1,
+    },
+  ]}
+/>
+
+---
+
 <div className="not-prose mt-10 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-6 dark:border-slate-700">
   <a href="./foundations-of-deep-sequence-modeling" className="text-sm font-medium text-slate-600 no-underline hover:text-indigo-700 hover:underline dark:text-slate-400 dark:hover:text-indigo-400">← Lesson 1 · Foundations</a>
   <a href="./rnn-internal-mechanics" className="text-sm font-semibold text-indigo-700 no-underline hover:underline dark:text-indigo-400">Next: Lesson 3 — RNN mechanics →</a>

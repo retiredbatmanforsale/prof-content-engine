@@ -181,6 +181,32 @@ Neural networks learn to extract features from raw pixels through successive lay
 
 ---
 
+<Quiz
+  lessonId="ai-for-engineering/deep-computer-vision-cnn/from-pixels-to-perception"
+  questions={[
+    {
+      id: "pixels-q1",
+      prompt: "An RGB image of size 224 × 224 has how many raw pixel values (channels × height × width)?",
+      options: ["224 × 224 = 50,176", "3 × 224 × 224 = 150,528", "224 × 3 = 672", "224^3"],
+      correctIndex: 1,
+    },
+    {
+      id: "pixels-q2",
+      prompt: "Why is naively flattening an image into a vector and feeding it to a dense MLP a bad fit for vision?",
+      options: ["MLPs can't handle large vectors", "It explodes parameter counts and discards spatial structure — the model has no built-in notion that nearby pixels are related", "Pixels are stored as floats", "It loses color information"],
+      correctIndex: 1,
+    },
+    {
+      id: "pixels-q3",
+      prompt: "What does it mean that pixels alone are not 'perception'?",
+      options: ["Pixels are abstract; perception requires hand labels", "Raw intensity values mean nothing in isolation — perception requires combining them into edges, textures, parts, and finally objects/scenes", "Perception happens only on the GPU", "Perception is the same as classification"],
+      correctIndex: 1,
+    },
+  ]}
+/>
+
+---
+
 <div className="not-prose mt-10 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-6 dark:border-slate-700">
   <a href="./transformative-deep-learning-vision" className="text-sm font-medium text-slate-600 no-underline hover:text-teal-700 hover:underline dark:text-slate-400 dark:hover:text-teal-400">← Lesson 2 · Deep learning in vision</a>
   <a href="./feature-detection-hierarchy" className="text-sm font-semibold text-teal-700 no-underline hover:underline dark:text-teal-400">Next: Lesson 4 — Feature hierarchy →</a>

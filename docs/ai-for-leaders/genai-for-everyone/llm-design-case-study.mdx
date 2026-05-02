@@ -233,3 +233,36 @@ That is not lipstick—it is **behavior specification** on top of the same trans
 - Ask what **data rights** cover both **pre-training** and **your** enterprise fine-tunes.
 
 You do not need to draw a transformer by hand. You **do** need to know it is a **designed pipeline**—and where your organization inserts **accountability**.
+
+---
+
+<Quiz
+  lessonId="ai-for-leaders/genai-for-everyone/llm-design-case-study"
+  questions={[
+    {
+      id: "case-q1",
+      prompt: "An LLM at the most basic level predicts:",
+      options: ["The next token (word piece) given the tokens it has seen so far", "An entire essay in one shot", "Class probabilities for a fixed set of categories", "A bounding box on an image"],
+      correctIndex: 0,
+    },
+    {
+      id: "case-q2",
+      prompt: "What is the difference between training and inference for an LLM?",
+      options: ["They are the same", "Training updates model weights from labeled data over many examples; inference uses fixed weights to produce outputs for new inputs", "Training runs on phones, inference on servers", "Inference is for research only"],
+      correctIndex: 1,
+    },
+    {
+      id: "case-q3",
+      prompt: "When evaluating a vendor's chatbot, which question targets factual reliability?",
+      options: ["What color is the loading spinner?", "How does it ground its answers — retrieval, citations, tool calls, human review?", "How many tokens does it generate per second?", "What font does it use?"],
+      correctIndex: 1,
+    },
+    {
+      id: "case-q4",
+      prompt: "Why does the 'data diet' (training data composition) matter for procurement?",
+      options: ["It doesn't — only the model size matters", "Training data shapes biases, capabilities, and legal exposure (copyright, PII, jurisdictional rules) — leaders must understand what went into the model they're buying", "Smaller datasets always perform better", "Data diet only matters for image models"],
+      correctIndex: 1,
+    },
+  ]}
+/>
+

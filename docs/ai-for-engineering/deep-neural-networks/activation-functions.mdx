@@ -205,6 +205,38 @@ $$
 
 ---
 
+<Quiz
+  lessonId="ai-for-engineering/deep-neural-networks/activation-functions"
+  questions={[
+    {
+      id: "activations-q1",
+      prompt: "Why does a deep network need nonlinear activations between layers?",
+      options: ["Without them, the loss is non-differentiable", "Without them, any stack of dense layers collapses into a single linear map (no representational gain from depth)", "Linear activations cannot fit through GPUs efficiently", "Sigmoid is mathematically required for all networks"],
+      correctIndex: 1,
+    },
+    {
+      id: "activations-q2",
+      prompt: "ReLU(x) = max(0, x). What is ReLU(-3)?",
+      options: ["-3", "0", "3", "1 / (1 + e^3)"],
+      correctIndex: 1,
+    },
+    {
+      id: "activations-q3",
+      prompt: "When does a sigmoid neuron suffer from vanishing gradients during training?",
+      options: ["When the input is exactly zero", "When the pre-activation z is very large positive or very large negative — σ saturates and σ' approaches zero", "When the bias term is missing", "When inputs are not normalized to (0,1)"],
+      correctIndex: 1,
+    },
+    {
+      id: "activations-q4",
+      prompt: "Softmax outputs over K classes have which mathematical property?",
+      options: ["Each output is independently between 0 and 1", "The outputs are always one-hot (exactly one is 1, the rest are 0)", "The K outputs are non-negative and sum to 1, forming a probability distribution", "The largest input always produces output exactly 1"],
+      correctIndex: 2,
+    },
+  ]}
+/>
+
+---
+
 <div className="not-prose mt-10 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-6 dark:border-slate-700">
   <a href="./layers-in-deep-neural-networks" className="text-sm font-medium text-slate-600 no-underline hover:text-emerald-700 hover:underline dark:text-slate-400 dark:hover:text-emerald-400">← Lesson 2 · Layers in a DNN</a>
   <a href="./loss-functions" className="text-sm font-semibold text-emerald-700 no-underline hover:underline dark:text-emerald-400">Lesson 4 · Loss functions →</a>

@@ -1,7 +1,7 @@
 ---
 hide_title: true
-sidebar_label: '14 · Encoder–decoder transformer'
-title: 'Lesson 14 — Encoder–decoder transformer (conclusion)'
+sidebar_label: '8 · Encoder–decoder transformer'
+title: 'Lesson 8 — Encoder–decoder transformer'
 description: >-
   Full architecture recap, where enc-dec is used, and how it differs from
   encoder-only and decoder-only stacks—with visuals and real-world relevance.
@@ -15,7 +15,7 @@ tutor_concepts:
   - "two-tower transformer architecture"
 ---
 
-<LessonHero course="Attention Is All You Need" number="14" title="Encoder–decoder transformer" subtitle="The complete architecture from the original paper" />
+<LessonHero course="Attention Is All You Need" number="8" title="Encoder–decoder transformer" subtitle="The complete architecture from the original paper" />
 
 This course ends where [Vaswani et al. (2017), *Attention Is All You Need*](https://arxiv.org/abs/1706.03762) presented the **full** model: an **encoder** that **reads** an **input** sequence in one representation, and a **decoder** that **writes** an **output** sequence while **querying** that representation through **cross-attention**. The [Lex AI interactive tour](https://aiayn.aiseekhegaindia.com/) shows the same **two-tower** picture: **source → encoder memory (K, V)** feeding **every** decoder layer.
 
@@ -82,6 +82,24 @@ The encoder–decoder design is **not** the only transformer layout—but it is 
                                             ▼
                                      P(next | prefix, source)`}</pre>
 </div>
+
+---
+
+## Inside one decoder layer
+
+The encoder layer (Lesson 7) had two sublayers: self-attention + FFN, each wrapped in **Add & Norm**. The decoder layer adds a **third** sublayer between them — **cross-attention** to the encoder memory — and the self-attention is **masked** so position *i* cannot attend to positions *j > i*. The full per-layer rhythm is:
+
+$$
+\begin{aligned}
+x_1 &= \text{LayerNorm}\bigl( x + \text{MaskedMultiHeadSelfAttention}(x) \bigr) \\
+x_2 &= \text{LayerNorm}\bigl( x_1 + \text{CrossAttention}(x_1;\, K_{\text{enc}}, V_{\text{enc}}) \bigr) \\
+x_{\text{out}} &= \text{LayerNorm}\bigl( x_2 + \text{FFN}(x_2) \bigr)
+\end{aligned}
+$$
+
+**Sublayer order:** Masked MHSA → Add & Norm → Cross-Attn → Add & Norm → FFN → Add & Norm. Repeat **N = 6** times in the base model. The mask is applied in **every** masked self-attention layer; cross-attention itself is **not** masked — it reads encoder memory in full.
+
+> **Note on masking and FFN/LayerNorm/residuals.** Causal masking, layer normalization, residual connections, and feed-forward blocks are mechanics shared across every transformer variant. They're covered in code in the [Build and Train Your Own GPT-2 course](../build-and-train-your-own-gpt2-model/intro).
 
 ---
 
@@ -209,7 +227,39 @@ Revisit any earlier lesson for **one** mechanism in isolation—or the [Lex AI s
 
 ---
 
+<Quiz
+  lessonId="ai-for-engineering/attention-is-all-you-need/encoder-decoder-transformer"
+  questions={[
+    {
+      id: "edt-q1",
+      prompt: "The three transformer 'families' are:",
+      options: ["RNN, CNN, MLP", "Encoder-only (e.g., BERT), decoder-only (e.g., GPT), and encoder–decoder (e.g., the original transformer, T5)", "Big, medium, small", "Vision, text, audio"],
+      correctIndex: 1,
+    },
+    {
+      id: "edt-q2",
+      prompt: "Which task is the canonical motivation for an encoder–decoder transformer?",
+      options: ["Sentiment classification on a single sentence", "Sequence-to-sequence tasks like machine translation, where you have a source sequence to encode and a target sequence to generate", "Image classification", "Tabular regression"],
+      correctIndex: 1,
+    },
+    {
+      id: "edt-q3",
+      prompt: "Why is GPT classified as decoder-only?",
+      options: ["It has no attention", "It uses only the masked self-attention + FFN stack (no encoder, no cross-attention) and is trained with a causal LM objective", "It uses encoders for inference and decoders for training", "It uses LSTMs"],
+      correctIndex: 1,
+    },
+    {
+      id: "edt-q4",
+      prompt: "BERT is encoder-only. What does that imply about its self-attention?",
+      options: ["It is causally masked", "It is bidirectional — each token can attend to all positions on both sides, which is appropriate for understanding tasks but not for autoregressive generation", "It is restricted to attend only to the previous token", "It is identical to GPT's"],
+      correctIndex: 1,
+    },
+  ]}
+/>
+
+---
+
 <div className="not-prose mt-10 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-6 dark:border-slate-700">
-  <a href="./decoder-stack" className="text-sm font-medium text-slate-600 no-underline hover:text-emerald-700 hover:underline dark:text-slate-400 dark:hover:text-emerald-400">← Lesson 13 · Decoder stack</a>
-  <a href="./intro" className="text-sm font-semibold text-emerald-700 no-underline hover:underline dark:text-emerald-400">Course overview →</a>
+  <a href="./encoder-stack" className="text-sm font-medium text-slate-600 no-underline hover:text-emerald-700 hover:underline dark:text-slate-400 dark:hover:text-emerald-400">← Lesson 7 · Encoder stack</a>
+  <a href="./from-encoder-decoder-to-gpt" className="text-sm font-semibold text-emerald-700 no-underline hover:underline dark:text-emerald-400">Lesson 9 · From encoder–decoder to GPT →</a>
 </div>

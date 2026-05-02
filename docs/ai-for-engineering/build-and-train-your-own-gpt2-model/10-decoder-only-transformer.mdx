@@ -12,6 +12,8 @@ tutor_concepts:
   - "next token prediction objective"
 ---
 
+import PromptJourney from '@site/src/components/viz/PromptJourney';
+
 <LessonHero course="Build and Train Your Own GPT-2" number="10" title="Decoder-only transformer" subtitle="Assembling the full architecture that powers GPT-2" />
 
 <LessonVideo
@@ -19,8 +21,13 @@ tutor_concepts:
   title="Decoder-Only Transformer"
 />
 
-
 ## Overview
 
 This lesson ties everything together to explain the decoder-only transformer used in GPT-style models.
+
+## The journey of a prompt
+
+Every component you've built across lessons 2–9 — token embeddings, positional encodings, attention, masking, residuals, layer norm, feed-forward, sampling — fires in sequence on every token. Step through the animation below to watch a prompt traverse the full decoder stack and produce one token at a time.
+
+<PromptJourney />
 

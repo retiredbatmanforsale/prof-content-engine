@@ -1,17 +1,28 @@
 ---
-title: Attention Is All You Need
+title: 'Attention Is All You Need — The 2017 paper'
 description: >-
-  Transformer architecture from recurrence to attention: embeddings, multi-head
-  attention, masking, residuals, layer norm, FFNs, and the encoder–decoder stack.
+  A close reading of Vaswani et al. 2017: encoder–decoder transformers built
+  for translation. Self-attention, multi-head attention, cross-attention, and
+  the two-tower architecture that started everything.
 access: public
 ---
 
 import CourseTopicTree from '@site/src/components/CourseTopicTree';
 import { attentionTopicTree } from '@site/src/data/topic-trees/attention-is-all-you-need';
 
-# Attention Is All You Need
+# Attention Is All You Need — the 2017 paper
 
-This course walks through the **transformer** architecture: why it replaced **RNNs/LSTMs** for many sequence tasks, how **token and positional embeddings** feed **attention**, and how **encoder** and **decoder** stacks combine into the model from [Vaswani et al. (2017)](https://arxiv.org/abs/1706.03762).
+This course is a close reading of [Vaswani et al. (2017), *Attention Is All You Need*](https://arxiv.org/abs/1706.03762) — the paper that introduced the **encoder–decoder transformer** for machine translation. We focus on what the paper actually proposed: **self-attention**, **multi-head attention**, **cross-attention**, and the two-tower architecture in which an encoder reads the source sequence and a decoder generates the target while attending to encoder memory.
+
+For the modern decoder-only world (GPT-2, GPT-3, the chat models you use every day), see the companion course **Build and Train Your Own GPT-2**, which builds a decoder-only transformer end-to-end in PyTorch.
+
+:::note[Prerequisites]
+
+- **Deep Sequence Modelling (RNN)** — you'll get the most from this course if you've seen the RNN family first; lesson 1 sets up *why* this paper happened.
+- **Deep Neural Networks** — forward pass, backprop, softmax, matrix multiplication.
+- Linear algebra: dot products, vector norms.
+
+:::
 
 <LessonVideo
   src="https://player.vimeo.com/video/1185168916?h=b2a7d002a7&badge=0&autopause=0&player_id=0&app_id=58479"
@@ -31,29 +42,21 @@ This course walks through the **transformer** architecture: why it replaced **RN
   >
     <span className="text-xs font-bold uppercase tracking-wide text-emerald-700 dark:text-emerald-400">Lesson 1</span>
     <span className="text-base font-semibold text-slate-900 dark:text-slate-100">Problem with RNNs and LSTMs</span>
-    <span className="text-sm text-slate-600 dark:text-slate-400">Sequential updates, long-range dependencies, and limited parallelism.</span>
-  </a>
-  <a
-    href="./token-embeddings"
-    className="flex flex-col gap-1 rounded-xl border border-slate-200 bg-white p-4 no-underline transition-colors hover:border-emerald-400 hover:bg-emerald-50/50 dark:border-slate-700 dark:bg-slate-900/40 dark:hover:border-emerald-600 dark:hover:bg-emerald-950/30"
-  >
-    <span className="text-xs font-bold uppercase tracking-wide text-emerald-700 dark:text-emerald-400">Lesson 2</span>
-    <span className="text-base font-semibold text-slate-900 dark:text-slate-100">Token embeddings</span>
-    <span className="text-sm text-slate-600 dark:text-slate-400">From vocabulary IDs to dense vectors in ℝᵈ.</span>
+    <span className="text-sm text-slate-600 dark:text-slate-400">The serial bottleneck and long-range dependency problems the paper set out to solve.</span>
   </a>
   <a
     href="./positional-embeddings"
     className="flex flex-col gap-1 rounded-xl border border-slate-200 bg-white p-4 no-underline transition-colors hover:border-emerald-400 hover:bg-emerald-50/50 dark:border-slate-700 dark:bg-slate-900/40 dark:hover:border-emerald-600 dark:hover:bg-emerald-950/30"
   >
-    <span className="text-xs font-bold uppercase tracking-wide text-emerald-700 dark:text-emerald-400">Lesson 3</span>
+    <span className="text-xs font-bold uppercase tracking-wide text-emerald-700 dark:text-emerald-400">Lesson 2</span>
     <span className="text-base font-semibold text-slate-900 dark:text-slate-100">Positional embeddings / encodings</span>
-    <span className="text-sm text-slate-600 dark:text-slate-400">Restoring order: sinusoidal vs learned positions.</span>
+    <span className="text-sm text-slate-600 dark:text-slate-400">Why a permutation-invariant model needs explicit position information.</span>
   </a>
   <a
     href="./attention"
     className="flex flex-col gap-1 rounded-xl border border-slate-200 bg-white p-4 no-underline transition-colors hover:border-emerald-400 hover:bg-emerald-50/50 dark:border-slate-700 dark:bg-slate-900/40 dark:hover:border-emerald-600 dark:hover:bg-emerald-950/30"
   >
-    <span className="text-xs font-bold uppercase tracking-wide text-emerald-700 dark:text-emerald-400">Lesson 4</span>
+    <span className="text-xs font-bold uppercase tracking-wide text-emerald-700 dark:text-emerald-400">Lesson 3</span>
     <span className="text-base font-semibold text-slate-900 dark:text-slate-100">Attention</span>
     <span className="text-sm text-slate-600 dark:text-slate-400">Queries, keys, values, scaled dot-product attention.</span>
   </a>
@@ -61,80 +64,54 @@ This course walks through the **transformer** architecture: why it replaced **RN
     href="./self-attention"
     className="flex flex-col gap-1 rounded-xl border border-slate-200 bg-white p-4 no-underline transition-colors hover:border-emerald-400 hover:bg-emerald-50/50 dark:border-slate-700 dark:bg-slate-900/40 dark:hover:border-emerald-600 dark:hover:bg-emerald-950/30"
   >
-    <span className="text-xs font-bold uppercase tracking-wide text-emerald-700 dark:text-emerald-400">Lesson 5</span>
+    <span className="text-xs font-bold uppercase tracking-wide text-emerald-700 dark:text-emerald-400">Lesson 4</span>
     <span className="text-base font-semibold text-slate-900 dark:text-slate-100">Self-attention</span>
-    <span className="text-sm text-slate-600 dark:text-slate-400">Q, K, V from the same sequence; O(n²) over length.</span>
+    <span className="text-sm text-slate-600 dark:text-slate-400">Q, K, V from the same sequence — the conceptual breakthrough of the paper.</span>
   </a>
   <a
     href="./multi-headed-attention"
     className="flex flex-col gap-1 rounded-xl border border-slate-200 bg-white p-4 no-underline transition-colors hover:border-emerald-400 hover:bg-emerald-50/50 dark:border-slate-700 dark:bg-slate-900/40 dark:hover:border-emerald-600 dark:hover:bg-emerald-950/30"
   >
-    <span className="text-xs font-bold uppercase tracking-wide text-emerald-700 dark:text-emerald-400">Lesson 6</span>
+    <span className="text-xs font-bold uppercase tracking-wide text-emerald-700 dark:text-emerald-400">Lesson 5</span>
     <span className="text-base font-semibold text-slate-900 dark:text-slate-100">Multi-headed attention</span>
-    <span className="text-sm text-slate-600 dark:text-slate-400">Parallel heads, concat, and output projection.</span>
-  </a>
-  <a
-    href="./causal-masking"
-    className="flex flex-col gap-1 rounded-xl border border-slate-200 bg-white p-4 no-underline transition-colors hover:border-emerald-400 hover:bg-emerald-50/50 dark:border-slate-700 dark:bg-slate-900/40 dark:hover:border-emerald-600 dark:hover:bg-emerald-950/30"
-  >
-    <span className="text-xs font-bold uppercase tracking-wide text-emerald-700 dark:text-emerald-400">Lesson 7</span>
-    <span className="text-base font-semibold text-slate-900 dark:text-slate-100">Causal masking</span>
-    <span className="text-sm text-slate-600 dark:text-slate-400">Autoregressive decoders: no peeking at future tokens.</span>
-  </a>
-  <a
-    href="./residual-connections"
-    className="flex flex-col gap-1 rounded-xl border border-slate-200 bg-white p-4 no-underline transition-colors hover:border-emerald-400 hover:bg-emerald-50/50 dark:border-slate-700 dark:bg-slate-900/40 dark:hover:border-emerald-600 dark:hover:bg-emerald-950/30"
-  >
-    <span className="text-xs font-bold uppercase tracking-wide text-emerald-700 dark:text-emerald-400">Lesson 8</span>
-    <span className="text-base font-semibold text-slate-900 dark:text-slate-100">Residual connections</span>
-    <span className="text-sm text-slate-600 dark:text-slate-400">Skip connections, identity paths, pre-norm vs post-norm.</span>
-  </a>
-  <a
-    href="./layer-normalization"
-    className="flex flex-col gap-1 rounded-xl border border-slate-200 bg-white p-4 no-underline transition-colors hover:border-emerald-400 hover:bg-emerald-50/50 dark:border-slate-700 dark:bg-slate-900/40 dark:hover:border-emerald-600 dark:hover:bg-emerald-950/30"
-  >
-    <span className="text-xs font-bold uppercase tracking-wide text-emerald-700 dark:text-emerald-400">Lesson 9</span>
-    <span className="text-base font-semibold text-slate-900 dark:text-slate-100">Layer normalization</span>
-    <span className="text-sm text-slate-600 dark:text-slate-400">Normalize per token across features; γ and β.</span>
-  </a>
-  <a
-    href="./feed-forward-neural-networks"
-    className="flex flex-col gap-1 rounded-xl border border-slate-200 bg-white p-4 no-underline transition-colors hover:border-emerald-400 hover:bg-emerald-50/50 dark:border-slate-700 dark:bg-slate-900/40 dark:hover:border-emerald-600 dark:hover:bg-emerald-950/30"
-  >
-    <span className="text-xs font-bold uppercase tracking-wide text-emerald-700 dark:text-emerald-400">Lesson 10</span>
-    <span className="text-base font-semibold text-slate-900 dark:text-slate-100">Feed-forward neural networks</span>
-    <span className="text-sm text-slate-600 dark:text-slate-400">Position-wise MLP: expand, nonlinearity, project.</span>
+    <span className="text-sm text-slate-600 dark:text-slate-400">Parallel heads, concat, output projection.</span>
   </a>
   <a
     href="./cross-attention"
     className="flex flex-col gap-1 rounded-xl border border-slate-200 bg-white p-4 no-underline transition-colors hover:border-emerald-400 hover:bg-emerald-50/50 dark:border-slate-700 dark:bg-slate-900/40 dark:hover:border-emerald-600 dark:hover:bg-emerald-950/30"
   >
-    <span className="text-xs font-bold uppercase tracking-wide text-emerald-700 dark:text-emerald-400">Lesson 11</span>
+    <span className="text-xs font-bold uppercase tracking-wide text-emerald-700 dark:text-emerald-400">Lesson 6</span>
     <span className="text-base font-semibold text-slate-900 dark:text-slate-100">Cross-attention</span>
-    <span className="text-sm text-slate-600 dark:text-slate-400">Decoder queries encoder memory (K, V).</span>
+    <span className="text-sm text-slate-600 dark:text-slate-400">The bridge from decoder back to encoder memory — the move that makes seq2seq work.</span>
   </a>
   <a
     href="./encoder-stack"
     className="flex flex-col gap-1 rounded-xl border border-slate-200 bg-white p-4 no-underline transition-colors hover:border-emerald-400 hover:bg-emerald-50/50 dark:border-slate-700 dark:bg-slate-900/40 dark:hover:border-emerald-600 dark:hover:bg-emerald-950/30"
   >
-    <span className="text-xs font-bold uppercase tracking-wide text-emerald-700 dark:text-emerald-400">Lesson 12</span>
+    <span className="text-xs font-bold uppercase tracking-wide text-emerald-700 dark:text-emerald-400">Lesson 7</span>
     <span className="text-base font-semibold text-slate-900 dark:text-slate-100">Encoder stack</span>
     <span className="text-sm text-slate-600 dark:text-slate-400">N layers of bidirectional self-attention + FFN.</span>
-  </a>
-  <a
-    href="./decoder-stack"
-    className="flex flex-col gap-1 rounded-xl border border-slate-200 bg-white p-4 no-underline transition-colors hover:border-emerald-400 hover:bg-emerald-50/50 dark:border-slate-700 dark:bg-slate-900/40 dark:hover:border-emerald-600 dark:hover:bg-emerald-950/30"
-  >
-    <span className="text-xs font-bold uppercase tracking-wide text-emerald-700 dark:text-emerald-400">Lesson 13</span>
-    <span className="text-base font-semibold text-slate-900 dark:text-slate-100">Decoder stack</span>
-    <span className="text-sm text-slate-600 dark:text-slate-400">Masked self-attention, cross-attention, FFN.</span>
   </a>
   <a
     href="./encoder-decoder-transformer"
     className="flex flex-col gap-1 rounded-xl border border-slate-200 bg-white p-4 no-underline transition-colors hover:border-emerald-400 hover:bg-emerald-50/50 dark:border-slate-700 dark:bg-slate-900/40 dark:hover:border-emerald-600 dark:hover:bg-emerald-950/30"
   >
-    <span className="text-xs font-bold uppercase tracking-wide text-emerald-700 dark:text-emerald-400">Lesson 14</span>
+    <span className="text-xs font-bold uppercase tracking-wide text-emerald-700 dark:text-emerald-400">Lesson 8</span>
     <span className="text-base font-semibold text-slate-900 dark:text-slate-100">Encoder–decoder transformer</span>
-    <span className="text-sm text-slate-600 dark:text-slate-400">Full architecture and how it fits together.</span>
+    <span className="text-sm text-slate-600 dark:text-slate-400">Both stacks, the two-tower architecture, decoder rhythm, and how the families compare.</span>
+  </a>
+  <a
+    href="./from-encoder-decoder-to-gpt"
+    className="flex flex-col gap-1 rounded-xl border border-slate-200 bg-white p-4 no-underline transition-colors hover:border-emerald-400 hover:bg-emerald-50/50 dark:border-slate-700 dark:bg-slate-900/40 dark:hover:border-emerald-600 dark:hover:bg-emerald-950/30"
+  >
+    <span className="text-xs font-bold uppercase tracking-wide text-emerald-700 dark:text-emerald-400">Lesson 9</span>
+    <span className="text-base font-semibold text-slate-900 dark:text-slate-100">From encoder–decoder to GPT</span>
+    <span className="text-sm text-slate-600 dark:text-slate-400">What happened next: BERT, GPT, T5 — and where to go to build one yourself.</span>
   </a>
 </div>
+
+:::tip[Want to build one?]
+
+The components common to **every** transformer (token embeddings, causal masking, residuals, layer norm, feed-forward blocks) are covered in code in the **Build and Train Your Own GPT-2** course. This course gives you the *why*; that course gives you the *how*.
+
+:::

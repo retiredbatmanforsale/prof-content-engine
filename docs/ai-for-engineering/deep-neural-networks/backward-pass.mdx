@@ -195,6 +195,38 @@ for step in range(401):
 
 ---
 
+<Quiz
+  lessonId="ai-for-engineering/deep-neural-networks/backward-pass"
+  questions={[
+    {
+      id: "backward-q1",
+      prompt: "Backpropagation is essentially an application of which calculus rule?",
+      options: ["The product rule", "The quotient rule", "The chain rule (composed across layers)", "Integration by parts"],
+      correctIndex: 2,
+    },
+    {
+      id: "backward-q2",
+      prompt: "In a 2-layer network with sigmoid output and BCE loss, the output-layer error simplifies to δ_out = ŷ - y. Why?",
+      options: ["Because BCE has no gradient when ŷ is correct", "Because the sigmoid derivative cancels with the BCE derivative when paired together", "Because the bias term absorbs the residual", "Because the network is trained without regularization"],
+      correctIndex: 1,
+    },
+    {
+      id: "backward-q3",
+      prompt: "What does ∂L/∂W₂ depend on in a 2-layer network?",
+      options: ["Only the input x", "The activation a₁ from the previous layer and the output-layer error δ_out", "Only the loss function", "The number of training examples"],
+      correctIndex: 1,
+    },
+    {
+      id: "backward-q4",
+      prompt: "Why do gradients shrink as we propagate backward through a deep stack of sigmoids?",
+      options: ["Because the chain rule subtracts terms layer by layer", "Because each σ' is at most 0.25 and we multiply many of them together — the product collapses toward zero", "Because PyTorch truncates floating-point numbers", "Because the loss is bounded above"],
+      correctIndex: 1,
+    },
+  ]}
+/>
+
+---
+
 <div className="not-prose mt-10 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-6 dark:border-slate-700">
   <a href="./forward-pass" className="text-sm font-medium text-slate-600 no-underline hover:text-emerald-700 hover:underline dark:text-slate-400 dark:hover:text-emerald-400">← Lesson 5 · Forward pass</a>
   <a href="./trainable-parameters-and-hyperparameters" className="text-sm font-semibold text-emerald-700 no-underline hover:underline dark:text-emerald-400">Lesson 7 · Parameters &amp; hyperparameters →</a>

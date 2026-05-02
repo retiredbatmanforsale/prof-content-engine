@@ -13,19 +13,145 @@ tutor_concepts:
 access: public
 ---
 
-import PromptJourney from '@site/src/components/viz/PromptJourney';
+<LessonHero course="Build and Train Your Own GPT-2" number="1" title="Problem with RNNs and LSTMs" subtitle="Why we're rebuilding GPT-2 as a transformer, not an RNN" />
 
-<LessonHero course="Build and Train Your Own GPT-2" number="1" title="Problem with RNNs and LSTMs" subtitle="Why the old sequential approach had to go" />
+Before we write a single line of PyTorch, let's answer the obvious question: **why isn't GPT-2 an RNN?** Recurrent networks dominated language modelling for almost a decade — LSTMs powered Google Translate, speech recognition, and the first wave of seq2seq systems. Then, between 2017 and 2019, the entire field switched to transformers. Three concrete failures pushed it over.
 
-<LessonVideo
-  src="https://player.vimeo.com/video/1184752541?h=8d00e8a357&badge=0&autopause=0&player_id=0&app_id=58479"
-  title="The Problem with RNNs"
-  aspectRatio={54.37}
+This course is going to **build a decoder-only transformer from scratch**. To understand why we make every architectural choice we make — embeddings, causal masking, multi-head attention, residual connections — you need to know what we're walking away from and why we couldn't just keep scaling the old approach.
+
+---
+
+## Failure 1 — Sequential processing kills GPU parallelism
+
+An RNN computes its hidden state one token at a time:
+
+$$
+h_t = \tanh(W_h \, h_{t-1} + W_x \, x_t + b)
+$$
+
+Notice the dependency: **`h_t` cannot be computed until `h_{t-1}` is finished**. To process a 1024-token sequence, the GPU must execute 1024 sequential matrix multiplies — one after another, no shortcuts. Modern GPUs have ~10,000+ cores sitting idle because the math forbids using them in parallel.
+
+Transformers, by contrast, compute every token's representation **simultaneously** through self-attention. A 1024-token sequence becomes a single batched matrix multiply. **On the same hardware, transformer training throughput is 10–100× higher than an equivalent RNN.** Without this single change, GPT-2's 1.5B-parameter scale would not be economically possible.
+
+| Architecture | Tokens processed in parallel | Training time on 1B tokens (rough) |
+|---|---|---|
+| LSTM | 1 (strictly serial along time) | weeks |
+| Transformer (decoder-only) | All N at once | days |
+
+This is the silent killer. Even before we get to gradients or context, RNNs lose by virtue of *not being able to use the hardware they're running on*.
+
+---
+
+## Failure 2 — Vanishing gradients across long sequences
+
+When you backpropagate through an RNN unrolled across `T` timesteps, the gradient at step 0 is a product of `T` Jacobians:
+
+$$
+\frac{\partial \mathcal{L}}{\partial h_0} = \frac{\partial \mathcal{L}}{\partial h_T} \cdot \prod_{t=1}^{T} \frac{\partial h_t}{\partial h_{t-1}}
+$$
+
+Each factor in that product is roughly `tanh'(·) · W_h`. Since `tanh' ∈ (0, 1]`, repeated multiplication shrinks the gradient exponentially. Over a few hundred timesteps, the gradient at early tokens collapses to numerical noise — **the network cannot learn dependencies that span more than ~10–20 tokens.**
+
+The visualization below makes this concrete. Pick an activation, pick a depth, watch the gradient magnitude at each layer. The same dynamic that wrecks deep MLPs wrecks RNNs unrolled across long sequences:
+
+<VanishingGradient />
+
+LSTMs were specifically designed to mitigate this — the cell state `c_t = f_t \odot c_{t-1} + i_t \odot g_t` provides a near-identity gradient path when the forget gate `f_t ≈ 1`. This works for moderate sequence lengths (50–200 tokens) but it doesn't scale: at 1000+ tokens, even LSTMs degrade. **A model trained to predict the next token in a Wikipedia article can't reliably remember the article's title.**
+
+Transformers sidestep this entirely. Self-attention gives every token a **direct path** to every other token — gradient flow from token 1024 to token 1 traverses *one* attention layer, not 1024 sequential cells. The longest gradient path in a transformer is `O(layers)`, not `O(sequence length)`.
+
+---
+
+## Failure 3 — Information bottlenecked through a fixed-size hidden state
+
+This one is subtler but architecturally fatal. An RNN compresses **everything** it has seen so far into a single fixed-dimensional hidden state `h_t ∈ ℝ^d`. Whether it has read 10 tokens or 10,000, all of that context must be squeezed into the same `d` numbers and passed forward.
+
+Think about what this means for a language model. To predict the next word in:
+
+> *"The agreement, signed in 1997 by representatives of nine member states after eighteen months of fractious negotiation in Brussels, ..."*
+
+…the model needs to reach back ~25 tokens to recall *what* was signed (the agreement) and another 8 tokens to recall *where* it was signed (Brussels). An RNN is trying to keep both of those facts alive in its hidden state while also tracking grammar, current clause structure, and every other detail that mattered along the way. Information **competes for room** in a fixed-size vector.
+
+Self-attention removes the bottleneck completely. Every token in the context is **stored separately** — there is no compression step. When the decoder needs to attend back to "agreement," it does so directly, regardless of how many tokens have passed. **The transformer's effective memory grows linearly with context length; the RNN's stays fixed at `d`.**
+
+---
+
+## What this gives us
+
+These three failures are why GPT-2, GPT-3, and every modern LLM are transformers. The decoder-only architecture we're about to build:
+
+- **Processes the whole sequence in parallel** — exploits GPU compute fully
+- **Provides direct gradient paths** between any two positions — long-range dependencies are learnable
+- **Stores every token explicitly** in the attention KV cache — no fixed-size bottleneck
+
+Each lesson in this course corresponds to one component that delivers one of these properties. By Lesson 10, you'll have an end-to-end PyTorch implementation of a small GPT-2 you can train on your own data.
+
+---
+
+## What we keep from the RNN era
+
+Not everything the RNN community learned is obsolete. Two ideas in particular survived the transition:
+
+- **Tokenization and embeddings** — turning discrete symbols into dense vectors is still the first step of every LM. Lesson 2.
+- **Cross-entropy loss on next-token prediction** — the training objective is unchanged. The architecture changed; the *task* did not.
+
+The transformer is not a wholesale rejection of what came before. It's a targeted fix to three specific bottlenecks that made RNNs a dead end at scale.
+
+---
+
+<Quiz
+  lessonId="ai-for-engineering/build-and-train-your-own-gpt2-model/problem-with-rnns-lstms"
+  questions={[
+    {
+      id: "gpt2-l1-q1",
+      prompt: "Why can't RNNs fully utilize modern GPU hardware?",
+      options: [
+        "They use too much memory",
+        "Their hidden state update h_t = f(h_{t-1}, x_t) is strictly sequential — h_t cannot be computed until h_{t-1} finishes, so parallelization across the time dimension is impossible",
+        "GPUs don't support the tanh function",
+        "RNNs only run on CPUs"
+      ],
+      correctIndex: 1,
+    },
+    {
+      id: "gpt2-l1-q2",
+      prompt: "What causes the vanishing gradient problem in vanilla RNNs?",
+      options: [
+        "The learning rate is too small",
+        "Backprop through T timesteps multiplies T Jacobians of the form diag(tanh'(·))·W_h; since tanh' ∈ (0,1], the product shrinks exponentially with sequence length",
+        "RNNs use 32-bit floats",
+        "Gradients vanish because of dropout"
+      ],
+      correctIndex: 1,
+    },
+    {
+      id: "gpt2-l1-q3",
+      prompt: "How does self-attention solve the long-range dependency problem?",
+      options: [
+        "It uses a larger hidden state",
+        "Every position has a direct attention path to every other position — the gradient path between any two tokens is O(layers), not O(sequence length)",
+        "It applies more nonlinearities",
+        "It runs the RNN backward as well as forward"
+      ],
+      correctIndex: 1,
+    },
+    {
+      id: "gpt2-l1-q4",
+      prompt: "What is the fundamental information bottleneck in an RNN that the transformer removes?",
+      options: [
+        "RNNs can only see one token at a time",
+        "All past context must be compressed into a single fixed-size hidden state h_t ∈ ℝ^d, regardless of how much history has been seen — transformers store every token's representation separately and attend to them on demand",
+        "RNNs require labeled data",
+        "RNNs can't handle batches"
+      ],
+      correctIndex: 1,
+    },
+  ]}
 />
 
+---
 
-<PromptJourney />
-
-## Overview
-
-This lesson explains the limitations of RNNs and LSTMs and why the transformer architecture was introduced.
+<div className="not-prose mt-10 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-6 dark:border-slate-700">
+  <a href="./intro" className="text-sm font-medium text-slate-600 no-underline hover:text-emerald-700 hover:underline dark:text-slate-400 dark:hover:text-emerald-400">← Course overview</a>
+  <a href="./token-embeddings" className="text-sm font-semibold text-emerald-700 no-underline hover:underline dark:text-emerald-400">Lesson 2 · Token embeddings →</a>
+</div>

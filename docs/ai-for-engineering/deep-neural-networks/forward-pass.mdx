@@ -195,6 +195,38 @@ So **`model.predict(x)`** (or **`forward`** with **no_grad**) is **exactly** the
 
 ---
 
+<Quiz
+  lessonId="ai-for-engineering/deep-neural-networks/forward-pass"
+  questions={[
+    {
+      id: "forward-q1",
+      prompt: "What does a forward pass through the network produce?",
+      options: ["The gradients of all parameters", "A prediction ŷ for the given input x", "The updated weights after one training step", "The training loss only"],
+      correctIndex: 1,
+    },
+    {
+      id: "forward-q2",
+      prompt: "At inference time (using a trained model to make predictions), do we need to compute gradients?",
+      options: ["Yes — gradients are required for every prediction", "No — gradients are only needed during training to update weights", "Only if the input is new", "Only for the output layer"],
+      correctIndex: 1,
+    },
+    {
+      id: "forward-q3",
+      prompt: "For a 2-layer net with input x, the forward computation is z₁ = W₁x + b₁; a₁ = σ(z₁); z₂ = W₂a₁ + b₂; ŷ = σ(z₂). If x has shape (3,1), W₁ has shape (4,3), W₂ has shape (2,4), what is the shape of ŷ?",
+      options: ["(3, 1)", "(4, 1)", "(2, 1)", "(2, 4)"],
+      correctIndex: 2,
+    },
+    {
+      id: "forward-q4",
+      prompt: "Why is the forward pass deterministic given fixed weights and input (assuming no dropout)?",
+      options: ["Because gradients are not computed", "Because all operations (matrix multiplies, additions, activations) are deterministic functions with no randomness", "Because the optimizer is deterministic", "Because PyTorch caches activations"],
+      correctIndex: 1,
+    },
+  ]}
+/>
+
+---
+
 <div className="not-prose mt-10 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-6 dark:border-slate-700">
   <a href="./loss-functions" className="text-sm font-medium text-slate-600 no-underline hover:text-emerald-700 hover:underline dark:text-slate-400 dark:hover:text-emerald-400">← Lesson 4 · Loss functions</a>
   <a href="./backward-pass" className="text-sm font-semibold text-emerald-700 no-underline hover:underline dark:text-emerald-400">Lesson 6 · Backward pass →</a>

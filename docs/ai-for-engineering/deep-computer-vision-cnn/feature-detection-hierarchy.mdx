@@ -196,6 +196,38 @@ What was previously a **manual, error-prone, and brittle** process is now a **sc
 
 ---
 
+<Quiz
+  lessonId="ai-for-engineering/deep-computer-vision-cnn/feature-detection-hierarchy"
+  questions={[
+    {
+      id: "hier-q1",
+      prompt: "In a deep CNN, what kind of features do the EARLY (low) layers typically learn?",
+      options: ["Whole-object detectors (e.g., 'dog')", "Edges, oriented gradients, simple color blobs — the visual primitives", "Class probabilities", "Raw RGB pixel values unchanged"],
+      correctIndex: 1,
+    },
+    {
+      id: "hier-q2",
+      prompt: "What about MIDDLE layers?",
+      options: ["The same as early layers", "Compositions of low-level primitives — textures, simple shapes, parts (e.g., eyes, wheels)", "Nothing — they pass features through", "They handle only color"],
+      correctIndex: 1,
+    },
+    {
+      id: "hier-q3",
+      prompt: "And LATE / high layers?",
+      options: ["They re-do edge detection", "They represent semantic, often class-discriminative information — entire objects, scenes, or task-specific concepts", "They store the input image again", "They run softmax on each pixel"],
+      correctIndex: 1,
+    },
+    {
+      id: "hier-q4",
+      prompt: "Why is this hierarchical organization useful?",
+      options: ["It's coincidental", "Higher-level features can be reused across tasks (transfer learning), and the architecture mirrors how primates' visual cortex is thought to process images", "It makes models smaller", "It eliminates the need for backprop"],
+      correctIndex: 1,
+    },
+  ]}
+/>
+
+---
+
 <div className="not-prose mt-10 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-6 dark:border-slate-700">
   <a href="./from-pixels-to-perception" className="text-sm font-medium text-slate-600 no-underline hover:text-teal-700 hover:underline dark:text-slate-400 dark:hover:text-teal-400">← Lesson 3 · Pixels to perception</a>
   <a href="./learning-features-from-data" className="text-sm font-semibold text-teal-700 no-underline hover:underline dark:text-teal-400">Next: Lesson 5 — Learned features →</a>

@@ -1,0 +1,317 @@
+---
+hide_title: true
+sidebar_label: '🎯 Interview Readiness'
+title: 'Interview Readiness — Build a Multi-Agent Research Assistant'
+description: >-
+  High-signal AI agent and multi-agent system interview questions across Google,
+  Amazon, Microsoft, Meta, Apple, Netflix, Stripe, Snowflake, and Databricks,
+  organized by theme and difficulty.
+tutor_topic: "Interview Readiness — Multi-Agent AI Systems"
+tutor_concepts:
+  - "bare LLM loop, ReAct, and planner pattern tradeoffs"
+  - "tool use schemas, function calling, MCP, error recovery"
+  - "shared memory designs and contamination prevention"
+  - "infinite tool-call loops and cost guardrails"
+  - "critic agent calibration and self-evaluation drift"
+  - "observability, tracing, and cost attribution for agents"
+---
+
+<LessonHero course="Build a Multi-Agent Research Assistant" title="Interview Readiness" subtitle="High-signal agent and multi-agent system questions for ML and applied-AI interviews" />
+
+These questions are drawn from a synthesis of ML engineer, applied scientist, and AI infrastructure interviews across nine top employers. They cover the patterns this course built lesson-by-lesson — bare LLM loops, ReAct, planning, parallel execution, shared memory, critic validation, orchestration, and observability — framed for the questions a hiring manager would actually ask.
+
+**How to use this page:** Try answering each question out loud in 3–5 minutes. Then open the answer and evaluate your depth, the failure modes you anticipated, and your production maturity.
+
+<div className="not-prose my-6 flex flex-wrap gap-3 text-xs font-semibold">
+  <span className="rounded-full bg-red-100 px-3 py-1 text-red-700 dark:bg-red-900/40 dark:text-red-300">Google</span>
+  <span className="rounded-full bg-yellow-100 px-3 py-1 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-300">Amazon</span>
+  <span className="rounded-full bg-teal-100 px-3 py-1 text-teal-700 dark:bg-teal-900/40 dark:text-teal-300">Microsoft</span>
+  <span className="rounded-full bg-blue-100 px-3 py-1 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300">Meta</span>
+  <span className="rounded-full bg-zinc-100 px-3 py-1 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">Apple</span>
+  <span className="rounded-full bg-rose-100 px-3 py-1 text-rose-700 dark:bg-rose-900/40 dark:text-rose-300">Netflix</span>
+  <span className="rounded-full bg-violet-100 px-3 py-1 text-violet-700 dark:bg-violet-900/40 dark:text-violet-300">Stripe</span>
+  <span className="rounded-full bg-cyan-100 px-3 py-1 text-cyan-700 dark:bg-cyan-900/40 dark:text-cyan-300">Snowflake</span>
+  <span className="rounded-full bg-indigo-100 px-3 py-1 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300">Databricks</span>
+  <span className="rounded-full bg-violet-100 px-3 py-1 text-violet-800 dark:bg-violet-900/40 dark:text-violet-300">Fundamentals</span>
+  <span className="rounded-full bg-orange-100 px-3 py-1 text-orange-800 dark:bg-orange-900/40 dark:text-orange-300">Training/Debugging</span>
+  <span className="rounded-full bg-fuchsia-100 px-3 py-1 text-fuchsia-800 dark:bg-fuchsia-900/40 dark:text-fuchsia-300">System Design</span>
+</div>
+
+---
+
+## Quick-Reference Coverage Table
+
+| Q | Question (abbreviated) | Section | Difficulty | Companies |
+|---|------------------------|---------|------------|-----------|
+| 1 | Bare loop vs ReAct vs Planner — when does each pattern fail? | Fundamentals | Fundamentals | Google, Meta, Anthropic |
+| 2 | Tool use schemas, function calling, and error recovery | Fundamentals | Fundamentals | Microsoft, Amazon, Anthropic |
+| 3 | ReAct trace: Thought → Action → Observation, why each matters | Fundamentals | Fundamentals | Google, Meta, Apple |
+| 4 | Shared memory: short-term vs long-term, retrieval, contamination | Fundamentals | Fundamentals | Amazon, Snowflake, Databricks |
+| 5 | Debugging an agent stuck in an infinite tool-call loop | Training/Debugging | Training/Debugging | Stripe, Microsoft, Netflix |
+| 6 | Planner hallucinations: detection and recovery | Training/Debugging | Training/Debugging | Google, Meta, Apple |
+| 7 | Non-determinism in multi-agent runs: reproducibility, eval design | Training/Debugging | Training/Debugging | Netflix, Databricks, Google |
+| 8 | Critic agent failure modes and self-evaluation drift | Training/Debugging | Training/Debugging | Anthropic, Apple, Microsoft |
+| 9 | Design a customer-support agent: tools, escalation, guardrails | System Design | System Design | Amazon, Stripe, Microsoft |
+| 10 | Design a research assistant — interview pitch version | System Design | System Design | Google, Meta, Anthropic |
+| 11 | Design a code-review agent: traversal, sandboxing, security | System Design | System Design | Microsoft, GitHub, Stripe |
+| 12 | Observability for production agents: traces, replay, cost attribution | System Design | System Design | Databricks, Snowflake, Netflix |
+
+---
+
+## Fundamentals and Core Mechanics
+
+<InterviewQuestion
+  number={1}
+  difficulty="Fundamentals"
+  company={["Google", "Meta", "Anthropic"]}
+  question="Compare the bare LLM loop, ReAct, and a Planner+Executor pattern. When does each break, and how do you decide which pattern a given task needs?"
+>
+
+- **Bare LLM loop** (Lesson 1): a single LLM call, no tools, no iteration. Fails the moment the question requires fresh information, multi-step reasoning, or external state. Useful only for closed-book questions where the model already knows the answer.
+- **ReAct** (Lesson 3): the LLM drives a `Reason → Act → Observe` loop and decides each step adaptively. Solves the multi-step problem but **improvises** — there is no guarantee the model covers every facet of a multi-faceted question. A query like *"Compare the architectures of GPT-4, Claude, and Gemini on three axes"* often produces partial coverage because the agent forgets to circle back to the third model.
+- **Planner + Executors** (Lesson 4): a separate planning LLM call decomposes the question into an explicit sub-question list *before* execution. Coverage becomes structural, not improvisational. Each sub-question runs as its own ReAct loop. Failure mode shifts upstream: a bad plan cascades into wasted executor cost.
+- **Pattern hierarchy:** each layer adds a different reliability guarantee. ReAct adds adaptivity; the planner adds systematic coverage; parallel executors (Lesson 5) add latency control; the critic (Lesson 7) adds output validation.
+- **Production routing heuristic:** classify the question first. Single-fact lookup → bare or one tool call. Multi-step adaptive search → ReAct alone. Multi-faceted research → planner + parallel executors. Most production systems run a cheap classifier (often a small LLM) to pick the pipeline, since invoking the planner on a simple lookup wastes 2–3 seconds and one extra LLM call.
+- **Anti-pattern:** using the planner indiscriminately. Over-decomposition turns *"What's the capital of France?"* into a five-sub-question fan-out that costs 10× more than the bare loop and answers no better.
+
+</InterviewQuestion>
+
+<InterviewQuestion
+  number={2}
+  difficulty="Fundamentals"
+  company={["Microsoft", "Amazon", "Anthropic"]}
+  question="Walk through the modern tool-use protocol: how does the LLM call a tool, what does the schema look like, and how do you handle errors?"
+>
+
+- **The protocol (function calling, OpenAI/Anthropic-style):** you declare each tool as a JSON schema with `name`, `description`, and `parameters` (typed properties). The LLM, instead of emitting prose, emits a structured `tool_call` block: `{"name": "search", "arguments": {"query": "..."}}`. Your runtime parses, executes, and returns a `tool_result` message. The LLM then continues generation with the result in context.
+- **Schema design rules:** mandatory `description` on every parameter (the model needs to know what each field means); `enum` constraints for finite choices (much better than free-form strings); examples in the description (`"e.g., 'San Francisco, CA'"`); idempotent tools where possible so retries are safe.
+- **Three failure modes to handle:** (1) **malformed JSON** — the LLM hallucinates a parameter name or invents a tool that doesn't exist; (2) **type mismatches** — string where number expected, missing required field; (3) **runtime failures** — 404, rate limit, network timeout. Each needs a distinct recovery path.
+- **Recovery pattern:** parse with a strict validator (Pydantic, Zod), and on failure return a *structured* error message back to the LLM (`{"error": "parameter 'limit' must be an integer", "schema": {...}}`). The LLM corrects on the next turn. For repeated failures, circuit-break: refuse to issue the same call twice and force the LLM to either change strategy or give up.
+- **MCP (Model Context Protocol, Anthropic 2024+):** an emerging standard for portable tool definitions across providers and runtimes. Prefer MCP-style schemas if you expect to switch model vendors or share tools across teams.
+- **Production hygiene:** keep the tool surface small. 30+ tools dilutes the model's choice-making and inflates context tokens. If you have many tools, expose a single `dispatch` tool whose argument is the sub-tool name — the model picks the sub-tool first, then issues the actual call. This pattern scales to hundreds of underlying capabilities without overwhelming the prompt.
+
+</InterviewQuestion>
+
+<InterviewQuestion
+  number={3}
+  difficulty="Fundamentals"
+  company={["Google", "Meta", "Apple"]}
+  question="Walk through a ReAct trace step by step. Why does the explicit Thought → Action → Observation format matter, and what would break without it?"
+>
+
+- **The format is a contract:** the LLM is required to emit a `Thought:` line (free-text reasoning) before it emits an `Action:` line (a structured tool call). The runtime executes the action and appends an `Observation:` line (the tool result) to the context. The LLM then generates the next `Thought:`.
+- **Why each part matters:** `Thought` forces the model to externalize its reasoning into the output token stream — those tokens then condition the next-token distribution for the `Action`. Without an explicit Thought, the model frequently emits actions inconsistent with its goals, especially on complex queries. `Observation` is the only way the runtime can communicate world state back into the model's context, since the model itself has no memory between calls.
+- **Original result (Yao et al. 2022):** ReAct outperformed chain-of-thought-only baselines on HotpotQA by ~6–10 points exact match, and reduced hallucinated facts substantially. The improvement comes from the Observation grounding the next Thought in real data rather than the model's prior beliefs.
+- **2026 context:** most frontier models (Claude, GPT-4o, Gemini) now do this implicitly via *thinking tokens* or *extended thinking* APIs. Explicit ReAct format remains valuable when (a) you need traceability for debugging or compliance, (b) you're using an open-weight model without native thinking support, or (c) you want to gate Action emission with structured output validation.
+- **Failure modes:** **infinite Thought loops** — the model rationalizes without acting, especially when stuck. Mitigate with a minimum-action-rate constraint or a `max_steps` cap (Lesson 3). **Truncated Observations** — long tool outputs blow the context window; truncate with summary, or store full output in shared memory and feed back a digest. **Stale Thoughts** — when the model's first Thought becomes self-justifying ("I should search again because my earlier Thought said so"), inject a forced step every N iterations: *"Summarize what you've found and decide whether to stop or continue."*
+- **Debugging:** every ReAct trace should be logged to your `Tracer` (Lesson 9) with thought, action, and observation as separate spans. When an agent run fails, the trace is your only forensic tool — without it, you're guessing.
+
+</InterviewQuestion>
+
+<InterviewQuestion
+  number={4}
+  difficulty="Fundamentals"
+  company={["Amazon", "Snowflake", "Databricks"]}
+  question="Design the memory architecture for a multi-agent system. Walk through short-term vs long-term, retrieval strategy, and how you prevent contamination across agents."
+>
+
+- **Three memory tiers:** (1) **Short-term** — the conversation/context within a single agent's run, token-bounded, often summarized when approaching the model's context limit. (2) **Run-shared** — a workspace several agents in one run read and write to (executors write findings, synthesizer reads them, critic audits). This is what Lesson 6 builds. (3) **Long-term** — persistent across sessions (vector store, SQL, or document DB).
+- **Run-shared memory schema:** structured findings rather than free-form text. Each finding carries `{sub_question_id, source_url, claim, confidence, agent_id, timestamp}`. Provenance is non-negotiable — without it, the synthesizer can't distinguish a verified fact from a hallucinated one.
+- **Contamination problem:** agent A writes a hallucinated claim to shared memory; agent B retrieves it and treats it as ground truth. The classic failure is one agent's invented "Source: arXiv 2024" propagating downstream as a real citation. Defenses: (a) **provenance enforcement** — every claim must trace to a tool result, not to LLM generation; (b) **namespace isolation** — each agent has a private working buffer, only commits to shared memory through a typed handoff interface; (c) **immutable findings log** — once written, findings can't be retroactively edited.
+- **Retrieval strategy for long-term memory:** for time-sensitive queries (news, prices, current events), prefer fresh search over pre-indexed vector stores — embeddings go stale fast. For stable knowledge (documentation, internal wiki), vector retrieval over a refreshed-weekly index is fine. Hybrid retrieval (BM25 + dense embeddings, fused with reciprocal rank) consistently beats either alone on production benchmarks.
+- **Cost and growth:** memory grows linearly with run length. Implement (a) **per-agent context budgets** in tokens, (b) **summarization compaction** when a run exceeds budget, (c) **eviction policies** for long-term memory based on staleness and access frequency. Without these, a 30-minute multi-agent run can balloon to $50+ in token costs.
+- **Observability:** instrument memory reads and writes the same way you instrument tool calls. The trace should answer *"which agent wrote this finding, when, from which tool result?"* This is the single most useful piece of data when debugging "the answer is wrong" complaints.
+
+</InterviewQuestion>
+
+---
+
+## Training, Debugging and Optimisation
+
+<InterviewQuestion
+  number={5}
+  difficulty="Training/Debugging"
+  company={["Stripe", "Microsoft", "Netflix"]}
+  question="An agent is stuck in a loop — calling the same tool repeatedly without making progress. The cost meter is climbing. Walk through your diagnosis and the systemic fixes you put in place."
+>
+
+- **First action: kill the run.** Most loops cost real money — typically $0.10–$1.00 per iteration on frontier models. A loop running unattended overnight can cost thousands.
+- **Diagnose from the trace:** is it the same tool with the same arguments? Same observation each time? Is the LLM ignoring the observation? Three patterns dominate: (a) the tool returns the same output for the same query (e.g., search returns the same top result), so the LLM keeps re-asking; (b) the LLM never recognizes a terminal state — it has no clear "I have enough information" criterion; (c) the observation is being truncated and the model keeps issuing the same call to recover the missing data.
+- **Hard guardrails (non-negotiable in production):**
+  - **`max_steps` cap** — covered in Lesson 3. Always set this; even when you "know" the agent will halt naturally, set it anyway.
+  - **Cost ceiling per run** — `if total_cost > $X: halt`. This is your last line of defense.
+  - **Tool-call deduplication** — refuse to issue the *exact same* tool call twice in a row. Force the LLM to change strategy.
+- **Soft guardrails:** every N steps, force the model to summarize what it has found and explicitly decide to stop or continue. This breaks rationalization loops where the model's own Thoughts justify continued action.
+- **Critic as supervisor (Lesson 7):** a separate critic LLM that reads the trace every K steps and answers *"is this making progress?"* Adds cost but catches loops the agent itself can't escape. Cheaper than letting a stuck agent run to its hard cap.
+- **Observability hooks (Lesson 9):** alert on long traces (>30s wall time), unusually high tool-call counts, or repeated arguments. LangSmith, Langfuse, Helicone, and Phoenix all support these alerts out of the box. Also alert on per-tenant cost spikes — a single misbehaving agent can blow a daily budget in minutes.
+
+</InterviewQuestion>
+
+<InterviewQuestion
+  number={6}
+  difficulty="Training/Debugging"
+  company={["Google", "Meta", "Apple"]}
+  question="The Planner is producing incoherent or off-topic sub-question lists. Some plans miss key parts of the question; others over-decompose. How do you detect bad plans before execution and recover?"
+>
+
+- **The planner is one LLM call** — and a single LLM call has all the usual failure modes: hallucinated sub-questions, off-topic decompositions, redundant entries, missed facets.
+- **Detection layer 1 — structured output validation:** force the planner to emit JSON with a fixed schema `{plan: [{id, sub_question, depends_on}]}`. Reject if it fails to parse, has fewer than N or more than M sub-questions, or if any sub-question fails a relevance check (e.g., does not contain at least one entity from the original question).
+- **Detection layer 2 — self-consistency sampling:** run the planner 3 times at temperature 0.5 and look for agreement on sub-question themes. If three runs produce wildly different decompositions, the question is ambiguous or the planner is unreliable. Either reformulate the user's question, fall back to a simpler pipeline, or escalate to a more capable model.
+- **Detection layer 3 — critic-on-plan:** a small dedicated critic LLM reviews the plan against the original question before any executor cost is incurred. Prompt: *"Does this plan cover every facet of the user's question? Is anything missing or off-topic?"* with output schema `{coverage_complete: bool, missing_facets: [...]}`. This is cheap (one extra small-model call) compared to the executor cost it prevents.
+- **Repair vs regenerate:** for minor issues (awkward wording, redundant sub-questions) — repair pass with the original planner. For structural issues (off-topic, missing facets) — regenerate with a more constrained prompt that names the missing facets explicitly.
+- **Anti-pattern — over-decomposition:** the planner turns a simple question into 8 sub-questions, ballooning cost. Defense: a complexity classifier (or a hard rule based on question length and entity count) gates whether the planner runs at all. Below the threshold, skip the planner and run a single ReAct loop.
+- **Empirical calibration:** track planner failure rate against a labeled eval set. If failure rate > 10%, the planner prompt or model is the bottleneck; iterate before scaling traffic. A working planner is a force multiplier; a broken one is pure cost.
+
+</InterviewQuestion>
+
+<InterviewQuestion
+  number={7}
+  difficulty="Training/Debugging"
+  company={["Netflix", "Databricks", "Google"]}
+  question="Multi-agent runs are non-deterministic — the same input produces different outputs across runs. How do you make them debuggable and how do you design evals that account for this?"
+>
+
+- **Three sources of non-determinism:** (1) **LLM sampling** — temperature > 0, nucleus sampling, or stochastic top-k; (2) **Parallel execution** — async race conditions where the order of completed sub-tasks varies; (3) **External tool variability** — search results change between runs, time-sensitive APIs return different data.
+- **Reproducibility strategies:**
+  - **Temperature 0 + seed parameter** for the LLM portion, where the API supports it (most do, with varying determinism guarantees).
+  - **Deterministic tool mocks** for testing — replay-based fixtures so a test always sees the same search results.
+  - **Pin the model version** — `gpt-4-2024-11-01` rather than `gpt-4`. Provider-side updates change behavior and silently break repro.
+- **Production reality check:** temperature 0 is too rigid for many tasks (creative synthesis, brainstorming sub-questions). Accept non-determinism; design *evals around distributions*, not single-shot success.
+- **Eval design for stochastic systems:**
+  - Run each test case **N times** (typically 5–10) and report success *rate*, not pass/fail.
+  - Use **adversarial cases** that target known failure modes (long context, ambiguous queries, contradictory tool outputs).
+  - Track **regression bands** — a 5-point drop in success rate is more informative than a single failed run.
+- **Tracing is non-negotiable:** Lesson 9's `TraceEvent` log is your only forensic tool. When user reports *"the agent answered wrong yesterday but I can't reproduce it"*, the trace has the actual sequence of LLM calls, tool calls, and intermediate state. Without traces, debugging non-deterministic failures is guessing.
+- **Cost-aware eval scheduling:** running each query 10× against 100 cases = 1000 LLM calls per eval pass. Use a **tiered strategy** — cheap routine evals (Haiku/Mini) on every PR, frontier-model evals (Opus/Sonnet) gating release. Persist eval traces alongside model versions so you can attribute regressions to specific upgrades.
+
+</InterviewQuestion>
+
+<InterviewQuestion
+  number={8}
+  difficulty="Training/Debugging"
+  company={["Anthropic", "Apple", "Microsoft"]}
+  question="Your Critic agent is routinely passing answers that contain unsupported claims. Walk through what's likely happening and how to fix it without scrapping the critic entirely."
+>
+
+- **Root cause — self-evaluation drift:** a critic that uses the same model family as the synthesizer shares its hallucination tendencies. If the synthesizer invented a claim like *"Anthropic released MCP in 2024"*, a same-family critic may accept it because the underlying model has the same prior. The critic isn't doing independent verification; it's doing correlated rubber-stamping.
+- **Symptom inventory:** critics that always PASS (low-precision; useless), critics that always FAIL (high-precision but recall collapses; no answer ships); critics that flag style as substance (unhelpful noise); critics that miss factual errors but obsess over hedging language.
+- **Fix 1 — model diversity:** run the critic on a *different model family* than the synthesizer. Anthropic critic on OpenAI synthesis, or vice versa. The hallucination distributions are uncorrelated, so a critic catches errors the synthesizer's family commits.
+- **Fix 2 — structured rubric with explicit verifiable rules:** instead of free-form *"is this good?"*, give the critic a checklist. Each rule outputs a typed result: *"Every numerical claim cites a source: [PASS/FAIL]. Every named entity appears in shared memory: [PASS/FAIL]. The answer addresses each sub-question from the plan: [PASS/FAIL]"*. Aggregate to a final verdict. This is auditable, tunable, and you can measure precision/recall *per rule*.
+- **Fix 3 — two-critic ensemble:** a cheap "factual" critic (claim → source matching, runs on a small model) and a "completeness" critic (every sub-question answered, runs on a small model). Together they often beat one frontier-model critic at lower cost. The cost of a wrong answer in production usually exceeds the cost of two extra small-model calls.
+- **Fix 4 — calibration on a labeled eval set:** hand-label 50–100 (answer, correct verdict) pairs. Measure your critic's precision and recall against the labels. Tune the prompt or rule list until precision exceeds 0.9 (you trust PASS verdicts) and recall is acceptable. Without this, you're guessing whether critic improvements actually help.
+- **The deeper point:** the critic is not a magic fix — it's another LLM call subject to the same failure modes. Use it as one layer in a defense-in-depth setup (structured output validation → critic → human review for high-stakes outputs), not as the sole quality gate.
+
+</InterviewQuestion>
+
+---
+
+## System Design and Production
+
+<InterviewQuestion
+  number={9}
+  difficulty="System Design"
+  company={["Amazon", "Stripe", "Microsoft"]}
+  question="Design a customer-support agent for a SaaS product. Walk through tools, escalation, guardrails, memory, and how you measure success."
+>
+
+- **Tool inventory:**
+  - **Read tools** (LLM-driven, low risk): ticket history lookup, knowledge base search, customer account read, product documentation search.
+  - **Write tools** (gated, high risk): refund issuance (with a dollar threshold), credit application, ticket status change, account settings update.
+  - **Escalation tool**: hand off to a human agent with full conversation context.
+- **Read–write boundary:** write tools require explicit user confirmation in the conversation, dollar-amount caps per action ($50 self-served, $50–$500 manager approval, >$500 mandatory human handoff), and structured logging for audit trails. Never let the LLM autonomously issue refunds without a confirmation step.
+- **Escalation triggers:** (1) every 3 tool calls without resolution → checkpoint; (2) explicit user frustration signals (profanity, repeated re-phrasings, *"I want to speak to a human"*); (3) any request outside the tool inventory; (4) any topic flagged by guardrails (legal, medical, refund disputes above threshold).
+- **Guardrails (defense in depth):**
+  - **Input filters** — prompt-injection detection ("ignore previous instructions"), profanity, off-topic request detection.
+  - **Output filters** — PII scrubbing before logging, confidence threshold on factual claims, refusal templates for out-of-scope questions.
+  - **Rate limits** — per-customer, per-conversation, per-day. Prevents abuse and runaway cost from a single user.
+- **Memory architecture:** per-customer **long-term** memory (purchase history, prior tickets, communication preferences, prior resolution outcomes) feeds context. Per-conversation **short-term** memory tracks the current issue. Use structured records (not free-form summaries) so retrieval is reliable and auditable.
+- **Cost controls:** small fast model (Haiku/Mini) for routing and simple FAQs; frontier model (Opus/Sonnet) only when the small model expresses low confidence. Track per-ticket cost in observability — when ticket cost exceeds a threshold, the routing logic is broken.
+- **Eval and measurement:** replay anonymized real tickets through the agent in shadow mode; measure resolution rate, escalation rate, time-to-resolution, and CSAT proxy (sentiment of the final user message). A/B test against the rule-based baseline before fully shipping. Track **resolution cost** ($/ticket-resolved) as the headline metric — that's the number a CFO will ask about.
+
+</InterviewQuestion>
+
+<InterviewQuestion
+  number={10}
+  difficulty="System Design"
+  company={["Google", "Meta", "Anthropic"]}
+  question="Design a multi-agent research assistant from scratch. Walk through the architecture, the failure modes each component addresses, and how you'd evaluate it."
+>
+
+- **Architecture (this is the system this course built):**
+  - **Planner** — decomposes the user question into a sub-question list with a structured plan.
+  - **Parallel Executors** — each runs a focused ReAct loop on one sub-question; async-concurrent.
+  - **Shared Memory** — write-once findings log with provenance (`source_url, claim, agent_id, sub_question_id`).
+  - **Synthesizer** — reads shared memory and produces a coherent answer.
+  - **Critic** — audits the answer against findings; emits structured PASS/FAIL with reasons.
+  - **Tracer** — instruments every LLM call, tool call, retry, and verdict.
+- **Why this shape — failure-mode-driven design:**
+  - Bare LLM loop fails on multi-step research → add ReAct.
+  - ReAct improvises and misses coverage → add Planner.
+  - Sequential execution is slow on N independent sub-questions → add parallel executors.
+  - Executors duplicate work or contaminate each other → add structured shared memory.
+  - Synthesizer invents claims not grounded in findings → add Critic.
+  - Whole system is opaque when it fails → add Tracer.
+  Each component exists because the previous version failed in a specific, named way.
+- **Stack:** Python with `asyncio` for parallelism, OpenAI/Anthropic API for the LLM (or a self-hosted open-weight model behind vLLM), a search tool (Brave Search API, Tavily, or Bing), optional vector store for long-term memory.
+- **Cost vs latency tradeoff:** the Planner adds ~2–3 seconds and one extra LLM call (typically $0.005–$0.02 depending on the model). Parallel executors save 5–10× wall-clock time when there are 5+ independent sub-questions. The Critic adds another LLM call but prevents bad answers from shipping — net positive on quality-weighted cost.
+- **Evaluation framework:** 50 hand-labeled gold-standard questions with expected coverage, expected sources, and expected answer quality. Run nightly. Track **answer correctness**, **coverage** (fraction of expected sub-questions addressed), **cost per query**, and **wall-clock time**. Block deploys on regressions.
+- **Production hardening:**
+  - Rate limits on tool calls per user.
+  - Exponential-backoff retries on transient API failures.
+  - **Cost ceiling per run** (hard cap, e.g., $5).
+  - Alert when critic FAIL rate trends up (model drift, prompt regression, or upstream tool change).
+  - Per-tenant observability dashboards for B2B customers.
+- **The "interview pitch":** lead with the architecture and the failure mode each component addresses, not the technology choices. Hiring managers want to know *why* you made the system five components, not the API you used.
+
+</InterviewQuestion>
+
+<InterviewQuestion
+  number={11}
+  difficulty="System Design"
+  company={["Microsoft", "GitHub", "Stripe"]}
+  question="Design a code-review agent that reviews pull requests. Walk through traversal strategy, sandboxing, security boundaries, and how you ship comments to GitHub."
+>
+
+- **Tool inventory:** read file (path → contents), AST parse (path → structured tree), `git blame` (path, line → author + commit), dependency graph lookup (symbol → callers/callees), test runner (sandboxed), CVE database lookup (package + version → vulnerabilities).
+- **Traversal strategy — diff-first, never whole-repo:** start from the PR diff. For each changed file: (a) read the full file to understand local context, (b) traverse imports one or two levels (callers and callees of changed symbols), (c) bound recursion at depth 2–3 to prevent runaway cost on dense codebases. Rule of thumb: each level of traversal multiplies cost by ~5–10×; budget accordingly.
+- **Sandboxing (non-negotiable):** any code execution (test runner, linters, type checkers) runs in an isolated container with no network access, time limits (60s typical), filesystem read-only outside a designated workspace, and CPU/memory caps. The agent's tools have **declared side effects** — only those explicitly marked as "writes" can modify state, and writes go to ephemeral storage.
+- **Output schema (forces actionability):** structured comments in the format `{file, line, severity: 'error|warning|info', category: 'correctness|security|style|performance', body, suggested_fix?}`. Reject free-form prose — interviewers care that you know unstructured output makes review tools brittle. The PR comment integration consumes this structured output and posts to GitHub via the API.
+- **Layered review pipeline:** pass 1 — fast deterministic checks (lint, type-check, test run). Pass 2 — LLM review with the diff and surrounding context. Pass 3 — security-focused critic that re-examines for injection, secrets in diff, and dependency CVEs. Each pass is cheaper and catches different bug classes; only the LLM passes need expensive context.
+- **Cost control (this is the dominant production concern):** tokens scale with codebase context — large diffs are expensive. Tier review depth by PR size: under 100 lines → fast pass only; 100–500 lines → standard LLM pass; 500+ lines → flagged for chunked review. Hard cap of $X per PR. Without a cap, a single 5000-line refactor PR can cost $50.
+- **Integration:** GitHub/GitLab webhook → queue → agent run → structured comments POSTed to PR via REST API. Latency target: under 2 minutes on typical PRs (median ~150 lines), under 10 minutes on large ones. Track false-positive rate (developer-dismissed comments) — this is the single best signal of agent quality and the metric the dev tooling team will optimize.
+
+</InterviewQuestion>
+
+<InterviewQuestion
+  number={12}
+  difficulty="System Design"
+  company={["Databricks", "Snowflake", "Netflix"]}
+  question="Design observability for a production multi-agent system. What do you log, how do you store it, and how do you support replay, cost attribution, and alerting?"
+>
+
+- **Tracing primitives (this is what Lesson 9 instruments):** the unit of observation is a `TraceEvent` — `{run_id, span_id, parent_span_id, type, name, start_time, duration, tokens_in, tokens_out, cost, status, payload}`. Compose into spans (an LLM call is one span; a tool call is another), spans nest into a run.
+- **Storage architecture:** append-only log per run, indexed by `run_id` and `tenant_id`. Tiered retention: full traces for 7 days (debugging), aggregated metrics for 90 days (analytics), sampled examples for 1 year (long-term regression detection). For high-volume systems, sample at 1–10% for non-error traces and 100% for error traces.
+- **Replay:** the killer observability feature. Given a stored trace, deterministically re-execute the run with frozen tool outputs. This requires logging tool inputs and outputs alongside LLM calls. Crucial when a customer reports *"the agent answered wrong yesterday"* — without replay, you cannot reproduce the failure.
+- **Cost attribution dimensions:**
+  - **Per run** — which user query cost what.
+  - **Per agent** — is the planner or the executor driving cost?
+  - **Per tool** — is the search API or the LLM the bottleneck?
+  - **Per tenant** (B2B) — for billing and per-customer profitability analysis.
+  - **Per model version** — track cost per query against `gpt-4-2024-11-01` vs `gpt-4-2025-03-01` to spot expensive model upgrades.
+- **Latency analysis:** identify slow spans via `duration` aggregations. Common findings: the Planner LLM call dominates wall-clock time on simple queries; one specific tool (Bing API at certain hours) has a long-tail latency distribution; the Critic adds 2s per run that turns out to catch 8% of bad answers.
+- **Tooling landscape (2026):** **LangSmith** (LangChain ecosystem), **Langfuse** (open-source), **Helicone** (proxy-based, model-agnostic), **Arize Phoenix** (open-source, OpenTelemetry-compatible), or DIY **OpenTelemetry** with custom semantic conventions. The emerging standard is OpenTelemetry-compatible traces with the `gen_ai` semantic conventions — prefer this for portability.
+- **Alerting (the part most teams skip until it's painful):**
+  - Cost spike per run (> 3× rolling p95).
+  - Critic FAIL rate trending up over 24 hours (model drift, prompt regression, or upstream tool change).
+  - Long traces (> 30s wall time) — usually a stuck loop.
+  - Per-tenant cost exceeding daily quota.
+  Wire alerts to Slack/PagerDuty. The cost of an undetected loop or model regression at 3am is much higher than the cost of a few false-positive alerts.
+
+</InterviewQuestion>
+
+---
+
+<div className="not-prose mt-10 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-6 dark:border-slate-700">
+  <a href="./observability" className="text-sm font-medium text-slate-600 no-underline hover:text-emerald-700 hover:underline dark:text-slate-400 dark:hover:text-emerald-400">← Lesson 9 · Observability</a>
+  <a href="./intro" className="text-sm font-semibold text-emerald-700 no-underline hover:underline dark:text-emerald-400">Course overview →</a>
+</div>

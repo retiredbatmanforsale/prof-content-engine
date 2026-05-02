@@ -101,6 +101,32 @@ Deep learning did not just **improve** accuracy charts; it made **one flexible t
 
 ---
 
+<Quiz
+  lessonId="ai-for-engineering/deep-computer-vision-cnn/transformative-deep-learning-vision"
+  questions={[
+    {
+      id: "transform-q1",
+      prompt: "What is the key shift deep learning brought to computer vision?",
+      options: ["Cheaper cameras", "Replacing hand-crafted feature pipelines (SIFT, HOG, etc.) with end-to-end learned representations from raw pixels", "Replacing GPUs with TPUs", "Eliminating the need for training data"],
+      correctIndex: 1,
+    },
+    {
+      id: "transform-q2",
+      prompt: "Cloud vs edge deployment for vision models trades off:",
+      options: ["Nothing — they're equivalent", "Latency, privacy, and cost: cloud has more compute but adds latency/network/privacy concerns; edge runs locally but is constrained on memory and compute", "Cloud models are always more accurate", "Edge models cannot be retrained"],
+      correctIndex: 1,
+    },
+    {
+      id: "transform-q3",
+      prompt: "Why is the same CNN backbone often reused across seemingly unrelated vision tasks (classification, detection, segmentation)?",
+      options: ["By accident", "Lower CNN layers learn general visual primitives (edges, textures, parts) that transfer across tasks; only the task-specific heads on top change", "Because all tasks share the exact same dataset", "Because PyTorch enforces it"],
+      correctIndex: 1,
+    },
+  ]}
+/>
+
+---
+
 <div className="not-prose mt-10 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-6 dark:border-slate-700">
   <a href="./visual-revolution" className="text-sm font-medium text-slate-600 no-underline hover:text-teal-700 hover:underline dark:text-slate-400 dark:hover:text-teal-400">← Lesson 1 · Visual revolution</a>
   <a href="./from-pixels-to-perception" className="text-sm font-semibold text-teal-700 no-underline hover:underline dark:text-teal-400">Next: Lesson 3 — Pixels to perception →</a>

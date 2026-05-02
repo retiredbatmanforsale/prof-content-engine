@@ -258,6 +258,38 @@ for xi, yi, pi in zip(X, y.flatten(), yhat.flatten()):
 
 ---
 
+<Quiz
+  lessonId="ai-for-engineering/deep-neural-networks/neural-network-from-scratch"
+  questions={[
+    {
+      id: "scratch-q1",
+      prompt: "Why can a single linear unit (no hidden layer) NOT solve XOR?",
+      options: ["XOR has too many examples", "XOR is not linearly separable — no single hyperplane can split the four points correctly", "XOR requires probabilities, not 0/1 outputs", "Because XOR uses negative numbers"],
+      correctIndex: 1,
+    },
+    {
+      id: "scratch-q2",
+      prompt: "In the from-scratch NumPy implementation, weights W₁ and W₂ are initialized to small random values, while biases b are initialized to zero. Why not initialize all of them to zero?",
+      options: ["Bias initialization doesn't matter at all", "If all weights start at zero, every neuron in a layer computes the same output and receives the same gradient — they stay identical (the symmetry-breaking problem)", "NumPy throws an error if weights are zero", "Zero weights cause the loss to be undefined"],
+      correctIndex: 1,
+    },
+    {
+      id: "scratch-q3",
+      prompt: "The from-scratch implementation computes gradients via manual chain rule (e.g., d2 @ W2.T * sigmoid_d(z1)). What does PyTorch's autograd do that this code does manually?",
+      options: ["Compute the loss", "Build a computation graph during the forward pass and traverse it backward to apply the chain rule automatically", "Initialize the weights", "Apply the activation function"],
+      correctIndex: 1,
+    },
+    {
+      id: "scratch-q4",
+      prompt: "The from-scratch lesson uses MSE on a sigmoid output (not BCE). Why is this acceptable here as a learning scaffold even though BCE is the production-correct choice?",
+      options: ["MSE is mathematically equivalent to BCE", "Because for the simple XOR demo, MSE still trains successfully and keeps the focus on backprop mechanics, not loss-function selection", "BCE doesn't exist in NumPy", "MSE always converges faster"],
+      correctIndex: 1,
+    },
+  ]}
+/>
+
+---
+
 <div className="not-prose mt-10 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-6 dark:border-slate-700">
   <a href="./neural-network-architecture" className="text-sm font-medium text-slate-600 no-underline hover:text-emerald-700 hover:underline dark:text-slate-400 dark:hover:text-emerald-400">← Lesson 9 · Architecture recap</a>
   <a href="./intro" className="text-sm font-semibold text-emerald-700 no-underline hover:underline dark:text-emerald-400">Course overview →</a>

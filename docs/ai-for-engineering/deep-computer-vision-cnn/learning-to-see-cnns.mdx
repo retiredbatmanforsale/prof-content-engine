@@ -348,6 +348,38 @@ The CNN learns to extract patterns that are <strong>invariant</strong>, <strong>
 
 ---
 
+<Quiz
+  lessonId="ai-for-engineering/deep-computer-vision-cnn/learning-to-see-cnns"
+  questions={[
+    {
+      id: "see-q1",
+      prompt: "What does max-pooling do in a CNN?",
+      options: ["Adds parameters", "Downsamples each feature map by taking the maximum activation in each spatial window — increases receptive field while reducing spatial size", "Applies a softmax", "Replaces convolutions"],
+      correctIndex: 1,
+    },
+    {
+      id: "see-q2",
+      prompt: "Why does batch normalization help training deep CNNs?",
+      options: ["It's purely cosmetic", "It normalizes intermediate activations, stabilizing the distribution layer-to-layer, allowing higher learning rates and faster convergence", "It removes the bias term", "It replaces the activation function"],
+      correctIndex: 1,
+    },
+    {
+      id: "see-q3",
+      prompt: "Why are CNN-learned features called 'invariant'?",
+      options: ["They never change after training", "They tend to remain stable under small translations, scale changes, or lighting shifts — the network learns to recognize the same pattern despite local variations", "They are independent of the input", "They are class-agnostic"],
+      correctIndex: 1,
+    },
+    {
+      id: "see-q4",
+      prompt: "Once a CNN has extracted a hierarchy of features, what typically follows on top?",
+      options: ["Another set of convolutions only", "A small classification head (typically global pooling + a fully-connected layer + softmax) that maps features to class probabilities", "A second image", "Backpropagation only"],
+      correctIndex: 1,
+    },
+  ]}
+/>
+
+---
+
 <div className="not-prose mt-10 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-6 dark:border-slate-700">
   <a href="./filters-features-convolutions" className="text-sm font-medium text-slate-600 no-underline hover:text-teal-700 hover:underline dark:text-slate-400 dark:hover:text-teal-400">← Lesson 7 · Filters & feature maps</a>
   <a href="./intro" className="text-sm font-semibold text-teal-700 no-underline hover:underline dark:text-teal-400">Course overview →</a>
