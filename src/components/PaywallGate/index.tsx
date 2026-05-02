@@ -44,7 +44,7 @@ export default function PaywallGate({ access, title, description }: Props) {
     : `${mainPlatformUrl}/login?tab=register`;
 
   const primaryLabel = isFreeAccount
-    ? 'Subscribe — from ₹299/month'
+    ? 'Subscribe — from ₹1,667/mo'
     : access === 'free'
       ? 'Create free account →'
       : 'Get started free →';
@@ -82,11 +82,14 @@ export default function PaywallGate({ access, title, description }: Props) {
         </div>
 
         {isFreeAccount && (
-          <p className={styles.plans}>
-            <Link href={`${mainPlatformUrl}/subscribe`} className={styles.plansLink}>
-              View all plans →
-            </Link>
-          </p>
+          <>
+            <p className={styles.fineprint}>*billed annually. Monthly and quarterly plans also available.</p>
+            <p className={styles.plans}>
+              <Link href={`${mainPlatformUrl}/subscribe`} className={styles.plansLink}>
+                View all plans →
+              </Link>
+            </p>
+          </>
         )}
       </div>
     </div>
