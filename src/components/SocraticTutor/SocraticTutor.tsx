@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
 
 const TOKEN_KEY = 'lexai_access_token';
+const REFRESH_KEY = 'lexai_refresh_token';
 
 interface Message {
   role: 'user' | 'assistant';
@@ -14,6 +15,54 @@ interface Props {
   lessonId: string;
 }
 
+/**
+ * Try to mint a fresh access token using the stored refresh token. Returns the
+ * new access token or null on failure. Used to recover from a 401 mid-session
+ * — the access token usually has a short TTL (~15 min) and Root.tsx's periodic
+ * refresh runs every 13 min, so a long idle gap can leave us with an expired
+ * token by the time the user clicks "Start session."
+ */
+async function refreshAccessToken(apiUrl: string): Promise<string | null> {
+  const refreshToken = typeof localStorage !== 'undefined'
+    ? localStorage.getItem(REFRESH_KEY)
+    : null;
+  if (!refreshToken) return null;
+
+  try {
+    const res = await fetch(`${apiUrl}/auth/refresh`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ refreshToken }),
+    });
+    if (!res.ok) return null;
+    const data = await res.json();
+    if (!data.accessToken) return null;
+    sessionStorage.setItem(TOKEN_KEY, data.accessToken);
+    if (data.refreshToken) localStorage.setItem(REFRESH_KEY, data.refreshToken);
+    return data.accessToken;
+  } catch {
+    return null;
+  }
+}
+
+async function postTutorChat(
+  apiUrl: string,
+  token: string | null,
+  payload: { topic: string; concepts: string[]; lessonId: string; message: string; history: Message[] },
+): Promise<Response | { networkError: true }> {
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+  if (token) headers['Authorization'] = `Bearer ${token}`;
+  try {
+    return await fetch(`${apiUrl}/tutor/chat`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(payload),
+    });
+  } catch {
+    return { networkError: true };
+  }
+}
+
 async function streamTutorResponse(
   apiUrl: string,
   token: string | null,
@@ -22,23 +71,51 @@ async function streamTutorResponse(
   onError: (msg: string) => void,
   onDone: () => void
 ) {
-  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-  if (token) headers['Authorization'] = `Bearer ${token}`;
+  let response = await postTutorChat(apiUrl, token, payload);
 
-  let response: Response;
-  try {
-    response = await fetch(`${apiUrl}/tutor/chat`, {
-      method: 'POST',
-      headers,
-      body: JSON.stringify(payload),
-    });
-  } catch {
+  if ('networkError' in response) {
     onError('Could not reach the server. Please check your connection.');
     return;
   }
 
+  // If our access token is stale (Root.tsx refresh hasn't run in time), try
+  // to refresh once and retry the request. Avoids dead-ending the session.
+  if (response.status === 401) {
+    const fresh = await refreshAccessToken(apiUrl);
+    if (fresh) {
+      const retry = await postTutorChat(apiUrl, fresh, payload);
+      if ('networkError' in retry) {
+        onError('Could not reach the server. Please check your connection.');
+        return;
+      }
+      response = retry;
+    }
+  }
+
   if (!response.ok || !response.body) {
-    onError('Failed to start session. Please try again.');
+    // Try to extract the backend's JSON error if it sent one. Even if the
+    // response is supposed to be SSE, an early failure (auth, validation,
+    // 503) returns plain JSON.
+    let detail = `HTTP ${response.status}`;
+    try {
+      const body = await response.text();
+      // Server-side log path for debugging. The user only sees onError.
+      // eslint-disable-next-line no-console
+      console.error('[tutor] non-OK response:', response.status, body);
+      try {
+        const parsed = JSON.parse(body);
+        if (parsed.error) detail = parsed.error;
+      } catch {
+        if (body) detail = body.slice(0, 200);
+      }
+    } catch {}
+    onError(
+      response.status === 401
+        ? 'Your session expired. Please refresh the page and sign in again.'
+        : response.status === 429
+          ? 'Too many requests. Please wait a minute and try again.'
+          : `Failed to start session: ${detail}`,
+    );
     return;
   }
 
