@@ -10,7 +10,7 @@ import { RecentlyAskedEntry } from '@site/src/components/InterviewGuide';
 
 const TODAY = '2026-05-04';
 
-// Tier 1 AI — populated by research agent batch 1 + 2
+// AI labs & foundation model companies
 export const openaiMTS: RecentlyAskedEntry = {
   companySlug: 'openai',
   company: 'OpenAI',
@@ -391,7 +391,7 @@ export const huggingfaceMLE: RecentlyAskedEntry = {
   lastUpdated: TODAY,
 };
 
-// High-Bar Tech — populated by research agent batch 3 + 4
+// High-bar tech companies
 export const databricksSWE: RecentlyAskedEntry = {
   companySlug: 'databricks',
   company: 'Databricks',
