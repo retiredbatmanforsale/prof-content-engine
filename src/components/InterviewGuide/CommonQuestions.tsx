@@ -1,25 +1,11 @@
 import React from 'react';
 import styles from './styles.module.css';
-
-interface Question {
-  prompt: string;
-  type?: 'coding' | 'system-design' | 'ml' | 'behavioral';
-  difficulty?: 'easy' | 'medium' | 'hard';
-  source?: string;
-  href?: string;
-}
+import { Question, TYPE_LABEL } from './types';
 
 interface Props {
   questions: Question[];
   title?: string;
 }
-
-const TYPE_LABEL: Record<NonNullable<Question['type']>, string> = {
-  coding: 'Coding',
-  'system-design': 'System Design',
-  ml: 'ML',
-  behavioral: 'Behavioral',
-};
 
 export default function CommonQuestions({
   questions,

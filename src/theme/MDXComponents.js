@@ -26,6 +26,7 @@ import InterviewGuide, {
   GuideTOC,
   RelatedGuides,
   CommonQuestions,
+  RecentlyAsked,
   MarkAsRead,
 } from '@site/src/components/InterviewGuide';
 
@@ -57,5 +58,6 @@ export default {
   GuideTOC,
   RelatedGuides,
   CommonQuestions,
+  RecentlyAsked,
   MarkAsRead,
 };

@@ -6,6 +6,7 @@ import MarkAsRead from './MarkAsRead';
 import GuideTOC from './GuideTOC';
 import RelatedGuides from './RelatedGuides';
 import CommonQuestions from './CommonQuestions';
+import RecentlyAsked from './RecentlyAsked';
 import styles from './styles.module.css';
 
 interface GuideContext {
@@ -50,4 +51,5 @@ export default function InterviewGuide({
   );
 }
 
-export { GuideHero, Round, EvalCriteria, MarkAsRead, GuideTOC, RelatedGuides, CommonQuestions };
+export { GuideHero, Round, EvalCriteria, MarkAsRead, GuideTOC, RelatedGuides, CommonQuestions, RecentlyAsked };
+export type { Question, RecentQuestion, QuestionType, Difficulty, Confidence, RecentlyAskedEntry } from './types';

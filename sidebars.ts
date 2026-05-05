@@ -181,6 +181,7 @@ const sidebars: SidebarsConfig = {
               label: 'Company Interview Guides',
               link: { type: 'doc', id: 'ai-for-engineering/mle-interview/guides/index' },
               items: [
+                'ai-for-engineering/mle-interview/guides/recently-asked',
                 {
                   type: 'category',
                   label: 'Meta',
