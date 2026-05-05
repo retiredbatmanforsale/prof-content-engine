@@ -1,0 +1,307 @@
+---
+title: Amazon SDE II Interview Guide
+description: >-
+  The complete Amazon SDE II / L5 (mid-level) interview process for 2026 —
+  system design becomes mandatory, LLD round added, behavioral scope shifts to
+  ownership and cross-team work, Bar Raiser remains the veto.
+access: free
+hide_title: true
+tutor_topic: "Amazon SDE II interview process"
+tutor_concepts:
+  - "Amazon L5 leveling"
+  - "system design at SDE II scale"
+  - "low-level design LLD round"
+  - "concurrency in coding rounds"
+  - "ownership and cross-team behavioral signals"
+  - "Bar Raiser at SDE II"
+---
+
+<InterviewGuide
+  slug="amazon-sde-ii"
+  company="Amazon"
+  level="SDE II"
+  title="Amazon SDE II Interview Guide"
+  subtitle="Mid-level SWE loop (L5) — system design is mandatory, the LLD round is added, behavioral scope shifts to ownership of multi-engineer projects. The Bar Raiser still vetos."
+>
+
+<GuideTOC
+  items={[
+    { href: '#process-overview', label: 'Process overview' },
+    { href: '#how-it-differs-from-sde-i', label: 'How it differs from SDE I' },
+    { href: '#technical-phone-screen', label: 'Technical phone screen' },
+    { href: '#onsite', label: 'Onsite (4–5 rounds)' },
+    { href: '#bar-raiser', label: 'The Bar Raiser at SDE II' },
+    { href: '#evaluation-criteria', label: 'Evaluation criteria' },
+    { href: '#common-questions', label: 'Common questions' },
+    { href: '#preparation-plan', label: 'Preparation plan' },
+    { href: '#sources', label: 'Sources' },
+  ]}
+/>
+
+## Process overview {#process-overview}
+
+The Amazon SDE II (L5) loop runs **4–8 weeks** end-to-end (team match can extend further):
+
+1. **Recruiter screen** — 15–30 min
+2. **Online assessment** (sometimes skipped for experienced hires) — coding + work simulation, similar to SDE I but with harder coding problems
+3. **Technical phone screen** — 60 min: 40 min coding + 10–15 min system design fundamentals + LP question
+4. **Onsite loop** — 4 rounds, ~60 min each: 2 coding (one with concurrency / distributed flavor) + 1 system design + 1 LLD or extra coding
+5. **Behavioral round** (often woven into other rounds, sometimes standalone) — 45 min, pure LP
+6. **Bar Raiser** — 60 min, conducted by a senior engineer outside your target team
+
+:::warning[Key shift from SDE I]
+At SDE II, **system design becomes mandatory and is weighted heavily**. The behavioral bar also shifts: you need stories of **independent ownership**, not just collaboration. "I built feature X under my manager\'s direction" reads as SDE I.
+:::
+
+## How it differs from SDE I {#how-it-differs-from-sde-i}
+
+| Dimension | SDE I (L4) | SDE II (L5) |
+|---|---|---|
+| **System design** | Light OOP (parking lot, vending machine) | Real distributed systems supporting millions of users |
+| **LLD round** | Sometimes part of coding | Often a dedicated 60-min round |
+| **Coding bar** | Single-threaded mediums | Adds concurrency (rate limiter, circular buffer, producer-consumer), distributed-systems primitives |
+| **Behavioral scope** | Internships, school projects, early career | Multi-quarter ownership, cross-team work, mentoring juniors |
+| **Autonomy** | Supervised execution | Independent ownership of features end-to-end |
+| **AWS literacy** | Not required | Expected — S3, DynamoDB, Lambda, SQS, CloudWatch |
+
+## Technical phone screen {#technical-phone-screen}
+
+<InterviewRound
+  name="Technical Phone Screen"
+  duration="60 min"
+  format="CoderPad · 1 medium-hard coding + system design fundamentals + LP"
+  weight="gate"
+>
+
+Three-part round:
+
+1. **Coding** (40 min) — one medium-hard problem with follow-ups, often touching concurrency or graph traversal.
+2. **System design fundamentals** (10–15 min) — high-level discussion of a small system or component (e.g., a URL shortener\'s API design, a basic message queue).
+3. **LP question** (5–10 min) — one behavioral question against a Leadership Principle.
+
+A clear miss on any segment ends the loop.
+
+</InterviewRound>
+
+## Onsite (4–5 rounds) {#onsite}
+
+<InterviewRound
+  name="Coding 1 — Algorithms & OOP"
+  duration="60 min"
+  format="Whiteboard / virtual IDE"
+  weight="signal"
+>
+
+Medium-hard algorithmic problem with follow-ups, plus 2–3 LP questions woven in. Common categories: graphs (Dijkstra, cycle detection), DP (matrix chain, subset sum), trees (serialize/deserialize N-ary), strings (minimum window substring).
+
+</InterviewRound>
+
+<InterviewRound
+  name="Coding 2 — Concurrency / Distributed Patterns"
+  duration="60 min"
+  format="Whiteboard / virtual IDE"
+  weight="signal"
+>
+
+The round that distinguishes SDE II from SDE I. Common prompts:
+
+- Implement a rate limiter (token bucket or sliding window)
+- Design and implement a thread-safe circular buffer
+- Producer-consumer with bounded queue using semaphores
+- Distributed lock primitives
+
+You\'re expected to discuss tradeoffs (mutex vs. lock-free, fairness, starvation) and reason about race conditions explicitly.
+
+<EvalCriteria
+  criteria={[
+    {
+      name: 'Concurrency correctness',
+      detail: 'You identify race conditions, deadlocks, and starvation modes without prompting. Your implementation handles them correctly.',
+    },
+    {
+      name: 'Tradeoff articulation',
+      detail: 'When you pick a synchronization primitive, you can explain the alternatives and what you traded.',
+      strong: 'You discuss fairness, throughput vs. latency, and when this approach breaks at scale.',
+    },
+  ]}
+/>
+
+</InterviewRound>
+
+<InterviewRound
+  name="System Design (HLD)"
+  duration="60 min"
+  format="Whiteboard"
+  weight="level"
+>
+
+The level-deciding round. Typical prompts:
+
+- Design a real-time stock price tracking system
+- Design a notification service for Prime Day
+- Design a global rate limiter
+- Design an event-driven order pipeline
+- Design a distributed cache for product catalog
+
+Expected flow:
+
+1. **Requirements** (5 min) — functional + non-functional. Latency, availability (99.99%+), throughput targets.
+2. **Capacity estimation** (3–5 min) — QPS, storage, bandwidth.
+3. **High-level architecture** (10–15 min) — WebSocket / Kafka / Redis / DynamoDB / Lambda boxes with explicit data flow.
+4. **Deep dive** (20 min) — interviewer picks 1–2 components: sharding, replication, circuit breakers, hot keys.
+5. **Optimization** (5–10 min) — cost (spot instances, tiered storage), monitoring (CloudWatch), failure modes.
+
+**AWS literacy is expected.** You\'re not required to use only AWS, but interviewers expect you to name appropriate services when relevant (DynamoDB for KV, Kinesis for streams, S3 for blob, etc.) and explain consistency tradeoffs (DynamoDB strong vs. eventual reads, etc.).
+
+<EvalCriteria
+  criteria={[
+    {
+      name: 'Requirements and capacity',
+      detail: 'You drive scoping yourself. Specific QPS / storage / bandwidth numbers, named consistency model.',
+    },
+    {
+      name: 'AWS service fluency',
+      detail: 'When AWS services are appropriate, you name them and explain the tradeoff. You know which services map to which patterns.',
+    },
+    {
+      name: 'Tradeoff articulation',
+      detail: 'For every architectural choice, you name what you traded away and why it\'s acceptable here.',
+      strong: 'You preempt the interviewer\'s "what about consistency?" by raising it yourself.',
+    },
+    {
+      name: 'Failure-mode reasoning',
+      detail: 'You discuss what breaks at 10x scale, when components fail, and how the system degrades gracefully.',
+    },
+  ]}
+/>
+
+</InterviewRound>
+
+<InterviewRound
+  name="LLD or Extra Coding"
+  duration="60 min"
+  format="Whiteboard"
+  weight="signal"
+>
+
+Whether you get a Low-Level Design round or an extra coding round depends on the team. LLD prompts typical at SDE II:
+
+- Design a distributed in-memory cache (with eviction)
+- Design a logger framework (multi-level, async, file rotation)
+- Design a parking lot **with concurrency support** (multi-threaded reservation)
+- Design a job scheduler
+
+Expected: classes with relationships, public APIs, key methods implemented in code, edge cases (concurrency, eviction, retries) explicitly handled.
+
+</InterviewRound>
+
+<InterviewRound
+  name="Behavioral / Leadership Principles"
+  duration="45–60 min"
+  format="Conversational"
+  weight="signal"
+>
+
+At SDE II, the LP bar shifts:
+
+- **Ownership** — "describe a project you owned end-to-end" (not just one feature, the whole project)
+- **Bias for Action** — making 2-way-door decisions yourself, not waiting for approval
+- **Dive Deep** — debugging a production incident; understanding all layers of a system
+- **Earn Trust** — handling disagreements with senior engineers, admitting mistakes
+- **Highest Standards** — driving code quality, raising the bar in code review
+
+Stories should include **specific metrics**: latency improvements, revenue saved, headcount affected, on-call burden reduced. Vague impact ("the team was happy") collapses under drill-down.
+
+</InterviewRound>
+
+## The Bar Raiser at SDE II {#bar-raiser}
+
+The Bar Raiser is even more impactful at SDE II than at SDE I, because the bar to "raise" is meaningfully higher and more specific. They probe:
+
+- **Whether you would mentor and lift current SDE Is/IIs**, not just match them
+- **Whether your scope of impact is clearly L5+** (not a strong L4 in disguise)
+- **Whether your judgment under ambiguity** is independent (you make 2-way-door decisions on your own, escalate 1-way-door decisions)
+
+The Bar Raiser is **outside your team** and has full veto power. A common pattern: 4 of 5 interviewers say "hire," Bar Raiser says "downlevel to L4," and you receive an L4 offer instead of L5.
+
+## Evaluation criteria {#evaluation-criteria}
+
+<EvalCriteria
+  criteria={[
+    {
+      name: 'Coding (algorithms + concurrency)',
+      detail: 'Mediums and hards, plus correct handling of concurrency primitives. Both rounds clean.',
+    },
+    {
+      name: 'System design (HLD)',
+      detail: 'Specific numbers, AWS service fluency, deep dive on one component, failure-mode reasoning.',
+      strong: 'You\'d be a credible designer for the team\'s next 1M-user feature.',
+    },
+    {
+      name: 'Low-level design',
+      detail: 'Class decomposition, APIs, edge cases (concurrency, eviction). Code is implementation-ready.',
+    },
+    {
+      name: 'Leadership Principles',
+      detail: 'Stories of multi-quarter ownership, mentoring, cross-team work. Specific metrics. Drill-down survives 3+ levels.',
+    },
+  ]}
+/>
+
+## Common questions {#common-questions}
+
+<CommonQuestions
+  questions={[
+    { type: 'coding', difficulty: 'medium', prompt: 'Longest Consecutive Sequence', source: 'LC 128' },
+    { type: 'coding', difficulty: 'hard', prompt: 'Minimum Window Substring', source: 'LC 76' },
+    { type: 'coding', difficulty: 'hard', prompt: 'Serialize and Deserialize N-ary Tree', source: 'LC 428' },
+    { type: 'coding', difficulty: 'medium', prompt: 'Implement a rate limiter (token bucket)' },
+    { type: 'coding', difficulty: 'hard', prompt: 'Thread-safe circular buffer with read/write' },
+    { type: 'coding', difficulty: 'medium', prompt: 'Producer-consumer with bounded queue' },
+    { type: 'system-design', prompt: 'Design a real-time stock price tracking system.' },
+    { type: 'system-design', prompt: 'Design a global rate limiter for an API gateway.' },
+    { type: 'system-design', prompt: 'Design an event-driven order processing pipeline.' },
+    { type: 'system-design', prompt: 'Design a distributed cache for a product catalog.' },
+    { type: 'system-design', prompt: 'Design a notification service for Prime Day traffic.' },
+    { type: 'behavioral', prompt: 'Describe a project you owned from inception to production.' },
+    { type: 'behavioral', prompt: 'Walk me through debugging a critical production issue.' },
+    { type: 'behavioral', prompt: 'How do you ensure code quality in reviews you lead?' },
+    { type: 'behavioral', prompt: 'Tell me about a time you shipped despite ambiguity.' },
+    { type: 'behavioral', prompt: 'How do you handle disagreement with a senior engineer?' },
+    { type: 'behavioral', prompt: 'Tell me about mentoring a junior engineer through a difficult problem.' },
+  ]}
+/>
+
+## Preparation plan {#preparation-plan}
+
+| Week | Focus | Daily commitment | Exit criteria |
+|---|---|---|---|
+| 1 | LC mediums (algorithms + Amazon-tagged) | 2 mediums/day | 14 mediums solved cleanly |
+| 2 | LC mediums + concurrency primitives (rate limiter, circular buffer, producer-consumer) | 1 medium + 1 concurrency/day | All concurrency primitives implementable from scratch |
+| 3 | System design fundamentals (sharding, caching, queues, consistency) + AWS service mapping | 1 design walkthrough/day | 5 designs with capacity numbers and AWS services named |
+| 4 | System design reps (Amazon question bank) | 1 mock + 1 self-paced design | 5 mocks: stock tracker, rate limiter, notifications, order pipeline, cache |
+| 5 | LP story building (12–15 stories at SDE II scope) + drill-down rehearsal | 30 min stories + 1 mock LP | 12 stories at 4 levels deep, scoped multi-engineer |
+| 6 | Mock loops (full or near-full) | 1 mock loop/week | 2 full mocks with no flagged round |
+
+:::tip[Two patterns that downlevel SDE II candidates]
+**Pattern 1:** Strong coding + strong system design + average LP → Bar Raiser flags "doesn\'t demonstrate L5 ownership," result is downlevel to L4.
+**Pattern 2:** System design that stays high-level ("I\'d add a load balancer and DynamoDB") without numbers, eviction policies, or failure modes. Force yourself to put specific values on every component.
+:::
+
+<RelatedGuides
+  guides={[
+    { href: '../amazon/sde-i', company: 'Amazon', level: 'SDE I', blurb: 'Junior cousin — light OOP design, simpler LP scope.' },
+    { href: '../meta/e5', company: 'Meta', level: 'E5', blurb: 'Compare with Meta\'s senior loop.' },
+    { href: '../google/l4', company: 'Google', level: 'L4', blurb: 'Cross-company mid-level reference.' },
+  ]}
+/>
+
+## Sources {#sources}
+
+Cross-checked against three sources during authoring (May 2026):
+
+- [Onsites.fyi — Amazon SDE II (2025)](https://www.onsites.fyi/blog/article/amazon-sde-ii-software-engineer-interview-questions)
+- [Amazon Jobs — SDE II Interview Prep](https://amazon.jobs/content/en/how-we-hire/sde-ii-interview-prep)
+- [IGotAnOffer — Amazon SDE 2](https://igotanoffer.com/en/advice/amazon-sde-2-interview)
+
+</InterviewGuide>

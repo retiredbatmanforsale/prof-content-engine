@@ -20,6 +20,14 @@ import ExcalidrawScene from '@site/src/components/ExcalidrawScene';
 import PerceptronDiagram from '@site/src/components/ExcalidrawScene/PerceptronDiagram';
 import LessonHero from '@site/src/components/LessonHero';
 import LessonVideo from '@site/src/components/LessonVideo';
+import InterviewGuide, {
+  Round as InterviewRound,
+  EvalCriteria,
+  GuideTOC,
+  RelatedGuides,
+  CommonQuestions,
+  MarkAsRead,
+} from '@site/src/components/InterviewGuide';
 
 export default {
   ...MDXComponents,
@@ -43,4 +51,11 @@ export default {
   PerceptronDiagram,
   LessonHero,
   LessonVideo,
+  InterviewGuide,
+  InterviewRound,
+  EvalCriteria,
+  GuideTOC,
+  RelatedGuides,
+  CommonQuestions,
+  MarkAsRead,
 };

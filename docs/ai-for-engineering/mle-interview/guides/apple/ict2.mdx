@@ -1,0 +1,315 @@
+---
+title: Apple ICT2 Interview Guide
+description: >-
+  The complete Apple ICT2 (entry-level Software Engineer) interview process for 2026 —
+  team-specific loops, on-device and privacy-first thinking, Swift / GCD literacy,
+  and the Apple cultural fit signal that runs through every round.
+access: free
+hide_title: true
+tutor_topic: "Apple ICT2 interview process"
+tutor_concepts:
+  - "Apple ICT2 entry-level leveling"
+  - "team-specific interview loops at Apple"
+  - "privacy-first product thinking"
+  - "on-device processing constraints"
+  - "Swift / GCD / async-await literacy"
+  - "Apple culture fit and pixel-perfect mindset"
+---
+
+<InterviewGuide
+  slug="apple-ict2"
+  company="Apple"
+  level="ICT2"
+  title="Apple ICT2 Interview Guide"
+  subtitle="Entry-level SWE loop. Apple's interviews are team-specific — there's no single Apple loop. Coding, feature-level design, and behavioral signals around privacy, on-device thinking, and pixel-perfect quality decide outcomes."
+>
+
+<GuideTOC
+  items={[
+    { href: '#process-overview', label: 'Process overview' },
+    { href: '#apple-leveling', label: 'Apple leveling explained' },
+    { href: '#team-specific-nature', label: 'Why Apple loops vary by team' },
+    { href: '#technical-phone-screen', label: 'Technical phone screen' },
+    { href: '#onsite', label: 'Onsite (4–5 rounds)' },
+    { href: '#apple-themes', label: 'Apple-specific themes' },
+    { href: '#evaluation-criteria', label: 'Evaluation criteria' },
+    { href: '#common-questions', label: 'Common questions' },
+    { href: '#preparation-plan', label: 'Preparation plan' },
+    { href: '#sources', label: 'Sources' },
+  ]}
+/>
+
+## Process overview {#process-overview}
+
+The Apple ICT2 loop runs **4–8 weeks** end-to-end:
+
+1. **Recruiter screen** — 20–30 min: background, motivation, Apple interest, salary
+2. **Hiring manager screen** — often more technical than at peer companies; deep dive on past projects
+3. **Technical phone screen** — 45–60 min on CoderPad, 1–2 coding problems
+4. **Onsite loop** — 4–5 rounds, ~45–60 min each, ~4–5 hours total. Mix of:
+   - 2 coding rounds (LC-style with Apple twists)
+   - 1 feature-level design (NOT distributed systems at ICT2)
+   - 1 behavioral
+   - 1 domain-specific (iOS / macOS frameworks, team-flavored)
+5. **Decision** — team consensus + leveling discussion. Apple\'s leveling is famously opaque; offers can come at ICT2 or sometimes ICT3 depending on the team\'s read.
+
+:::warning[There is no "the Apple interview"]
+Apple lets candidates interview with **multiple teams in parallel**. Each team designs its own loop. Your friend\'s Apple interview is not your Apple interview. Confirm with your recruiter what the specific team\'s format will be.
+:::
+
+## Apple leveling explained {#apple-leveling}
+
+| Level | Title | Years exp | Notes |
+|---|---|---|---|
+| **ICT2** | SWE | 0–2 | **This guide — entry / new grad** |
+| ICT3 | SWE | 2–5 | Mid-level |
+| ICT4 | Senior SWE | 5+ | Senior |
+| ICT5 | Staff SWE | 8+ | Staff |
+| ICT6 | Principal | 10+ | Principal |
+
+ICT2 is where Apple typically hires new grads. The expectation: execute well-defined tasks under mentorship, with strong fundamentals and ramp-up potential. You\'re not expected to own a whole feature yet — that\'s ICT3+.
+
+## Why Apple loops vary by team {#team-specific-nature}
+
+Apple\'s engineering org is structured around products and platforms (iOS, macOS, Photos, Maps, Health, etc.). Each team has substantial autonomy in interview design. As a result:
+
+- **Languages vary.** Apple-platform teams often expect Swift or Objective-C. Services and ML teams may lean Python / C++.
+- **System design questions vary.** Most ICT2 design questions are **feature-level** ("design Recently Deleted in Photos") rather than distributed systems.
+- **Behavioral focus varies.** UI-heavy teams probe pixel-perfect mindset and designer collaboration; ML teams probe privacy and on-device constraints; infra teams lean closer to standard SWE behavioral.
+
+Ask your recruiter explicitly: *"What language is preferred? What kind of design problems? What does the loop look like?"* They will tell you.
+
+## Technical phone screen {#technical-phone-screen}
+
+<InterviewRound
+  name="Technical Phone Screen"
+  duration="45–60 min"
+  format="CoderPad · 1–2 problems · live with engineer"
+  weight="gate"
+>
+
+One or two medium coding problems with follow-ups. Apple frequently adds an Apple-platform twist to standard problems:
+
+- "Implement an LRU cache that handles concurrent access via GCD."
+- "Solve this problem with attention to memory — what\'s the heap allocation pattern?"
+- "Now imagine this needs to run on-device with 1MB memory budget."
+
+The interviewer also asks 2–3 ecosystem questions: do you understand reference counting in Swift, value vs. reference types, Foundation collections vs. Swift native types, async-await semantics.
+
+<EvalCriteria
+  criteria={[
+    {
+      name: 'Coding correctness',
+      detail: 'Solve at least one problem fully with edge cases and complexity analysis.',
+    },
+    {
+      name: 'Memory awareness',
+      detail: 'You discuss heap vs. stack, retain cycles, allocation cost. Apple cares about this even at ICT2.',
+      strong: 'You raise memory concerns before being prompted ("we should pool these to avoid retained allocations").',
+    },
+    {
+      name: 'Ecosystem literacy',
+      detail: 'Comfortable with Swift / GCD / async-await if Apple-platform team. Equivalent depth in your team\'s preferred stack.',
+    },
+  ]}
+/>
+
+</InterviewRound>
+
+## Onsite (4–5 rounds) {#onsite}
+
+<InterviewRound name="Coding 1" duration="60 min" format="Live coding · whiteboard or shared editor" weight="signal">
+
+LeetCode-style medium with Apple-specific twists. Common categories: trees, graphs, strings, recursion, intervals.
+
+The interviewer often adds a follow-up about real-world Apple product optimization: "How would you make this fast enough for the Photos app to use it on a 100k-image library?"
+
+</InterviewRound>
+
+<InterviewRound name="Coding 2" duration="60 min" format="Live coding · whiteboard or shared editor" weight="signal">
+
+Same format, different interviewer, harder problem. Often emphasizes:
+
+- **Algorithm optimization** — moving from naive O(n²) to O(n log n) when memory matters
+- **Code cleanliness** — modularity, testability, naming
+- **Edge cases** — Apple is unusually rigorous here; expect probes on null, empty, max-bounds
+
+</InterviewRound>
+
+<InterviewRound name="Feature-Level Design" duration="45 min" format="Whiteboard / virtual canvas" weight="signal">
+
+**Not distributed systems** at ICT2. Apple\'s ICT2 design questions stay at the feature level:
+
+- Design the "Recently Deleted" album in Photos (with restore + auto-purge)
+- Design offline mode for Notes app with iCloud sync
+- Design a privacy-respecting health-data export feature
+- Design notification grouping for Messages
+- Design a media picker that respects on-device privacy
+
+Expected flow:
+
+1. **Clarify product requirements** (5 min) — what does the user actually do? what\'s the success criterion?
+2. **Data model** (5–10 min) — entities, fields, relationships.
+3. **API / interface** (5–10 min) — public surface, edge cases.
+4. **Storage and sync** (10 min) — on-device vs. iCloud, what\'s persisted, what\'s ephemeral.
+5. **Privacy considerations** (5 min) — what data leaves the device? what\'s encrypted? what does the user explicitly consent to?
+
+<EvalCriteria
+  criteria={[
+    {
+      name: 'Product reasoning',
+      detail: 'You start from user intent, not technical mechanism. "What does the user want here?" is your first question.',
+    },
+    {
+      name: 'Privacy by default',
+      detail: 'You raise privacy considerations without being prompted. Default-on-device, default-encrypted reasoning.',
+      strong: 'You discuss what data NOT to collect, not just how to protect it.',
+    },
+    {
+      name: 'Resource constraints',
+      detail: 'You reason about battery, bandwidth, storage, and compute as scarce on-device resources.',
+    },
+  ]}
+/>
+
+</InterviewRound>
+
+<InterviewRound name="Behavioral" duration="45 min" format="Conversational" weight="signal">
+
+Apple\'s behavioral round is unusually focused on **culture fit**:
+
+- **Designer / engineer collaboration** — how you handled disagreement with a designer or PM
+- **Pixel-perfect mindset** — caring about details others might dismiss as minor
+- **Privacy-first thinking** — choices you made about data collection or handling
+- **Attention to detail** — a time you caught something subtle that mattered
+- **Long product cycles** — comfort with shipping seasonally rather than weekly
+- **Why Apple specifically** — concrete answers about products you use and care about
+
+A common Apple red flag: **shipping for shipping\'s sake**. If your stories are all about velocity without quality concern, the interviewer flags it.
+
+<EvalCriteria
+  criteria={[
+    {
+      name: 'Quality obsession',
+      detail: 'Your stories include moments where you slowed down for quality, not just sped up for delivery.',
+      strong: 'You can name a specific bug or edge case you caught that others missed and explain why it mattered.',
+    },
+    {
+      name: 'Privacy reasoning',
+      detail: 'You can articulate a specific privacy decision you made and the tradeoff involved.',
+    },
+    {
+      name: 'Specific Apple interest',
+      detail: 'Your "why Apple" answer is grounded in actual products you use and care about — not generic ("influence at scale").',
+    },
+  ]}
+/>
+
+</InterviewRound>
+
+<InterviewRound name="Domain-Specific (team-flavored)" duration="45 min" format="Conversational + light technical" weight="signal">
+
+The team-specific round. Content depends entirely on the team:
+
+- **iOS / macOS app teams** — UIKit / SwiftUI, Auto Layout, view lifecycles, Core Data
+- **Frameworks teams** — system frameworks, low-level concurrency, public API design
+- **ML / Siri teams** — Core ML, on-device inference, model compression
+- **Services / cloud teams** — server-side Swift, iCloud architecture
+- **Hardware-adjacent teams** — driver layers, embedded constraints, battery profiling
+
+Ask your recruiter what to expect — they will tell you specifically which framework or domain the round will cover.
+
+</InterviewRound>
+
+## Apple-specific themes {#apple-themes}
+
+Across all rounds, these themes recur and are **scored**, not just discussed:
+
+1. **Privacy by default.** "How would you handle user data securely in this feature?" is asked at every level. Defaults that minimize data collection score better than features with elaborate protections after the fact.
+2. **On-device processing.** Apple has a strategic preference for local computation over cloud dependency. Designs that work offline and don\'t leak data score better.
+3. **Resource constraints.** Battery, bandwidth, storage, and memory are first-class concerns. ICT2 candidates are expected to reason about these.
+4. **Swift / GCD literacy** for platform-adjacent teams. Threading discipline matters; UI thread vs. background work is a real signal.
+5. **Pixel-perfect quality.** Apple explicitly hires for taste. Your behavioral stories should reflect this.
+
+## Evaluation criteria {#evaluation-criteria}
+
+<EvalCriteria
+  criteria={[
+    {
+      name: 'Coding fundamentals',
+      detail: 'Mediums solved with edge cases, memory awareness, and clean structure.',
+    },
+    {
+      name: 'Feature-level design',
+      detail: 'Product reasoning, privacy by default, on-device-first thinking, resource awareness.',
+      strong: 'You discuss what NOT to build to preserve user privacy or device performance.',
+    },
+    {
+      name: 'Apple culture fit',
+      detail: 'Quality obsession, designer collaboration, specific Apple interest. Generic FAANG-style answers underperform.',
+    },
+    {
+      name: 'Domain literacy',
+      detail: 'For platform teams: Swift / GCD / SwiftUI fluency. For other teams: equivalent depth in their stack.',
+    },
+  ]}
+/>
+
+## Common questions {#common-questions}
+
+<CommonQuestions
+  questions={[
+    { type: 'coding', difficulty: 'medium', prompt: 'LRU Cache (with concurrency)', source: 'LC 146' },
+    { type: 'coding', difficulty: 'medium', prompt: 'Lowest Common Ancestor of a Binary Tree', source: 'LC 236' },
+    { type: 'coding', difficulty: 'medium', prompt: 'Course Schedule', source: 'LC 207' },
+    { type: 'coding', difficulty: 'medium', prompt: 'Word Search', source: 'LC 79' },
+    { type: 'coding', difficulty: 'medium', prompt: 'Decode Ways', source: 'LC 91' },
+    { type: 'coding', difficulty: 'hard', prompt: 'Implement a memory-efficient image cache for the Photos app' },
+    { type: 'system-design', prompt: 'Design the "Recently Deleted" album in Photos.' },
+    { type: 'system-design', prompt: 'Design offline mode for Notes with iCloud sync.' },
+    { type: 'system-design', prompt: 'Design notification grouping for Messages.' },
+    { type: 'system-design', prompt: 'Design a privacy-respecting health-data export.' },
+    { type: 'behavioral', prompt: 'Tell me about resolving a conflict with a designer or PM.' },
+    { type: 'behavioral', prompt: 'Describe a bug or edge case others missed that you caught.' },
+    { type: 'behavioral', prompt: 'Walk me through a privacy decision you made in your work.' },
+    { type: 'behavioral', prompt: 'Why Apple specifically? What product do you most care about?' },
+    { type: 'behavioral', prompt: 'How do you handle long product cycles vs. shipping fast?' },
+  ]}
+/>
+
+## Preparation plan {#preparation-plan}
+
+| Week | Focus | Daily commitment | Exit criteria |
+|---|---|---|---|
+| 1 | LC mediums (Apple-tagged: trees, graphs, strings, recursion) | 2 mediums/day | 14 mediums solved cleanly |
+| 2 | LC mediums + memory-aware optimization | 2 mediums/day with allocation analysis | All mediums solved with memory discussion |
+| 3 | Swift / GCD / async-await fundamentals (if platform team) | 1 hour/day | Comfortable with concurrency primitives, value vs reference types, retain cycles |
+| 4 | Feature-level design reps (Photos, Notes, Messages, Health) | 1 design/day | 5 feature designs with privacy and on-device reasoning |
+| 5 | Apple-cultural behavioral story building (5 stories) | 30 min/day + 1 mock | 5 STAR stories: quality, privacy, designer collaboration, attention to detail, "why Apple" |
+| 6 | Mock loops + team-specific prep (whatever your recruiter named) | 1 mock loop | 2 full mocks, including one team-flavored round |
+
+:::tip[Apple-specific gotchas]
+**"Why Apple?"** is asked unironically and weighted. Generic answers ("influence at scale," "great products") flag. A concrete answer like *"I\'ve used Notes daily for 8 years and I\'m fascinated by how the iCloud sync handles offline edits — I want to work on the substrate that makes this feel reliable"* lands.
+
+**Privacy-by-default reasoning is scored.** Even if the team isn\'t privacy-adjacent, candidates who raise privacy considerations naturally score better. Practice incorporating it as a default, not as a checkbox.
+
+**Use the recruiter.** Apple recruiters are unusually informative about their team\'s specific format. Ask explicitly what language, what kind of design questions, what behavioral themes — they\'ll tell you.
+:::
+
+<RelatedGuides
+  guides={[
+    { href: '../meta/e3', company: 'Meta', level: 'E3', blurb: 'Compare with Meta\'s entry-level loop.' },
+    { href: '../google/l3', company: 'Google', level: 'L3', blurb: 'Compare with Google\'s entry-level loop.' },
+    { href: '../amazon/sde-i', company: 'Amazon', level: 'SDE I', blurb: 'Compare with Amazon\'s entry-level loop.' },
+  ]}
+/>
+
+## Sources {#sources}
+
+Cross-checked against three sources during authoring (May 2026):
+
+- [Onsites.fyi — Apple ICT2 (2025)](https://www.onsites.fyi/blog/article/apple-ict2-software-engineer-interview-questions)
+- [Interview Query — Apple SWE Guide (2026)](https://www.interviewquery.com/interview-guides/apple-software-engineer)
+- [Interviewing.io — Senior Engineer\'s Apple Guide](https://interviewing.io/guides/hiring-process/apple)
+
+</InterviewGuide>

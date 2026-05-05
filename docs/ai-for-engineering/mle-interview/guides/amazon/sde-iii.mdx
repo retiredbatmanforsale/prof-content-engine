@@ -1,0 +1,326 @@
+---
+title: Amazon SDE III Interview Guide
+description: >-
+  The complete Amazon SDE III / L6 (Senior SDE) interview process for 2026 —
+  multi-service system design, architecture review, principal-level behavioral
+  scope. ~60% of the loop is Leadership Principles.
+access: free
+hide_title: true
+tutor_topic: "Amazon SDE III interview process"
+tutor_concepts:
+  - "Amazon L6 senior leveling"
+  - "multi-service system design at SDE III"
+  - "architecture review round"
+  - "org-wide leadership and P&L impact"
+  - "principal-level Leadership Principles"
+---
+
+<InterviewGuide
+  slug="amazon-sde-iii"
+  company="Amazon"
+  level="SDE III"
+  title="Amazon SDE III Interview Guide"
+  subtitle="Senior SWE loop (L6) — multi-service architecture, an architecture review round, and principal-level LP scope. Around 60% of the loop is Leadership Principles."
+>
+
+<GuideTOC
+  items={[
+    { href: '#process-overview', label: 'Process overview' },
+    { href: '#how-it-differs-from-sde-ii', label: 'How it differs from SDE II' },
+    { href: '#technical-phone-screen', label: 'Technical phone screen' },
+    { href: '#onsite', label: 'Onsite (5–7 rounds)' },
+    { href: '#bar-raiser', label: 'The Bar Raiser at L6' },
+    { href: '#evaluation-criteria', label: 'Evaluation criteria' },
+    { href: '#common-questions', label: 'Common questions' },
+    { href: '#preparation-plan', label: 'Preparation plan' },
+    { href: '#sources', label: 'Sources' },
+  ]}
+/>
+
+## Process overview {#process-overview}
+
+The Amazon SDE III (L6) loop runs **4–8 weeks** end-to-end (team match can extend longer):
+
+1. **Recruiter call** — 30 min
+2. **Technical phone screen** — 75 min: 1 advanced coding (50 min) + system design (15 min) + LP
+3. **Onsite loop** — 5–7 rounds, ~55 min each:
+   - 2 advanced coding rounds (concurrency, optimization, production-grade)
+   - 1–2 system design rounds (distributed, multi-service, global scale)
+   - 1 architecture review (critique an existing system)
+   - 1 LLD or project deep-dive (team's choice)
+   - 1 leadership/behavioral round
+   - 1 Bar Raiser round
+
+:::warning[The L6 loop is mostly behavioral]
+Recent reports indicate **~60% of the L6 loop is dedicated to Leadership Principles**. Coding and system design are the floor — they qualify you for the conversation. Whether you land L6 vs. downlevel to L5 is decided by your stories of org-wide impact, mentorship, and long-term technical vision.
+:::
+
+## How it differs from SDE II {#how-it-differs-from-sde-ii}
+
+| Dimension | L5 (SDE II) | L6 (SDE III) |
+|---|---|---|
+| **System design scope** | Single service supporting 1M+ users | Multi-service platform, multi-region, fault-tolerant, supporting 100M+ users |
+| **Leadership impact** | Mentor within team | Define org-wide engineering standards, mentor across teams |
+| **Business impact** | Feature-level metrics | P&L outcomes (revenue, cost reduction quantified) |
+| **Stakeholders** | Team leads, PMs | Directors, VPs, external partners |
+| **Coding** | Concurrency primitives | Lock-free data structures, distributed algorithms, optimization at scale |
+| **Architecture review** | Not assessed | Dedicated round — critique and improve a system |
+
+## Technical phone screen {#technical-phone-screen}
+
+<InterviewRound
+  name="Technical Phone Screen"
+  duration="75 min"
+  format="CoderPad · advanced coding (50 min) + system design (15 min) + LP"
+  weight="gate"
+>
+
+Three-part screen, harder than SDE II in every section:
+
+1. **Advanced coding** (50 min) — typically a problem with concurrency or thread-safety constraints (e.g., concurrent LRU, distributed semaphore).
+2. **System design fundamentals** (15 min) — high-level discussion at scale ("walk me through how you\'d design X for 10x current traffic").
+3. **LP question** (10 min) — one principle-aligned story, drilled 2–3 levels.
+
+A clear miss on any segment ends the loop.
+
+</InterviewRound>
+
+## Onsite (5–7 rounds) {#onsite}
+
+<InterviewRound
+  name="Coding 1 — Advanced Algorithms"
+  duration="55 min"
+  format="Whiteboard / virtual IDE"
+  weight="signal"
+>
+
+Hard algorithmic problem with non-trivial follow-ups, plus 2–3 LP questions woven in. Common categories: graphs (shortest path with constraints, network flow), advanced DP (interval, bitmask), strings (suffix arrays).
+
+</InterviewRound>
+
+<InterviewRound
+  name="Coding 2 — Concurrency / Production-Grade"
+  duration="55 min"
+  format="Whiteboard / virtual IDE"
+  weight="signal"
+>
+
+Production-grade implementation with concurrency, optimization, and edge cases all in scope. Common prompts:
+
+- Concurrent LRU cache with TTL eviction
+- Distributed semaphore with lease expiry
+- Lock-free queue or stack
+- Thread pool with priority and cancellation
+
+You\'re expected to discuss memory ordering, fairness, starvation, and how the implementation would change at distributed scale.
+
+</InterviewRound>
+
+<InterviewRound
+  name="System Design — Distributed (HLD)"
+  duration="55 min"
+  format="Virtual whiteboard"
+  weight="level"
+>
+
+Multi-service distributed system at Amazon scale. Typical prompts:
+
+- Real-time fraud detection for payments at 1M TPS
+- Product recommendation engine for 100M users with &lt;50ms latency
+- Real-time inventory management for millions of products across regions
+- Black Friday traffic-spike-resistant checkout
+
+Expected flow goes deeper than SDE II:
+
+1. **Requirements** (5 min) — functional + non-functional with **explicit SLAs** (P99 latency, availability, throughput).
+2. **Capacity** (5 min) — QPS, storage, bandwidth, multi-region failover budgets.
+3. **High-level architecture** (15 min) — multi-service decomposition, named technologies, explicit data flow.
+4. **Deep dives** (20 min) — interviewer picks 2 components: usually one storage/consistency choice and one scale/failure mode.
+5. **Tradeoffs** (10 min) — CAP implications, cost vs. latency, eventual vs. strong consistency. **You should preempt the deep-dive questions** by raising tradeoffs first.
+
+<EvalCriteria
+  criteria={[
+    {
+      name: 'Multi-service decomposition',
+      detail: 'You decompose into services that can be owned by different teams. Boundaries are explicit (API contract, data ownership, deployment cadence).',
+    },
+    {
+      name: 'CAP and consistency reasoning',
+      detail: 'You name the consistency model per data store, explain why, and discuss the cost of strong consistency where you chose it.',
+      strong: 'You design a hybrid system where some operations use strong consistency and others eventual, with explicit reasoning per case.',
+    },
+    {
+      name: 'Failure-mode reasoning',
+      detail: 'You discuss what breaks at 10x scale, when components fail, multi-region failover, partial degradation strategies.',
+    },
+    {
+      name: 'AWS service fluency at depth',
+      detail: 'DynamoDB hot partitions, Kinesis ordering guarantees, S3 consistency model, Aurora vs. RDS tradeoffs — you can speak to specific service-level concerns.',
+    },
+  ]}
+/>
+
+</InterviewRound>
+
+<InterviewRound
+  name="Architecture Review"
+  duration="55 min"
+  format="Whiteboard · candidate critiques an existing design"
+  weight="level"
+>
+
+A round unique to L6 (and above). The interviewer presents an existing system — sometimes a real Amazon system, sometimes a deliberately-flawed mock — and asks you to:
+
+1. Understand the design (15 min) — ask clarifying questions, read the diagram.
+2. Identify weaknesses (15 min) — performance bottlenecks, single points of failure, security gaps, cost inefficiencies.
+3. Propose improvements (20 min) — prioritized, with cost/benefit reasoning.
+4. Discuss rollout (5 min) — how would you actually migrate without downtime?
+
+This round tests **judgment** — can you spot the right things to fix and sequence them sensibly. Senior engineers spend most of their time critiquing and evolving existing systems, not greenfield designs, so this round is closer to L6 day-to-day.
+
+<EvalCriteria
+  criteria={[
+    {
+      name: 'Critique quality',
+      detail: 'You identify 5+ real weaknesses, ranked by impact. You don\'t over-optimize on minor issues.',
+    },
+    {
+      name: 'Migration thinking',
+      detail: 'Your improvements come with a migration plan — rolling deploy, dual-write phase, feature flags. Not just "change everything."',
+      strong: 'You discuss what could go wrong during migration and how to detect/roll back.',
+    },
+    {
+      name: 'Cost vs. benefit',
+      detail: 'For each improvement you suggest the cost (engineer-weeks, infra cost) and the benefit (latency, availability, $).',
+    },
+  ]}
+/>
+
+</InterviewRound>
+
+<InterviewRound
+  name="LLD or Project Deep-Dive"
+  duration="55 min"
+  format="Whiteboard or conversational"
+  weight="signal"
+>
+
+The team chooses between:
+
+- **LLD** — design and partially implement a complex component (e.g., a logger framework, distributed task scheduler, transaction coordinator). Code is implementation-ready.
+- **Project deep-dive** — a 50-minute walkthrough of a complex project you\'ve owned. The interviewer probes design decisions, tradeoffs, what you\'d do differently. Often reads like a "reverse system design."
+
+If you have one strong recent project (multi-quarter, multi-engineer, with metrics), the project deep-dive is your friend. If your projects are smaller, prepare for LLD.
+
+</InterviewRound>
+
+<InterviewRound
+  name="Behavioral / Leadership Principles"
+  duration="55 min"
+  format="Conversational"
+  weight="level"
+>
+
+At L6, the LP bar shifts to **principal-level impact**:
+
+- **Ownership** — driving an org-wide initiative for multiple quarters with measurable P&L impact
+- **Think Big** — proposing and shipping work that meaningfully changes the team\'s or org\'s trajectory
+- **Hire and Develop the Best** — concrete examples of mentoring junior and mid-level engineers (named individuals, before/after states)
+- **Have Backbone; Disagree and Commit** — disagreeing with directors or skip-levels and either changing minds or committing professionally
+- **Earn Trust** — handling cross-team conflict, admitting org-wide mistakes
+- **Are Right, A Lot** — judgment under ambiguity at high stakes
+
+Stories should include **specific business outcomes**: revenue impact ($M), cost savings, headcount affected, customer NPS shifts. Vague impact ("the team was happier") collapses immediately at L6.
+
+</InterviewRound>
+
+## The Bar Raiser at L6 {#bar-raiser}
+
+The Bar Raiser round at L6 is **especially high-stakes**:
+
+- The bar to "raise" at L6 is high — the Bar Raiser is asking whether you would **lift the bar of current L6 engineers**, not just match them.
+- L6 candidates frequently get downleveled to L5 by the Bar Raiser if their stories don\'t convincingly demonstrate org-wide influence.
+- The Bar Raiser at L6 often drills hardest into the LP round — expect 4-deep follow-ups on your strongest stories.
+
+A common pattern at L6: 5 of 6 interviewers say "hire," but the Bar Raiser writes "strong hire at L5" — result is L5 offer.
+
+## Evaluation criteria {#evaluation-criteria}
+
+<EvalCriteria
+  criteria={[
+    {
+      name: 'Coding (advanced)',
+      detail: 'Production-grade code with concurrency. Lock-free reasoning where appropriate. Optimization mindset.',
+    },
+    {
+      name: 'System design (multi-service, global scale)',
+      detail: 'Multi-region, multi-service, with explicit consistency reasoning and failure-mode handling.',
+      strong: 'You\'d be a credible designer for the team\'s next platform-level investment.',
+    },
+    {
+      name: 'Architecture judgment',
+      detail: 'You can critique an existing system, prioritize improvements, and sequence migrations safely.',
+    },
+    {
+      name: 'Leadership Principles at scale',
+      detail: 'Stories of org-wide impact, multi-quarter ownership, mentoring, P&L outcomes. 12-15 stories at 4+ levels deep.',
+    },
+  ]}
+/>
+
+## Common questions {#common-questions}
+
+<CommonQuestions
+  questions={[
+    { type: 'coding', difficulty: 'hard', prompt: 'Design a concurrent LRU cache with TTL eviction' },
+    { type: 'coding', difficulty: 'hard', prompt: 'Implement a distributed semaphore with lease expiry' },
+    { type: 'coding', difficulty: 'hard', prompt: 'Lock-free queue with multiple producers and consumers' },
+    { type: 'coding', difficulty: 'hard', prompt: 'Thread pool with priority and cancellation support' },
+    { type: 'system-design', prompt: 'Design real-time fraud detection for payments at 1M TPS.' },
+    { type: 'system-design', prompt: 'Design a product recommendation engine for 100M users with <50ms latency.' },
+    { type: 'system-design', prompt: 'Design a real-time inventory management platform across regions.' },
+    { type: 'system-design', prompt: 'Design a global checkout system resilient to 50x Black Friday spikes.' },
+    { type: 'system-design', prompt: 'Critique this existing notification service and propose improvements.' },
+    { type: 'behavioral', prompt: 'Describe a long-term technical vision you drove across teams.' },
+    { type: 'behavioral', prompt: 'Tell me about an org-wide initiative you led with measurable P&L impact.' },
+    { type: 'behavioral', prompt: 'How have you mentored engineers into senior roles? Name specific people.' },
+    { type: 'behavioral', prompt: 'Describe disagreeing with a director or skip-level. How did you proceed?' },
+    { type: 'behavioral', prompt: 'Tell me about a time you made a high-stakes call under ambiguity.' },
+  ]}
+/>
+
+## Preparation plan {#preparation-plan}
+
+LP prep dominates L6 prep — at least equal weight with system design, more than coding.
+
+| Week | Focus | Daily commitment | Exit criteria |
+|---|---|---|---|
+| 1 | LC hards (Amazon-tagged) + concurrency primitives | 1 hard + 1 concurrency/day | All listed concurrency primitives implementable |
+| 2 | Advanced system design (multi-service, global scale) + AWS service depth | 1 design walkthrough/day | 5 designs with named services and explicit SLAs |
+| 3 | Architecture review practice (critique existing systems) | 1 critique/day | 5 critique+migration plans for real or hypothetical systems |
+| 4 | LP story building (12–15 stories at L6 scope) | 30 min/day + 1 mock LP | 12 stories at 4 levels deep, with $-impact numbers |
+| 5 | Mock LP rounds with drill-down | 1 mock LP/day | 5 mocks with no story collapse |
+| 6 | Mock loops (full or near-full) | 1 mock loop/week | 2 full mocks with no flagged round |
+
+:::tip[L6 candidates downlevel often]
+The most common L6 outcome is **L5 offer instead of L6**. Prevent it by: (a) ensuring every LP story has org-wide scope and a $-impact number, (b) practicing the architecture-review round (most candidates skip it in prep), (c) treating the Bar Raiser as the deciding round and preparing your two strongest stories for them.
+:::
+
+<RelatedGuides
+  guides={[
+    { href: '../amazon/sde-i', company: 'Amazon', level: 'SDE I', blurb: 'Entry-level cousin — light OOP design.' },
+    { href: '../amazon/sde-ii', company: 'Amazon', level: 'SDE II', blurb: 'Mid-level — the level often offered when L6 candidates downlevel.' },
+    { href: '../meta/e5', company: 'Meta', level: 'E5', blurb: 'Compare with Meta\'s senior loop.' },
+    { href: '../google/l5', company: 'Google', level: 'L5', blurb: 'Compare with Google\'s senior loop.' },
+  ]}
+/>
+
+## Sources {#sources}
+
+Cross-checked against three sources during authoring (May 2026):
+
+- [Onsites.fyi — Amazon SDE III (2025)](https://www.onsites.fyi/blog/article/amazon-sde-iii-software-engineer-interview-questions)
+- [HelloInterview — Amazon L6](https://www.hellointerview.com/guides/amazon/l6)
+- [Amazon Jobs — SDE III Interview Prep](https://amazon.jobs/content/en/how-we-hire/sde-iii-interview-prep)
+
+</InterviewGuide>

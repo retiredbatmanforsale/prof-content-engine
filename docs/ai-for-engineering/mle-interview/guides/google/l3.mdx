@@ -1,0 +1,178 @@
+---
+title: Google L3 Interview Guide
+description: >-
+  The complete Google L3 (entry-level SWE / MLE) interview process —
+  rounds, rubrics, common questions, and a focused preparation plan.
+access: free
+hide_title: true
+tutor_topic: "Google L3 interview process"
+tutor_concepts:
+  - "Google leveling and hiring committee"
+  - "data structures and algorithms gate"
+  - "Googleyness and leadership"
+  - "ML domain depth at L3"
+---
+
+<InterviewGuide
+  slug="google-l3"
+  company="Google"
+  level="L3"
+  title="Google L3 Interview Guide"
+  subtitle="Entry SWE/MLE loop — recruiter screen, technical phone screen, then a four-round virtual onsite. Hiring Committee makes the final call, not the team."
+>
+
+<GuideTOC
+  items={[
+    { href: '#process-overview', label: 'Process overview' },
+    { href: '#technical-phone-screen', label: 'Technical phone screen' },
+    { href: '#onsite', label: 'Onsite (4 rounds)' },
+    { href: '#hiring-committee', label: 'Hiring Committee' },
+    { href: '#evaluation-criteria', label: 'Evaluation criteria' },
+    { href: '#common-questions', label: 'Common questions' },
+    { href: '#preparation-plan', label: 'Preparation plan' },
+  ]}
+/>
+
+## Process overview {#process-overview}
+
+The Google L3 loop runs **6–10 weeks**:
+
+1. **Recruiter screen** — 30 min, logistics + light technical fit.
+2. **Technical phone screen** — 45 min, 1–2 coding problems.
+3. **Onsite (virtual loop)** — 4 rounds, usually one day:
+   - 2 coding rounds
+   - 1 "Googleyness & leadership" (behavioral)
+   - 1 ML domain round (for MLE roles) **or** an additional coding round (for generalist SWE).
+4. **Hiring Committee review** — your packet goes to a committee that decides hire/no-hire **without** meeting you.
+5. **Team match** — if hired, you're matched to a team after committee approval.
+
+:::warning[Different from Meta]
+Google does **not** match you to a team during the loop. You can pass the bar and still wait weeks for a team match. Don't optimize prep around a specific team — optimize for committee signal.
+:::
+
+## Technical phone screen {#technical-phone-screen}
+
+<InterviewRound
+  name="Technical Phone Screen"
+  duration="45 min"
+  format="Google Docs · live with engineer"
+  weight="gate"
+>
+
+Google still conducts the phone screen on **a shared Google Doc**, not an IDE. You will not have syntax highlighting or a compiler. Practice on plain text before this round — it is genuinely different from CoderPad.
+
+The interviewer is calibrating against the same rubric used in the onsite, so prepare it as the same round.
+
+<EvalCriteria
+  criteria={[
+    {
+      name: 'Algorithmic clarity',
+      detail: 'You name the data structure and approach before coding. You don\'t leap to coding from the problem statement.',
+    },
+    {
+      name: 'Plain-text coding discipline',
+      detail: 'Your code is correctly indented and parses — interviewers explicitly notice candidates who can\'t code without an IDE.',
+    },
+    {
+      name: 'Complexity analysis',
+      detail: 'Time and space for both your initial and optimized solutions, derived clearly.',
+    },
+  ]}
+/>
+
+</InterviewRound>
+
+## Onsite (4 rounds) {#onsite}
+
+<InterviewRound name="Coding 1 — Data Structures & Algorithms" duration="45 min" format="Google Docs" weight="signal">
+One main problem with 1–2 follow-ups. Common: trees, graphs, recursion, DP, intervals. The follow-up usually generalizes the original problem (e.g., "now do it with k arrays instead of 2").
+</InterviewRound>
+
+<InterviewRound name="Coding 2 — Implementation" duration="45 min" format="Google Docs" weight="signal">
+Slightly more implementation-heavy than Coding 1 — string parsing, simulation, or a system component (e.g., LRU cache, rate limiter). The interviewer cares more about correctness and edge-case discipline than raw algorithmic insight.
+</InterviewRound>
+
+<InterviewRound name="ML Domain (MLE roles only)" duration="45 min" format="Conversational + whiteboard" weight="level">
+
+For MLE candidates, this replaces one of the coding rounds. The interviewer probes:
+
+- **Fundamentals** — bias-variance, regularization, evaluation metrics for the candidate's chosen problem (classification vs. ranking vs. recommendation).
+- **A practical problem** — "design the model and training pipeline for X" (e.g., spam classifier, news ranker).
+- **Recent reading** — what models or papers are you tracking in your area?
+
+<EvalCriteria
+  criteria={[
+    { name: 'Concept clarity', detail: 'You can explain why log loss is preferred to MSE for classification, what regularization does, and what overfitting looks like — without hand-waving.' },
+    { name: 'Pipeline thinking', detail: 'You design the full pipeline (data, features, model, eval, monitoring), not just "I\'d use XGBoost."' },
+    { name: 'GenAI literacy', detail: 'You can discuss when to use an LLM vs. a classical model, and the cost/latency/accuracy tradeoff.', strong: 'You\'ve hands-on built a non-trivial RAG or fine-tuning project and can describe what failed.' },
+  ]}
+/>
+
+</InterviewRound>
+
+<InterviewRound name="Googleyness & Leadership" duration="45 min" format="Conversational" weight="signal">
+
+Google's behavioral round is lighter than Meta's "Jedi" but still a real signal. The interviewer probes:
+
+- **Comfort with ambiguity** — situations where requirements were unclear and what you did.
+- **Collaboration** — feedback culture, how you handle disagreements.
+- **Bias toward action** — when you took initiative without being asked.
+
+For L3, examples can be from internships, school projects, or early-career work. Scale of impact is **not** the signal — clarity of self-reflection is.
+
+</InterviewRound>
+
+## Hiring Committee {#hiring-committee}
+
+After your onsite, your interviewers' written feedback goes to a Hiring Committee — a group of 4–6 senior engineers from across Google who haven't met you. They vote hire/no-hire based on the **packet alone**.
+
+This means:
+
+- **Interviewer write-up quality matters as much as your performance.** Speak clearly enough that your interviewer can write strong evidence into the packet — vague answers produce vague write-ups.
+- **A weak signal cannot be saved by manager advocacy.** Unlike many companies, your future manager has no influence over the hire decision.
+
+## Evaluation criteria {#evaluation-criteria}
+
+<EvalCriteria
+  criteria={[
+    { name: 'General Cognitive Ability (GCA)', detail: 'Problem-solving and reasoning under ambiguity — drives the algorithm rounds.' },
+    { name: 'Role-Related Knowledge (RRK)', detail: 'Coding fluency and (for MLE) ML fundamentals — drives the technical rounds.', strong: 'You teach the interviewer something they didn\'t know in your domain.' },
+    { name: 'Leadership', detail: 'For L3: collaboration, ownership of small projects, response to feedback.' },
+    { name: 'Googleyness', detail: 'Comfort with ambiguity, intellectual humility, ethical instincts.' },
+  ]}
+/>
+
+## Common questions {#common-questions}
+
+<CommonQuestions
+  questions={[
+    { type: 'coding', difficulty: 'medium', prompt: 'Number of Islands', source: 'LC 200' },
+    { type: 'coding', difficulty: 'medium', prompt: 'Word Ladder', source: 'LC 127' },
+    { type: 'coding', difficulty: 'medium', prompt: 'Decode Ways', source: 'LC 91' },
+    { type: 'coding', difficulty: 'hard', prompt: 'Median of Two Sorted Arrays', source: 'LC 4' },
+    { type: 'coding', difficulty: 'hard', prompt: 'Trapping Rain Water', source: 'LC 42' },
+    { type: 'ml', prompt: 'Walk through how you would build a spam classifier from scratch.' },
+    { type: 'ml', prompt: 'Why would you use cross-entropy loss instead of MSE for classification?' },
+    { type: 'ml', prompt: 'When would you fine-tune an LLM vs. use prompting + RAG?' },
+    { type: 'behavioral', prompt: 'Tell me about a time you worked under unclear requirements.' },
+  ]}
+/>
+
+## Preparation plan {#preparation-plan}
+
+| Week | Focus | Exit criteria |
+|---|---|---|
+| 1–2 | LC mediums + Google Doc practice (no IDE) | 25 mediums solved on plain text |
+| 3 | LC hards (selectively — 8–10 of the most common) | Solve LC 4, 42, 23 cleanly |
+| 4 | ML fundamentals refresher (for MLE roles) | Re-derive logistic regression, explain bias-variance |
+| 5 | ML system design reps (5 walkthroughs) | Spam classifier, ranker, recommender, search, fraud detection |
+| 6 | Behavioral + 2 mocks | 3 STAR stories, 2 full mocks |
+
+<RelatedGuides
+  guides={[
+    { href: '../meta/e3', company: 'Meta', level: 'E3', blurb: 'Compare with Meta\'s coding-heavy E3 loop.' },
+    { href: '../meta/e4', company: 'Meta', level: 'E4', blurb: 'Mid-level cousin at Meta with system design.' },
+  ]}
+/>
+
+</InterviewGuide>

@@ -1,0 +1,283 @@
+---
+title: Google L5 Interview Guide
+description: >-
+  The complete Google L5 (Senior Software Engineer) interview process for 2026 —
+  full system design depth, leadership-weighted behavioral, RRK round option,
+  and the Hiring Committee weighting that lands or downlevels the offer.
+access: free
+hide_title: true
+tutor_topic: "Google L5 interview process"
+tutor_concepts:
+  - "Google L5 senior leveling"
+  - "system design depth at L5"
+  - "Googleyness leadership at senior bar"
+  - "RRK role-related knowledge round"
+  - "influence without authority"
+  - "Hiring Committee weighting at L5"
+---
+
+<InterviewGuide
+  slug="google-l5"
+  company="Google"
+  level="L5"
+  title="Google L5 Interview Guide"
+  subtitle="Senior SWE loop — system design depth and leadership-weighted behavioral are the level deciders. Coding is the floor; ownership and influence are the signals that land L5."
+>
+
+<GuideTOC
+  items={[
+    { href: '#process-overview', label: 'Process overview' },
+    { href: '#how-it-differs-from-l4', label: 'How it differs from L4' },
+    { href: '#technical-phone-screens', label: 'Technical phone screens' },
+    { href: '#onsite', label: 'Onsite (5 rounds)' },
+    { href: '#hiring-committee', label: 'Hiring Committee weighting' },
+    { href: '#evaluation-criteria', label: 'Evaluation criteria' },
+    { href: '#common-questions', label: 'Common questions' },
+    { href: '#preparation-plan', label: 'Preparation plan' },
+    { href: '#sources', label: 'Sources' },
+  ]}
+/>
+
+## Process overview {#process-overview}
+
+The Google L5 loop runs **6–10 weeks** end-to-end (team match can extend further):
+
+1. **Recruiter screen** — 30 min
+2. **Google Hiring Assessment (GHA)** — 30–45 min, personality + situational test
+3. **Technical phone screens** — 2 × 45 min on the VIP platform
+4. **Onsite loop** — typically 5 rounds: 2 coding + 1 system design + 1 Googleyness/behavioral + 1 RRK or extra coding
+5. **Hiring Committee** — packet review by senior Googlers
+6. **Team match**
+
+:::warning[Where the level is decided]
+At L5, the **system design round and the behavioral round carry the most weight** with the Hiring Committee. Strong coding is treated as a floor; you can\'t pass L5 without it, but it won\'t lift you over the bar either.
+:::
+
+## How it differs from L4 {#how-it-differs-from-l4}
+
+- **System design becomes mandatory and deeper.** Not optional or team-dependent — every L5 loop has it, and the bar is meaningfully higher.
+- **Behavioral signal must show leadership at scale.** Not just collaboration (L4) — explicit influence-without-authority, mentorship of juniors, ownership of multi-team outcomes.
+- **RRK option appears.** You can sometimes swap one coding round for a Role-Related Knowledge round in your specialty (e.g., distributed systems, ML, security) — useful if your specialty is your strongest signal.
+- **Coding stays at the same difficulty as L4** but speed expectation is higher and follow-ups go deeper.
+
+## Technical phone screens {#technical-phone-screens}
+
+<InterviewRound
+  name="Technical Phone Screen ×2"
+  duration="45 min each"
+  format="Google Meet · VIP platform · 1–2 mediums each · no code execution · no AI"
+  weight="gate"
+>
+
+Two screens (sometimes consolidated into one), each calibrated identically to onsite coding rounds. The bar is the same — a clear miss on either ends the loop.
+
+L5 candidates are expected to **finish both problems comfortably** within the 45 minutes, including manual dry-run and complexity analysis. Solving one and partially solving the other reads as L4.
+
+</InterviewRound>
+
+## Onsite (5 rounds) {#onsite}
+
+<InterviewRound name="Coding 1" duration="45 min" format="VIP platform · in-person or virtual" weight="signal">
+
+One challenging problem with non-trivial follow-ups. Common categories: graphs, DP, intervals, design problems (LRU, LFU), recursion. Recently asked: Merge Intervals (LC 56), Meeting Rooms III (LC 2402), LFU Cache (LC 460).
+
+L5 follow-ups stress scale ("now imagine the input doesn\'t fit in memory") or generalization ("what if updates are concurrent?"). Have an answer ready for both flavors.
+
+</InterviewRound>
+
+<InterviewRound name="Coding 2" duration="45 min" format="VIP platform" weight="signal">
+
+Same format, different interviewer. The two coding rounds give independent signals; the committee discounts one good and one bad as average.
+
+</InterviewRound>
+
+<InterviewRound name="System Design" duration="45 min" format="Virtual whiteboard / Excalidraw" weight="level">
+
+The single most important round at L5. You will design a large-scale distributed system from scratch — common prompts:
+
+- Distributed denylist / rate limiter
+- Trending hashtags service
+- Ticket booking system (high-contention writes)
+- URL shortener
+- Chat application at millions of users
+
+Expected flow:
+
+1. **Requirements** (5 min) — functional + non-functional. You drive scoping.
+2. **Capacity estimation** (3–5 min) — QPS, storage, bandwidth. Numbers, not adjectives.
+3. **API + data model** (5–10 min) — endpoints with parameter types; schemas with explicit indexes.
+4. **High-level architecture** (10 min) — boxes-and-arrows with named services and protocols.
+5. **Deep dives** (15 min) — interviewer picks 1–2 components: sharding, caching, replication, consistency, hot-key mitigation.
+6. **Tradeoffs and failure modes** (5 min) — what breaks at 10x scale, how the system degrades.
+
+The bar shifts from L4 in a few ways:
+
+- You **don\'t lean on named SaaS products** (e.g. "I\'d use DynamoDB"). You explain the data model and consistency requirements first, then suggest a database that fits.
+- You **anticipate failure modes** before being asked — what happens when a shard is down, when the cache is cold, when a replica lags.
+- You **balance simplicity and complexity** — adding sharding when you don\'t need it is a flag, not a strength.
+
+<EvalCriteria
+  criteria={[
+    {
+      name: 'Requirements scoping',
+      detail: 'You drive the conversation toward concrete functional and non-functional requirements without prompting. You name explicit assumptions.',
+    },
+    {
+      name: 'Architectural depth',
+      detail: 'Specific QPS / storage / bandwidth numbers; named consistency model; explicit cache eviction policy; named indexes on the schema.',
+      strong: 'When pressed, you go 3+ levels deep on one component — schema, indexes, hot-key mitigation, replication lag handling.',
+    },
+    {
+      name: 'Tradeoff articulation',
+      detail: 'When you pick a database, queue, or replication strategy, you name what you traded away and why it\'s acceptable here.',
+    },
+    {
+      name: 'Foundational knowledge',
+      detail: 'You can build the system from primitives — hash tables, B-trees, log-structured storage, consensus — not just pre-built products.',
+    },
+  ]}
+/>
+
+</InterviewRound>
+
+<InterviewRound name="Googleyness & Leadership" duration="45 min" format="Conversational" weight="level">
+
+This round is **most responsible for L5 leveling**. The interviewer probes:
+
+- **Leadership without authority** — driving a decision across people who didn\'t report to you
+- **Mentorship** — coaching juniors, raising the bar on a team
+- **Ownership of substantial projects** — well-scoped but multi-quarter, multi-engineer work
+- **Conflict resolution** — peer or stakeholder disagreement and how you brought them along
+- **Learning from failure** — a project that went wrong, what you specifically did and changed
+
+L5 stories should land at the **multi-engineer, multi-quarter** scale. Single-sprint or solo contributions read as L4 and trigger downlevel discussion in committee.
+
+<EvalCriteria
+  criteria={[
+    {
+      name: 'Influence without authority',
+      detail: 'A peer, skip-level, or partner team changed their position because of how you framed the tradeoff — not because you escalated.',
+      strong: 'You can name the specific argument that moved them and why it landed.',
+    },
+    {
+      name: 'Scope of ownership',
+      detail: 'Stories involve 3+ engineers and a quarter+ of timeline, with measurable outcomes. "I built feature X" isn\'t enough.',
+    },
+    {
+      name: 'Mentorship evidence',
+      detail: 'You named specific juniors you coached and the specific behavior change that followed.',
+    },
+    {
+      name: 'Self-awareness in failure',
+      detail: 'You name what you specifically did wrong, not "the team failed." Generic "we should have communicated better" is a flag.',
+    },
+  ]}
+/>
+
+</InterviewRound>
+
+<InterviewRound name="RRK or Extra Coding" duration="45 min" format="Domain interview or VIP coding" weight="signal">
+
+You can usually elect between:
+
+- **Role-Related Knowledge (RRK)** — a deep domain interview in your specialty (distributed systems, security, ML, compilers, networking). Half technical discussion, half whiteboard scenarios. Good if your specialty is your strongest signal.
+- **Extra coding round** — a third coding interview. Default if you don\'t opt into RRK or your specialty doesn\'t cleanly map.
+
+For ML-leaning candidates, the RRK round becomes essentially an ML system design + fundamentals round.
+
+</InterviewRound>
+
+## Hiring Committee weighting {#hiring-committee}
+
+At L5, the Hiring Committee weights signals roughly:
+
+| Signal | Approximate weight |
+|---|---|
+| System design | High |
+| Behavioral / Googleyness | High |
+| Coding | Moderate (must clear the floor) |
+| RRK | Moderate (boosts if elected) |
+
+A common pattern: **strong coding + strong system design + average behavioral → downlevel to L4**. Behavioral isn\'t a tiebreaker — at L5 it\'s a primary deciding signal. Prepare it with the same intensity as system design.
+
+## Evaluation criteria {#evaluation-criteria}
+
+<EvalCriteria
+  criteria={[
+    {
+      name: 'GCA — General Cognitive Ability',
+      detail: 'Reasoning under ambiguity. Drives system design and coding follow-ups.',
+    },
+    {
+      name: 'RRK — Role-Related Knowledge',
+      detail: 'Deep domain knowledge in your specialty. Code reads like production. Specific to your area (distributed systems, ML, etc.).',
+      strong: 'You teach the interviewer something they didn\'t know.',
+    },
+    {
+      name: 'Leadership',
+      detail: 'Multi-engineer, multi-quarter scope. Influence without authority. Mentorship of juniors. This is what separates L5 from L4 in committee.',
+    },
+    {
+      name: 'Googleyness',
+      detail: 'Six attributes (ambiguity, feedback, status quo, user focus, integrity, team). At L5 these are deeper — you\'re expected to model them for others.',
+    },
+  ]}
+/>
+
+## Common questions {#common-questions}
+
+<CommonQuestions
+  questions={[
+    { type: 'coding', difficulty: 'medium', prompt: 'Merge Intervals', source: 'LC 56' },
+    { type: 'coding', difficulty: 'hard', prompt: 'Meeting Rooms III', source: 'LC 2402' },
+    { type: 'coding', difficulty: 'hard', prompt: 'LFU Cache', source: 'LC 460' },
+    { type: 'coding', difficulty: 'hard', prompt: 'Median of Two Sorted Arrays', source: 'LC 4' },
+    { type: 'coding', difficulty: 'hard', prompt: 'Trapping Rain Water', source: 'LC 42' },
+    { type: 'system-design', prompt: 'Design a distributed denylist / rate limiter at Google scale.' },
+    { type: 'system-design', prompt: 'Design a trending hashtags service.' },
+    { type: 'system-design', prompt: 'Design a ticket booking system (high-contention writes).' },
+    { type: 'system-design', prompt: 'Design a URL shortener handling billions of redirects/day.' },
+    { type: 'system-design', prompt: 'Design a chat system supporting millions of concurrent users.' },
+    { type: 'behavioral', prompt: 'Tell me about a time you influenced a decision outside your team.' },
+    { type: 'behavioral', prompt: 'Describe a junior engineer you coached and the change that followed.' },
+    { type: 'behavioral', prompt: 'Tell me about a project that failed and what you did differently next.' },
+    { type: 'behavioral', prompt: 'How do you adapt your leadership style to different teammates?' },
+  ]}
+/>
+
+## Preparation plan {#preparation-plan}
+
+System design and behavioral dominate prep at L5.
+
+| Week | Focus | Daily commitment | Exit criteria |
+|---|---|---|---|
+| 1 | LC mediums + Google-tagged mediums (no IDE) | 2 mediums/day | 14 mediums solved cleanly, plain text |
+| 2 | LC mediums + selective hards | 2 mediums + 1 hard/day | LC 56, 460, 2402, 4, 42 solved |
+| 3 | System design fundamentals (consistency, sharding, replication, queues, leader election, hot keys) | 1 design walkthrough/day | 5 detailed designs with capacity numbers |
+| 4 | System design reps — Google question bank | 1 mock + 1 self-paced design/day | 5 mock designs at 45 min: rate limiter, hashtags, ticket booking, URL shortener, chat |
+| 5 | Behavioral story building (leadership scope) | 30 min stories + 1 mock | 5 STAR stories at multi-engineer / multi-quarter scope |
+| 6 | RRK / domain depth (if electing) | 30 min/day | 3 deep domain talks rehearsed |
+| 7 | Final mocks (full loops) | 1 mock loop/week | 2 full loops with no flagged round |
+
+:::tip[Two patterns that downlevel L5 candidates]
+**Pattern 1:** Strong coding + strong system design + average behavioral → committee downlevels to L4. Spend equal time on stories.
+**Pattern 2:** System design that leans on named SaaS products ("I\'d use DynamoDB and Kafka") rather than first principles. Practice designing the database from scratch — only mention named products to anchor a tradeoff.
+:::
+
+<RelatedGuides
+  guides={[
+    { href: '../google/l3', company: 'Google', level: 'L3', blurb: 'Entry-level reference.' },
+    { href: '../google/l4', company: 'Google', level: 'L4', blurb: 'Mid-level cousin — coding-dominated, system design optional.' },
+    { href: '../meta/e5', company: 'Meta', level: 'E5', blurb: 'Compare with Meta\'s senior loop.' },
+  ]}
+/>
+
+## Sources {#sources}
+
+Cross-checked against three sources during authoring (May 2026):
+
+- [HelloInterview — Google L5 (2026)](https://www.hellointerview.com/guides/google/l5)
+- [Onsites.fyi — Google L5 SWE Guide 2025](https://www.onsites.fyi/blog/article/google-L5-software-engineer-interview-questions)
+- [System Design Handbook — Google L5](https://www.systemdesignhandbook.com/guides/google-l5-system-design/)
+
+</InterviewGuide>

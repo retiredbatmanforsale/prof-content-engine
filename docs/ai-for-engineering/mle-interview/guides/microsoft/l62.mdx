@@ -1,0 +1,294 @@
+---
+title: Microsoft Level 62 Interview Guide
+description: >-
+  The complete Microsoft Level 62 (mid-level SDE II) interview process for 2026 —
+  Codility online assessment, 3–4 coding rounds, system design, and the
+  As-Appropriate (As-Ap) round that can override the loop.
+access: free
+hide_title: true
+tutor_topic: "Microsoft L62 interview process"
+tutor_concepts:
+  - "Microsoft L59-L67 leveling"
+  - "L62 mid-level SDE II"
+  - "As-Appropriate veto round"
+  - "Microsoft growth mindset"
+  - "system design at L61+"
+  - "Responsible AI Copilot context"
+---
+
+<InterviewGuide
+  slug="microsoft-l62"
+  company="Microsoft"
+  level="L62"
+  title="Microsoft Level 62 Interview Guide"
+  subtitle="Mid-level SDE II loop (4-6 years experience). 3-4 coding rounds plus system design, with the As-Appropriate round able to override the rest. Behavioral signal runs through every round."
+>
+
+:::warning[Leveling note]
+L62 at Microsoft is **mid-to-senior SDE II (4–6 years experience)**, not entry-level. Microsoft\'s entry levels are L59–L60. If you\'re a new grad targeting Microsoft, you\'re aiming for L59–L60, not L62.
+:::
+
+<GuideTOC
+  items={[
+    { href: '#process-overview', label: 'Process overview' },
+    { href: '#microsoft-leveling', label: 'Microsoft leveling explained' },
+    { href: '#online-assessment', label: 'Online assessment' },
+    { href: '#technical-phone-screen', label: 'Technical phone screen' },
+    { href: '#onsite', label: 'Onsite (4–5 rounds)' },
+    { href: '#as-appropriate', label: 'The As-Appropriate (As-Ap) round' },
+    { href: '#evaluation-criteria', label: 'Evaluation criteria' },
+    { href: '#common-questions', label: 'Common questions' },
+    { href: '#preparation-plan', label: 'Preparation plan' },
+    { href: '#sources', label: 'Sources' },
+  ]}
+/>
+
+## Process overview {#process-overview}
+
+The Microsoft L62 loop runs **4–8 weeks** end-to-end:
+
+1. **Recruiter screen** — 30–45 min logistics + level fit
+2. **Online assessment (Codility)** — 60–90 min, 2–3 coding problems
+3. **Technical phone screen** (sometimes replaces OA) — 45–60 min, 1–2 medium problems
+4. **Onsite loop** — 4–5 rounds: 3–4 coding rounds (medium / medium-hard) + 1 system design + behavioral woven into each round
+5. **As-Appropriate (As-Ap) round** — final senior-leadership interview that can override the rest
+
+:::warning[How Microsoft differs from FAANG]
+Microsoft **weaves behavioral assessment into every technical round**, rather than dedicating a separate behavioral round. Each interviewer is checking for "growth mindset" and culture fit while you code. Treat every round as both technical and behavioral.
+:::
+
+## Microsoft leveling explained {#microsoft-leveling}
+
+| Level | Title | Years exp | Notes |
+|---|---|---|---|
+| L59 | SDE I | 0–1 | Entry / new grad |
+| L60 | SDE I | 1–2 | Junior |
+| L61 | SDE II | 2–5 | Mid-level |
+| **L62** | **SDE II** | **4–6** | **This guide — mid-to-senior** |
+| L63 | Senior SDE | 6–10 | Senior |
+| L64 | Senior SDE | 8+ | Senior / Staff start |
+| L65–67 | Principal+ | 10+ | Principal level |
+
+L62 candidates are expected to operate independently on substantial features, mentor junior engineers, and contribute to system design without being the primary driver. The interview reflects this — coding is the gate, system design is required, and behavioral signal must show ownership beyond your immediate scope.
+
+## Online assessment {#online-assessment}
+
+<InterviewRound
+  name="Online Assessment (Codility)"
+  duration="60–90 min"
+  format="Codility · 2–3 problems"
+  weight="gate"
+>
+
+Two or three problems on Codility. Common pattern: 1 medium + 1 medium-hard. Topics: arrays, strings, hash maps, trees, graphs, BFS/DFS, sliding window, basic DP.
+
+The OA is a true gate — passing it grants the onsite, but a borderline pass does not survive a weak interview later. Aim to solve all problems comfortably with edge cases handled.
+
+</InterviewRound>
+
+## Technical phone screen {#technical-phone-screen}
+
+<InterviewRound
+  name="Technical Phone Screen"
+  duration="45–60 min"
+  format="Live with engineer · 1–2 medium problems · CodingPad / shared editor"
+  weight="gate"
+>
+
+Sometimes substitutes for the OA, sometimes added on top. One or two medium problems with follow-ups. The interviewer also asks 1–2 behavioral questions in the back half.
+
+Microsoft is unusually tolerant of using your most-comfortable language. They explicitly tell you to pick the language you can write fastest in.
+
+</InterviewRound>
+
+## Onsite (4–5 rounds) {#onsite}
+
+<InterviewRound name="Coding 1 — DSA" duration="45–60 min" format="Whiteboard / virtual editor" weight="signal">
+
+One medium problem with follow-ups. Common categories: trees, graphs, BFS/DFS, recursion, intervals. Recently asked: Reverse Linked List (LC 206), Word Ladder (LC 127), Course Schedule (LC 207), Binary Tree Right Side View (LC 199).
+
+The interviewer expects you to:
+1. Restate the problem and ask clarifying questions.
+2. Propose an approach before coding.
+3. Code with clean variable names and clear structure.
+4. Dry-run on the example input.
+5. Discuss complexity.
+
+</InterviewRound>
+
+<InterviewRound name="Coding 2 — DSA" duration="45–60 min" format="Whiteboard / virtual editor" weight="signal">
+
+Same format, harder problem. Common: medium-hard DP, intervals, design (LRU cache, basic queue with two stacks).
+
+</InterviewRound>
+
+<InterviewRound name="Coding 3 — Implementation" duration="45–60 min" format="Whiteboard / virtual editor" weight="signal">
+
+Heavier on implementation discipline than algorithmic insight. Common prompts: parsing problems, simulation, basic OOP design (vending machine, parking lot, deck of cards). The interviewer wants to see if you write production-ready code, not just clever algorithms.
+
+</InterviewRound>
+
+<InterviewRound name="System Design" duration="45–60 min" format="Whiteboard" weight="level">
+
+Required at L61+. Design questions are typically targeted at **Microsoft products**:
+
+- Design OneDrive\'s file sync system
+- Design Teams chat (with persistence + presence)
+- Design Azure Blob Storage
+- Design SharePoint document collaboration
+- Design Outlook calendar with availability search
+
+Expected flow:
+
+1. **Requirements** (5 min) — functional + non-functional, scale numbers.
+2. **Capacity** (3–5 min) — QPS, storage, bandwidth.
+3. **High-level architecture** (10–15 min) — boxes-and-arrows with named services.
+4. **Deep dive** (15 min) — interviewer picks 1–2 components, often around consistency or scale.
+5. **Tradeoffs** (5 min) — what breaks at 10x scale, failure modes.
+
+**Azure service literacy** is welcome but not required. Microsoft interviewers care more about first-principles design than knowledge of specific Azure services.
+
+<EvalCriteria
+  criteria={[
+    {
+      name: 'Requirements scoping',
+      detail: 'You drive scoping yourself — functional vs. non-functional, capacity numbers, simplifying assumptions.',
+    },
+    {
+      name: 'Tradeoff articulation',
+      detail: 'When you pick a database, queue, or replication strategy, you explain what you traded away.',
+      strong: 'You raise the next tradeoff before the interviewer asks "what about consistency?"',
+    },
+    {
+      name: 'First-principles thinking',
+      detail: 'You can build the system from primitives without leaning on named SaaS products.',
+    },
+  ]}
+/>
+
+</InterviewRound>
+
+<InterviewRound name="Behavioral (woven, not standalone)" duration="varies" format="Embedded in technical rounds" weight="signal">
+
+Microsoft does **not** typically have a standalone behavioral round at L62. Instead, every interviewer asks 1–2 behavioral questions during their technical round. Cumulatively this adds up to substantial behavioral signal.
+
+The dominant behavioral theme is **growth mindset** — Microsoft\'s explicit cultural value, derived from Carol Dweck\'s framework. Stories about learning from failure, receiving feedback well, and developing skills you didn\'t have score highly. Defensive responses to setbacks are a hard red flag.
+
+Other themes:
+
+- **Customer-first orientation** — choosing user-aligned tradeoffs
+- **Collaboration across team boundaries** — working with PMs, designers, partner teams
+- **Responsible AI** (newly emphasized) — for AI/Copilot-adjacent teams, expect questions about how you reason about model risks, fairness, and enterprise-safe AI
+
+<EvalCriteria
+  criteria={[
+    {
+      name: 'Growth mindset',
+      detail: 'Your stories show learning from setbacks rather than defensiveness. You name what you did wrong and changed.',
+      strong: 'You can describe a specific feedback moment and how it changed your subsequent behavior.',
+    },
+    {
+      name: 'Authenticity',
+      detail: 'Microsoft interviewers explicitly value genuine answers over polished STAR narratives. Over-rehearsed stories sometimes flag.',
+    },
+    {
+      name: 'Collaboration evidence',
+      detail: 'Cross-team examples — working with PMs, designers, partner teams — not just within-team contributions.',
+    },
+  ]}
+/>
+
+</InterviewRound>
+
+## The As-Appropriate (As-Ap) round {#as-appropriate}
+
+The As-Ap is Microsoft\'s analog to Amazon\'s Bar Raiser, with a twist: it\'s **invitation-only** based on your earlier rounds.
+
+- **You only get an As-Ap if your earlier rounds went well.** Receiving the invitation is itself a strong positive signal.
+- The As-Ap is a senior leader (often a partner-level engineer or hiring manager) who can **override the rest of the loop in either direction** — they can downlevel a strong loop or save a weak one.
+- The format depends on what gaps the loop revealed: they can ask coding, system design, or behavioral. Sometimes the round is half-technical, half "selling" you on the team.
+- The As-Ap and the hiring manager **jointly make the final hire decision**.
+
+If you get to As-Ap with a strong loop, the round often becomes a two-way conversation about the team\'s work. Don\'t treat it as a victory lap — but it\'s a less adversarial round than a Bar Raiser.
+
+## Evaluation criteria {#evaluation-criteria}
+
+<EvalCriteria
+  criteria={[
+    {
+      name: 'Coding fluency',
+      detail: '3 coding rounds — all solved cleanly with edge cases. Your most-comfortable language; idiomatic.',
+    },
+    {
+      name: 'System design',
+      detail: 'Drives scoping, articulates tradeoffs, goes deep on one component. First-principles, not SaaS-name-dropping.',
+      strong: 'You\'d be a credible designer for the next OneDrive / Teams / Outlook feature.',
+    },
+    {
+      name: 'Growth mindset',
+      detail: 'Stories show learning from failure, acting on feedback, developing skills outside your comfort zone.',
+    },
+    {
+      name: 'Cross-team collaboration',
+      detail: 'Examples of working with PMs, designers, partner teams. Multi-quarter ownership at L62 scope.',
+    },
+  ]}
+/>
+
+## Common questions {#common-questions}
+
+<CommonQuestions
+  questions={[
+    { type: 'coding', difficulty: 'medium', prompt: 'Reverse Linked List', source: 'LC 206' },
+    { type: 'coding', difficulty: 'medium', prompt: 'Word Ladder', source: 'LC 127' },
+    { type: 'coding', difficulty: 'medium', prompt: 'Course Schedule', source: 'LC 207' },
+    { type: 'coding', difficulty: 'medium', prompt: 'Binary Tree Right Side View', source: 'LC 199' },
+    { type: 'coding', difficulty: 'medium', prompt: 'LRU Cache', source: 'LC 146' },
+    { type: 'coding', difficulty: 'medium', prompt: 'Number of Islands', source: 'LC 200' },
+    { type: 'coding', difficulty: 'hard', prompt: 'Serialize and Deserialize Binary Tree', source: 'LC 297' },
+    { type: 'system-design', prompt: 'Design OneDrive\'s file sync system.' },
+    { type: 'system-design', prompt: 'Design Teams chat with persistence and presence.' },
+    { type: 'system-design', prompt: 'Design Outlook calendar with availability search.' },
+    { type: 'system-design', prompt: 'Design Azure Blob Storage.' },
+    { type: 'behavioral', prompt: 'Tell me about a time you learned something completely new.' },
+    { type: 'behavioral', prompt: 'What\'s your favorite Microsoft product and why?' },
+    { type: 'behavioral', prompt: 'Describe a time you received critical feedback and what changed.' },
+    { type: 'behavioral', prompt: 'Tell me about a project where you collaborated across teams.' },
+    { type: 'behavioral', prompt: 'How do you reason about responsible AI in your work?' },
+  ]}
+/>
+
+## Preparation plan {#preparation-plan}
+
+| Week | Focus | Daily commitment | Exit criteria |
+|---|---|---|---|
+| 1 | LC mediums (Microsoft-tagged) | 2 mediums/day | 14 mediums solved cleanly |
+| 2 | LC mediums + selective hards | 2 mediums + 1 hard/day | LC 297, 146, 199, 207 solved |
+| 3 | System design fundamentals (storage, replication, sharding, queues) | 1 design walkthrough/day | 5 designs at L62 scope |
+| 4 | System design — Microsoft-product flavored (OneDrive, Teams, Outlook) | 1 mock design/day | 5 product-flavored designs |
+| 5 | Growth-mindset story building + Microsoft-product familiarity | 30 min/day | 6 STAR stories with feedback/learning angles |
+| 6 | Mock loops + final coding rotation | 1 mock loop/week | 2 full mocks |
+
+:::tip[Microsoft-specific signals]
+**"What\'s your favorite Microsoft product?"** is asked unironically and weighted. Have a specific answer that shows you actually use the product, with one feature you appreciate and one you\'d improve. Generic answers ("Office because it\'s ubiquitous") flag.
+
+**For AI/Copilot teams**, expect Responsible AI questions: "How would you reason about content moderation in a Copilot suggestion?" or "How would you handle a model giving advice that could harm an enterprise customer?" These are signal rounds, not casual chat.
+:::
+
+<RelatedGuides
+  guides={[
+    { href: '../meta/e4', company: 'Meta', level: 'E4', blurb: 'Compare with Meta\'s mid-level loop.' },
+    { href: '../google/l4', company: 'Google', level: 'L4', blurb: 'Compare with Google\'s mid-level loop.' },
+    { href: '../amazon/sde-ii', company: 'Amazon', level: 'SDE II', blurb: 'Compare with Amazon\'s mid-level loop.' },
+  ]}
+/>
+
+## Sources {#sources}
+
+Cross-checked against three sources during authoring (May 2026):
+
+- [Prepfully — Microsoft SWE Guide 2026](https://prepfully.com/interview-guides/microsoft-software-engineer-interview-guide)
+- [Tryexponent — Microsoft Entry-Level SWE 2026](https://www.tryexponent.com/guides/microsoft-entry-level-software-engineer-interview)
+- [HelloInterview — Microsoft L63-64 (2026)](https://www.hellointerview.com/guides/microsoft/senior)
+
+</InterviewGuide>

@@ -1,0 +1,284 @@
+---
+title: Meta E3 Interview Guide
+description: >-
+  The complete Meta E3 (junior software engineer) interview process —
+  rounds, rubrics, common questions, and a focused preparation plan.
+access: free
+hide_title: true
+tutor_topic: "Meta E3 interview process"
+tutor_concepts:
+  - "Meta E3 leveling"
+  - "online assessment expectations"
+  - "coding round structure at Meta"
+  - "behavioral failure as terminal"
+  - "Meta evaluation criteria"
+---
+
+<InterviewGuide
+  slug="meta-e3"
+  company="Meta"
+  level="E3"
+  title="Meta E3 Interview Guide"
+  subtitle="Junior SWE loop — recruiter screen, online assessment, technical phone screen, and a four-round onsite. Coding decides hire; behavioral can still terminate."
+>
+
+<GuideTOC
+  items={[
+    { href: '#process-overview', label: 'Process overview' },
+    { href: '#online-assessment', label: 'Online assessment' },
+    { href: '#recruiter-phone-screen', label: 'Recruiter phone screen' },
+    { href: '#technical-phone-screen', label: 'Technical phone screen' },
+    { href: '#onsite', label: 'Onsite (4 rounds)' },
+    { href: '#evaluation-criteria', label: 'Evaluation criteria' },
+    { href: '#common-questions', label: 'Common questions' },
+    { href: '#preparation-plan', label: 'Preparation plan' },
+  ]}
+/>
+
+## Process overview {#process-overview}
+
+The Meta E3 loop typically runs **4–6 weeks** end-to-end:
+
+1. **Recruiter phone screen** — 20–30 min, logistics + soft fit
+2. **Online assessment (OA)** — 70 min, two coding problems via CoderPad
+3. **Technical phone screen** — 45 min, 1–2 coding problems with a Meta engineer
+4. **Onsite ("full loop")** — 4 rounds in one day, virtual or onsite:
+   - Coding 1 (45 min, 2 problems)
+   - Coding 2 (45 min, 2 problems)
+   - Behavioral (45 min)
+   - *No system design at E3.*
+
+:::warning[High-signal insight]
+At E3, **coding determines the hire decision**. Behavioral does not raise your level, but a clear behavioral failure (poor collaboration signals, defensive responses to feedback) is **terminal** regardless of coding strength.
+:::
+
+## Online assessment {#online-assessment}
+
+<InterviewRound
+  name="Online Assessment (OA)"
+  duration="70 min"
+  format="2 problems · CoderPad · no interviewer"
+  weight="gate"
+>
+
+You receive a CoderPad link from the recruiter and have a few days to complete it. Both problems are graded by automated test cases and human review of code quality.
+
+- **Problem 1** is usually an easy/medium array, string, or hashmap problem.
+- **Problem 2** is a medium with a non-trivial twist — typically a graph, tree traversal, or two-pointer problem.
+
+You are expected to finish both, with code that compiles, passes the visible cases, and handles obvious edge cases. Comments are not required but a short explanation in plain English at the top of each solution helps the human reviewer.
+
+<EvalCriteria
+  criteria={[
+    {
+      name: 'Correctness',
+      detail: 'Both problems pass all visible test cases; obvious edge cases (empty input, single element, duplicates) are handled.',
+      strong: 'Solutions also pass hidden cases, with a one-line note explaining a tricky edge case.',
+    },
+    {
+      name: 'Code quality',
+      detail: 'Readable variable names, no dead code, no obvious O(n²) when O(n) is straightforward.',
+    },
+    {
+      name: 'Time discipline',
+      detail: 'Both problems submitted within the 70-minute window. Most candidates finish in 50–60 min.',
+    },
+  ]}
+/>
+
+</InterviewRound>
+
+## Recruiter phone screen {#recruiter-phone-screen}
+
+<InterviewRound
+  name="Recruiter Phone Screen"
+  duration="20–30 min"
+  format="Conversational"
+  weight="gate"
+>
+
+The recruiter walks through your background, target team, timeline, and salary band. This is also where they explain the loop and answer your questions.
+
+There is no technical evaluation here, but **two things can knock you out**:
+
+- Misalignment on level — if your resume reads E4+ but you applied for E3, recruiters may steer you to a different opening.
+- Red-flag answers about why you're leaving your current role (anything that reads as conflict-averse or blame-shifting).
+
+</InterviewRound>
+
+## Technical phone screen {#technical-phone-screen}
+
+<InterviewRound
+  name="Technical Phone Screen (Coding)"
+  duration="45 min"
+  format="1–2 problems · CoderPad · live with engineer"
+  weight="gate"
+>
+
+Identical format to onsite coding rounds, just one. A Meta engineer joins on video, shares a CoderPad link, and walks you through 1–2 problems.
+
+The interviewer is looking for the **same signals as the onsite coding rounds**, so prep them as one unit. The bar is slightly lower (some companies use a "convert" model where TPS is purely a screen) but a clear miss here ends the loop.
+
+<EvalCriteria
+  criteria={[
+    {
+      name: 'Communication',
+      detail: 'You restate the problem, propose an approach before coding, and narrate tradeoffs as you write.',
+    },
+    {
+      name: 'Coding speed',
+      detail: 'You solve at least one problem fully — ideally two — within 45 min, including dry-runs.',
+      strong: 'You write a clean, working solution in <15 min and use the rest for follow-ups.',
+    },
+    {
+      name: 'Debugging',
+      detail: 'When a test case fails, you walk through the code line-by-line rather than randomly tweaking.',
+    },
+  ]}
+/>
+
+</InterviewRound>
+
+## Onsite (4 rounds) {#onsite}
+
+<InterviewRound
+  name="Coding 1"
+  duration="45 min"
+  format="2 problems · CoderPad"
+  weight="signal"
+>
+
+Two problems, typically one warm-up easy/medium and one harder medium. Common categories: arrays, strings, hashmaps, two pointers, sliding window, BFS/DFS on trees and graphs.
+
+The interviewer expects you to:
+
+1. Spend the first 3–5 min restating the problem and asking clarifying questions.
+2. Propose a brute-force approach, then optimize before coding.
+3. Code the optimized solution, narrating as you go.
+4. Dry-run your code on the example input.
+5. Discuss complexity (time and space).
+
+</InterviewRound>
+
+<InterviewRound
+  name="Coding 2"
+  duration="45 min"
+  format="2 problems · CoderPad"
+  weight="signal"
+>
+
+Same structure as Coding 1, but with a different interviewer and (usually) different problem categories — often DP, recursion, intervals, or harder graph problems. The two coding rounds are calibrated to give independent signal: a strong-strong is a clear hire, a strong-weak goes to debrief discussion.
+
+</InterviewRound>
+
+<InterviewRound
+  name="Behavioral ('Jedi')"
+  duration="45 min"
+  format="Conversational · with senior engineer"
+  weight="veto"
+>
+
+Meta calls this the "Jedi" round. The interviewer probes:
+
+- **Conflict** — how you handled disagreements with peers or managers.
+- **Failure** — a project that went wrong and what you learned.
+- **Motivation** — why Meta, why this role, what kind of work energizes you.
+- **Collaboration** — how you give and receive feedback.
+
+Have **3 polished stories** prepared, each in STAR format, each demonstrating a different value (impact, ownership, growth). Use real numbers where possible.
+
+<EvalCriteria
+  criteria={[
+    {
+      name: 'Self-awareness',
+      detail: 'You name what you specifically did wrong or could have done better — not "the team failed" framing.',
+    },
+    {
+      name: 'Collaboration signals',
+      detail: 'Your stories show you giving credit, taking ownership of failures, and being responsive to feedback.',
+      strong: 'You describe a moment where peer feedback changed your approach and the outcome improved.',
+    },
+    {
+      name: 'Motivation fit',
+      detail: 'Your "why Meta" is specific — a product, a team, a problem domain — not generic ("scale", "smart people").',
+    },
+  ]}
+/>
+
+:::warning[Behavioral as a terminator]
+A weak behavioral round at Meta is **not redeemable** by strong coding. Recruiters will explicitly tell you "we'd love your code, but the loop didn't go well." Prepare this round with the same intensity as coding.
+:::
+
+</InterviewRound>
+
+## Evaluation criteria {#evaluation-criteria}
+
+The debrief uses four dimensions, scored independently by each interviewer and combined by the hiring committee:
+
+<EvalCriteria
+  criteria={[
+    {
+      name: 'Coding (problem-solving)',
+      detail: 'Can the candidate decompose, optimize, and implement medium-difficulty problems within 25 min each?',
+      strong: 'Two clean solutions per round with optimal complexity, dry-run, and follow-up extension.',
+    },
+    {
+      name: 'Coding (implementation)',
+      detail: 'Is the code idiomatic, free of bugs, and easy to read? Does the candidate self-correct when wrong?',
+    },
+    {
+      name: 'Communication',
+      detail: 'Does the candidate think out loud, narrate tradeoffs, and respond well to hints?',
+      strong: 'Hints accelerate rather than replace the candidate\'s reasoning — they take the hint and run with it.',
+    },
+    {
+      name: 'Behavioral',
+      detail: 'Does the candidate work well with others, respond non-defensively to feedback, and show growth?',
+    },
+  ]}
+/>
+
+## Common questions {#common-questions}
+
+<CommonQuestions
+  questions={[
+    { type: 'coding', difficulty: 'easy', prompt: 'Valid Palindrome II', source: 'LC 680' },
+    { type: 'coding', difficulty: 'medium', prompt: 'Subarray Sum Equals K', source: 'LC 560' },
+    { type: 'coding', difficulty: 'medium', prompt: 'Lowest Common Ancestor of a Binary Tree', source: 'LC 236' },
+    { type: 'coding', difficulty: 'medium', prompt: 'Random Pick with Weight', source: 'LC 528' },
+    { type: 'coding', difficulty: 'medium', prompt: 'Binary Tree Vertical Order Traversal', source: 'LC 314' },
+    { type: 'coding', difficulty: 'medium', prompt: 'Kth Largest Element in an Array', source: 'LC 215' },
+    { type: 'coding', difficulty: 'hard', prompt: 'Minimum Window Substring', source: 'LC 76' },
+    { type: 'behavioral', prompt: 'Tell me about a time you disagreed with your manager.' },
+    { type: 'behavioral', prompt: 'Describe a project that did not go as planned. What did you learn?' },
+    { type: 'behavioral', prompt: 'Why Meta, and why this team specifically?' },
+  ]}
+/>
+
+## Preparation plan {#preparation-plan}
+
+A focused 4-week plan, weighted toward coding since that's the gating signal:
+
+| Week | Focus | Daily commitment | Exit criteria |
+|---|---|---|---|
+| 1 | LC patterns: arrays, strings, hashmaps, two pointers | 2 mediums/day | Solve 14 mediums in &lt;25 min each |
+| 2 | LC patterns: trees, graphs, BFS/DFS, recursion | 2 mediums/day | Solve LC 236, 314, 199 cleanly |
+| 3 | Mock interviews + Meta-tagged questions | 1 mock + 1 hard/day | Pass 3 mocks with no major bugs |
+| 4 | Behavioral stories + final mocks | 1 mock + 30 min stories/day | 3 polished STAR stories, 1 final mock |
+
+:::tip[Meta-specific hack]
+Most Meta E3 questions repeat from a known pool. After Week 2, switch to the **"Top 50 Meta-tagged"** filter on LeetCode — you'll see most of your actual onsite questions in that list.
+:::
+
+<RelatedGuides
+  guides={[
+    { href: '../meta/e4', company: 'Meta', level: 'E4', blurb: 'Mid SWE — adds system design.' },
+    { href: '../google/l3', company: 'Google', level: 'L3', blurb: 'Entry-level cousin loop at Google.' },
+  ]}
+/>
+
+</InterviewGuide>
+
+:::note[Want a personalized prep plan?]
+Use the <a href="/courses/ai-for-engineering/mle-interview/rubrics-and-playbook">MLE Rubrics & Playbook</a> alongside this guide to map the rounds to your current skill gaps.
+:::

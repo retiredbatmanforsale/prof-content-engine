@@ -1,0 +1,332 @@
+---
+title: Meta E5 Interview Guide
+description: >-
+  The complete Meta E5 (Senior Software Engineer) interview process for 2026 —
+  rounds, the new AI-assisted coding round, system design depth, and the
+  behavioral signals that decide level.
+access: free
+hide_title: true
+tutor_topic: "Meta E5 interview process"
+tutor_concepts:
+  - "Meta E5 senior leveling"
+  - "AI-assisted coding round 2026"
+  - "system design as level decider at E5"
+  - "behavioral can downlevel to E4"
+  - "Meta 5 core competencies"
+  - "product architecture vs system design split"
+---
+
+<InterviewGuide
+  slug="meta-e5"
+  company="Meta"
+  level="E5"
+  title="Meta E5 Interview Guide"
+  subtitle="Senior SWE loop — system design and behavioral decide level. New for 2026: one of the two coding rounds is now AI-assisted."
+>
+
+<GuideTOC
+  items={[
+    { href: '#process-overview', label: 'Process overview' },
+    { href: '#whats-new-in-2026', label: 'What\'s new in 2026' },
+    { href: '#online-assessment', label: 'Online assessment' },
+    { href: '#technical-phone-screen', label: 'Technical phone screen' },
+    { href: '#onsite', label: 'Onsite (4 rounds)' },
+    { href: '#evaluation-criteria', label: 'Evaluation criteria' },
+    { href: '#common-questions', label: 'Common questions' },
+    { href: '#preparation-plan', label: 'Preparation plan' },
+    { href: '#sources', label: 'Sources' },
+  ]}
+/>
+
+## Process overview {#process-overview}
+
+The Meta E5 loop runs **3–4 weeks** end-to-end:
+
+1. **Recruiter screen** — 20–30 min logistics + level fit
+2. **Online assessment** — 90 min on CodeSignal, single problem with 4 progressive stages
+3. **Technical phone screen** — 45 min (≈35 min coding) on CoderPad, 2 medium problems, no code execution
+4. **Onsite ("full loop")** — 4 rounds in one day:
+   - 1 traditional coding (45 min)
+   - 1 AI-assisted coding (45 min) — **new pilot rolled out for 2026**
+   - 1 system design **or** product architecture (45 min)
+   - 1 behavioral (45 min, run by the loop lead)
+
+:::warning[High-signal insight]
+At E5, **system design and behavioral carry the most weight** for both hire and level decisions. Strong coding alone will not land an E5 offer — and a weak behavioral can downlevel you to E4 even with strong technicals.
+:::
+
+## What's new in 2026 {#whats-new-in-2026}
+
+Meta made larger changes to the loop between Oct 2025 and Q1 2026 than in the prior five years combined:
+
+- **AI-assisted coding round** — One of the two onsite coding rounds is now conducted in a CoderPad environment with an AI assistant built in. The interviewer evaluates how you collaborate with the AI: when you accept its output, when you push back, and how you verify what it generates.
+- **Senior loops dropped the second pure-coding round.** At E5+, the freed slot goes to a deeper system design probe, deeper behavioral, or (in some loops) a cross-functional ambiguity round.
+- **Code execution disabled** in coding rounds. You read the code aloud and trace it manually — practice this before the loop or you will fumble.
+
+## Online assessment {#online-assessment}
+
+<InterviewRound
+  name="Online Assessment (OA)"
+  duration="90 min"
+  format="CodeSignal · single problem · 4 progressive stages · video/mic monitored"
+  weight="gate"
+>
+
+You receive a CodeSignal link from the recruiter. Format is unusual: **one problem with four progressive stages**, each unlocking after the previous is solved. The early stages are easy; the later stages add real-world complications (state, concurrency, edge-case handling).
+
+Meta acknowledges that most senior candidates **do not finish all four stages**. Reaching stage 3 with clean code is generally enough to advance.
+
+<EvalCriteria
+  criteria={[
+    {
+      name: 'Stage progression',
+      detail: 'You complete at least 3 of the 4 stages with passing test cases. Solving 2 cleanly often beats solving 3 with bugs.',
+    },
+    {
+      name: 'Code quality across stages',
+      detail: 'Earlier stages are written so they extend cleanly to later stages. Senior candidates are expected to anticipate the progression.',
+      strong: 'Your stage-2 abstraction is the right one for stage-3, requiring minimal rewrite.',
+    },
+    {
+      name: 'Edge-case discipline',
+      detail: 'Empty input, single element, max bounds — handled in every stage without being prompted.',
+    },
+  ]}
+/>
+
+</InterviewRound>
+
+## Technical phone screen {#technical-phone-screen}
+
+<InterviewRound
+  name="Technical Phone Screen"
+  duration="45 min (≈35 min coding)"
+  format="CoderPad · 2 medium problems · live with engineer · no code execution"
+  weight="gate"
+>
+
+A Meta engineer joins on video and shares a CoderPad link. **You cannot run your code.** You write it, then trace through it manually with example inputs.
+
+The interviewer expects you to test at least one corner case verbally during the dry-run, even on simple problems.
+
+<EvalCriteria
+  criteria={[
+    {
+      name: 'Coding speed',
+      detail: 'Both problems solved in 35 min. Senior candidates are expected to finish faster than E3/E4 on the same difficulty.',
+    },
+    {
+      name: 'Manual verification',
+      detail: 'You trace your code on input/output without an interpreter. You catch your own off-by-one errors.',
+      strong: 'You preempt the interviewer pointing out a corner case by raising it yourself.',
+    },
+    {
+      name: 'Communication',
+      detail: 'You restate the problem, propose an approach, narrate as you code, and discuss complexity at the end.',
+    },
+  ]}
+/>
+
+</InterviewRound>
+
+## Onsite (4 rounds) {#onsite}
+
+<InterviewRound
+  name="Coding 1 — Traditional"
+  duration="45 min"
+  format="CoderPad · 1–2 problems · no AI · no code execution"
+  weight="signal"
+>
+
+Identical bar to E4 coding rounds, but speed expectation is higher. Common categories: graphs, trees, intervals, DP, design (LRU cache, calculator). Recently asked: Minimum Remove to Make Valid Parentheses (LC 1249), Binary Tree Vertical Order Traversal (LC 314), Basic Calculator II (LC 227), Kth Largest (LC 215), Valid Word Abbreviation (LC 408).
+
+</InterviewRound>
+
+<InterviewRound
+  name="Coding 2 — AI-Assisted (new for 2026)"
+  duration="45 min"
+  format="Specialized CoderPad with built-in AI assistant"
+  weight="signal"
+>
+
+This round is **new for 2026** and randomly assigned. The interviewer evaluates how you work *with* AI, not how well the AI codes:
+
+- Do you prompt it precisely or vaguely?
+- Do you read and verify its output, or accept it blindly?
+- When it produces wrong code, do you debug effectively?
+- Do you know when not to use it (small functions where typing is faster than prompting)?
+
+Treat the AI like a junior engineer pair-programming with you: delegate clear sub-tasks, review output, push back when needed.
+
+<EvalCriteria
+  criteria={[
+    {
+      name: 'AI collaboration quality',
+      detail: 'You write specific, contextful prompts. You verify outputs. You catch hallucinated APIs or wrong logic.',
+      strong: 'You explicitly say "I won\'t use AI for this part because X" — Meta values judgment, not raw usage.',
+    },
+    {
+      name: 'Speed advantage',
+      detail: 'You finish meaningfully faster than the traditional round would allow, while maintaining correctness.',
+    },
+    {
+      name: 'Code ownership',
+      detail: 'You can explain every line of generated code and make modifications yourself when prompted.',
+    },
+  ]}
+/>
+
+</InterviewRound>
+
+<InterviewRound
+  name="System Design or Product Architecture"
+  duration="45 min"
+  format="Excalidraw whiteboard"
+  weight="level"
+>
+
+The single most important round at E5. Meta splits into two flavors based on the team you're matching to:
+
+- **Product Architecture** (consumer / product teams) — design user-facing products: Instagram feed, Ticketmaster, Uber, a top-K Spotify widget. Emphasis on APIs, UX flows, data modeling, write/read patterns.
+- **System Design** (infra / platform teams) — design backend systems: distributed cache, rate limiter, ad-click aggregator, leaderboard, top-K service. Emphasis on scaling, sharding, consistency, fault tolerance.
+
+Meta interviewers go **deeper than peers at other big-tech**: you will be asked for specific throughput numbers, cache invalidation strategies, and explicit failure-mode reasoning. High-level boxes-and-arrows is not enough.
+
+A common variant: the **reverse system design** — the interviewer asks you to walk through a system you actually built. Have one prepared, with capacity numbers and at least one tradeoff you'd revisit.
+
+<EvalCriteria
+  criteria={[
+    {
+      name: 'Problem navigation',
+      detail: 'You drive scoping yourself — functional vs. non-functional, capacity numbers, simplifying assumptions — without being prompted.',
+    },
+    {
+      name: 'Technical excellence',
+      detail: 'Specific QPS / storage / bandwidth numbers; explicit consistency model; specific cache eviction policy; named indexes on the schema.',
+      strong: 'You preempt the interviewer\'s "what about X" by raising the tradeoff yourself.',
+    },
+    {
+      name: 'Depth on a chosen component',
+      detail: 'When pressed on one piece, you go 3+ levels deep — schema, index choices, hot-key mitigation, replication lag handling.',
+    },
+    {
+      name: 'Technical communication',
+      detail: 'You name what you\'re drawing as you draw it. The interviewer can follow without asking what a box represents.',
+    },
+  ]}
+/>
+
+</InterviewRound>
+
+<InterviewRound
+  name="Behavioral ('Jedi')"
+  duration="45 min"
+  format="Conversational · led by the loop lead"
+  weight="veto"
+>
+
+Run by the **loop lead**, who aggregates feedback from all interviewers and writes the hire/level recommendation. Behavioral signal is the deciding factor between E5 and E4 in the debrief.
+
+Meta evaluates against five competencies:
+
+1. **Resolving conflicts** — peer or stakeholder disagreement, how you handled it
+2. **Driving results** — initiatives you owned end-to-end with measurable impact
+3. **Embracing ambiguity** — leading without clear requirements
+4. **Growing continuously** — feedback you received and changed your behavior on
+5. **Communicating effectively** — making complex work understandable to non-experts
+
+The E5 expectation: stories that involve **3+ engineers**, **cross-team coordination**, and **multi-quarter timelines**. Single-sprint or solo contributions feel like E4.
+
+<EvalCriteria
+  criteria={[
+    {
+      name: 'Scope of impact',
+      detail: 'Stories involve teams beyond your own, with measurable outcomes (revenue, latency, headcount affected).',
+    },
+    {
+      name: 'Leadership without authority',
+      detail: 'You drove decisions across people who didn\'t report to you, by building consensus rather than escalating.',
+      strong: 'A peer or skip-level changed their mind because of how you framed the tradeoff.',
+    },
+    {
+      name: 'Self-awareness',
+      detail: 'You name what you specifically did wrong and how you changed. "The team failed" framing is a red flag.',
+    },
+  ]}
+/>
+
+:::warning[Behavioral as level decider]
+A weak behavioral at E5 doesn't usually mean no-hire — it usually means **down-level to E4**. The recruiter will tell you "the loop went well, but we\'d like to extend at E4." If you only target E5, prepare behavioral with the same intensity as system design.
+:::
+
+</InterviewRound>
+
+## Evaluation criteria {#evaluation-criteria}
+
+The hiring committee weighs four dimensions independently:
+
+<EvalCriteria
+  criteria={[
+    { name: 'Coding', detail: 'Both rounds (traditional + AI-assisted) clean. AI-assisted round adds the AI-collaboration dimension.' },
+    { name: 'System design / product architecture', detail: 'Drives scoping, articulates tradeoffs with specific numbers, goes deep on one component.', strong: 'Suggests two viable architectures and chooses one with explicit reasoning grounded in the requirements.' },
+    { name: 'Behavioral (the 5 competencies)', detail: 'Cross-team scope, measurable impact, leadership without authority.' },
+    { name: 'Loop coherence', detail: 'The loop lead synthesizes signals — inconsistency across rounds (strong coding, weak design) typically resolves to a downlevel rather than no-hire.' },
+  ]}
+/>
+
+## Common questions {#common-questions}
+
+<CommonQuestions
+  questions={[
+    { type: 'coding', difficulty: 'medium', prompt: 'Minimum Remove to Make Valid Parentheses', source: 'LC 1249' },
+    { type: 'coding', difficulty: 'medium', prompt: 'Binary Tree Vertical Order Traversal', source: 'LC 314' },
+    { type: 'coding', difficulty: 'medium', prompt: 'Basic Calculator II', source: 'LC 227' },
+    { type: 'coding', difficulty: 'medium', prompt: 'Kth Largest Element in an Array', source: 'LC 215' },
+    { type: 'coding', difficulty: 'medium', prompt: 'Valid Word Abbreviation', source: 'LC 408' },
+    { type: 'system-design', prompt: 'Design an ad-click aggregator at Meta scale.' },
+    { type: 'system-design', prompt: 'Design a top-K leaderboard service.' },
+    { type: 'system-design', prompt: 'Design a distributed rate limiter.' },
+    { type: 'system-design', prompt: 'Design a ticket booking system (high-contention writes).' },
+    { type: 'system-design', prompt: 'Design Instagram\'s news feed.' },
+    { type: 'behavioral', prompt: 'Tell me about a conflict with a coworker. How did you resolve it?' },
+    { type: 'behavioral', prompt: 'What project are you most proud of?' },
+    { type: 'behavioral', prompt: 'Give me an example of tough feedback you received and how you changed.' },
+    { type: 'behavioral', prompt: 'Describe a project where requirements were unclear or kept changing.' },
+  ]}
+/>
+
+## Preparation plan {#preparation-plan}
+
+Behavioral and system design dominate prep at E5. Coding is the floor, not the ceiling.
+
+| Week | Focus | Daily commitment | Exit criteria |
+|---|---|---|---|
+| 1 | LC mediums (Meta-tagged, last 6 months) | 2 mediums/day, manual trace (no IDE) | 14 mediums solved cleanly without code execution |
+| 2 | System design fundamentals (storage, caching, sharding, consistency, queues, leader election) | 1 design walkthrough/day | 5 written designs with capacity numbers |
+| 3 | System design reps — Meta question bank | 1 mock + 1 self-paced design | 5 mocks: ad aggregator, leaderboard, feed, ticket booking, top-K |
+| 4 | Behavioral story building (the 5 competencies) | 30 min stories + 1 mock behavioral | 5 STAR stories scoped to 3+ engineers, multi-quarter |
+| 5 | AI-assisted coding practice (set up CoderPad-style sandbox + AI) | 30 min/day | 10 problems where you measure speed *with* vs *without* AI |
+| 6 | Final mocks (full loops with calibrated interviewers) | 1 full loop/week | 2 full mock loops, no flagged round |
+
+:::tip[Two patterns that fail at E5]
+**Pattern 1:** Strong coding, weak behavioral → downlevel to E4. Prevent by spending equal time on stories.
+**Pattern 2:** High-level system design ("I\'d add a load balancer and Redis") → no-hire. Prevent by forcing yourself to put numbers and named technologies on every box you draw.
+:::
+
+<RelatedGuides
+  guides={[
+    { href: '../meta/e3', company: 'Meta', level: 'E3', blurb: 'Junior — coding-only, no system design.' },
+    { href: '../meta/e4', company: 'Meta', level: 'E4', blurb: 'Mid — adds system design but coding still dominates.' },
+    { href: '../google/l3', company: 'Google', level: 'L3', blurb: 'Cross-company entry-level reference.' },
+  ]}
+/>
+
+## Sources {#sources}
+
+Cross-checked against three sources during authoring (May 2026):
+
+- [HelloInterview — Meta E5 (2026)](https://www.hellointerview.com/guides/meta/e5)
+- [Design Gurus — Meta System Design 2026](https://designgurus.substack.com/p/meta-system-design-interview-prep)
+- [Exponent — Meta System Design 2026](https://www.tryexponent.com/blog/meta-system-design-interview)
+
+</InterviewGuide>

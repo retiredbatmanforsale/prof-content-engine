@@ -1,0 +1,306 @@
+---
+title: Microsoft Level 63 Interview Guide
+description: >-
+  The complete Microsoft Level 63 (Senior SDE) interview process for 2026 —
+  full system design depth, dedicated LLD round, behavioral woven into
+  technical rounds, and the As-Appropriate finale.
+access: free
+hide_title: true
+tutor_topic: "Microsoft L63 interview process"
+tutor_concepts:
+  - "Microsoft L63 Senior SDE leveling"
+  - "system design depth at senior bar"
+  - "LLD round at L63"
+  - "no standalone behavioral until L64"
+  - "As-Appropriate optional finale"
+---
+
+<InterviewGuide
+  slug="microsoft-l63"
+  company="Microsoft"
+  level="L63"
+  title="Microsoft Level 63 Interview Guide"
+  subtitle="Senior SDE loop (6-10 years experience). System design depth becomes the level decider, LLD often gets its own round, and behavioral signal threads through every technical round."
+>
+
+<GuideTOC
+  items={[
+    { href: '#process-overview', label: 'Process overview' },
+    { href: '#how-it-differs-from-l62', label: 'How it differs from L62' },
+    { href: '#online-assessment', label: 'Online assessment' },
+    { href: '#technical-phone-screen', label: 'Technical phone screen' },
+    { href: '#onsite', label: 'Onsite (4–5 rounds)' },
+    { href: '#as-appropriate', label: 'As-Appropriate' },
+    { href: '#evaluation-criteria', label: 'Evaluation criteria' },
+    { href: '#common-questions', label: 'Common questions' },
+    { href: '#preparation-plan', label: 'Preparation plan' },
+    { href: '#sources', label: 'Sources' },
+  ]}
+/>
+
+## Process overview {#process-overview}
+
+The Microsoft L63 (Senior SDE) loop runs **4–8 weeks** end-to-end:
+
+1. **Recruiter / Hiring Manager screen** — 30 min
+2. **Coding assessment** (HackerRank) — 90 min, 2 problems (1 approachable, 1 challenging) — *or* **Technical phone screen** (60 min, 2–3 LeetCode-style problems live)
+3. **Onsite loop** — 4–5 rounds, mostly virtual via Teams:
+   - 2–3 DSA coding rounds
+   - 1 LLD (low-level design) round
+   - 1 system design round
+   - Behavioral woven into each technical round (no standalone round at L63)
+4. **As-Appropriate (As-Ap)** — invitation-only finale if earlier rounds went well
+
+:::warning[Where L63 is decided]
+At L63, **system design is the level-deciding round** — strong coding will not lift you over the bar without it. The LLD round is where Microsoft tests whether you can implement *and* design at senior depth. Behavioral matters but no single round decides it; the cumulative signal across rounds counts.
+:::
+
+## How it differs from L62 {#how-it-differs-from-l62}
+
+| Dimension | L62 (mid SDE II) | L63 (Senior SDE) |
+|---|---|---|
+| **System design** | Required, but high-level breadth | **Deeper** — interviewer drills 3+ levels into one component |
+| **LLD round** | Often part of coding | Frequently a dedicated 60-min round |
+| **Coding bar** | Mediums, occasional medium-hard | Mediums + medium-hard, with implementation depth |
+| **Behavioral expectation** | Growth mindset, collaboration | Cross-team mentorship, technical leadership, strategic judgment |
+| **Ambiguity handling** | Asks clarifying questions | "Make reasonable assumptions" without getting blocked |
+| **Stakeholder scope** | Within-team | Cross-org, including PM/design partner work |
+
+## Online assessment {#online-assessment}
+
+<InterviewRound
+  name="Coding Assessment (HackerRank)"
+  duration="90 min"
+  format="HackerRank · 2 problems · no retakes"
+  weight="gate"
+>
+
+Two problems on HackerRank. Common pattern: one approachable medium and one harder medium with non-trivial follow-ups. Topics: arrays, strings, hash maps, trees, graphs, BFS/DFS, sliding window, basic DP.
+
+**No retakes.** A weak performance here ends the loop before the onsite is scheduled.
+
+</InterviewRound>
+
+## Technical phone screen {#technical-phone-screen}
+
+<InterviewRound
+  name="Technical Phone Screen"
+  duration="60 min"
+  format="Live with engineer · 2-3 problems · CodingPad"
+  weight="gate"
+>
+
+Sometimes substitutes for the OA, sometimes added on top. 2–3 LeetCode-style problems with follow-ups. The interviewer also asks 1–2 behavioral questions.
+
+</InterviewRound>
+
+## Onsite (4–5 rounds) {#onsite}
+
+<InterviewRound name="Coding 1 — DSA" duration="45–60 min" format="Collaborative editor" weight="signal">
+
+One medium-hard problem with follow-ups. Common: trees, graphs, advanced DP, intervals, design problems (LRU cache, serialize/deserialize tree). Recently asked: Integer to English Words (LC 273), LRU Cache (LC 146), Serialize/Deserialize Binary Tree (LC 297), Spiral Matrix (LC 54).
+
+The interviewer also probes a predetermined behavioral focus area (you\'ll be told beforehand which area — e.g., "growth mindset," "feedback handling," "cross-team collaboration").
+
+</InterviewRound>
+
+<InterviewRound name="Coding 2 — DSA" duration="45–60 min" format="Collaborative editor" weight="signal">
+
+Same format, different interviewer, different behavioral focus area. Often skews toward implementation discipline rather than pure algorithmic insight.
+
+</InterviewRound>
+
+<InterviewRound name="Low-Level Design (LLD)" duration="60 min" format="Whiteboard / virtual canvas" weight="signal">
+
+Often a dedicated round at L63 (sometimes embedded in coding at L62). The interviewer asks you to design and partially implement a complex component:
+
+- Design a logger framework (multi-level, async, file rotation)
+- Design a parking lot with concurrency
+- Design a job scheduler with priority and retries
+- Design a chess game engine
+- Design a distributed cache (interface + key methods)
+
+Expected: classes with relationships, public APIs, key methods implemented in code, edge cases (concurrency, eviction, retries) explicitly handled.
+
+<EvalCriteria
+  criteria={[
+    {
+      name: 'Class decomposition',
+      detail: 'You name entities and their relationships. Inheritance vs. composition decisions explained.',
+    },
+    {
+      name: 'API design',
+      detail: 'Public methods have sensible signatures and return types. You name what NOT to expose.',
+      strong: 'You raise concurrency, error states, and capacity limits without prompting.',
+    },
+    {
+      name: 'Implementation depth',
+      detail: 'You actually implement the key methods, not just sketch interfaces. Code is production-ready.',
+    },
+  ]}
+/>
+
+</InterviewRound>
+
+<InterviewRound name="System Design (HLD)" duration="60 min" format="Whiteboard discussion" weight="level">
+
+The level-deciding round. Microsoft asks for **first-principles** distributed system design, often around Microsoft products:
+
+- Design OneDrive\'s file sync at billions-of-files scale
+- Design Teams chat with persistence + presence + reactions
+- Design Azure Blob Storage with strong consistency guarantees
+- Design Outlook with calendar availability search across millions of mailboxes
+- Design SharePoint Online with cross-tenant document sharing
+- Design a distributed rate limiter for Azure API Gateway
+
+Expected flow:
+
+1. **Clarifying questions** (5 min) — scale, workload patterns, target latency.
+2. **Iterative high-level design** (15 min) — start simple, add complexity only as motivated.
+3. **Deep dive on one component** (20 min) — interviewer drills into one piece. Common targets: storage schema, sharding, consistency model, hot-key mitigation.
+4. **Tradeoffs** (10 min) — alternatives, what you traded away.
+5. **Mid-interview constraint changes** (5–10 min) — interviewer may add a new requirement to test adaptability.
+
+Critical Microsoft signal: **know everything you mention.** If you say "JWT," expect to explain how JWT is implemented, signature validation, expiry handling, what happens on key rotation. Senior interviewers explicitly probe this.
+
+<EvalCriteria
+  criteria={[
+    {
+      name: 'Iterative design',
+      detail: 'You start simple, layer complexity as needed. You don\'t over-engineer the first pass.',
+    },
+    {
+      name: 'Depth on chosen component',
+      detail: 'When pressed on one piece, you go 3+ levels deep — schema, indexes, hot-key mitigation, replication lag handling.',
+      strong: 'You describe the failure modes and degradation strategy without being asked.',
+    },
+    {
+      name: 'Knowledge of everything you cite',
+      detail: 'Every technology you name (Kafka, Redis, JWT, gRPC), you can explain how it works internally.',
+    },
+    {
+      name: 'Adaptability',
+      detail: 'When the interviewer adds a constraint mid-design, you adapt without re-doing the whole architecture.',
+    },
+  ]}
+/>
+
+</InterviewRound>
+
+<InterviewRound name="Behavioral (woven through technical rounds)" duration="varies" format="Embedded in technical rounds · predetermined focus areas" weight="signal">
+
+L63 has **no standalone behavioral round** — that comes at L64. Instead, each interviewer is assigned a behavioral focus area and probes it during their technical round. The recruiter usually tells you which areas which round will cover.
+
+Senior themes:
+
+- **Cross-team mentorship** — coaching mid-level engineers to senior, with named individuals
+- **Technical leadership without authority** — driving decisions across teams
+- **Strategic judgment** — picking what NOT to build, prioritizing under constraints
+- **Growth mindset** — feedback you received and changed your behavior on
+- **Conflict resolution** — disagreements with senior engineers or partners
+- **Customer obsession** — choosing user-aligned tradeoffs over engineering preference
+
+Stories should land at the **multi-quarter, cross-team** scope. Single-sprint stories read as L62.
+
+</InterviewRound>
+
+## As-Appropriate {#as-appropriate}
+
+The As-Ap round at L63 is invitation-only and signals strong earlier performance. It\'s typically:
+
+- Conducted by the hiring manager or a partner-level engineer
+- **Project-focused, not technical testing** — they walk you through the team\'s work and probe fit
+- An opportunity for them to **sell you on the team**, especially if multiple teams are competing for senior candidates
+- The hiring manager and the As-Ap interviewer **jointly make the final hire decision**
+
+If you reach As-Ap, the offer is likely. The round is more about confirming fit and team alignment than gating you out.
+
+## Evaluation criteria {#evaluation-criteria}
+
+<EvalCriteria
+  criteria={[
+    {
+      name: 'Coding fluency',
+      detail: 'Mediums + medium-hards solved cleanly with edge cases. Implementation depth, not just algorithmic insight.',
+    },
+    {
+      name: 'Low-level design',
+      detail: 'Class decomposition, sensible APIs, key methods implemented, concurrency / error states handled.',
+    },
+    {
+      name: 'System design depth',
+      detail: 'Iterative design, deep dive on a chosen component, knowledge of everything you cite.',
+      strong: 'You\'d be a credible designer for the next OneDrive / Teams / Outlook investment.',
+    },
+    {
+      name: 'Behavioral signals (woven)',
+      detail: 'Cross-team mentorship, leadership without authority, strategic judgment. Multi-quarter scope.',
+    },
+    {
+      name: 'Ambiguity handling',
+      detail: 'You make reasonable assumptions when the problem is unclear, rather than getting blocked.',
+    },
+  ]}
+/>
+
+## Common questions {#common-questions}
+
+<CommonQuestions
+  questions={[
+    { type: 'coding', difficulty: 'hard', prompt: 'Integer to English Words', source: 'LC 273' },
+    { type: 'coding', difficulty: 'medium', prompt: 'LRU Cache', source: 'LC 146' },
+    { type: 'coding', difficulty: 'hard', prompt: 'Serialize and Deserialize Binary Tree', source: 'LC 297' },
+    { type: 'coding', difficulty: 'medium', prompt: 'Spiral Matrix', source: 'LC 54' },
+    { type: 'coding', difficulty: 'easy', prompt: 'Merge Sorted Array', source: 'LC 88' },
+    { type: 'coding', difficulty: 'medium', prompt: 'Course Schedule II', source: 'LC 210' },
+    { type: 'coding', difficulty: 'medium', prompt: 'Implement a logger / rate limiter framework' },
+    { type: 'system-design', prompt: 'Design OneDrive\'s file sync system at billions-of-files scale.' },
+    { type: 'system-design', prompt: 'Design Teams chat with persistence, presence, and reactions.' },
+    { type: 'system-design', prompt: 'Design a distributed rate limiter for an API gateway.' },
+    { type: 'system-design', prompt: 'Design Outlook\'s calendar availability search across millions of mailboxes.' },
+    { type: 'system-design', prompt: 'Design Azure Blob Storage with strong consistency.' },
+    { type: 'behavioral', prompt: 'Tell me about mentoring a mid-level engineer to senior.' },
+    { type: 'behavioral', prompt: 'Describe a technical decision you drove across teams.' },
+    { type: 'behavioral', prompt: 'Walk me through critical feedback you received and what changed.' },
+    { type: 'behavioral', prompt: 'Why are you considering leaving your current role?' },
+    { type: 'behavioral', prompt: 'What\'s your favorite Microsoft product, and what would you improve?' },
+  ]}
+/>
+
+## Preparation plan {#preparation-plan}
+
+System design dominates L63 prep. Coding is the floor.
+
+| Week | Focus | Daily commitment | Exit criteria |
+|---|---|---|---|
+| 1 | LC mediums + medium-hards (Microsoft-tagged) | 2 mediums/day | 14 mediums solved cleanly |
+| 2 | Selective LC hards (Microsoft-tagged) + LLD warm-up | 1 hard + 1 LLD/day | LC 273, 297, 146, 210 solved |
+| 3 | LLD design reps (logger, parking lot, scheduler, cache) | 1 LLD design/day | 5 LLDs with implementation-ready code |
+| 4 | System design fundamentals (storage, replication, sharding, consistency) | 1 design walkthrough/day | 5 designs from first principles |
+| 5 | System design — Microsoft-product flavored (OneDrive, Teams, Outlook, Azure) | 1 mock design/day | 5 product designs at L63 depth |
+| 6 | Behavioral story building (cross-team mentorship, leadership) + final mocks | 30 min stories + 1 mock loop | 6 STAR stories at L63 scope, 1 full mock |
+
+:::tip[L63-specific gotchas]
+**"Know everything you mention."** Senior Microsoft interviewers will probe any technology you name. If you mention Kafka, expect questions on partition assignment and exactly-once semantics. If you mention JWT, expect questions on signature validation and key rotation. Audit your vocabulary before the interview — only name things you can defend 3 levels deep.
+
+**Adaptability matters.** Microsoft system design interviews often add constraints mid-discussion ("now imagine the latency requirement is 10ms instead of 100ms"). Practice adapting your design rather than restarting it.
+:::
+
+<RelatedGuides
+  guides={[
+    { href: '../microsoft/l62', company: 'Microsoft', level: 'L62', blurb: 'Mid-level cousin — system design lighter, behavioral less weighted.' },
+    { href: '../meta/e5', company: 'Meta', level: 'E5', blurb: 'Compare with Meta\'s senior loop.' },
+    { href: '../google/l5', company: 'Google', level: 'L5', blurb: 'Compare with Google\'s senior loop.' },
+    { href: '../amazon/sde-ii', company: 'Amazon', level: 'SDE II', blurb: 'Compare with Amazon\'s mid-senior loop.' },
+  ]}
+/>
+
+## Sources {#sources}
+
+Cross-checked against three sources during authoring (May 2026):
+
+- [HelloInterview — Microsoft L63-64 (2026)](https://www.hellointerview.com/guides/microsoft/senior)
+- [Prepfully — Microsoft SWE Guide 2026](https://prepfully.com/interview-guides/microsoft-software-engineer-interview-guide)
+- [Roundz — Microsoft L63 Interview Experience (2025)](https://roundz.substack.com/p/microsoft-senior-software-engineer-63)
+
+</InterviewGuide>

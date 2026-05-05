@@ -1,0 +1,285 @@
+---
+title: Amazon SDE I Interview Guide
+description: >-
+  The complete Amazon SDE I (entry-level / new grad) interview process for 2026 —
+  online assessment, Leadership Principles behavioral, Bar Raiser veto,
+  and the 12-15 STAR stories you actually need.
+access: free
+hide_title: true
+tutor_topic: "Amazon SDE I interview process"
+tutor_concepts:
+  - "Amazon Leadership Principles"
+  - "Bar Raiser veto round"
+  - "STAR format behavioral"
+  - "Amazon work simulation OA"
+  - "Customer Obsession Ownership Invent and Simplify"
+---
+
+<InterviewGuide
+  slug="amazon-sde-i"
+  company="Amazon"
+  level="SDE I"
+  title="Amazon SDE I Interview Guide"
+  subtitle="Entry-level SWE loop — coding gets you the interview, Leadership Principles get you the offer. The Bar Raiser can veto, and you will not know which interviewer it is."
+>
+
+<GuideTOC
+  items={[
+    { href: '#process-overview', label: 'Process overview' },
+    { href: '#leadership-principles', label: 'Leadership Principles (the actual gate)' },
+    { href: '#online-assessment', label: 'Online assessment' },
+    { href: '#technical-phone-screen', label: 'Technical phone screen' },
+    { href: '#onsite', label: 'Onsite (4–5 rounds)' },
+    { href: '#bar-raiser', label: 'The Bar Raiser' },
+    { href: '#evaluation-criteria', label: 'Evaluation criteria' },
+    { href: '#common-questions', label: 'Common questions' },
+    { href: '#preparation-plan', label: 'Preparation plan' },
+    { href: '#sources', label: 'Sources' },
+  ]}
+/>
+
+## Process overview {#process-overview}
+
+The Amazon SDE I loop runs **3–6 weeks** end-to-end:
+
+1. **Online Assessment (OA)** — 70–90 min. 2 coding problems + a Work Simulation + a Workstyle Simulation
+2. **Recruiter screen** — 20–30 min logistics + light fit
+3. **Technical phone screen** (sometimes skipped for new grads with strong OA) — 45–60 min, 1 coding problem with follow-ups + 1–2 LP questions
+4. **Onsite loop** — 4–5 rounds, 45–60 min each: 2 coding rounds + 1 system design (light, e.g. parking lot) + 1 behavioral/LP + 1 Bar Raiser
+
+:::warning[The most common reason candidates fail Amazon]
+**Behavioral fumbles, not coding.** Amazon weights Leadership Principles more heavily than any other big-tech. Fluent coding with weak LP stories will not get you an offer; the inverse sometimes will.
+:::
+
+## Leadership Principles (the actual gate) {#leadership-principles}
+
+Amazon has **16 Leadership Principles** and explicitly maps your stories to them in the debrief. Each interviewer is assigned 2–3 LPs to probe; together they cover most of the 16 across the loop.
+
+For SDE I, the most-probed LPs (covered in 80%+ of loops):
+
+1. **Customer Obsession** — putting end users above your own preferences or convenience
+2. **Ownership** — going beyond your assigned scope to deliver an outcome
+3. **Invent and Simplify** — simplifying a complex process
+4. **Learn and Be Curious** — actively learning a new technology or domain
+5. **Bias for Action** — moving with incomplete information when speed matters
+6. **Earn Trust** — admitting mistakes, listening, communicating clearly
+7. **Dive Deep** — operating at all levels, knowing the details
+8. **Deliver Results** — focusing on key inputs, finishing despite setbacks
+
+You need **12–15 STAR stories** prepared, with each story tagged to 1–3 LPs. The interviewer asks "tell me about a time when..." and you map quickly to your prepared story for the relevant LP.
+
+## Online assessment {#online-assessment}
+
+<InterviewRound
+  name="Online Assessment (OA)"
+  duration="70–90 min total"
+  format="HackerRank or Amazon platform · 4 components"
+  weight="gate"
+>
+
+Four sections, completed in one sitting:
+
+1. **2 coding problems** (~70 min) — typically one easy/medium and one medium. Common categories: arrays, strings, hash maps, two pointers, sliding window, BFS/DFS.
+2. **Work Simulation** — multiple-choice scenarios about engineering tradeoffs ("you have a tight deadline and noticed a bug — what do you do?"). Map to LPs.
+3. **Workstyle Simulation** — Likert-scale questions about preferences. Honest answers, but consistency matters.
+4. **Approach explanations** — short text fields where you explain your solution. Don\'t skip these — they are graded.
+
+<EvalCriteria
+  criteria={[
+    {
+      name: 'Coding correctness',
+      detail: 'Both problems pass all visible test cases. Hidden tests catch edge cases (empty input, single element, max bounds).',
+    },
+    {
+      name: 'Code quality',
+      detail: 'Readable variable names, no dead code, sensible function decomposition. Amazon human-reviews the code, not just test pass rates.',
+    },
+    {
+      name: 'LP-aligned simulation answers',
+      detail: 'Work simulation answers consistently choose the LP-aligned option (Customer Obsession, Bias for Action, Earn Trust).',
+    },
+  ]}
+/>
+
+</InterviewRound>
+
+## Technical phone screen {#technical-phone-screen}
+
+<InterviewRound
+  name="Technical Phone Screen"
+  duration="45–60 min"
+  format="Live with engineer · 1 coding problem + 1–2 LP questions"
+  weight="gate"
+>
+
+Increasingly skipped for new grads with strong OA results, but still common. One medium coding problem with 1–2 follow-ups, then 1–2 LP behavioral questions.
+
+The behavioral portion is **not a warm-up** — it's a real signal. Have your top-3 strongest LP stories ready (Customer Obsession, Ownership, Earn Trust are safe bets).
+
+</InterviewRound>
+
+## Onsite (4–5 rounds) {#onsite}
+
+<InterviewRound name="Coding 1" duration="60 min" format="Whiteboard / virtual IDE" weight="signal">
+
+One medium-hard problem with follow-ups. Common categories: trees, graphs, DP, intervals. Typical Amazon questions: meeting room scheduling, anagram problems, matrix rotation, BST validation, LCA.
+
+The interviewer also asks **2–3 LP questions** in the back half of the round (~15 min). Don\'t treat this round as pure coding.
+
+</InterviewRound>
+
+<InterviewRound name="Coding 2" duration="60 min" format="Whiteboard / virtual IDE" weight="signal">
+
+Same format, different interviewer, different LPs probed. Often a graph or DP problem. Recently asked: edit distance, decode ways, max product subarray, clone graph.
+
+</InterviewRound>
+
+<InterviewRound name="System Design (light)" duration="60 min" format="Whiteboard" weight="signal">
+
+For SDE I, system design is **scoped low** — typical prompts are object-oriented design problems rather than full distributed systems:
+
+- Design a parking lot
+- Design a chess game
+- Design a vending machine
+- Design a deck-of-cards class hierarchy
+
+Expected: requirements, class definitions, public APIs, basic database schema, edge cases. **You do not need to discuss QPS, sharding, or replication** — that\'s SDE II+ territory.
+
+<EvalCriteria
+  criteria={[
+    {
+      name: 'Object decomposition',
+      detail: 'You name the entities, their relationships, and the operations. Inheritance/composition decisions explained.',
+    },
+    {
+      name: 'API design',
+      detail: 'Public methods have sensible signatures, with explicit parameter and return types.',
+      strong: 'You name what NOT to expose publicly and why (encapsulation reasoning).',
+    },
+    {
+      name: 'Edge cases',
+      detail: 'You raise concurrency, error states, and capacity limits without prompting.',
+    },
+  ]}
+/>
+
+</InterviewRound>
+
+<InterviewRound name="Behavioral / Leadership Principles" duration="45–60 min" format="Conversational" weight="signal">
+
+Pure LP round. The interviewer probes 4–5 of the 16 principles, drilling into each with 2–3 follow-ups per story.
+
+The hardest part of this round is the **drill-down**. After your STAR story, expect:
+- "What was the most challenging part?"
+- "What would you do differently?"
+- "How did the customer/team react?"
+- "What did you learn?"
+- "Have you applied that lesson since?"
+
+Stories without specific outcomes (numbers, before/after states, named stakeholders) collapse under drill-down. **Prepare each story 3–4 levels deep**, not just the surface STAR.
+
+</InterviewRound>
+
+<InterviewRound name="Bar Raiser" duration="60 min" format="Conversational + technical · senior engineer outside the team" weight="veto">
+
+The Bar Raiser is the round that most often kills offers. See the next section.
+
+</InterviewRound>
+
+## The Bar Raiser {#bar-raiser}
+
+The Bar Raiser is a senior Amazon engineer **specifically trained** to maintain Amazon\'s hiring quality across teams and over time. Their veto is binding — even if your team manager wants to hire you.
+
+Key facts:
+
+- **You are not told which interviewer is the Bar Raiser.** Treat every round as if it is.
+- The Bar Raiser is **not from your target team**. They have no incentive to lower the bar to fill the role.
+- Their evaluation focuses on: **whether you would raise or lower the bar** of the team, not whether you can do the specific job.
+- They probe LPs deeper than other interviewers and weight LP signal heavily.
+
+A common pattern: 4 of 5 interviewers say "hire," but the Bar Raiser says "no hire" — the result is **no hire**. Manager advocacy does not override the Bar Raiser.
+
+:::tip[How to recognize a Bar Raiser]
+You won\'t know for sure, but tells include: not from your target team, asks deeper LP follow-ups than peers, asks "what would you do differently" repeatedly, doesn\'t talk about team-specific work. If you sense it, treat that round with extra care — but the right move is to treat *every* round that way.
+:::
+
+## Evaluation criteria {#evaluation-criteria}
+
+<EvalCriteria
+  criteria={[
+    {
+      name: 'Coding',
+      detail: 'Two clean medium-difficulty solutions per coding round, with edge cases and complexity analysis.',
+    },
+    {
+      name: 'Object-oriented design',
+      detail: 'You can decompose a small-to-medium system into classes with sensible APIs and edge-case handling.',
+    },
+    {
+      name: 'Leadership Principles',
+      detail: 'You have 12–15 STAR stories covering all 16 LPs, prepared 3–4 follow-up levels deep.',
+      strong: 'Your stories include specific names, numbers, and outcomes. Drill-down doesn\'t collapse them.',
+    },
+    {
+      name: 'Bar-raising signal',
+      detail: 'You\'d be in the top half of current SDE I engineers on at least one dimension. Bar Raiser is the gatekeeper here.',
+    },
+  ]}
+/>
+
+## Common questions {#common-questions}
+
+<CommonQuestions
+  questions={[
+    { type: 'coding', difficulty: 'medium', prompt: 'Find All Anagrams in a String', source: 'LC 438' },
+    { type: 'coding', difficulty: 'medium', prompt: 'Rotate Image (Matrix by 90°)', source: 'LC 48' },
+    { type: 'coding', difficulty: 'easy', prompt: 'Meeting Rooms (can attend all?)', source: 'LC 252' },
+    { type: 'coding', difficulty: 'medium', prompt: 'Validate Binary Search Tree', source: 'LC 98' },
+    { type: 'coding', difficulty: 'medium', prompt: 'Maximum Product Subarray', source: 'LC 152' },
+    { type: 'coding', difficulty: 'medium', prompt: 'Decode Ways', source: 'LC 91' },
+    { type: 'coding', difficulty: 'hard', prompt: 'Edit Distance', source: 'LC 72' },
+    { type: 'coding', difficulty: 'medium', prompt: 'Clone Graph', source: 'LC 133' },
+    { type: 'system-design', prompt: 'Design a parking lot.' },
+    { type: 'system-design', prompt: 'Design a chess game.' },
+    { type: 'system-design', prompt: 'Design a vending machine.' },
+    { type: 'behavioral', prompt: 'Tell me about a time you went out of your way for a customer.' },
+    { type: 'behavioral', prompt: 'Describe a project you owned beyond your initial assignment.' },
+    { type: 'behavioral', prompt: 'How have you simplified a complex process?' },
+    { type: 'behavioral', prompt: 'What new technology have you learned recently and applied?' },
+    { type: 'behavioral', prompt: 'Describe a time you made a quick decision with incomplete data.' },
+    { type: 'behavioral', prompt: 'Tell me about a time you disagreed with a teammate and how you resolved it.' },
+    { type: 'behavioral', prompt: 'Tell me about your biggest mistake and what you learned.' },
+  ]}
+/>
+
+## Preparation plan {#preparation-plan}
+
+LP prep dominates Amazon prep — equal weight to coding.
+
+| Week | Focus | Daily commitment | Exit criteria |
+|---|---|---|---|
+| 1 | LC mediums (arrays, strings, hashmaps) + LP story brainstorm | 2 mediums + 30 min stories | 14 mediums solved, 8 raw story drafts |
+| 2 | LC mediums (trees, graphs, DP) + STAR refinement | 2 mediums + 30 min stories | 12 stories in STAR format |
+| 3 | OOP design practice (parking lot, chess, vending machine) + drill-down rehearsal on stories | 1 design/day + mock drill-down | 5 OOP designs + 12 stories at 4 levels deep |
+| 4 | Mock LP rounds + final coding mocks | 1 mock LP + 1 mock coding | 2 mock LP rounds with no story collapse |
+
+:::tip[Story map technique]
+Build a **2-column map**: 16 LPs in column A, your 12-15 stories in column B. Draw lines so every LP has at least one story. Add a "best fit" star to each line. When the interviewer asks about an LP, you go straight to your starred story without thinking. This is the single highest-leverage prep move for Amazon.
+:::
+
+<RelatedGuides
+  guides={[
+    { href: '../meta/e3', company: 'Meta', level: 'E3', blurb: 'Compare with Meta\'s entry-level coding-heavy loop.' },
+    { href: '../google/l3', company: 'Google', level: 'L3', blurb: 'Compare with Google\'s L3 (no LP equivalent).' },
+  ]}
+/>
+
+## Sources {#sources}
+
+Cross-checked against three sources during authoring (May 2026):
+
+- [Onsites.fyi — Amazon SDE I (2025)](https://www.onsites.fyi/blog/article/amazon-sde-i-software-engineer-interview-questions)
+- [IGotAnOffer — Amazon SDE I](https://igotanoffer.com/blogs/tech/amazon-software-development-engineer-interview)
+- [IGotAnOffer — Amazon Bar Raiser](https://igotanoffer.com/blogs/tech/amazon-bar-raiser-interview)
+
+</InterviewGuide>

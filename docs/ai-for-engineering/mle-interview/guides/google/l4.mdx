@@ -1,0 +1,282 @@
+---
+title: Google L4 Interview Guide
+description: >-
+  The complete Google L4 (mid-level Software Engineer) interview process for 2026 —
+  GHA personality screen, coding-dominated onsite, Googleyness, and the
+  Hiring Committee mechanic that decides level.
+access: free
+hide_title: true
+tutor_topic: "Google L4 interview process"
+tutor_concepts:
+  - "Google L4 leveling"
+  - "Google Hiring Assessment GHA"
+  - "Hiring Committee process"
+  - "Googleyness six attributes"
+  - "system design optional at L4"
+  - "in-person shift 2025"
+---
+
+<InterviewGuide
+  slug="google-l4"
+  company="Google"
+  level="L4"
+  title="Google L4 Interview Guide"
+  subtitle="Mid-level SWE loop — coding is the primary differentiator. System design is team-dependent. Final call is made by the Hiring Committee, not the team."
+>
+
+<GuideTOC
+  items={[
+    { href: '#process-overview', label: 'Process overview' },
+    { href: '#how-it-differs-from-l3', label: 'How it differs from L3' },
+    { href: '#google-hiring-assessment', label: 'Google Hiring Assessment (GHA)' },
+    { href: '#technical-phone-screen', label: 'Technical phone screen' },
+    { href: '#onsite', label: 'Onsite (4–5 rounds)' },
+    { href: '#hiring-committee', label: 'Hiring Committee' },
+    { href: '#evaluation-criteria', label: 'Evaluation criteria' },
+    { href: '#common-questions', label: 'Common questions' },
+    { href: '#preparation-plan', label: 'Preparation plan' },
+    { href: '#sources', label: 'Sources' },
+  ]}
+/>
+
+## Process overview {#process-overview}
+
+The Google L4 loop runs **~2 months** end-to-end (range: a few weeks to 3+ months depending on team match):
+
+1. **Google Hiring Assessment (GHA)** — 30–45 min online personality + situational test
+2. **Recruiter phone screen** — 30 min
+3. **Technical phone screen** — 45–60 min, 1–2 medium coding problems on the VIP platform
+4. **Onsite loop** — 4–5 rounds: 2–3 coding + 1 Googleyness/behavioral. **System design is optional** and depends on the team you're matching to.
+5. **Hiring Committee review** — your packet is decided by senior Googlers who never met you
+6. **Team match** — if hired, matched to a team after committee approval
+
+:::warning[2025-2026 shift to in-person]
+Google has been moving onsite coding rounds back to **in-person** since 2025, citing AI-assisted cheating in virtual interviews. Many candidates now do a hybrid loop: virtual phone screen + Googleyness, then fly in for onsite coding. AI assistants are explicitly prohibited and have been since 2023.
+:::
+
+## How it differs from L3 {#how-it-differs-from-l3}
+
+- **Coding bar is harder.** L4 problems are intentionally tougher than the phone screen, with the expectation that you solve them **completely** (not just describe an approach).
+- **Self-direction is expected.** Behavioral stories should show you driving work without explicit assignment, not just "my manager asked me to."
+- **System design may appear** for some teams (infra, backend) — at L3 it never does.
+- **Hiring Committee weighting differs.** At L4, the committee places **most weight on coding** when deciding hire vs. downlevel to L3.
+
+## Google Hiring Assessment (GHA) {#google-hiring-assessment}
+
+<InterviewRound
+  name="Google Hiring Assessment (GHA)"
+  duration="30–45 min"
+  format="Online · self-paced · ~50 questions"
+  weight="gate"
+>
+
+A personality + situational-judgment test. ~50 questions, mostly Likert-scale (strongly agree → strongly disagree) with some "what would you do if..." scenarios.
+
+**Failure disqualifies you for 6 months** across all Google roles, so don't take it casually. Be honest — there's no key, but consistency matters: contradictory answers across paired questions flag you.
+
+The questions probe alignment with Google's values: collaboration, user focus, ethical reasoning, comfort with ambiguity.
+
+</InterviewRound>
+
+## Technical phone screen {#technical-phone-screen}
+
+<InterviewRound
+  name="Technical Phone Screen"
+  duration="45–60 min"
+  format="Google Meet · VIP platform · 1–2 medium problems · no code execution · no AI"
+  weight="gate"
+>
+
+Google's coding interviews use the **VIP platform** (their internal CoderPad equivalent) — plain text, no execution, no autocomplete. Practice without an IDE before this round.
+
+The interviewer expects:
+1. Clarifying questions about the problem (3–5 min).
+2. A brute-force approach proposed and rejected before coding the optimized version.
+3. Syntactically correct code on the first pass — typos count against you because there's no compiler to save you.
+4. Manual trace through the example input.
+5. Time and space complexity for both your initial and optimized solutions.
+
+<EvalCriteria
+  criteria={[
+    {
+      name: 'Algorithmic clarity',
+      detail: 'You name the data structure and approach before coding. You don\'t leap from problem to code.',
+    },
+    {
+      name: 'Plain-text coding discipline',
+      detail: 'Code parses and indents correctly without an IDE. Senior interviewers explicitly notice candidates who fumble without autocomplete.',
+    },
+    {
+      name: 'Communication',
+      detail: 'You think out loud, narrate tradeoffs, and respond well to hints.',
+      strong: 'Hints accelerate rather than replace your reasoning — you take the hint and run with it.',
+    },
+  ]}
+/>
+
+</InterviewRound>
+
+## Onsite (4–5 rounds) {#onsite}
+
+<InterviewRound name="Coding 1" duration="45 min" format="VIP platform · in-person or Google Meet" weight="signal">
+
+One harder problem with possible follow-ups. Common categories: graphs, trees, DP, recursion, intervals. Recently asked: Number of Unequal Triplets (LC 2475), Count Islands in Binary Trees, Merge Intervals (LC 56), Pour Water (LC 755), Best Meeting Point (LC 296).
+
+The follow-up usually generalizes the original (e.g., "now what if there are k arrays instead of 2") or stresses scale ("now imagine the input doesn\'t fit in memory").
+
+</InterviewRound>
+
+<InterviewRound name="Coding 2" duration="45 min" format="VIP platform" weight="signal">
+
+Same format, different interviewer. Often skews toward implementation discipline (string parsing, simulation, design problems like LRU cache or rate limiter) rather than pure algorithmic insight.
+
+The two coding rounds are calibrated to give independent signals: a strong/strong is a clear hire; strong/weak goes to debrief discussion.
+
+</InterviewRound>
+
+<InterviewRound name="Coding 3 OR System Design" duration="45 min" format="VIP platform / whiteboard" weight="signal">
+
+Whether you get a third coding round or a system design round **depends on the team**. Backend, infra, and platform teams typically include system design even at L4. Frontend, mobile, and applied-ML teams often skip it for an extra coding round.
+
+If it's system design, expect a scoped product or component (URL shortener, typeahead, parking lot system) — less depth than L5 system design, but you should still hit the basics: requirements, capacity, schema, sharding, caching.
+
+<EvalCriteria
+  criteria={[
+    {
+      name: 'Coverage of fundamentals',
+      detail: 'You touch requirements, capacity, schema, scaling, and at least one tradeoff without prompting.',
+    },
+    {
+      name: 'Tradeoff articulation',
+      detail: 'When you pick a database or caching strategy, you can explain what you traded away.',
+      strong: 'You raise the tradeoff yourself before the interviewer asks "what about consistency?"',
+    },
+  ]}
+/>
+
+</InterviewRound>
+
+<InterviewRound name="Googleyness & Leadership" duration="45 min" format="Conversational" weight="signal">
+
+Google evaluates against **six Googleyness attributes**:
+
+1. **Thriving in ambiguity** — leading work when requirements are unclear
+2. **Valuing feedback** — receiving and acting on criticism
+3. **Effectively challenging the status quo** — pushing back constructively
+4. **Putting the user first** — choosing the user-aligned tradeoff
+5. **Doing the right thing** — ethical reasoning
+6. **Caring about the team** — collaboration, mentorship, credit-sharing
+
+For L4, examples can come from your last 1–2 years of work — internships and school projects are too thin. Stories should show **self-directed action**, not just task execution.
+
+<EvalCriteria
+  criteria={[
+    {
+      name: 'Self-directed action',
+      detail: 'Stories where you identified a problem and acted without being told. "My manager asked me to..." framing reads as L3.',
+    },
+    {
+      name: 'Receiving feedback',
+      detail: 'A specific instance where peer or manager feedback changed your approach and the outcome improved.',
+      strong: 'You name the feedback verbatim and explain why it was hard to hear at first.',
+    },
+    {
+      name: 'No negative framing',
+      detail: 'Speaking negatively about past employers, teammates, or managers is a hard red flag at Google.',
+    },
+  ]}
+/>
+
+</InterviewRound>
+
+## Hiring Committee {#hiring-committee}
+
+After the onsite, your interviewers' written feedback (the "packet") goes to a Hiring Committee — 4–6 senior Googlers across the company who **have not met you**. They vote hire/no-hire and assign a level based on the packet alone.
+
+This means:
+
+- **Speak so your interviewer can write strong evidence into the packet.** Vague answers produce vague write-ups, which the committee discounts. Be specific with names, numbers, and outcomes.
+- **The committee weights coding most at L4.** Strong coding + average behavioral usually clears the bar. Average coding + strong behavioral usually does not.
+- **Manager advocacy doesn\'t exist.** Unlike Meta or Amazon, your future manager has no influence over the hire decision.
+
+In EU offices the order is sometimes reversed (team match first, then committee), but the committee still has final say.
+
+## Evaluation criteria {#evaluation-criteria}
+
+Google scores on four dimensions, with coding most heavily weighted at L4:
+
+<EvalCriteria
+  criteria={[
+    {
+      name: 'General Cognitive Ability (GCA)',
+      detail: 'Problem decomposition and reasoning under ambiguity. Drives coding and system design rounds.',
+    },
+    {
+      name: 'Role-Related Knowledge (RRK)',
+      detail: 'Coding fluency, language idioms, complexity analysis. The primary differentiator at L4.',
+      strong: 'Your code reads like production — sensible names, no dead code, proper error handling without prompting.',
+    },
+    {
+      name: 'Leadership',
+      detail: 'For L4: collaboration, ownership of medium-scope projects, response to feedback. Not full leadership scope (that\'s L5+).',
+    },
+    {
+      name: 'Googleyness',
+      detail: 'Six attributes above. Can prevent a hire but rarely decides level.',
+    },
+  ]}
+/>
+
+## Common questions {#common-questions}
+
+<CommonQuestions
+  questions={[
+    { type: 'coding', difficulty: 'medium', prompt: 'Number of Unequal Triplets in Array', source: 'LC 2475' },
+    { type: 'coding', difficulty: 'medium', prompt: 'Merge Intervals', source: 'LC 56' },
+    { type: 'coding', difficulty: 'medium', prompt: 'Best Meeting Point', source: 'LC 296' },
+    { type: 'coding', difficulty: 'hard', prompt: 'Pour Water', source: 'LC 755' },
+    { type: 'coding', difficulty: 'medium', prompt: 'Count Islands in Binary Trees (Google variant)' },
+    { type: 'coding', difficulty: 'medium', prompt: 'Word Ladder', source: 'LC 127' },
+    { type: 'coding', difficulty: 'hard', prompt: 'Trapping Rain Water', source: 'LC 42' },
+    { type: 'system-design', prompt: 'Design a URL shortener.' },
+    { type: 'system-design', prompt: 'Design a typeahead / search autocomplete service.' },
+    { type: 'behavioral', prompt: 'Describe a time you went above and beyond to help a teammate.' },
+    { type: 'behavioral', prompt: 'Tell me about a time requirements were unclear or kept changing.' },
+    { type: 'behavioral', prompt: 'Tell me about a conflict with a coworker. How did you resolve it?' },
+    { type: 'behavioral', prompt: 'What project are you most proud of, and what would you change?' },
+  ]}
+/>
+
+## Preparation plan {#preparation-plan}
+
+| Week | Focus | Daily commitment | Exit criteria |
+|---|---|---|---|
+| 1 | LC mediums on plain text (no IDE) | 2 mediums/day | 14 mediums solved cleanly without execution |
+| 2 | LC mediums + harder Google-tagged | 2 mediums + 1 hard/day | LC 56, 296, 2475, 755 solved |
+| 3 | System design fundamentals (storage, caching, sharding) — only if your team includes SD | 1 design walkthrough/day | 5 designs at the L4 level: URL shortener, typeahead, rate limiter, parking lot, news feed |
+| 4 | Googleyness stories (the 6 attributes) | 30 min stories + 1 mock | 5 STAR stories, 1 per Googleyness attribute |
+| 5 | Mock loops with calibrated interviewers | 1 full mock/week | 2 mocks with no flagged round |
+
+:::tip[Google-specific gotchas]
+**Plain-text typing matters.** Practice writing Python or Java in a Google Doc with no autocomplete. The friction is real and visible to interviewers.
+
+**Don\'t over-prepare for system design at L4.** Most L4 loops don\'t include it. Confirm with your recruiter; if they say "team is product-facing," skip the SD prep and double down on coding.
+:::
+
+<RelatedGuides
+  guides={[
+    { href: '../google/l3', company: 'Google', level: 'L3', blurb: 'Junior cousin — easier coding bar, no system design.' },
+    { href: '../meta/e4', company: 'Meta', level: 'E4', blurb: 'Cross-company mid-level reference.' },
+    { href: '../meta/e5', company: 'Meta', level: 'E5', blurb: 'Compare with senior loop at Meta.' },
+  ]}
+/>
+
+## Sources {#sources}
+
+Cross-checked against three sources during authoring (May 2026):
+
+- [HelloInterview — Google L4 (2026)](https://www.hellointerview.com/guides/google/l4)
+- [Onsites.fyi — Google L4 SWE Interview Guide 2025](https://www.onsites.fyi/blog/article/google-L4-software-engineer-interview-questions)
+- [Design Gurus — Google System Design 2026](https://designgurus.substack.com/p/googles-system-design-interview-in)
+
+</InterviewGuide>

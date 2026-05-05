@@ -1,0 +1,302 @@
+---
+title: Microsoft Level 64 Interview Guide
+description: >-
+  The complete Microsoft Level 64 (Senior / Principal-track SDE) interview process
+  for 2026 — full system design depth, dedicated behavioral round at this level,
+  and a CVP-level As-Appropriate finale that probes blind spots.
+access: free
+hide_title: true
+tutor_topic: "Microsoft L64 interview process"
+tutor_concepts:
+  - "Microsoft L64 Senior / Principal-track"
+  - "dedicated behavioral round appears at L64"
+  - "As-Appropriate run by CVP / Partner"
+  - "system design at architect-level depth"
+  - "blind-spot probe in As-Ap"
+---
+
+<InterviewGuide
+  slug="microsoft-l64"
+  company="Microsoft"
+  level="L64"
+  title="Microsoft Level 64 Interview Guide"
+  subtitle="Senior / Principal-track SDE loop (8+ years experience). System design at architect depth, the first level with a dedicated behavioral round, and an As-Appropriate run by a CVP or Partner that probes the gaps from earlier rounds."
+>
+
+<GuideTOC
+  items={[
+    { href: '#process-overview', label: 'Process overview' },
+    { href: '#how-it-differs-from-l63', label: 'How it differs from L63' },
+    { href: '#online-assessment', label: 'Online assessment' },
+    { href: '#technical-phone-screen', label: 'Technical phone screen' },
+    { href: '#onsite', label: 'Onsite (5–6 rounds)' },
+    { href: '#as-appropriate', label: 'The As-Appropriate (CVP-level) round' },
+    { href: '#evaluation-criteria', label: 'Evaluation criteria' },
+    { href: '#common-questions', label: 'Common questions' },
+    { href: '#preparation-plan', label: 'Preparation plan' },
+    { href: '#sources', label: 'Sources' },
+  ]}
+/>
+
+## Process overview {#process-overview}
+
+The Microsoft L64 loop runs **6–10 weeks** end-to-end:
+
+1. **Recruiter / Hiring Manager screen** — 30 min
+2. **Coding assessment** (HackerRank) — 90 min, 2 problems — *or* **Technical phone screen** (60 min, 2-3 problems live)
+3. **Onsite loop** — 5–6 rounds, mostly virtual via Teams:
+   - 2 DSA coding rounds
+   - 1 LLD round
+   - 1 system design round (often deeper or a second design round at L64)
+   - 1 dedicated behavioral round (**new at L64** — not present at L63 or below)
+4. **As-Appropriate (As-Ap)** — conducted by a **CVP, Partner, or senior hiring leader** after the first rounds; probes blind spots and confirms fit
+
+:::warning[The dedicated behavioral round]
+**L64 is the first Microsoft level with a standalone behavioral round.** Below L64, behavioral signal is woven into technical rounds. At L64+, you sit through a dedicated round focused entirely on leadership, mentorship, strategic judgment, and cultural fit. Treat it with the same intensity as system design.
+:::
+
+## How it differs from L63 {#how-it-differs-from-l63}
+
+| Dimension | L63 (Senior SDE) | L64 (Senior / Principal-track) |
+|---|---|---|
+| **Behavioral** | Woven into technical rounds | **Dedicated standalone round** |
+| **System design depth** | One deep dive | Often two SD rounds OR one SD + architecture review |
+| **Coding bar** | Mediums + medium-hard | Same difficulty, but speed and clarity expectations higher |
+| **Leadership scope** | Cross-team mentorship | Org-wide influence, defines engineering standards across orgs |
+| **Stakeholder scope** | Cross-team | Cross-org, including Partners and CVPs |
+| **As-Appropriate** | Hiring manager or senior engineer | **CVP, Partner, or senior hiring leader** |
+
+## Online assessment {#online-assessment}
+
+<InterviewRound
+  name="Coding Assessment (HackerRank)"
+  duration="90 min"
+  format="HackerRank · 2 problems · no retakes"
+  weight="gate"
+>
+
+Same format as L63 — the bar at L64 is "comfortably solve both" rather than "barely pass."
+
+</InterviewRound>
+
+## Technical phone screen {#technical-phone-screen}
+
+<InterviewRound
+  name="Technical Phone Screen"
+  duration="60 min"
+  format="Live with senior engineer · 2-3 problems · CodingPad"
+  weight="gate"
+>
+
+A senior engineer (often L64+) screens you. Coding is the same difficulty as L63, but the conversation also probes architectural intuition: "How would this scale to 10x?" "What if you couldn't use a database?"
+
+</InterviewRound>
+
+## Onsite (5–6 rounds) {#onsite}
+
+<InterviewRound name="Coding 1 — DSA" duration="45–60 min" format="Collaborative editor" weight="signal">
+
+Medium-hard problem with follow-ups. Topics: trees, graphs, advanced DP, intervals, design problems.
+
+</InterviewRound>
+
+<InterviewRound name="Coding 2 — DSA" duration="45–60 min" format="Collaborative editor" weight="signal">
+
+Same format, harder problem or different category. Coding is treated as a floor at L64 — both rounds clean is necessary but not sufficient.
+
+</InterviewRound>
+
+<InterviewRound name="Low-Level Design (LLD)" duration="60 min" format="Whiteboard / virtual canvas" weight="signal">
+
+Same format as L63 — design and partially implement a complex component (logger framework, distributed cache interface, job scheduler, chess engine). At L64, the interviewer also probes how you'd evolve the design over time as requirements grow.
+
+</InterviewRound>
+
+<InterviewRound name="System Design — Architect-Level" duration="60 min" format="Whiteboard discussion" weight="level">
+
+The most weighted technical round. At L64 the depth bar shifts:
+
+- **Multi-region, multi-service** systems are the default, not the exception
+- **Failure-mode reasoning is mandatory** — you must describe what breaks at each layer and how the system degrades
+- **Cost / SLA / consistency tradeoffs are explicit** — you put numbers on each dimension
+- **Mid-interview constraint changes are heavier** — the interviewer may swap a requirement and expect you to adapt without restarting
+
+Common prompts:
+
+- Design OneDrive sync at trillions-of-files scale with offline editing
+- Design Teams chat with end-to-end encryption, presence, reactions, and threaded replies
+- Design Azure Cosmos DB's global multi-region replication
+- Design SharePoint's cross-tenant collaboration with compliance constraints
+- Design Outlook's calendar with availability search across millions of mailboxes and external partners
+- Design a global API gateway with rate limiting, auth, and observability
+
+Some L64 loops include **two design rounds** — one focused on system design, one on architecture review (critique an existing design and propose evolution).
+
+<EvalCriteria
+  criteria={[
+    {
+      name: 'Architectural vision',
+      detail: 'You decompose into logical services with clear boundaries, ownership, and contracts. You explain how they evolve.',
+    },
+    {
+      name: 'Multi-region failure reasoning',
+      detail: 'You describe failure modes at each layer (region, AZ, service, dependency) and the degradation strategy for each.',
+      strong: 'You preempt the interviewer\'s "what if X fails?" by raising it yourself.',
+    },
+    {
+      name: 'Quantified tradeoffs',
+      detail: 'You put numbers on consistency vs. latency, cost vs. SLA, simplicity vs. flexibility. Not adjectives.',
+    },
+    {
+      name: 'Adaptability under constraint changes',
+      detail: 'When the interviewer swaps a requirement mid-design, you adapt the existing architecture rather than restarting.',
+    },
+  ]}
+/>
+
+</InterviewRound>
+
+<InterviewRound name="Behavioral (dedicated round, new at L64)" duration="60 min" format="Conversational with senior leader" weight="level">
+
+L64 is the first level with a **standalone behavioral round**. The interviewer (often a senior engineer or hiring manager) probes:
+
+- **Org-wide leadership** — driving multi-quarter initiatives across orgs, with measurable outcomes
+- **Mentorship at scale** — coaching engineers from L62 to L63+, named individuals
+- **Strategic judgment** — choosing what NOT to build, reprioritizing under constraints
+- **Conflict resolution at executive levels** — disagreements with directors, CVPs, partner teams
+- **Setting engineering standards** — practices or principles you established that others adopted
+- **Failure ownership** — projects you led that failed, what specifically you changed afterward
+
+L64 stories should land at the **multi-team, multi-quarter, with $-impact or org-impact metrics** scope. Single-team contributions read as L63.
+
+<EvalCriteria
+  criteria={[
+    {
+      name: 'Org-wide scope',
+      detail: 'Stories involve multiple teams, quarters of timeline, with measurable outcomes (revenue, cost, latency, headcount affected).',
+      strong: 'Specific business impact in $ or measurable engineering velocity changes.',
+    },
+    {
+      name: 'Strategic judgment',
+      detail: 'You name decisions you made about what NOT to build and why. You chose against the obvious option with reasoning.',
+    },
+    {
+      name: 'Mentorship evidence',
+      detail: 'Specific juniors you coached, with named individuals and specific behavior changes that followed.',
+    },
+    {
+      name: 'Authentic failure stories',
+      detail: 'A real failure with named decisions you got wrong. Not "the team failed." Microsoft values authentic ownership.',
+    },
+  ]}
+/>
+
+</InterviewRound>
+
+## The As-Appropriate (CVP-level) round {#as-appropriate}
+
+The As-Ap at L64 is **conducted by a CVP, Partner, or senior hiring leader** — the most senior interview in the loop. It happens after the rest of the loop, and the interviewer reviews all prior feedback before talking to you.
+
+Their job is twofold:
+
+1. **Probe blind spots in the prior assessment.** If your earlier rounds established technical strength but the panel was uncertain about culture fit, the As-Ap focuses on behavioral. If technical depth was uncertain, they probe technical. The format adapts to your specific gaps.
+2. **Confirm cultural and strategic alignment** — does your judgment align with where this org is going? Do you fit with the leadership team\'s working style?
+
+The As-Ap and the hiring manager **jointly make the final hire decision**. If you reach As-Ap, the offer is likely — but the round can still downlevel you to L63 if the senior leader spots a gap the rest of the panel missed.
+
+:::tip[How to prepare for the As-Ap at L64]
+You won't know in advance what they'll probe — that's the point. Prepare so you're ready for any of: a technical deep-dive on something you mentioned, a behavioral story drilled to 4 levels, or a strategic conversation about the team's direction. The most common pattern: a relaxed conversation that shifts to a specific probe in the last 15 minutes.
+:::
+
+## Evaluation criteria {#evaluation-criteria}
+
+<EvalCriteria
+  criteria={[
+    {
+      name: 'Coding fluency',
+      detail: 'Mediums + medium-hards solved cleanly. Floor, not ceiling, at L64.',
+    },
+    {
+      name: 'Low-level design',
+      detail: 'Class decomposition, sensible APIs, key methods implemented. Evolution discussion.',
+    },
+    {
+      name: 'System design at architect depth',
+      detail: 'Multi-region, multi-service, with failure modes, quantified tradeoffs, mid-interview adaptability.',
+      strong: 'You\'d be a credible architect for a multi-team Microsoft platform investment.',
+    },
+    {
+      name: 'Behavioral at org scale',
+      detail: 'Multi-team, multi-quarter ownership; mentorship of L62 → L63 engineers; strategic judgment.',
+    },
+    {
+      name: 'CVP / Partner trust',
+      detail: 'After As-Ap, the senior leader trusts your judgment and would want you on their team.',
+    },
+  ]}
+/>
+
+## Common questions {#common-questions}
+
+<CommonQuestions
+  questions={[
+    { type: 'coding', difficulty: 'hard', prompt: 'Integer to English Words', source: 'LC 273' },
+    { type: 'coding', difficulty: 'medium', prompt: 'LRU Cache', source: 'LC 146' },
+    { type: 'coding', difficulty: 'hard', prompt: 'Serialize and Deserialize Binary Tree', source: 'LC 297' },
+    { type: 'coding', difficulty: 'hard', prompt: 'Word Ladder II', source: 'LC 126' },
+    { type: 'coding', difficulty: 'hard', prompt: 'LFU Cache', source: 'LC 460' },
+    { type: 'coding', difficulty: 'medium', prompt: 'Implement a logger / rate limiter framework with concurrency' },
+    { type: 'system-design', prompt: 'Design OneDrive sync at trillions-of-files scale with offline editing.' },
+    { type: 'system-design', prompt: 'Design Teams chat with end-to-end encryption, presence, reactions, threading.' },
+    { type: 'system-design', prompt: 'Design Azure Cosmos DB\'s global multi-region replication.' },
+    { type: 'system-design', prompt: 'Design SharePoint\'s cross-tenant collaboration with compliance constraints.' },
+    { type: 'system-design', prompt: 'Design a global API gateway (rate limiting, auth, observability).' },
+    { type: 'system-design', prompt: 'Critique this existing notification architecture and propose evolution.' },
+    { type: 'behavioral', prompt: 'Describe a multi-quarter initiative you led across multiple orgs.' },
+    { type: 'behavioral', prompt: 'Walk me through coaching an engineer from L62 to L63. Name the person.' },
+    { type: 'behavioral', prompt: 'Tell me about a time you decided NOT to build something against pressure.' },
+    { type: 'behavioral', prompt: 'Describe a disagreement with a Director or CVP and how you handled it.' },
+    { type: 'behavioral', prompt: 'What engineering standard or practice did you establish that others adopted?' },
+    { type: 'behavioral', prompt: 'Tell me about a project you led that failed. What did you specifically change?' },
+  ]}
+/>
+
+## Preparation plan {#preparation-plan}
+
+System design and behavioral dominate L64 prep. Coding is the floor.
+
+| Week | Focus | Daily commitment | Exit criteria |
+|---|---|---|---|
+| 1 | LC mediums + selective hards (Microsoft-tagged) | 1 medium + 1 hard/day | 14 problems solved cleanly, plain text |
+| 2 | LLD reps + concurrency primitives | 1 LLD + 1 concurrency/day | 5 LLDs implementable; concurrency reasoning fluent |
+| 3 | System design fundamentals (storage, replication, consistency, queues, leader election) | 1 design walkthrough/day | 5 designs from first principles, with capacity numbers |
+| 4 | System design — Microsoft-product flavored at architect depth | 1 mock design/day | 5 product designs at L64 depth, including multi-region |
+| 5 | Architecture review reps (critique existing systems with migration plans) | 1 critique/day | 5 critique-and-evolve plans with cost/benefit |
+| 6 | Behavioral story building (12 stories at L64 scope) | 30 min/day + 1 mock behavioral | 12 STAR stories, named individuals, quantified outcomes |
+| 7 | Mock loops + As-Ap rehearsal (relaxed senior conversation that probes one area) | 1 mock loop/week | 2 full mocks, 1 As-Ap-style conversation rehearsed |
+
+:::tip[L64-specific gotchas]
+**The dedicated behavioral round at L64 catches L63 candidates by surprise.** Below L64, behavioral signal is forgiving because it's spread across rounds. At L64, one weak story in the dedicated round can downlevel you. Prepare 12 stories at the right scope, drilled to 4 levels.
+
+**The As-Ap with a CVP is unusual at L64.** Most senior candidates haven't talked to a CVP-level leader as part of an interview before. The energy is conversational, not adversarial — but the implications are senior. Prepare to discuss strategy and team direction, not just your own work.
+:::
+
+<RelatedGuides
+  guides={[
+    { href: '../microsoft/l62', company: 'Microsoft', level: 'L62', blurb: 'Mid-level cousin — system design lighter, behavioral less weighted.' },
+    { href: '../microsoft/l63', company: 'Microsoft', level: 'L63', blurb: 'Senior cousin — same loop minus the dedicated behavioral round.' },
+    { href: '../meta/e5', company: 'Meta', level: 'E5', blurb: 'Compare with Meta\'s senior loop.' },
+    { href: '../google/l5', company: 'Google', level: 'L5', blurb: 'Compare with Google\'s senior loop.' },
+    { href: '../amazon/sde-iii', company: 'Amazon', level: 'SDE III', blurb: 'Compare with Amazon\'s senior loop.' },
+  ]}
+/>
+
+## Sources {#sources}
+
+Cross-checked against three sources during authoring (May 2026):
+
+- [HelloInterview — Microsoft L63-64 (2026)](https://www.hellointerview.com/guides/microsoft/senior)
+- [Levels.fyi — Microsoft Hiring Process](https://www.levels.fyi/blog/ace-microsoft-hiring.html)
+- [Interviewing.io — Senior Engineer's Microsoft Guide](https://interviewing.io/guides/hiring-process/microsoft)
+
+</InterviewGuide>

@@ -1,0 +1,147 @@
+---
+title: Meta E4 Interview Guide
+description: >-
+  The complete Meta E4 (mid software engineer) interview process —
+  rounds, rubrics, common questions, and a focused preparation plan.
+access: free
+hide_title: true
+tutor_topic: "Meta E4 interview process"
+tutor_concepts:
+  - "Meta E4 leveling and signals"
+  - "system design at Meta E4"
+  - "scope and ownership behavioral signals"
+  - "Meta calibration vs E3"
+---
+
+<InterviewGuide
+  slug="meta-e4"
+  company="Meta"
+  level="E4"
+  title="Meta E4 Interview Guide"
+  subtitle="Mid SWE loop — same coding bar as E3 plus a system design round and behavioral that probes scope and ownership."
+>
+
+<GuideTOC
+  items={[
+    { href: '#process-overview', label: 'Process overview' },
+    { href: '#how-it-differs-from-e3', label: 'How it differs from E3' },
+    { href: '#onsite', label: 'Onsite (5 rounds)' },
+    { href: '#evaluation-criteria', label: 'Evaluation criteria' },
+    { href: '#common-questions', label: 'Common questions' },
+    { href: '#preparation-plan', label: 'Preparation plan' },
+  ]}
+/>
+
+## Process overview {#process-overview}
+
+The E4 loop runs 5–7 weeks. Same screening flow as E3 (recruiter screen, OA, technical phone screen) but the onsite expands to **5 rounds**: 2 coding, 1 system design, 1 behavioral, 1 hiring-manager round (sometimes combined with behavioral).
+
+## How it differs from E3 {#how-it-differs-from-e3}
+
+- **System design is added** as a full round — this is the round that **decides level** between E3 and E4.
+- **Behavioral expectations grow** — E3 tests collaboration; E4 tests **independent ownership** ("you led X end-to-end with little supervision").
+- **Coding bar is the same** as E3, but the expectation is faster execution and cleaner code under time pressure.
+
+:::warning[Down-leveling at Meta]
+If your coding is strong but system design is shallow ("I'd add a load balancer and a cache"), the committee will likely down-level you to E3 rather than no-hire. Strong system design is the only reliable lever to land the E4 offer.
+:::
+
+## Onsite (5 rounds) {#onsite}
+
+<InterviewRound name="Coding 1" duration="45 min" format="2 problems · CoderPad" weight="signal">
+Same format as E3 coding rounds. Bar is calibrated identically — what changes is the expected delivery speed and follow-up depth.
+</InterviewRound>
+
+<InterviewRound name="Coding 2" duration="45 min" format="2 problems · CoderPad" weight="signal">
+Often skews harder than Coding 1, with one medium and one hard. Common categories: DP, intervals, advanced graphs, design (e.g., LRU cache).
+</InterviewRound>
+
+<InterviewRound name="System Design" duration="45 min" format="Whiteboard / virtual canvas" weight="level">
+
+Open-ended product or infrastructure design. Examples: design Instagram feed, design a chat system, design a URL shortener, design a typeahead service.
+
+Expected flow:
+
+1. **Clarify requirements** (3 min) — functional + non-functional, scale numbers.
+2. **Capacity estimation** (3 min) — QPS, storage, bandwidth.
+3. **High-level design** (10 min) — boxes-and-arrows, data flow.
+4. **Deep dives** (20 min) — interviewer picks 1–2 components to explore: storage schema, sharding, caching, consistency.
+5. **Tradeoffs and bottlenecks** (5 min) — what breaks at 10x scale.
+
+<EvalCriteria
+  criteria={[
+    {
+      name: 'Requirements scoping',
+      detail: 'You drive the conversation toward concrete requirements rather than waiting to be told.',
+    },
+    {
+      name: 'Tradeoff articulation',
+      detail: 'When you pick a database, queue, or replication strategy, you explain what you traded away and why it\'s acceptable here.',
+      strong: 'You preempt the interviewer\'s "but what about X?" by raising the tradeoff yourself.',
+    },
+    {
+      name: 'Depth on a chosen component',
+      detail: 'You can go 3+ levels deep on one piece — schema, indexes, query patterns, failure modes.',
+    },
+  ]}
+/>
+
+</InterviewRound>
+
+<InterviewRound name="Behavioral ('Jedi')" duration="45 min" format="Conversational" weight="veto">
+
+Same structure as E3 but with sharper probes on **scope** ("how big was the project, in headcount and timeline?") and **influence** ("who pushed back, and how did you bring them along?").
+
+Stories should land at the **multi-quarter, cross-team** size for E4. Single-sprint contributions feel like E3.
+
+</InterviewRound>
+
+<InterviewRound name="Hiring Manager" duration="30–45 min" format="Conversational + light technical">
+Often merged into the behavioral slot. The HM is calibrating fit and seniority — they may probe one technical area informally.
+</InterviewRound>
+
+## Evaluation criteria {#evaluation-criteria}
+
+<EvalCriteria
+  criteria={[
+    { name: 'Coding', detail: 'Same bar as E3, but expected faster.' },
+    { name: 'System design', detail: 'Drives the conversation, articulates tradeoffs, goes deep on one component.', strong: 'Suggests two viable architectures and chooses one with explicit reasoning.' },
+    { name: 'Ownership (behavioral)', detail: 'Stories show end-to-end delivery of multi-month projects with cross-functional inputs.' },
+    { name: 'Influence (behavioral)', detail: 'Examples of bringing peers or stakeholders along through disagreement.' },
+  ]}
+/>
+
+## Common questions {#common-questions}
+
+<CommonQuestions
+  questions={[
+    { type: 'coding', difficulty: 'medium', prompt: 'LRU Cache', source: 'LC 146' },
+    { type: 'coding', difficulty: 'medium', prompt: 'Word Break II', source: 'LC 140' },
+    { type: 'coding', difficulty: 'hard', prompt: 'Serialize and Deserialize Binary Tree', source: 'LC 297' },
+    { type: 'coding', difficulty: 'hard', prompt: 'Alien Dictionary', source: 'LC 269' },
+    { type: 'system-design', prompt: 'Design Instagram\'s news feed.' },
+    { type: 'system-design', prompt: 'Design a typeahead / search autocomplete service.' },
+    { type: 'system-design', prompt: 'Design a chat application like Messenger.' },
+    { type: 'behavioral', prompt: 'Describe a multi-month project you owned end-to-end.' },
+    { type: 'behavioral', prompt: 'Tell me about a time you influenced a decision outside your team.' },
+  ]}
+/>
+
+## Preparation plan {#preparation-plan}
+
+| Week | Focus | Exit criteria |
+|---|---|---|
+| 1–2 | LC mediums (arrays, trees, graphs, DP) | 30 mediums solved in &lt;25 min each |
+| 3 | System design fundamentals (storage, caching, sharding, queues) | 5 written design walkthroughs |
+| 4 | System design reps (Instagram, chat, typeahead, URL shortener, ride-sharing) | 5 mock designs at 45 min each |
+| 5 | Behavioral STAR stories + 2 mocks | 4 stories scoped to E4 (multi-quarter, cross-team) |
+| 6 | Final mocks + Meta-tagged LC | 3 final loops with no flagged round |
+
+<RelatedGuides
+  guides={[
+    { href: '../meta/e3', company: 'Meta', level: 'E3', blurb: 'Junior cousin — same coding bar, no system design.' },
+    { href: '../google/l3', company: 'Google', level: 'L3', blurb: 'Compare with Google\'s entry-level loop.' },
+  ]}
+/>
+
+</InterviewGuide>

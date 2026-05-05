@@ -1,0 +1,337 @@
+---
+title: Amazon Applied Scientist Interview Guide
+description: >-
+  The complete Amazon Applied Scientist interview process for 2026 —
+  ML breadth, ML depth, science presentation, coding, and the
+  Leadership-Principles-saturated behavioral signal that runs through every round.
+access: free
+hide_title: true
+tutor_topic: "Amazon Applied Scientist interview process"
+tutor_concepts:
+  - "Applied Scientist ladder vs SDE ladder"
+  - "ML breadth vs ML depth round"
+  - "research presentation tech talk"
+  - "ML application to business scenarios"
+  - "Leadership Principles in every round"
+---
+
+<InterviewGuide
+  slug="amazon-applied-scientist"
+  company="Amazon"
+  level="Applied Scientist"
+  title="Amazon Applied Scientist Interview Guide"
+  subtitle="Separate ladder from SDE — the loop tests ML breadth, depth on your research, applied judgment in business scenarios, plus coding. Leadership Principles run through every round."
+>
+
+<GuideTOC
+  items={[
+    { href: '#process-overview', label: 'Process overview' },
+    { href: '#how-it-differs-from-sde', label: 'How it differs from the SDE ladder' },
+    { href: '#technical-phone-screen', label: 'Technical phone screen' },
+    { href: '#onsite', label: 'Onsite (5 rounds)' },
+    { href: '#bar-raiser', label: 'The Bar Raiser' },
+    { href: '#evaluation-criteria', label: 'Evaluation criteria' },
+    { href: '#common-questions', label: 'Common questions' },
+    { href: '#preparation-plan', label: 'Preparation plan' },
+    { href: '#sources', label: 'Sources' },
+  ]}
+/>
+
+## Process overview {#process-overview}
+
+The Amazon Applied Scientist loop runs **6–10 weeks** end-to-end:
+
+1. **Recruiter screen** — 30 min logistics + light technical fit
+2. **Technical phone screen** — 60 min: ML + coding + LP. (1–2 screens depending on role and seniority)
+3. **Onsite loop** — 5 rounds, 55 min each:
+   - Coding (1–2 rounds)
+   - ML Breadth
+   - ML Depth (research project deep-dive)
+   - ML Application (model design for a business scenario)
+   - Leadership / Behavioral
+   - Bar Raiser
+4. **Tech talk** (some teams) — 60 min research presentation to the science community
+
+:::warning[LP signal everywhere]
+Leadership Principles are tested **in every round**, not just the behavioral round. Each interviewer asks 2–3 LP questions in addition to the technical content. Recent reports indicate **>50% of total interview time is behavioral**.
+:::
+
+## How it differs from the SDE ladder {#how-it-differs-from-sde}
+
+Applied Scientist is a **separate job family** from SDE at Amazon, with its own leveling and rubric:
+
+| Dimension | SDE ladder | Applied Scientist ladder |
+|---|---|---|
+| **Coding emphasis** | High (2-3 dedicated rounds) | Moderate (1-2 rounds, mediums) |
+| **System design** | Mandatory at L5+ | Replaced by ML application + research talk |
+| **ML depth** | Not assessed | Required — your published or industry research |
+| **ML breadth** | Not assessed | Required — fundamentals across supervised, unsupervised, deep learning |
+| **Research talk** | Not part of loop | Often required (1-hour presentation) |
+| **PhD relevance** | Not weighted | Weighted (especially for L5+ AS roles), but industry research counts |
+
+## Technical phone screen {#technical-phone-screen}
+
+<InterviewRound
+  name="Technical Phone Screen"
+  duration="60 min"
+  format="Video · 1–2 sessions · senior team member"
+  weight="gate"
+>
+
+Mixed bag: 1–2 coding problems + ML fundamentals + 1–2 LP questions. The first screen is typically:
+
+- **20–25 min coding** — DSA medium (arrays, hashmaps, graphs, trees, BST). Not the level of LeetCode-hard you\'d see for an SDE.
+- **20 min ML** — fundamentals only on this round: bias-variance, regularization, loss functions, evaluation metrics. The interviewer probes whether your ML grounding is solid before scheduling onsite.
+- **10–15 min LP** — 1–2 questions, drilled lightly.
+
+If a second phone screen exists, it usually goes deeper on ML (your research, model design tradeoffs).
+
+</InterviewRound>
+
+## Onsite (5 rounds) {#onsite}
+
+<InterviewRound
+  name="Coding"
+  duration="55 min · 1–2 rounds depending on team"
+  format="CoderPad / shared editor"
+  weight="gate"
+>
+
+LeetCode-style DSA problems at medium level — arrays, hashmaps, graphs, trees, BFS/DFS, sliding window, binary search, basic DP. The bar is "can you write working code under pressure" rather than "can you crack the hardest problem."
+
+The interviewer also asks 2–3 LP questions in this round (15 min). Don\'t treat coding rounds as pure technical.
+
+<EvalCriteria
+  criteria={[
+    {
+      name: 'Coding fluency',
+      detail: 'You solve a medium completely with edge cases and complexity analysis. The bar is correctness and clarity, not optimal complexity at the first attempt.',
+    },
+    {
+      name: 'Reasoning out loud',
+      detail: 'You narrate your approach, propose alternatives, accept hints when given.',
+      strong: 'Your code reads like research-quality production code — not academic pseudocode.',
+    },
+  ]}
+/>
+
+</InterviewRound>
+
+<InterviewRound
+  name="ML Breadth"
+  duration="55 min"
+  format="Conversational + whiteboard"
+  weight="signal"
+>
+
+Tests the **width** of your ML knowledge across topics. Common probes:
+
+- **Supervised learning** — linear/logistic regression, decision trees, random forests, GBMs (XGBoost, LightGBM), SVMs, neural networks
+- **Unsupervised** — k-means, GMM, DBSCAN, hierarchical clustering, anomaly detection
+- **Probabilistic models** — naive Bayes, HMMs, Bayesian inference basics
+- **Deep learning** — CNNs, RNNs, attention/Transformers, optimization, regularization (dropout, BatchNorm, weight decay)
+- **NLP / GenAI** — embeddings, fine-tuning, RAG, evaluation of LLMs
+- **Methodology** — bias-variance, regularization, cross-validation, hyperparameter tuning, evaluation metrics for various tasks
+
+The interviewer rapidly switches topics. You\'re not expected to be expert at everything — but you must be able to **discuss tradeoffs and pick the right tool** for a given problem.
+
+<EvalCriteria
+  criteria={[
+    {
+      name: 'Topic coverage',
+      detail: 'You can speak coherently to all major ML topic areas. You don\'t have a glaring blind spot in any of them.',
+    },
+    {
+      name: 'Tradeoff articulation',
+      detail: 'When asked "would you use bagging or boosting here?", you give a reasoned answer with explicit tradeoffs.',
+      strong: 'You preempt the follow-up by raising the next question yourself.',
+    },
+    {
+      name: 'GenAI literacy',
+      detail: 'You can discuss when to use LLMs vs. classical ML and reason about the cost/latency/accuracy tradeoff.',
+    },
+  ]}
+/>
+
+</InterviewRound>
+
+<InterviewRound
+  name="ML Depth — Research Deep-Dive"
+  duration="55 min"
+  format="Walkthrough of your past project · whiteboard for derivations"
+  weight="level"
+>
+
+You walk through a **real research or applied ML project** you\'ve owned (paper, internship work, side project). The interviewer drills into:
+
+- **Problem framing** — why this problem? what was the metric? what counted as success?
+- **Data** — how was it collected? what biases were there? how did you handle them?
+- **Method** — why this model? what alternatives did you consider? what did you implement vs. use off-the-shelf?
+- **Tradeoffs** — what did you give up? what would you do differently?
+- **Outcomes** — what worked, what didn\'t, what did you learn?
+- **Math** — derivations and intuitions for the key components (be ready to whiteboard a loss function or attention mechanism)
+
+This is the round that **decides level**. Strong depth on a real project — even an unpublished one — beats shallow familiarity with several papers. Have **one project rehearsed cold** at 4 levels of follow-up.
+
+<EvalCriteria
+  criteria={[
+    {
+      name: 'Ownership of decisions',
+      detail: 'You can defend every modeling decision with reasoning grounded in the problem, not just "this is what worked."',
+      strong: 'You name decisions you got wrong and what changed.',
+    },
+    {
+      name: 'Mathematical comfort',
+      detail: 'You can derive or explain the key equations on a whiteboard without notes. Loss functions, attention math, gradient computations — these are open game.',
+    },
+    {
+      name: 'Critical reflection',
+      detail: 'You name limitations, alternatives, and what you\'d do differently. You don\'t over-claim impact.',
+    },
+  ]}
+/>
+
+</InterviewRound>
+
+<InterviewRound
+  name="ML Application"
+  duration="55 min"
+  format="Whiteboard · open-ended business scenario"
+  weight="level"
+>
+
+The interviewer presents a real Amazon-flavored business problem and asks you to design the ML system end-to-end. Examples:
+
+- "Design a system to detect fraudulent reviews on Amazon."
+- "Design a recommendation engine for Prime Video."
+- "Design a query understanding system for Amazon search."
+- "Design a forecasting system for inventory at Amazon Fresh."
+- "Design a moderation system for Twitch using a multimodal LLM."
+
+Expected flow:
+
+1. **Problem framing** (5–10 min) — clarify objectives, success metrics, constraints (latency, scale, cost).
+2. **Data design** (10 min) — what data, how to collect it, what labels, how to handle biases.
+3. **Model architecture** (15 min) — start simple, add complexity only when motivated. Include training and inference pipelines.
+4. **Eval strategy** (5 min) — offline metrics, online experimentation (A/B), guardrails.
+5. **Deployment + monitoring** (10 min) — serving infra, latency budgets, retraining cadence, drift detection.
+6. **Failure modes** (5 min) — what breaks at scale, what biases creep in, how to debug.
+
+This round mirrors **what an Applied Scientist actually does at Amazon** — taking a vague business problem and shipping a model that works in production.
+
+</InterviewRound>
+
+<InterviewRound
+  name="Behavioral / Leadership Principles"
+  duration="55 min"
+  format="Conversational"
+  weight="signal"
+>
+
+Pure LP round (the other rounds also test LPs, but this is the dedicated one). At the Applied Scientist level, the most-probed principles:
+
+- **Customer Obsession** — choosing the user-aligned model over the academically-clean one
+- **Earn Trust** — communicating model risk and uncertainty to non-technical stakeholders
+- **Dive Deep** — debugging a model failure, understanding all layers of your pipeline
+- **Are Right, A Lot** — judgment under data ambiguity, when to ship vs. iterate
+- **Bias for Action** — making 2-way-door experiments quickly
+- **Invent and Simplify** — replacing a complex model with something simpler that works as well
+
+Have **10–12 STAR stories** prepared, mapped to LPs.
+
+</InterviewRound>
+
+## The Bar Raiser {#bar-raiser}
+
+The Bar Raiser at Applied Scientist is from outside your target science team but inside the broader Amazon science org. They probe:
+
+- **Whether you raise the bar of current Applied Scientists** in research depth and applied judgment
+- **Whether your ML breadth is wide enough** to support the team\'s long-term work
+- **Whether your judgment under ambiguity** is sound — would they trust your model decisions
+
+The Bar Raiser veto is binding here too. A common pattern: strong ML depth + weak ML breadth gets a downlevel ("we\'d like to extend at L4 instead of L5").
+
+## Evaluation criteria {#evaluation-criteria}
+
+<EvalCriteria
+  criteria={[
+    {
+      name: 'Coding',
+      detail: 'Mediums solved cleanly with edge cases. Bar is lower than SDE — correctness over optimal complexity.',
+    },
+    {
+      name: 'ML breadth',
+      detail: 'Coverage across supervised, unsupervised, deep learning, NLP, GenAI. Tradeoff articulation per topic.',
+    },
+    {
+      name: 'ML depth (research)',
+      detail: 'One real project rehearsed at 4 levels of follow-up. Math comfort on whiteboard. Critical reflection on tradeoffs.',
+      strong: 'You\'ve published or shipped non-trivial work and can defend every decision.',
+    },
+    {
+      name: 'ML application',
+      detail: 'End-to-end ML system design for a business problem: data, model, eval, deployment, monitoring, failure modes.',
+    },
+    {
+      name: 'Leadership Principles',
+      detail: 'Stories tagged to LPs, drilled 3+ levels deep. Specific outcomes — model accuracy, business metric, $ impact.',
+    },
+  ]}
+/>
+
+## Common questions {#common-questions}
+
+<CommonQuestions
+  questions={[
+    { type: 'coding', difficulty: 'medium', prompt: 'Distance Between Two Nodes in a Binary Tree' },
+    { type: 'coding', difficulty: 'medium', prompt: 'Top K Frequent Elements', source: 'LC 347' },
+    { type: 'coding', difficulty: 'medium', prompt: 'Number of Islands', source: 'LC 200' },
+    { type: 'coding', difficulty: 'medium', prompt: 'Word Break', source: 'LC 139' },
+    { type: 'ml', prompt: 'When would you use bagging vs. boosting? What are the failure modes of each?' },
+    { type: 'ml', prompt: 'Walk me through dropout — what does it do mathematically and intuitively?' },
+    { type: 'ml', prompt: 'Why use cross-entropy loss instead of MSE for classification?' },
+    { type: 'ml', prompt: 'Explain attention. Whiteboard the math.' },
+    { type: 'ml', prompt: 'Walk me through your most important research project.' },
+    { type: 'ml', prompt: 'When would you fine-tune an LLM vs. use prompting + RAG?' },
+    { type: 'ml', prompt: 'Design a system to detect fraudulent reviews on Amazon.' },
+    { type: 'ml', prompt: 'Design a recommendation engine for Prime Video.' },
+    { type: 'ml', prompt: 'Design a forecasting system for Amazon Fresh inventory.' },
+    { type: 'behavioral', prompt: 'Tell me about a time you replaced a complex model with something simpler.' },
+    { type: 'behavioral', prompt: 'Describe communicating a model\'s risk to a non-technical stakeholder.' },
+    { type: 'behavioral', prompt: 'Walk me through debugging an unexpected model failure.' },
+  ]}
+/>
+
+## Preparation plan {#preparation-plan}
+
+| Week | Focus | Daily commitment | Exit criteria |
+|---|---|---|---|
+| 1 | LC mediums (graphs, trees, BFS/DFS, DP) | 2 mediums/day | 14 mediums solved cleanly |
+| 2 | ML breadth review (supervised, unsupervised, deep learning fundamentals) | 1 topic/day with whiteboard derivations | All listed topics with tradeoff statements |
+| 3 | ML depth — pick your strongest project, rehearse 4 levels deep | 1 hour rehearsal + 1 mock | Project survives 4-level drill-down without collapse |
+| 4 | ML application reps (5 end-to-end designs) | 1 design/day | 5 designs: fraud, rec sys, forecasting, moderation, query understanding |
+| 5 | Tech talk preparation (if your role requires it) | 30 min/day | 60-min talk delivered cleanly with Q&A buffer |
+| 6 | LP story building (10–12 stories) | 30 min stories + 1 mock LP | 10 stories with metrics, mapped to LPs |
+| 7 | Mock loops (full or near-full) | 1 mock loop/week | 2 full mocks with no flagged round |
+
+:::tip[The most common mistake]
+Strong-depth-only candidates fail. **You can have one excellent project and still tank the breadth round.** Spend Week 2 forcing yourself to discuss every ML topic area, not just your specialty.
+:::
+
+<RelatedGuides
+  guides={[
+    { href: '../amazon/sde-i', company: 'Amazon', level: 'SDE I', blurb: 'Compare with the SDE ladder (separate from Applied Scientist).' },
+    { href: '../amazon/sde-ii', company: 'Amazon', level: 'SDE II', blurb: 'Some MLE roles use the SDE ladder instead — confirm with your recruiter.' },
+    { href: '../google/l4', company: 'Google', level: 'L4', blurb: 'Compare with Google\'s ML-track loop.' },
+  ]}
+/>
+
+## Sources {#sources}
+
+Cross-checked against three sources during authoring (May 2026):
+
+- [Amazon Jobs — Applied Scientist Interview Prep](https://amazon.jobs/content/en/how-we-hire/applied-scientist-interview-prep)
+- [IGotAnOffer — Amazon Applied Scientist](https://igotanoffer.com/en/advice/amazon-applied-scientist-interview)
+- [Interview Kickstart — 2026 Amazon Applied Scientist Guide](https://interviewkickstart.com/interview-questions/companies/amazon/applied-scientist)
+
+</InterviewGuide>

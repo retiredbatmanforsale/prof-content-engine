@@ -176,6 +176,59 @@ const sidebars: SidebarsConfig = {
           items: [
             'ai-for-engineering/mle-interview/intro',
             'ai-for-engineering/mle-interview/rubrics-and-playbook',
+            {
+              type: 'category',
+              label: 'Company Interview Guides',
+              link: { type: 'doc', id: 'ai-for-engineering/mle-interview/guides/index' },
+              items: [
+                {
+                  type: 'category',
+                  label: 'Meta',
+                  items: [
+                    'ai-for-engineering/mle-interview/guides/meta/e3',
+                    'ai-for-engineering/mle-interview/guides/meta/e4',
+                    'ai-for-engineering/mle-interview/guides/meta/e5',
+                  ],
+                },
+                {
+                  type: 'category',
+                  label: 'Google',
+                  items: [
+                    'ai-for-engineering/mle-interview/guides/google/l3',
+                    'ai-for-engineering/mle-interview/guides/google/l4',
+                    'ai-for-engineering/mle-interview/guides/google/l5',
+                  ],
+                },
+                {
+                  type: 'category',
+                  label: 'Amazon',
+                  items: [
+                    'ai-for-engineering/mle-interview/guides/amazon/sde-i',
+                    'ai-for-engineering/mle-interview/guides/amazon/sde-ii',
+                    'ai-for-engineering/mle-interview/guides/amazon/sde-iii',
+                    'ai-for-engineering/mle-interview/guides/amazon/applied-scientist',
+                  ],
+                },
+                {
+                  type: 'category',
+                  label: 'Microsoft',
+                  items: [
+                    'ai-for-engineering/mle-interview/guides/microsoft/l62',
+                    'ai-for-engineering/mle-interview/guides/microsoft/l63',
+                    'ai-for-engineering/mle-interview/guides/microsoft/l64',
+                  ],
+                },
+                {
+                  type: 'category',
+                  label: 'Apple',
+                  items: [
+                    'ai-for-engineering/mle-interview/guides/apple/ict2',
+                    'ai-for-engineering/mle-interview/guides/apple/ict3',
+                    'ai-for-engineering/mle-interview/guides/apple/ict4',
+                  ],
+                },
+              ],
+            },
           ],
         },
         {
