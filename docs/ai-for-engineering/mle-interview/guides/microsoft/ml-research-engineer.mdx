@@ -1,0 +1,382 @@
+---
+title: Microsoft Machine Learning Research Engineer Interview Guide
+description: >-
+  The complete Microsoft Machine Learning Research Engineer interview process
+  for 2026 across MSR, Microsoft AI, and Azure AI Research — research talk
+  round, lab match mechanic, distributed-training depth, and how the bar varies
+  by org.
+access: free
+hide_title: true
+tutor_topic: "Microsoft ML Research Engineer interview process"
+tutor_concepts:
+  - "MSR vs Microsoft AI vs Azure AI Research org distinctions"
+  - "research talk round at Microsoft"
+  - "lab match mechanic — why a strong loop can still no-offer"
+  - "distributed training and large-model engineering bar"
+  - "Research Engineer vs Applied Scientist vs MLE distinction"
+---
+
+<InterviewGuide
+  slug="microsoft-ml-research-engineer"
+  company="Microsoft"
+  level="ML Research Engineer"
+  title="Microsoft Machine Learning Research Engineer Interview Guide"
+  subtitle="Engineering-the-research role. 60-min research talk plus lab-match mechanic make this the longest, lowest-volume Microsoft ML loop. MSR, Microsoft AI (formerly MAI / Mustafa's org), and Azure AI Research run subtly different loops on the same headline ladder."
+>
+
+<GuideTOC
+  items={[
+    { href: '#process-overview', label: 'Process overview' },
+    { href: '#orgs', label: 'MSR vs Microsoft AI vs Azure AI Research' },
+    { href: '#how-it-differs', label: 'How it differs from MLE & Applied Scientist' },
+    { href: '#screens', label: 'Recruiter / HM / tech phone screens' },
+    { href: '#onsite', label: 'Onsite (5–7 rounds)' },
+    { href: '#research-talk', label: 'The research talk round' },
+    { href: '#lab-match', label: 'Lab match — the silent reject path' },
+    { href: '#evaluation-criteria', label: 'Evaluation criteria' },
+    { href: '#common-questions', label: 'Common questions' },
+    { href: '#preparation-plan', label: 'Preparation plan' },
+    { href: '#sources', label: 'Sources' },
+  ]}
+/>
+
+## Process overview {#process-overview}
+
+The Microsoft ML Research Engineer loop runs **6–12 weeks** end-to-end — the longest of any Microsoft ML track. The structure:
+
+1. **Recruiter screen** — 30 min: background, motivation, target lab / org, publication record
+2. **Hiring manager / lab-lead screen** — 45–60 min: research alignment, project deep-dive, level confirmation
+3. **Technical phone screen** — 60 min: one coding problem + research reasoning, often delivered by a senior research engineer
+4. **Onsite loop** — 5–7 rounds, typically split across two days: coding, ML breadth, ML depth, **research talk (60 min)**, distributed-training / systems, behavioral, AA
+5. **As-Appropriate (AA) round** — 45–60 min with a Distinguished Engineer or Lab Director
+6. **Lab match** — even with a strong loop, you need a lab/team that can absorb you. This is **the most common silent-reject path** at MSR.
+
+:::warning[Lab match can override a strong loop]
+Unlike SDE / MLE / Applied Scientist where a "hire" verdict converts to an offer once a team is found, **MSR specifically operates lab-match-first**: you interview against a specific lab\'s open headcount. If the lab\'s priorities shift mid-loop, or your research area no longer aligns, the loop ends without an offer even on positive feedback. Microsoft AI (the org reorganized around Mustafa Suleyman) and Azure AI Research are more team-flexible but still org-bounded.
+:::
+
+## MSR vs Microsoft AI vs Azure AI Research {#orgs}
+
+The "ML Research Engineer" title appears across three different orgs with subtly different loops, expectations, and outcomes. **Always confirm with your recruiter which org owns the headcount.**
+
+| Org | What it is | Loop character | Differentiator |
+|---|---|---|---|
+| **Microsoft Research (MSR)** | Pure-research labs (Redmond, Cambridge UK, Bangalore, NYC, Montreal). Each lab runs independently. | Lab-match dominates. Heavy research talk, lighter coding. **PhD essentially required**, publication record graded. | "What lab is hiring you?" is a real first question. |
+| **Microsoft AI (formerly MAI)** | The product-research org under Mustafa Suleyman. Copilot, MAI-1 / in-house foundation models, agents. Founded 2024, growing fast. | Heavier on **distributed training**, foundation-model engineering, evaluation infra. Less paper-publication weight than MSR. | "Have you trained a model >7B?" type questions. Bias toward shipped impact. |
+| **Azure AI Research** | Applied research powering Azure AI services and tooling. Sits between MSR (open research) and product (Azure AI Foundry, model serving infra). | Mid: research talk required, but ML system design and serving infra round are heavier than at MSR. | "How does your research land in a customer-facing Azure service?" |
+
+### Leveling
+
+The headline ladder is shared (L62 → L63 → L64 → L65 → L66 → L67), but interpretation diverges:
+
+- **MSR** — L62 entry RE rare; modal entry is L63 (post-PhD, ~3 yrs). L64+ expected to **drive a research direction**, not just contribute. L65+ is "named on the paper, owns the agenda."
+- **Microsoft AI** — Modal entry L63–L64 with industry training experience or PhD. L65+ measured on **scaled-system impact**: training runs you led, eval frameworks you built.
+- **Azure AI Research** — Modal entry L63 (PhD or strong industry research). L64+ expected to bridge research and Azure product surfaces.
+
+## How it differs from MLE & Applied Scientist {#how-it-differs}
+
+| Dimension | MLE | Applied Scientist | **ML Research Engineer** |
+|---|---|---|---|
+| Coding weight | 1–2 DSA rounds (~25–30%) | 1 DSA round (~15–20%) | **1 DSA round, often skipped at L65+** |
+| ML breadth | Required, broad | Required, rigorous | Required + **deep on the research subfield** |
+| Research talk | None | Often, but informal | **Dedicated 60-min round, formal talk + Q&A** |
+| Distributed training | Light | Light | **Often a dedicated round** at Microsoft AI |
+| ML system design | Heavy: training/serving infra | Modeling-centric | **Research-infra-centric**: training pipelines, eval harness, ablation tooling |
+| Publication record | Helpful | Often expected at L63+ | **First-author papers at top venues are the modal background** |
+
+The clean mental model:
+- **MLE** = ship the model in production
+- **Applied Scientist** = invent the model, defend the modeling choice
+- **ML Research Engineer** = invent **and engineer** new modeling capability — the eval harness, the training framework, the ablation, the paper
+
+## Recruiter / HM / tech phone screens {#screens}
+
+<InterviewRound
+  name="Recruiter screen"
+  duration="30 min"
+  format="Phone / Teams · non-technical"
+  weight="gate"
+>
+
+Standard recruiter call but with two ML-research-specific probes:
+- **Lab / org alignment** — which MSR lab, which Microsoft AI team, which Azure AI Research group are you targeting? Recruiter will route.
+- **Publication record** — first-author count, top-venue track (NeurIPS, ICML, ICLR, ACL, EMNLP, CVPR), citation context
+
+If you can\'t name a target lab or team, the loop may stall here.
+
+</InterviewRound>
+
+<InterviewRound
+  name="Hiring manager / lab-lead screen"
+  duration="45–60 min"
+  format="Video · research deep-dive on your CV"
+  weight="level"
+>
+
+The most important pre-onsite signal. The lab lead probes:
+- One paper or project from your CV — methodology, contribution, what you\'d do differently
+- How your research direction aligns with the lab\'s open problems
+- What you want to work on for the next 2–3 years
+
+Output of this round determines whether the lab fights for you in the onsite. **A weak HM screen is rarely overcome later.**
+
+</InterviewRound>
+
+<InterviewRound
+  name="Technical phone screen"
+  duration="60 min"
+  format="Live coding + research reasoning · CoderPad / shared editor"
+  weight="signal"
+>
+
+One LeetCode medium, often ML-flavored (implement K-means / a softmax cross-entropy gradient / batched dot-product attention in numpy). Last 10–15 minutes are research-talk-style follow-ups: pick one paper / project, defend your baseline choice and one ablation.
+
+Microsoft\'s signal here is **clean code under research-relevant load**: can you implement a numerical primitive correctly, with shape-correct broadcasting, while explaining your reasoning?
+
+</InterviewRound>
+
+## Onsite (5–7 rounds) {#onsite}
+
+<InterviewRound name="Coding (DSA / numerical)" duration="60 min" format="Live coding · shared editor" weight="signal">
+
+One coding problem, often:
+- A LeetCode medium with a numerical / streaming twist
+- Implement a small numerical primitive in numpy / PyTorch (attention, layer norm, beam search)
+- A data-loader / dataset edge-case problem
+
+At L65+ this round is sometimes dropped — research talk + lab match dominate.
+
+<EvalCriteria
+  criteria={[
+    {
+      name: 'Numerical correctness',
+      detail: 'Shape-correct broadcasting, dtype awareness, numerical stability (log-sum-exp, gradient clipping).',
+    },
+    {
+      name: 'Research-engineer reasoning',
+      detail: 'You discuss what could go wrong at training scale (memory, throughput, NaN risk), not just textbook complexity.',
+    },
+  ]}
+/>
+
+</InterviewRound>
+
+<InterviewRound name="ML Breadth + Depth" duration="60 min" format="Whiteboard / verbal" weight="level">
+
+Combined breadth + depth in research engineering. Topics span:
+- Optimization (Adam variants, learning-rate schedules, warmup, gradient accumulation)
+- Generalization theory (over-parameterized regimes, double descent, scaling laws)
+- Modern training: mixed precision, gradient checkpointing, ZeRO, FSDP
+- The research subfield of the lab (LLMs, RL, diffusion, multimodal, etc.)
+
+Going both wide and deep — interviewer is looking for someone who can **read a new paper from an adjacent subfield and reproduce it within a sprint**.
+
+<EvalCriteria
+  criteria={[
+    {
+      name: 'Subfield depth',
+      detail: 'You hold a 30-min conversation on the research area without falling back to surface descriptions.',
+      strong: 'You name 3–4 ongoing tensions in the subfield and what evidence would resolve them.',
+    },
+    {
+      name: 'Cross-subfield literacy',
+      detail: 'You can read a paper from an adjacent area and ask the right ablation questions.',
+    },
+    {
+      name: 'Modern training awareness',
+      detail: 'You know what FSDP, gradient checkpointing, mixed precision, and rematerialization buy you concretely.',
+    },
+  ]}
+/>
+
+</InterviewRound>
+
+<InterviewRound name="Research talk (60 min)" duration="60 min" format="Formal 30-min talk + 30-min Q&A · slides on Teams" weight="veto">
+
+The defining round. **Bring slides.** Present one piece of original research (your strongest paper, thesis chapter, or industry research project) for 30 minutes, then take 30 minutes of hostile Q&A from 2–4 researchers, often spanning multiple labs.
+
+What\'s probed:
+- **Motivation** — why this problem, why now, what was the field missing
+- **Methodology** — defensible baselines, ablations, statistical significance, error bars
+- **Negative results** — what didn\'t work and what you learned
+- **Reproducibility** — could a colleague reproduce your numbers from the paper alone? Have they?
+- **Future directions** — what would you do with 6 more months and 100x compute
+
+A weak research talk is the most common veto-weight signal in this loop. See the dedicated section below.
+
+</InterviewRound>
+
+<InterviewRound name="Distributed training / systems" duration="60 min" format="Whiteboard / canvas" weight="level">
+
+Especially heavy at **Microsoft AI** and **Azure AI Research**. Topics:
+- "Walk me through training a 70B-parameter model end-to-end. What goes wrong?"
+- Data parallel vs tensor parallel vs pipeline parallel — when each
+- Memory math: optimizer states, gradients, activations, communication overhead
+- Eval harness design: what you log, how you detect a bad run early
+- Checkpoint strategy and resumability
+
+<EvalCriteria
+  criteria={[
+    {
+      name: 'Memory math fluency',
+      detail: 'You can estimate VRAM for a given config (params × dtype × optimizer-state-multiplier) under load.',
+    },
+    {
+      name: 'Failure-mode awareness',
+      detail: 'You name 5+ concrete training failure modes (loss divergence, NaN cascades, dataloader stalls, network bottlenecks) and how you\'d diagnose each.',
+    },
+    {
+      name: 'Eval-pipeline thinking',
+      detail: 'You design eval harnesses that catch regressions early, not just end-of-run benchmarks.',
+    },
+  ]}
+/>
+
+At MSR (pure research) this round is sometimes lighter, replaced by a second research-talk-style discussion. Confirm with your recruiter.
+
+</InterviewRound>
+
+<InterviewRound name="Behavioral" duration="45–60 min" format="STAR-format conversational" weight="signal">
+
+Microsoft cultural pillars apply (growth mindset, customer obsession, one-Microsoft) but Research Engineer behavioral skews toward:
+- **Open-ended ambiguity** — driving research with no defined success metric
+- **Critique and recovery** — receiving harsh paper reviews, responding constructively
+- **Scientific honesty** — naming what you don\'t know, what you got wrong
+- **Cross-lab collaboration** — working across MSR labs or with product teams
+
+Expect **scientific-honesty probes** specifically. Reports describe candidates rejected for over-selling preliminary results.
+
+</InterviewRound>
+
+## The research talk round {#research-talk}
+
+The research talk is **the differentiating filter**. It carries veto weight: a strong talk pulls a marginal loop into hire, a weak talk overrides everything else.
+
+**What "strong" looks like:**
+- 25–28 minutes of content + 2–5 minutes of buffer for questions during the talk
+- Clean motivation in the first 90 seconds — what problem, what gap, what you contribute
+- One headline result, two supporting ablations, **at least one negative result you discuss honestly**
+- Slides that an outside-subfield researcher can follow (no jargon-load without definition)
+- You concede limitations crisply when asked — defensiveness collapses the round
+
+**Common failure modes:**
+- Reading slides verbatim — interviewers want a conversation, not a recital
+- Over-claiming impact — "this changes how the field thinks about X" without proportional evidence
+- Inability to name what you did vs what your collaborators did
+- Inability to position the work against 3–4 alternative approaches
+- Inability to name a follow-up direction or a limitation
+
+**What to prepare:**
+- Time the talk to ~28 min in front of a mirror or peer at least 3 times
+- Anticipate 5 hostile questions and rehearse them out loud
+- Prepare a 5-min "what I\'d do next with this work" extension — interviewers ask
+- Bring a single backup slide on a related paper you\'ve read recently and can discuss
+
+## Lab match — the silent reject path {#lab-match}
+
+After a positive loop, MSR (and to a lesser extent Microsoft AI / Azure AI Research) requires a **specific lab or team to commit headcount**. If no lab claims you, the loop ends without an offer regardless of feedback.
+
+How to mitigate:
+- **Multi-lab interest before the loop.** Tell your recruiter you\'re open to 2–3 labs, name them. Recruiters route accordingly.
+- **Pre-loop researcher conversations.** If you have an existing relationship with an MSR researcher, a 30-min coffee chat before the loop dramatically improves match odds.
+- **Research-area flexibility.** Candidates with one narrow specialization match fewer labs. If you can credibly bridge two areas (e.g., NLP + RLHF, or vision + multimodal), say so.
+- **Watch for org churn.** MSR has had hiring freezes and lab reorganizations in 2024–2026; Microsoft AI is growing aggressively. The org-mix shifts year-to-year. Confirm with your recruiter where the live headcount is.
+
+## Evaluation criteria {#evaluation-criteria}
+
+<EvalCriteria
+  criteria={[
+    {
+      name: 'Coding (research-engineer-flavored)',
+      detail: 'One round; numerical primitives, dataloader edges, training-stability awareness. Not the discriminator.',
+    },
+    {
+      name: 'ML breadth + subfield depth',
+      detail: '60-min combined round. Modern training awareness mandatory. Subfield mastery expected at L63+.',
+    },
+    {
+      name: 'Research talk (veto-weight)',
+      detail: '30-min talk + 30-min Q&A on one piece of original work. The defining filter.',
+      strong: 'You teach the panel something. You concede limitations crisply. You position your work against 3–4 alternatives.',
+    },
+    {
+      name: 'Distributed training / eval infra',
+      detail: 'Memory math, failure modes, eval-pipeline design. Heavier at Microsoft AI / Azure AI Research.',
+    },
+    {
+      name: 'Behavioral + scientific honesty',
+      detail: 'STAR stories tagged to research ambiguity, critique-handling, scientific honesty.',
+    },
+    {
+      name: 'Lab match',
+      detail: 'A specific lab / team must claim headcount. Often the silent reject path even on a positive loop.',
+    },
+  ]}
+/>
+
+## Common questions {#common-questions}
+
+:::note[Data thin]
+ML Research Engineer interviews at Microsoft are reported less publicly than SDE / MLE / Applied Scientist (lower volume, NDA culture, talks rarely make it to Glassdoor). The questions below cross-check 3 first-hand accounts (Yuan Meng MLE 2.0 transition write-up, Danyel Fisher MSR retrospective, InterviewQuery / Glassdoor aggregations) plus 2 lab-team job descriptions. Treat as directional.
+:::
+
+<CommonQuestions
+  questions={[
+    { type: 'ml-theory', prompt: 'Walk me through your strongest paper. Why this problem? What ablations did you run, and which one surprised you most?' },
+    { type: 'ml-theory', prompt: 'Pick a recent paper from outside your specialty that you found compelling. What\'s its core contribution, and what would you ablate to challenge it?' },
+    { type: 'system-design', prompt: 'Walk me through training a 70B-parameter model end-to-end. Where would your first failure be, and how would you detect it?' },
+    { type: 'ml-theory', prompt: 'When does FSDP outperform tensor parallelism, and when is the opposite true? Sketch the memory math.' },
+    { type: 'coding', difficulty: 'medium', prompt: 'Implement scaled dot-product attention in numpy. Now make it numerically stable for long sequences.' },
+    { type: 'ml-theory', prompt: 'Your training loss is dropping but eval loss is flat after 10K steps. What are 5 hypotheses, ranked by likelihood, and how do you test them?' },
+    { type: 'system-design', prompt: 'Design an eval harness that would catch a regression in instruction-following before a 100K-step run completes.' },
+    { type: 'behavioral', prompt: 'Describe a paper review or critique that fundamentally changed how you thought about your own work. What did you do?' },
+    { type: 'behavioral', prompt: 'Tell me about a research result you over-claimed and later had to walk back. What did you learn about scientific honesty?' },
+    { type: 'ml-theory', prompt: 'Why does Adam outperform SGD on transformer training? What evidence would convince you the opposite is true on a new architecture?' },
+    { type: 'system-design', prompt: 'You join the team and inherit a training pipeline that takes 3 days per run. What do you change first to halve iteration time?' },
+  ]}
+/>
+
+## Preparation plan {#preparation-plan}
+
+**8–10 weeks, ~12–15 hrs/week** — heaviest plan in the Microsoft ML family due to research-talk rehearsal and distributed-training depth.
+
+| Week | Focus | Daily commitment | Exit criteria |
+|---|---|---|---|
+| 1–2 | Subfield refresh + 20 LC mediums + numpy/PyTorch primitives | 60 min subfield reading + 60 min coding/day | Can implement attention, layer norm, beam search from memory; 15+ mediums solved cleanly |
+| 3–4 | Research talk drafting + paper critique discipline | 60 min talk-prep + 1 paper-critique writeup/week | Talk drafted at 28 min target; 4 paper critiques covering subfield + adjacent areas |
+| 5–6 | Distributed training depth + ML breadth review | 45 min systems + 45 min ML breadth/day | Can sketch memory math for a 70B run; can name 5 concrete failure modes per training stage; ML breadth no glaring gaps |
+| 7–8 | Talk rehearsal + mocks + behavioral story-building | 3x/week 60-min talk reps + 6 STAR stories + 2x/week mocks | Talk timed to 25–28 min consistently; 6 polished STAR stories tagged to scientific honesty + ambiguity; mock loop pass-rate >75% |
+| 9–10 | Lab-match groundwork + integration mocks | 2 lab-targeted research notes + full mock loops | Specific 2–3 labs identified with researchers contacted; full-loop mocks completed |
+
+:::tip[ML Research Engineer gotchas]
+**The research talk is rehearsal-bound.** No amount of being smart in real-time substitutes for 8–10 timed rehearsals in front of an honest critic. Most candidates rehearse the slides; few rehearse the Q&A.
+
+**Lab match starts before the loop, not after.** Identify your 2–3 target labs in week 1. Read their recent papers. If you have warm intros, use them — a single pre-loop conversation with an MSR researcher dramatically shifts match odds.
+
+**Distributed-training depth is now table-stakes at Microsoft AI.** Even pure-MSR candidates report distributed-training questions creeping into onsite loops as MSR collaborates more with Microsoft AI on foundation models. Spend a focused week on FSDP / ZeRO / mixed precision / memory math regardless of your subfield.
+
+**Scientific honesty is graded.** Candidates who over-claim or get defensive in the talk Q&A are flagged. Practice saying "I don\'t know" and "I got that wrong" out loud.
+:::
+
+<RelatedGuides
+  guides={[
+    { href: '../microsoft/applied-scientist', company: 'Microsoft', level: 'Applied Scientist', blurb: 'Heavyweight ML cousin — research depth without the formal talk round.' },
+    { href: '../microsoft/mle', company: 'Microsoft', level: 'MLE', blurb: 'Production-ML cousin — heavier infra, no research talk.' },
+    { href: '../microsoft/l64', company: 'Microsoft', level: 'L64 (SDE)', blurb: 'SDE staff cousin — system-design depth without ML.' },
+  ]}
+/>
+
+## Sources {#sources}
+
+Cross-checked against three sources during authoring (May 2026):
+
+- [Yuan Meng — MLE 2.0 transition retrospective (covers MSR + Microsoft AI loops)](https://www.yuan-meng.com/posts/mle-rl/)
+- [Danyel Fisher — Microsoft Research interviewing retrospective (Medium)](https://medium.com/@danyelfisher/interviewing-at-microsoft-research-1d36e63b0e62)
+- [InterviewQuery — Microsoft ML Research Engineer aggregated questions](https://www.interviewquery.com/interview-guides/microsoft-machine-learning-engineer)
+
+Additional reference points:
+- [Microsoft Research Careers — open lab roles](https://www.microsoft.com/en-us/research/careers/)
+- [Chip Huyen — ML Interviews Book (research-engineer chapter)](https://huyenchip.com/ml-interviews-book/)
+- [Glassdoor — Microsoft Research Engineer interview reviews (aggregated 2024–2026)](https://www.glassdoor.com/Interview/Microsoft-Research-Engineer-Interview-Questions-EI_IE1651.0,9_KO10,27.htm)
+
+</InterviewGuide>

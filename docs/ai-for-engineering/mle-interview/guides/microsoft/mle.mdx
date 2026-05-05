@@ -1,0 +1,298 @@
+---
+title: Microsoft Machine Learning Engineer Interview Guide
+description: >-
+  The complete Microsoft Machine Learning Engineer interview process for 2026 —
+  ML system design and ML breadth/depth dominate, production-engineering bar is
+  highest of any Microsoft track, As-Appropriate round still decides level.
+access: free
+hide_title: true
+tutor_topic: "Microsoft MLE interview process"
+tutor_concepts:
+  - "Microsoft MLE vs SDE vs Applied Scientist"
+  - "ML system design at Microsoft"
+  - "Azure ML feature store and serving"
+  - "Copilot RAG enterprise design"
+  - "ML breadth and depth round"
+---
+
+<InterviewGuide
+  slug="microsoft-mle"
+  company="Microsoft"
+  level="Machine Learning Engineer"
+  title="Microsoft Machine Learning Engineer Interview Guide"
+  subtitle="Production-ML loop. Coding lighter than SDE; ML breadth and ML system design get dedicated rounds. Bing, Microsoft Ads, Copilot, Azure ML are the typical homes. As-Appropriate round still decides level."
+>
+
+<GuideTOC
+  items={[
+    { href: '#process-overview', label: 'Process overview' },
+    { href: '#how-it-differs', label: 'How it differs from SDE & Applied Scientist' },
+    { href: '#online-assessment', label: 'Online assessment / phone screen' },
+    { href: '#onsite', label: 'Onsite (4–5 rounds)' },
+    { href: '#as-appropriate', label: 'As-Appropriate round' },
+    { href: '#evaluation-criteria', label: 'Evaluation criteria' },
+    { href: '#common-questions', label: 'Common questions' },
+    { href: '#preparation-plan', label: 'Preparation plan' },
+    { href: '#sources', label: 'Sources' },
+  ]}
+/>
+
+## Process overview {#process-overview}
+
+The Microsoft MLE loop runs **4–6 weeks** end-to-end (slightly longer for L65+):
+
+1. **Recruiter screen** — 30 min: background, motivation, Azure / LLM familiarity, target team and level
+2. **Phone screen / Online Assessment** — 60 min. Standard MS Codility OA on some teams; ML-product teams (Bing Ads, Copilot) substitute a hiring-manager technical screen with one coding problem + ML reasoning
+3. **Onsite loop** — 4–5 virtual rounds on Teams, single day or split across two days
+4. **As-Appropriate (AA) round** — 45–60 min with a Director or Partner-level engineer/scientist. Decision-bearing.
+
+Microsoft averages **~17 days from final round to verbal offer** for the MLE track.
+
+:::warning[Production-engineering bar is the highest of any Microsoft track]
+Applied Scientists trade coding rigor for novelty / publication depth; MLEs trade research depth for **serving infrastructure, retraining, drift detection, and SLA reasoning**. Strong modeling skill alone won\'t land an MLE offer — you have to demonstrate end-to-end production thinking.
+:::
+
+## How it differs from SDE & Applied Scientist {#how-it-differs}
+
+| Dimension | SDE (L62/L63) | **MLE (L62/L63)** | Applied Scientist |
+|---|---|---|---|
+| Coding rounds | 2–3 | **1–2** | 1 |
+| ML breadth round | none | **1 dedicated (60 min)** | 1 (deeper, theory-leaning) |
+| ML / DL system design | none | **1 dedicated (60 min)** | 1 (modeling-led) |
+| Research deep-dive | none | light (woven into ML round) | **1 dedicated** |
+| Generic system design | 1 | sometimes replaced by ML system design | rare |
+| Behavioral | woven; standalone at L64+ | woven at L62/L63; standalone at L64+ | woven |
+| Production / Azure ML emphasis | infra-general | **heaviest weight** | lightest |
+
+## Online assessment / phone screen {#online-assessment}
+
+<InterviewRound
+  name="Phone Screen / OA"
+  duration="60 min"
+  format="Codility (some teams) OR HM technical screen (Bing Ads, Copilot, Azure AI)"
+  weight="gate"
+>
+
+Format varies meaningfully by team:
+
+- **Codility OA** (default for non-ML-flagship teams) — 1–2 LeetCode-medium problems plus 10–15 min of ML-flavored Q&A: overfitting, regularization, evaluation metrics, basic Azure ML or PyTorch familiarity. Tilts more ML than SDE\'s pure-DSA OA.
+- **HM technical screen** (Copilot, Bing Ads, ML-product teams) — one coding problem (often a sampling or streaming variant) followed by ML reasoning anchored to the team\'s actual product surface.
+
+Confirm format with your recruiter — they will tell you specifically.
+
+<EvalCriteria
+  criteria={[
+    {
+      name: 'Optimal solution with clean code',
+      detail: 'Solve at least one problem fully with edge cases and complexity discussion.',
+    },
+    {
+      name: 'ML reasoning over recital',
+      detail: 'For ML questions, defend the why, not just the definition. Tradeoffs land better than textbook answers.',
+      strong: 'You raise the failure mode of your own ML answer before the interviewer asks.',
+    },
+  ]}
+/>
+
+</InterviewRound>
+
+## Onsite (4–5 rounds) {#onsite}
+
+<InterviewRound name="Coding 1 — DSA" duration="45–60 min" format="CoderPad / shared editor" weight="signal">
+
+1–2 LeetCode medium-to-hard problems in Python (or C++ / C#). Common categories: arrays, strings, graphs, DP, design problems (LRU cache, top-K).
+
+<EvalCriteria
+  criteria={[
+    {
+      name: 'Correct optimal solution within time',
+      detail: 'Both problems solved cleanly within the round window. Speed matters more for MLE than for Applied Scientist.',
+    },
+    {
+      name: 'Production-quality code',
+      detail: 'Sensible naming, modularity, no dead code. Microsoft cares about whether your code reads like a teammate\'s code.',
+    },
+    {
+      name: 'Edge-case discipline',
+      detail: 'You raise edge cases (empty input, max bounds) before being prompted.',
+    },
+  ]}
+/>
+
+</InterviewRound>
+
+<InterviewRound name="Coding 2 — Applied DSA" duration="45–60 min" format="CoderPad / shared editor" weight="signal">
+
+A more "applied" twist than the standard coding round. Recently asked:
+
+- Reservoir sampling: select a random element from a stream with O(1) space
+- Streaming text/embedding manipulation
+- Light SQL on large tables (100M-row events table — optimize a query)
+
+The interviewer wants to see you translate an ambiguous applied prompt into a concrete algorithm.
+
+</InterviewRound>
+
+<InterviewRound name="ML Breadth / Depth" duration="60 min" format="Whiteboard-style Q&A + 1–2 deep dives" weight="level">
+
+The level-deciding ML round. The interviewer rapidly switches across topics, then drills into 1–2:
+
+- **Classical ML** — bias-variance, regularization, ROC-AUC vs PR-AUC, calibration, class imbalance, feature engineering, cross-validation, error analysis
+- **Deep dives** (1–2) — gradient boosting internals, attention math, embedding training, ranking losses
+- **For Copilot / AI-Platform teams** — transformers, LoRA / PEFT, RLHF, RAG, hallucination mitigation, grounding, safety
+
+<EvalCriteria
+  criteria={[
+    {
+      name: 'Distinguishing paper from production',
+      detail: 'You name what works on paper but breaks in prod (cold-start, drift, distribution shift) without prompting.',
+    },
+    {
+      name: 'Metric choice tied to outcome',
+      detail: 'When asked which metric to use, you ground it in a business outcome — not just the textbook answer.',
+      strong: 'You raise calibration or fairness concerns the interviewer hadn\'t framed yet.',
+    },
+    {
+      name: 'Depth in at least one subarea',
+      detail: 'Recsys, NLP, ranking, or CV — pick one and go 3+ levels deep when asked.',
+    },
+  ]}
+/>
+
+</InterviewRound>
+
+<InterviewRound name="ML System Design" duration="45–60 min" format="Whiteboard / virtual canvas" weight="level">
+
+Open-ended product-framed design. Recently asked:
+
+- Design CTR prediction for Microsoft Ads with hourly model retraining
+- Design a Bing search ranking pipeline incorporating freshness without regressing relevance for head queries
+- Design a RAG assistant for an enterprise Copilot (multi-tenant, document-level access, fast freshness, citations, low hallucination)
+- Design a recommendation system for local sports teams (RAG vs fine-tuning, billion-parameter serving, hallucination handling)
+
+Expected coverage: data ingestion → feature store (online/offline parity) → training pipeline on Azure ML → batch vs realtime serving → latency / throughput → monitoring + drift detection → A/B testing → retraining cadence → rollback → privacy / PII → multi-tenant isolation.
+
+<EvalCriteria
+  criteria={[
+    {
+      name: 'End-to-end coverage without prompting',
+      detail: 'You touch data → train → serve → monitor → retrain in your first pass. Skipping monitoring or retraining is a flag.',
+    },
+    {
+      name: 'Quantified tradeoffs',
+      detail: 'Latency vs accuracy, cost vs freshness — with numbers, not adjectives.',
+      strong: 'You preempt the interviewer\'s "what about consistency?" by raising the tradeoff yourself.',
+    },
+    {
+      name: 'Enterprise-grade concerns',
+      detail: 'SLAs, PII, rollback, multi-tenant isolation come up naturally. Microsoft\'s products are mostly B2B.',
+    },
+  ]}
+/>
+
+</InterviewRound>
+
+<InterviewRound name="Hiring Manager / Behavioral (woven)" duration="45–60 min" format="Conversational + project deep-dive + light technical" weight="signal">
+
+Until L64, Microsoft does **not** run a standalone behavioral round for MLE. Behavioral signal lives inside the HM round alongside a project deep-dive and a brief technical question. At L64+ it splits into its own round.
+
+Common probes:
+- Growth mindset — "tell me about a time you were wrong"
+- Customer focus — prioritizing user needs over technical perfection
+- Cross-functional collaboration with PM, DS, SRE
+- Concrete metrics on past project impact
+
+</InterviewRound>
+
+## As-Appropriate round {#as-appropriate}
+
+The AA at MLE is run by a Director or Partner-level engineer/scientist and weights three things:
+
+1. **Judgment under ambiguity** — would you ship a model with 0.81 vs 0.83 AUC on a tight deadline? When does "good enough" beat "best"?
+2. **Failure modes you anticipate in production** — drift, distribution shift, RAI / hallucination, fairness, SLO regressions
+3. **Leadership / ownership signal** — alignment with PM and partner teams
+
+The AA reviews prior loop feedback and **probes your weakest signal hardest**. It is decision-bearing, not ceremonial.
+
+## Evaluation criteria {#evaluation-criteria}
+
+<EvalCriteria
+  criteria={[
+    {
+      name: 'Coding fluency',
+      detail: 'Mediums solved cleanly, applied-DSA twist (sampling, streaming, SQL) handled gracefully.',
+    },
+    {
+      name: 'ML breadth + one depth',
+      detail: 'Comfortable across classical + DL + GenAI. Genuinely deep in one subarea (recsys, NLP, ranking, CV).',
+      strong: 'You teach the interviewer something about your specialty.',
+    },
+    {
+      name: 'ML system design',
+      detail: 'End-to-end production thinking with quantified tradeoffs and enterprise concerns.',
+    },
+    {
+      name: 'Production engineering signal',
+      detail: 'Drift, retraining, rollback, monitoring, multi-tenant isolation. Not afterthoughts — structural.',
+    },
+  ]}
+/>
+
+## Common questions {#common-questions}
+
+<CommonQuestions
+  questions={[
+    { type: 'coding', difficulty: 'medium', prompt: 'Reservoir sampling: select a random element from a stream with O(1) space.' },
+    { type: 'coding', difficulty: 'medium', prompt: 'Merge all overlapping intervals from an array of intervals (Copilot team coding round).', source: 'LC 56' },
+    { type: 'coding', difficulty: 'medium', prompt: 'Find the LCA of two nodes in a BST. Follow-up: now do it for a general binary tree.', source: 'LC 235 / LC 236' },
+    { type: 'coding', difficulty: 'medium', prompt: 'Optimize a SQL query computing daily user-item engagement on a 100M-row events table.' },
+    { type: 'system-design', prompt: 'Design a CTR prediction system for Microsoft Ads with hourly model retraining; cover feature store, training pipeline on Azure ML, online serving, and drift detection.' },
+    { type: 'system-design', prompt: 'Design a RAG assistant for an enterprise Copilot: multi-tenant, document-level access control, fast freshness for new docs, citations, low hallucination, observability.' },
+    { type: 'system-design', prompt: 'Design a recommendation system for local sports teams; defend RAG vs fine-tuning, billion-parameter serving, and hallucination handling.' },
+    { type: 'system-design', prompt: 'Design a Bing search ranking pipeline that incorporates a freshness signal without regressing relevance for head queries.' },
+    { type: 'ml-theory', prompt: 'Compare L1 vs L2 regularization. When would you choose Lasso over Ridge for a 10k-feature ads model?' },
+    { type: 'ml-theory', prompt: 'Walk me through backpropagation for a 2-layer MLP. Now extend to a transformer block — where do gradients vanish?' },
+    { type: 'ml-theory', prompt: 'How would you choose between LoRA, full fine-tuning, and prompt engineering for adapting a base LLM to a Copilot vertical?' },
+    { type: 'behavioral', prompt: 'Tell me about a time you prioritized customer needs over technical perfection. (Copilot HM round.)' },
+    { type: 'behavioral', prompt: 'Describe a time you failed and what your growth-mindset takeaway was.' },
+  ]}
+/>
+
+## Preparation plan {#preparation-plan}
+
+Daily commitment: **~2 hrs weekdays, 4 hrs weekends** (~16 hrs/week).
+
+| Week | Focus | Daily commitment | Exit criteria |
+|---|---|---|---|
+| 1 | LC mediums + SQL on 1M-row datasets | 2 mediums + 1 SQL set/day | 8/10 mediums in under 25 min, SQL window functions fluent |
+| 2 | ML breadth review (bias-variance, regularization, calibration, GBM internals) + train an XGBoost CTR model on Criteo with feature ablation | 1 hour theory + 1 hour applied | Can explain bias-variance and pick a metric for any product framing in 60s |
+| 3 | ML system design — drill 4 designs end-to-end | 1 design walkthrough/day | Cover data → train → serve → monitor → retrain in 35 min unprompted with 3 quantified tradeoffs |
+| 4 | Coding under pressure + behavioral story building | 20 mediums + 5 hards + 6 STAR stories | 2 coding mocks at hiring bar; STAR stories under 3 min each |
+| 5 | Polish + AA prep — deep-dive your strongest ML project | Rebuild architecture diagram + rehearse 5-min and 15-min versions | Defend every modeling and infra decision on your headline project for 20 min |
+| 6 | Buffer / loop week | Light review + 1 mock/day | — |
+
+:::tip[MLE-specific gotchas]
+**The OA varies by team.** Some teams use the SDE Codility verbatim; ML-product teams (Bing Ads, Copilot, Azure AI) skip OA in favor of an HM technical screen. Confirm with your recruiter so you prep the right format.
+
+**Don\'t skip Azure ML literacy.** Even if you\'ve never used it, know the primitives: feature stores (online/offline parity), AML pipelines, model registry, batch vs online endpoints. A candidate who name-checks "I\'d use AzureML\'s online endpoint with a custom container" lands better than one who designs only abstractly.
+
+**Production thinking decides level.** Strong modeling at MLE without strong production reasoning lands at L62 instead of L63. Practice retrain cadence, rollback strategy, drift detection on every system design.
+:::
+
+<RelatedGuides
+  guides={[
+    { href: '../microsoft/l62', company: 'Microsoft', level: 'L62', blurb: 'SDE mid-level cousin — heavier coding, no ML rounds.' },
+    { href: '../microsoft/l63', company: 'Microsoft', level: 'L63', blurb: 'SDE senior cousin — system design depth without ML.' },
+    { href: '../amazon/applied-scientist', company: 'Amazon', level: 'Applied Scientist', blurb: 'Compare with Amazon\'s ML ladder.' },
+  ]}
+/>
+
+## Sources {#sources}
+
+Cross-checked against three sources during authoring (May 2026):
+
+- [Exponent — Microsoft MLE Interview Guide (2026)](https://www.tryexponent.com/guides/microsoft-machine-learning-engineer-interview)
+- [InterviewQuery — Microsoft MLE & Applied Scientist (2025)](https://www.interviewquery.com/interview-guides/microsoft-machine-learning-engineer)
+- [InterviewNode — Microsoft Copilot ML Interview](https://www.interviewnode.com/post/microsoft-copilot-ml-interview-llm-integration-and-productivity-systems)
+
+</InterviewGuide>

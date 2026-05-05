@@ -217,6 +217,9 @@ const sidebars: SidebarsConfig = {
                     'ai-for-engineering/mle-interview/guides/microsoft/l62',
                     'ai-for-engineering/mle-interview/guides/microsoft/l63',
                     'ai-for-engineering/mle-interview/guides/microsoft/l64',
+                    'ai-for-engineering/mle-interview/guides/microsoft/mle',
+                    'ai-for-engineering/mle-interview/guides/microsoft/applied-scientist',
+                    'ai-for-engineering/mle-interview/guides/microsoft/ml-research-engineer',
                   ],
                 },
                 {
