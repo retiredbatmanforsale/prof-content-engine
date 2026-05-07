@@ -13,6 +13,8 @@ tutor_concepts:
 access: free
 ---
 
+import TokenizerPlayground from '@site/src/components/viz/TokenizerPlayground';
+
 <LessonHero course="Build and Train Your Own GPT-2" number="2" title="Token embeddings" subtitle="From raw tokens to vectors the model can learn from" />
 
 <LessonVideo
@@ -25,4 +27,21 @@ access: free
 ## Overview
 
 This lesson introduces token embeddings and how they turn discrete tokens into continuous vector representations.
+
+## From characters to tokens
+
+Before a language model can look up an embedding, it has to decide what counts as a "token." Different model families make different choices, and those choices shape how the model sees text — what it groups together, what it splits, where its weak spots are.
+
+The playground below runs three real tokenizers (GPT-2's byte-level BPE, BERT's WordPiece, and Llama's SentencePiece) entirely in your browser. Type once, and watch how each one carves up the same input.
+
+A few things to try:
+
+- **Indented code** — count how many tokens each model spends on the leading whitespace alone.
+- **Glitch tokens** like `SolidGoldMagikarp` — a known artifact in GPT-2's vocabulary; see how it tokenizes.
+- **Non-English text** (Hindi, Mandarin) — most tokenizers fall back to byte-level fragments, dramatically inflating the token count.
+- **Numbers** like `1234567890` — different tokenizers split these very differently.
+
+The colors are stable: the same token ID always gets the same color, so when the same colored block reappears, that's the model reusing one vocabulary entry.
+
+<TokenizerPlayground />
 

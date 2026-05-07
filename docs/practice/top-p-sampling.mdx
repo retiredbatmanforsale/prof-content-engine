@@ -1,0 +1,145 @@
+---
+title: "Top-p (Nucleus) Sampling"
+description: Implement top-p sampling — the standard inference-time decoding strategy for modern LLMs.
+sidebar_position: 4
+---
+
+import PracticeProblem from '@site/src/components/viz/PracticeProblem';
+
+<PracticeProblem
+  id="top-p-sampling"
+  title="Top-p (nucleus) sampling"
+  difficulty="Medium"
+  tags={["sampling", "decoding", "numpy"]}
+  linkedLessons={[
+    { url: '/courses/ai-for-engineering/build-and-train-your-own-gpt2-model/generation-of-next-tokens', title: 'Generation of next tokens' },
+  ]}
+  starter={`
+import numpy as np
+
+def top_p_sample(probs, p, rng):
+    """
+    Sample one token id under nucleus (top-p) sampling.
+
+    Algorithm:
+        1. Sort token indices by probability descending.
+        2. Take the smallest prefix whose cumulative probability ≥ p.
+           (Always keep at least one token, even if probs[argmax] >= p already.)
+        3. Renormalize that prefix to sum to 1.
+        4. Sample one index from the renormalized distribution using rng.
+
+    Args:
+        probs: 1-D np.ndarray of length V; assume already a valid probability
+               distribution (non-negative, sums to 1).
+        p:     float in (0, 1].
+        rng:   np.random.Generator — use ONLY this for randomness so tests are
+               deterministic.
+
+    Returns:
+        int (the sampled index, in original probs space).
+    """
+    # YOUR CODE HERE
+    pass
+`}
+  tests={`
+import numpy as np
+
+@__test__("Returns an int in [0, V)")
+def t():
+    rng = np.random.default_rng(0)
+    probs = np.array([0.1, 0.2, 0.3, 0.4])
+    out = top_p_sample(probs, 0.9, rng)
+    assert out is not None, "function returned None"
+    out = int(out)
+    assert 0 <= out < 4, f"out={out} out of range"
+
+@__test__("p ≈ 1.0 samples from the full distribution")
+def t():
+    rng = np.random.default_rng(123)
+    probs = np.array([0.25, 0.25, 0.25, 0.25])
+    counts = np.zeros(4, dtype=int)
+    for _ in range(2000):
+        counts[int(top_p_sample(probs, 1.0, rng))] += 1
+    # All four indices should appear with rough equality.
+    assert np.all(counts > 350), f"counts={counts} — uniform sampling is broken"
+
+@__test__("Tiny p picks the argmax")
+def t():
+    rng = np.random.default_rng(7)
+    probs = np.array([0.05, 0.15, 0.7, 0.1])
+    # With p smaller than the argmax probability, only one token survives.
+    for _ in range(50):
+        out = int(top_p_sample(probs, 0.01, rng))
+        assert out == 2, f"expected argmax index 2, got {out}"
+
+@__test__("Cuts to the nucleus (excludes long tail)")
+def t():
+    rng = np.random.default_rng(3)
+    # Sharply peaked: indices 0 and 1 dominate.
+    probs = np.array([0.6, 0.35, 0.04, 0.01])
+    counts = np.zeros(4, dtype=int)
+    for _ in range(2000):
+        counts[int(top_p_sample(probs, 0.9, rng))] += 1
+    # p=0.9 → nucleus is {index 0 (0.6), index 1 (0.95 cumulative)}; tail blocked.
+    assert counts[0] > 0 and counts[1] > 0
+    assert counts[2] == 0, f"index 2 outside nucleus but sampled {counts[2]} times"
+    assert counts[3] == 0, f"index 3 outside nucleus but sampled {counts[3]} times"
+
+@__test__("Always keeps the top token even if it alone exceeds p")
+def t():
+    rng = np.random.default_rng(99)
+    probs = np.array([0.95, 0.03, 0.02])
+    # p=0.5 would naïvely cut everything; you must still include the argmax.
+    out = int(top_p_sample(probs, 0.5, rng))
+    assert out == 0, f"expected 0 (the dominant token), got {out}"
+
+@__test__("Determinism: same rng + inputs → same output")
+def t():
+    probs = np.array([0.1, 0.2, 0.3, 0.25, 0.15])
+    rng_a = np.random.default_rng(2025)
+    rng_b = np.random.default_rng(2025)
+    seq_a = [int(top_p_sample(probs, 0.85, rng_a)) for _ in range(10)]
+    seq_b = [int(top_p_sample(probs, 0.85, rng_b)) for _ in range(10)]
+    assert seq_a == seq_b, f"non-deterministic: {seq_a} vs {seq_b} — only use the rng arg"
+`}
+  solution={`
+import numpy as np
+
+def top_p_sample(probs, p, rng):
+    # Sort descending.
+    order = np.argsort(probs)[::-1]
+    sorted_probs = probs[order]
+    cumulative = np.cumsum(sorted_probs)
+
+    # Smallest prefix whose cumulative ≥ p — but always include at least one.
+    keep = np.searchsorted(cumulative, p) + 1
+    keep = max(keep, 1)
+
+    nucleus = sorted_probs[:keep]
+    nucleus = nucleus / nucleus.sum()
+
+    pick = rng.choice(keep, p=nucleus)
+    return int(order[pick])
+`}
+  hints={[
+    "Sort the probabilities descending and take a cumulative sum. The number of tokens to keep is the smallest k such that cumsum[k-1] >= p.",
+    "Use np.searchsorted to find that k in one call. Always keep at least one element, even if probs[argmax] >= p alone (otherwise k can be 0).",
+    "After truncating to the nucleus, renormalize so the kept probabilities sum to 1, then call rng.choice(k, p=nucleus). Map the result back to original indices via your sort order.",
+  ]}
+>
+
+Top-p (nucleus) sampling is the default decoding strategy for modern LLMs. It strikes a balance between greedy decoding (deterministic, often boring) and full-distribution sampling (creative, occasionally bizarre).
+
+The idea: at each step, only sample from the smallest set of candidate tokens whose probabilities add up to at least `p`. The "nucleus" adapts to the model's confidence — when the model is confident, the nucleus is one or two tokens; when it's uncertain, the nucleus expands.
+
+The algorithm in plain English:
+
+1. Sort token probabilities from highest to lowest.
+2. Take the smallest prefix whose cumulative probability reaches `p`. Always keep at least one token (the argmax) — even if it alone already exceeds `p`.
+3. Renormalize that prefix to a valid distribution.
+4. Sample one token from the renormalized prefix.
+5. Map back to the original index.
+
+The harness fixes the RNG with a seed, so your function must use **only** the `rng` argument for randomness — no `np.random.choice(...)` (which uses global state). That's a real-world correctness requirement for reproducible inference.
+
+</PracticeProblem>

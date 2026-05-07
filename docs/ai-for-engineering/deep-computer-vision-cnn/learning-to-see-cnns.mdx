@@ -16,6 +16,7 @@ tutor_concepts:
 ---
 
 import nonLinearityReluLesson8 from './Non-Linearity-with-relu-lesson8.png';
+import MNISTPlayground from '@site/src/components/viz/MNISTPlayground';
 
 <LessonHero course="Deep Computer Vision (CNN)" number="8" title="Learning to see: how CNNs work" subtitle="Inside the network architecture that changed computer vision" />
 
@@ -345,6 +346,20 @@ $$
 </div>
 
 The CNN learns to extract patterns that are <strong>invariant</strong>, <strong>informative</strong>, and <strong>interpretable</strong>, and then uses those to <strong>classify</strong> the input.
+
+---
+
+## Try it: a CNN running in your browser
+
+Below is a real, trained MNIST CNN — the same architecture this lesson describes, exported to ONNX and running entirely client-side. Draw a digit on the canvas and watch the bar chart update as the network reads each smudge of ink.
+
+A few things worth noticing:
+
+- **Inference is fast** (a millisecond or two) because the network is tiny — a handful of conv → ReLU → pool stages followed by a softmax head.
+- **The 28×28 preview** on the left shows what the model actually sees after downsampling. Most of your strokes get crushed into a few pixels, but enough structure survives for the classifier.
+- **Wobbly digits get fuzzy probabilities.** Try drawing a "1" that leans, or a "7" that could be a "1" — watch the model hedge.
+
+<MNISTPlayground />
 
 ---
 

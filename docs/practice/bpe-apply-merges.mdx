@@ -1,0 +1,126 @@
+---
+title: "BPE: Apply Merges"
+description: Implement the merge step of byte-pair encoding. Given a list of single-character tokens and an ordered list of merge rules, produce the merged token list.
+sidebar_position: 3
+---
+
+import PracticeProblem from '@site/src/components/viz/PracticeProblem';
+
+<PracticeProblem
+  id="bpe-apply-merges"
+  title="BPE: apply merges"
+  difficulty="Medium"
+  tags={["tokenization", "BPE", "algorithms"]}
+  linkedLessons={[
+    { url: '/courses/ai-for-engineering/build-and-train-your-own-gpt2-model/token-embeddings', title: 'Token embeddings' },
+  ]}
+  starter={`
+def apply_merges(tokens, merges):
+    """
+    Apply BPE merges to a token list, repeatedly, until no merge applies.
+
+    A "merge" is a tuple (a, b) meaning "wherever a and b are adjacent, glue
+    them into the single token a+b." Merges are tried in priority order
+    (earlier in the list = higher priority). At each pass, scan left-to-right
+    and apply the highest-priority merge that fits.
+
+    Args:
+        tokens: list[str], e.g. ["l", "o", "w", "</w>"]
+        merges: list[tuple[str, str]] in priority order
+
+    Returns:
+        list[str] after all applicable merges have fired.
+    """
+    # YOUR CODE HERE
+    pass
+`}
+  tests={`
+@__test__("No merges → input unchanged")
+def t():
+    out = apply_merges(["l", "o", "w"], [])
+    assert out == ["l", "o", "w"], f"got {out}"
+
+@__test__("Single merge applies once")
+def t():
+    out = apply_merges(["l", "o", "w"], [("l", "o")])
+    assert out == ["lo", "w"], f"got {out}"
+
+@__test__("Cascading merges produce a single token")
+def t():
+    # First merge produces 'lo', then 'lo' + 'w' produces 'low'.
+    out = apply_merges(["l", "o", "w"], [("l", "o"), ("lo", "w")])
+    assert out == ["low"], f"got {out}"
+
+@__test__("Priority is respected — earlier merge fires first")
+def t():
+    # If we merged ("o", "w") first, we'd get ["l", "ow"], then no more.
+    # But ("l", "o") is higher priority, so we get ["lo", "w"], then no more
+    # (since ("o", "w") is now blocked by the changed neighbours).
+    out = apply_merges(["l", "o", "w"], [("l", "o"), ("o", "w")])
+    assert out == ["lo", "w"], f"got {out}"
+
+@__test__("Multiple non-overlapping merges in one input")
+def t():
+    out = apply_merges(["l", "o", "w", "l", "o", "w"], [("l", "o")])
+    assert out == ["lo", "w", "lo", "w"], f"got {out}"
+
+@__test__("Merge that creates a new merge candidate")
+def t():
+    # ("e", "r") fires first → ["e", "r", "</w>"]→["er", "</w>"], then ("er", "</w>") fires
+    out = apply_merges(["e", "r", "</w>"], [("e", "r"), ("er", "</w>")])
+    assert out == ["er</w>"], f"got {out}"
+
+@__test__("No applicable merge stops the loop cleanly")
+def t():
+    out = apply_merges(["a", "b", "c"], [("x", "y"), ("y", "z")])
+    assert out == ["a", "b", "c"], f"got {out}"
+
+@__test__("Single-token input is a no-op")
+def t():
+    out = apply_merges(["single"], [("a", "b")])
+    assert out == ["single"], f"got {out}"
+`}
+  solution={`
+def apply_merges(tokens, merges):
+    # Index merges by their pair → priority (lower = higher priority).
+    rank = {pair: i for i, pair in enumerate(merges)}
+    tokens = list(tokens)
+
+    while True:
+        # Find the highest-priority adjacent pair anywhere in tokens.
+        best_idx, best_rank = None, None
+        for i in range(len(tokens) - 1):
+            r = rank.get((tokens[i], tokens[i + 1]))
+            if r is not None and (best_rank is None or r < best_rank):
+                best_rank = r
+                best_idx = i
+        if best_idx is None:
+            return tokens
+        # Merge the pair at best_idx.
+        tokens = (
+            tokens[:best_idx]
+            + [tokens[best_idx] + tokens[best_idx + 1]]
+            + tokens[best_idx + 2:]
+        )
+`}
+  hints={[
+    "Build a dict mapping pair → priority (its index in the merges list). Lower index = higher priority.",
+    "On each pass, scan all adjacent pairs in tokens, find the one with the lowest rank, merge it, and loop. Stop when no adjacent pair is in the merges dict.",
+    "Don't apply merges in 'merges-list order' (do all (l,o)s, then all (lo,w)s). The standard BPE algorithm picks the globally-highest-priority adjacent pair each iteration — the priority winner can change as the token list evolves.",
+  ]}
+>
+
+Byte-pair encoding (BPE) trains a vocabulary by iteratively merging the most frequent adjacent token pair. At inference time, you apply those merges in priority order to a string of single-character tokens, and out comes the tokenization GPT-2 (or any BPE-based model) actually uses.
+
+You're implementing **only the inference half** — the merge application. Training (counting pairs and picking the merge to add to the vocab) is a separate problem.
+
+The algorithm is small but subtle:
+
+1. You're given a list of single-character (or single-byte) tokens and a list of merges in priority order.
+2. Find every adjacent pair in the token list. If any of them appears in the merges dict, pick the one with the **highest priority** (= lowest index in the merges list).
+3. Merge that pair into a single token. Repeat from step 2.
+4. When no adjacent pair appears in merges, you're done.
+
+The tricky part is step 2: don't process merges one-by-one in list order. Each iteration scans the *current* tokens and picks the globally best pair. Otherwise you'll get the wrong tokenization for the test case where one merge enables another.
+
+</PracticeProblem>

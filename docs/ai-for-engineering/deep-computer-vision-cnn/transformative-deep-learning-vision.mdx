@@ -14,6 +14,8 @@ tutor_concepts:
 access: free
 ---
 
+import CLIPPlayground from '@site/src/components/viz/CLIPPlayground';
+
 <LessonHero course="Deep Computer Vision (CNN)" number="2" title="Deep learning's role in computer vision" subtitle="From hand-crafted features to representations learned from data" />
 
 Over the last decade, **deep learning** turned computer vision from **hand-tuned features and brittle rules** into **models that learn straight from pixels**. That change is not a small tweak; it is a different way to think about **perception**.
@@ -98,6 +100,20 @@ Same camera stream; **much richer outputs**—and stricter needs for **privacy**
 ## Takeaway
 
 Deep learning did not just **improve** accuracy charts; it made **one flexible toolkit** for vision across **cloud, edge, medicine, mobility, and interfaces**. The rest of this track builds the **core ideas** behind those models; the next lessons dig into **how** they work—not only **where** they ship.
+
+---
+
+## Try it: zero-shot vision with CLIP
+
+The "one flexible toolkit" claim above is easy to wave away in prose. Here it is concretely. CLIP is a vision-language model trained on image-caption pairs scraped from the web. It learned a *shared embedding space*: an image and a sentence describing that image end up close together; an unrelated sentence ends up far away.
+
+Once you have that, **classification stops being a fixed list of categories**. You feed the model an image and *whatever candidate captions you want* — `"a photo of a cat"`, `"an indoor scene"`, `"the year 1985"` — and it scores how well each one matches. No retraining, no fine-tuning, no labeled dataset. The same model handles "is this a cat?" and "is this happy?" because it lives in language-space.
+
+Pick a preset image (or upload your own), tweak the candidate labels, and watch the scores shift:
+
+<CLIPPlayground />
+
+The model running here is **clip-vit-base-patch32** — the same architecture used in production by Stable Diffusion, DALL·E text encoders, and countless retrieval systems. ~150 MB; cached in your browser after the first run.
 
 ---
 

@@ -15,6 +15,8 @@ tutor_concepts:
   - "token embeddings plus positional encodings"
 ---
 
+import ViTAttention from '@site/src/components/viz/ViTAttention';
+
 <LessonHero course="Attention Is All You Need" number="7" title="The encoder stack" subtitle="Stacking attention + feed-forward blocks to build representations" />
 
 The **encoder** is where the **source** sentence (or any input sequence) is turned into a **stack of contextual vectors**—one row per token—that the **decoder** will later **read** through **cross-attention**. Every lesson so far was a **piece** of this machine; this page **wires them in the exact order** used in [Vaswani et al. (2017), *Attention Is All You Need*](https://arxiv.org/abs/1706.03762). The [Lex AI interactive diagram](https://aiayn.aiseekhegaindia.com/) follows the same stacking.
@@ -165,6 +167,20 @@ The **base** Transformer in the paper uses **N = 6** **identical** encoder layer
 The final tensor has shape **(batch, source_length, d_model)**. For the full **encoder–decoder** Transformer, this sequence is projected to **K** and **V** for **each** **encoder–decoder (cross-)attention** sublayer in the decoder—so the **source** is **re-read** at every decoder depth with **updated** decoder queries.
 
 **Next:** the **decoder stack**—where **masked** self-attention and **cross-attention** appear.
+
+---
+
+## When the encoder reads pixels — the Vision Transformer
+
+The same encoder you've just wired up — embeddings → N layers of (self-attention → FFN, each Add & Norm) — also drives state-of-the-art **image** recognition. Replace word tokens with **image patches** (16×16 squares of pixels, flattened and linearly projected) and prepend a special **CLS** token. The CLS embedding gets to attend to every patch through the same self-attention machinery, and at the top its representation becomes the classification feature.
+
+That's literally it. The architecture below is identical to Lesson 1's encoder; only the embedding layer changes.
+
+To make the encoder's behaviour visible, the playground below runs **ViT-base/16** on an image you provide and computes **attention rollout** (Abnar & Zuidema, 2020): multiply attention matrices across layers, average over heads, and read off how much information the CLS token ultimately pulled from each patch. Bright regions = patches the classifier leaned on most heavily.
+
+Drag the slider to start the rollout from a deeper layer — you'll see the model focus tighten as it ascends through the stack, much like the encoder representations you've been wiring up sharpen with depth.
+
+<ViTAttention />
 
 ---
 

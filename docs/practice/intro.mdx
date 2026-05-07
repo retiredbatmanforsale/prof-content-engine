@@ -1,0 +1,44 @@
+---
+title: "Practice"
+slug: /practice
+sidebar_position: 1
+description: Deterministic ML practice problems — implement the math, run hidden test suites in your browser, see green ticks.
+---
+
+# Practice
+
+LeetCode for ML internals. Each problem ships with a hidden test harness that runs in your browser via Pyodide — no backend, no submission queue, no rate limit. Your code never leaves the tab.
+
+The first five problems target the operations interviewers actually ask about: softmax, attention, BPE, sampling, and the cross-entropy gradient. Each one cross-links back to the lesson that introduces the concept.
+
+## The five
+
+| # | Problem | Difficulty | Concept | Lesson |
+|---|---|---|---|---|
+| 1 | [Softmax from scratch](./softmax-from-scratch) | Easy | Numerical stability | [Generation of next tokens](/courses/ai-for-engineering/build-and-train-your-own-gpt2-model/generation-of-next-tokens) |
+| 2 | [Scaled dot-product attention](./scaled-dot-product-attention) | Medium | Transformers core | [Self-attention](/courses/ai-for-engineering/attention-is-all-you-need/self-attention) |
+| 3 | [BPE: apply merges](./bpe-apply-merges) | Medium | Tokenization | [Token embeddings](/courses/ai-for-engineering/build-and-train-your-own-gpt2-model/token-embeddings) |
+| 4 | [Top-p (nucleus) sampling](./top-p-sampling) | Medium | Decoding | [Generation of next tokens](/courses/ai-for-engineering/build-and-train-your-own-gpt2-model/generation-of-next-tokens) |
+| 5 | [Cross-entropy gradient](./cross-entropy-gradient) | Medium | Backprop | [Loss functions](/courses/ai-for-engineering/deep-neural-networks/loss-functions) |
+
+## How it works
+
+Each problem page has:
+
+- A statement explaining what you're implementing and why.
+- A starter code skeleton — read the docstring, fill in the body.
+- **Run tests** — your code executes in Pyodide alongside a hidden test harness. You get a per-test pass/fail panel with timing and (on failure) the assertion message.
+- Progressive **hints** if you're stuck.
+- A **Reveal solution** button that loads the reference implementation into the editor so you can run it and compare.
+
+The runtime takes 5–10 seconds to spin up the first time per session, then runs are instant.
+
+## Why these five
+
+These are the operations every transformer touches on every forward pass. If you can implement all five from a blank file, numerical stability included, you can debug almost any production LLM bug.
+
+They also happen to be the most-asked ML internals questions in interviews — the kind where "I sort of remember the formula" doesn't survive a 25-minute coding round.
+
+## Coming next
+
+More problems land here as we build them. Suggestions welcome — the bar is **deterministic + diagnostic of real understanding**, not just "do you know numpy."

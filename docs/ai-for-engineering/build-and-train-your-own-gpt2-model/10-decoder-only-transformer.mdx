@@ -13,6 +13,7 @@ tutor_concepts:
 ---
 
 import PromptJourney from '@site/src/components/viz/PromptJourney';
+import LogitLens from '@site/src/components/viz/LogitLens';
 
 <LessonHero course="Build and Train Your Own GPT-2" number="10" title="Decoder-only transformer" subtitle="Assembling the full architecture that powers GPT-2" />
 
@@ -30,4 +31,20 @@ This lesson ties everything together to explain the decoder-only transformer use
 Every component you've built across lessons 2–9 — token embeddings, positional encodings, attention, masking, residuals, layer norm, feed-forward, sampling — fires in sequence on every token. Step through the animation below to watch a prompt traverse the full decoder stack and produce one token at a time.
 
 <PromptJourney />
+
+## The logit lens — peek inside the stack
+
+Now that you've seen how a prompt moves through the decoder, here's the natural follow-up question: **does the model "know" the answer at layer 6, or does it only commit at layer 12?**
+
+The logit lens (Nostalgebraist, 2020) is a one-line trick that answers this. After the forward pass, instead of decoding only the final layer through the LM head, decode *every* intermediate layer's hidden state through the same head. Each cell below is the model's top guess for that position *if you had stopped the forward pass right there*.
+
+Try it on `The capital of France is`:
+
+- **Bottom layers** (closer to the embedding) usually emit token-shaped noise — copies of the input or near-neighbours in embedding space.
+- **Mid layers** start to surface plausible candidates. You can sometimes watch the right answer crystallize.
+- **Top layer** matches the model's actual prediction (the brightest cell — high certainty).
+
+Saturation = top-1 probability. Hover any cell for the top-5 candidates with their probabilities.
+
+<LogitLens />
 

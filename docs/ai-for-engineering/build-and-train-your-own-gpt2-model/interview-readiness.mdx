@@ -38,6 +38,8 @@ They cover autoregressive architecture mechanics, language model training, scali
   <span className="rounded-full bg-fuchsia-100 px-3 py-1 text-fuchsia-800 dark:bg-fuchsia-900/40 dark:text-fuchsia-300">System Design</span>
 </div>
 
+import QuantizationCompare from '@site/src/components/viz/QuantizationCompare';
+
 ---
 
 ## Quick-Reference Coverage Table
@@ -238,6 +240,24 @@ They cover autoregressive architecture mechanics, language model training, scali
 - **Measurement:** always profile end-to-end (time-to-first-token + generation time), not just model forward pass time. Network, tokenization, and result serialization add real latency.
 
 </InterviewQuestion>
+
+### See the quality / latency tradeoff for yourself
+
+The roadmap above turns into something more concrete when you can run the comparison. Below, the same prompt is forwarded through GPT-2 (or DistilGPT-2) at multiple precisions in your browser. Each column shows:
+
+- the next-token prediction at that precision,
+- the top-10 distribution it produced,
+- and the wall-clock forward-pass time.
+
+Below the columns, **pairwise KL divergence** measures how much each quantized model's full distribution actually diverges from the FP32 reference — a far more honest signal than accuracy on a hand-picked prompt. Generally:
+
+- **KL < 0.01** — quantization is essentially free for this prompt.
+- **KL 0.01–0.05** — small distributional drift; top-1 may still match.
+- **KL > 0.05** — meaningful divergence; argmax can flip on prompts that depend on long-tail facts.
+
+Try the "rare facts" and "code" prompts — these are where INT4 typically starts to wobble first.
+
+<QuantizationCompare />
 
 ---
 

@@ -1,0 +1,66 @@
+---
+title: Playgrounds Preview
+description: Sandbox page to preview the in-browser ML demos before placing them into individual lessons.
+---
+
+import MNISTPlayground from '@site/src/components/viz/MNISTPlayground';
+import TokenizerPlayground from '@site/src/components/viz/TokenizerPlayground';
+import GenerationPlayground from '@site/src/components/viz/GenerationPlayground';
+import AttentionVisualizer from '@site/src/components/viz/AttentionVisualizer';
+import LogitLens from '@site/src/components/viz/LogitLens';
+
+# Playgrounds Preview
+
+Internal sandbox page. Each demo below runs entirely in your browser — no backend, no API key. Models cache to IndexedDB on first load, so subsequent visits are instant.
+
+---
+
+## 1. MNIST classifier
+
+Draw a digit and watch a tiny CNN classify it live. Inference is ~1–3 ms once the runtime warms up.
+
+**Lesson home:** foundational neural net / "first NN from scratch"
+
+<MNISTPlayground />
+
+---
+
+## 2. Tokenizer playground
+
+Type once, see how three tokenizers carve it up. Color = stable hash of token ID (same color = same token across renders).
+
+**Lesson home:** tokenization (Karpathy mirror)
+
+<TokenizerPlayground />
+
+---
+
+## 3. Token-by-token generation
+
+Watch the next-token distribution live as GPT-2 samples. Sliders for temperature / top-k / top-p, plus a greedy mode.
+
+**Lesson home:** sampling lesson · generation step in `build-and-train-your-own-gpt2-model`
+
+⚠️ First run downloads ~80 MB (DistilGPT-2) or ~125 MB (GPT-2). Cached after that.
+
+<GenerationPlayground />
+
+---
+
+## 4. Attention visualizer
+
+Forward a sentence through GPT-2, see all L × H heads light up. Click a cell to expand that head into a full token-labeled view.
+
+**Lesson home:** `attention-is-all-you-need/attention.mdx` and `multi-headed-attention.mdx`
+
+<AttentionVisualizer />
+
+---
+
+## 5. Logit lens
+
+For every (layer, position), decode the hidden state through the LM head and show what the model "would have predicted" at that depth. Saturation = top-1 certainty.
+
+**Lesson home:** mechanistic interpretability / "how depth sharpens belief"
+
+<LogitLens />

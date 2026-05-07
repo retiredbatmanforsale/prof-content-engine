@@ -1,0 +1,145 @@
+---
+title: "Scaled Dot-Product Attention"
+description: Implement scaled dot-product attention from scratch in numpy. Compare your output to a reference implementation.
+sidebar_position: 2
+---
+
+import PracticeProblem from '@site/src/components/viz/PracticeProblem';
+
+<PracticeProblem
+  id="scaled-dot-product-attention"
+  title="Scaled dot-product attention"
+  difficulty="Medium"
+  tags={["numpy", "transformers", "attention"]}
+  linkedLessons={[
+    { url: '/courses/ai-for-engineering/attention-is-all-you-need/self-attention', title: 'Self-attention' },
+    { url: '/courses/ai-for-engineering/attention-is-all-you-need/multi-headed-attention', title: 'Multi-head attention' },
+  ]}
+  starter={`
+import numpy as np
+
+def attention(Q, K, V, mask=None):
+    """
+    Scaled dot-product attention.
+
+    Args:
+        Q: query matrix, shape [Tq, d_k]
+        K: key matrix,   shape [Tk, d_k]
+        V: value matrix, shape [Tk, d_v]
+        mask: optional boolean ndarray [Tq, Tk]; True = attend, False = block.
+
+    Returns:
+        np.ndarray of shape [Tq, d_v]
+    """
+    # YOUR CODE HERE
+    pass
+`}
+  tests={`
+import numpy as np
+
+def _ref(Q, K, V, mask=None):
+    dk = Q.shape[-1]
+    scores = Q @ K.T / np.sqrt(dk)
+    if mask is not None:
+        scores = np.where(mask, scores, -1e9)
+    s = scores - scores.max(axis=-1, keepdims=True)
+    e = np.exp(s)
+    w = e / e.sum(axis=-1, keepdims=True)
+    return w @ V
+
+@__test__("Output shape is [Tq, d_v]")
+def t():
+    rng = np.random.default_rng(0)
+    Q = rng.standard_normal((4, 8))
+    K = rng.standard_normal((6, 8))
+    V = rng.standard_normal((6, 5))
+    out = attention(Q, K, V)
+    assert out is not None, "function returned None"
+    assert out.shape == (4, 5), f"expected (4, 5), got {out.shape}"
+
+@__test__("Matches numpy reference (no mask)")
+def t():
+    rng = np.random.default_rng(42)
+    Q = rng.standard_normal((3, 4))
+    K = rng.standard_normal((5, 4))
+    V = rng.standard_normal((5, 7))
+    expected = _ref(Q, K, V)
+    out = attention(Q, K, V)
+    assert np.allclose(out, expected, atol=1e-6), \\
+        f"max abs diff = {np.max(np.abs(out - expected)):.6f}"
+
+@__test__("Applies sqrt(d_k) scaling")
+def t():
+    # Without scaling, scores would be Q @ K.T directly. Construct a case where
+    # the difference between scaled and unscaled is stark.
+    Q = np.array([[10.0, 0.0, 0.0, 0.0]])
+    K = np.array([[10.0, 0.0, 0.0, 0.0],
+                  [0.0,  10.0, 0.0, 0.0]])
+    V = np.array([[1.0, 0.0],
+                  [0.0, 1.0]])
+    out = attention(Q, K, V)
+    expected = _ref(Q, K, V)
+    assert np.allclose(out, expected, atol=1e-5), \\
+        f"forgot to divide by sqrt(d_k)? got {out}, expected {expected}"
+
+@__test__("Honors a causal mask")
+def t():
+    rng = np.random.default_rng(7)
+    T = 4
+    Q = rng.standard_normal((T, 6))
+    K = rng.standard_normal((T, 6))
+    V = rng.standard_normal((T, 3))
+    causal = np.tril(np.ones((T, T), dtype=bool))
+    out = attention(Q, K, V, mask=causal)
+    expected = _ref(Q, K, V, mask=causal)
+    assert np.allclose(out, expected, atol=1e-5), "mask not applied correctly"
+
+@__test__("Mask of all-True equals no mask")
+def t():
+    rng = np.random.default_rng(11)
+    Q = rng.standard_normal((2, 5))
+    K = rng.standard_normal((3, 5))
+    V = rng.standard_normal((3, 4))
+    full = np.ones((2, 3), dtype=bool)
+    a = attention(Q, K, V, mask=full)
+    b = attention(Q, K, V)
+    assert np.allclose(a, b, atol=1e-6)
+`}
+  solution={`
+import numpy as np
+
+def attention(Q, K, V, mask=None):
+    d_k = Q.shape[-1]
+    scores = Q @ K.T / np.sqrt(d_k)
+    if mask is not None:
+        scores = np.where(mask, scores, -1e9)
+    # numerically-stable softmax over the last axis
+    scores = scores - scores.max(axis=-1, keepdims=True)
+    weights = np.exp(scores)
+    weights = weights / weights.sum(axis=-1, keepdims=True)
+    return weights @ V
+`}
+  hints={[
+    "The four steps are: scores = Q @ K.T, scale by sqrt(d_k), softmax along the last axis, then weights @ V.",
+    "Apply the mask BEFORE the softmax: replace blocked positions with a large negative number (e.g. -1e9) so they get ~0 probability after softmax.",
+    "Use the same numerical-stability trick as softmax — subtract the row-max before exp.",
+  ]}
+>
+
+Scaled dot-product attention is the single most important operation in modern deep learning. Every transformer head — self, cross, causal, multi — bottoms out in this function.
+
+The formula:
+
+$$
+\\text{Attention}(Q, K, V) = \\text{softmax}\\!\\left(\\frac{QK^\\top}{\\sqrt{d_k}}\\right) V
+$$
+
+Three subtleties that interview problems probe for:
+
+1. **The $\\sqrt{d_k}$ scaling matters.** Without it, the dot products grow with the dimension and softmax pushes all the mass onto a single key, killing gradients.
+2. **Masks are applied to the *scores*, not the weights.** Set blocked positions to a large negative number *before* softmax, so they become ~0 *after* softmax. Setting them to 0 after the fact would re-normalize the wrong way.
+3. **Numerical stability.** The same max-shift trick from softmax applies here — subtract the row-max from the scores before exp.
+
+Implement it. The harness compares your output against a reference numpy implementation across several shapes, with and without a causal mask.
+
+</PracticeProblem>

@@ -16,6 +16,8 @@ tutor_concepts:
   - "why multiple heads outperform a single wide head"
 ---
 
+import AttentionVisualizer from '@site/src/components/viz/AttentionVisualizer';
+
 <LessonHero course="Attention Is All You Need" number="5" title="Multi-headed attention" subtitle="Running multiple attention patterns in parallel" />
 
 <LessonVideo
@@ -273,6 +275,23 @@ Below, each cell is **darker** = **higher** attention weight **(illustrative, no
     },
   ]}
 />
+
+---
+
+## See every head light up — live
+
+The math says each head learns its own pattern. You can actually see this. Below is GPT-2 (or DistilGPT-2 if you want a smaller download) running in your browser. Type a sentence, press **Run**, and you'll get a grid where each cell is one head's attention matrix at one layer.
+
+What to look for:
+
+- **Diagonal-heavy heads** — these mostly attend to the current token or its immediate neighbours. Often surface-level positional patterns.
+- **"Previous-token" heads** — every row attends one column to the left. A genuine syntactic regularity the model discovers on its own.
+- **Long-range heads** — bright spots far from the diagonal. Try `When Mary visited Paris, she ate a croissant.` and see which head connects `she` to `Mary` (coreference).
+- **How depth changes the picture** — early layers tend to be local and crisp; deeper layers smear into broader, semantic patterns.
+
+Click any cell to expand it into a full token-labeled view. Rows = which token is doing the attending; columns = which token it's attending to.
+
+<AttentionVisualizer />
 
 ---
 

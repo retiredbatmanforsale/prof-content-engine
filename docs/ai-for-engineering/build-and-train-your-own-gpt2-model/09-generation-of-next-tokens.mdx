@@ -12,9 +12,26 @@ tutor_concepts:
   - "temperature effect on randomness"
 ---
 
+import GenerationPlayground from '@site/src/components/viz/GenerationPlayground';
+
 <LessonHero course="Build and Train Your Own GPT-2" number="9" title="Generation of next tokens" subtitle="Sampling, temperature, and producing text one token at a time" />
 
 ## Overview
 
 This lesson covers how transformer-based language models generate the next token step by step.
+
+## See sampling happen, one token at a time
+
+A language model doesn't "think of an answer" and then write it down. It produces one token, sees the prompt-plus-that-token, and produces the next — and so on. At every step, the model emits a probability distribution over the entire vocabulary, and a sampling rule picks the actual next token from that distribution.
+
+The playground below runs GPT-2 in your browser. Press **Generate** and watch the right panel: at every step, you see the top-12 candidates the model considered, with the picked token highlighted. Then play with the controls:
+
+- **Temperature** — divide every logit by `T` before softmax. Low `T` (≈ 0.1) sharpens the distribution toward greedy. High `T` (≈ 1.5) flattens it; the model gets weird and creative.
+- **top-k** — keep only the `k` highest-probability candidates each step, drop the rest, renormalize.
+- **top-p (nucleus)** — keep the smallest set of tokens whose probabilities sum to `p`. Adapts to confidence: confident steps draw from few tokens, uncertain steps consider many.
+- **Greedy mode** — argmax every step. Deterministic, often boring (it loops).
+
+Compare the output of the same prompt under "greedy" vs `temperature=1.0, top-p=0.95`. The same model can sound robotic or surprisingly human depending on which sampling rule you pick.
+
+<GenerationPlayground />
 
