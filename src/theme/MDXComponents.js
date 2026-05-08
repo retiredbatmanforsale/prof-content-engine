@@ -16,6 +16,8 @@ import ChainRuleViz from '@site/src/components/viz/ChainRuleViz';
 import VanishingGradient from '@site/src/components/viz/VanishingGradient';
 import CausalMask from '@site/src/components/viz/CausalMask';
 import PromptJourney from '@site/src/components/viz/PromptJourney';
+import AgentLoopFlow from '@site/src/components/viz/AgentLoopFlow';
+import PromptAnatomy from '@site/src/components/viz/PromptAnatomy';
 import ExcalidrawScene from '@site/src/components/ExcalidrawScene';
 import PerceptronDiagram from '@site/src/components/ExcalidrawScene/PerceptronDiagram';
 import LessonHero from '@site/src/components/LessonHero';
@@ -48,6 +50,8 @@ export default {
   VanishingGradient,
   CausalMask,
   PromptJourney,
+  AgentLoopFlow,
+  PromptAnatomy,
   ExcalidrawScene,
   PerceptronDiagram,
   LessonHero,

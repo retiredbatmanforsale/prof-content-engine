@@ -1,0 +1,204 @@
+.wrap {
+  margin: 1.75rem 0;
+  padding: 1.4rem 1.2rem 1.5rem;
+  border: 1px solid #d1d5db;
+  border-radius: 16px;
+  background: linear-gradient(180deg, #fafaf9 0%, #ffffff 100%);
+}
+
+[data-theme='dark'] .wrap {
+  border-color: #334155;
+  background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%);
+}
+
+.toggle {
+  display: inline-flex;
+  gap: 0.25rem;
+  padding: 0.25rem;
+  background: #e7e5e4;
+  border-radius: 999px;
+  margin-bottom: 1.2rem;
+}
+
+[data-theme='dark'] .toggle { background: #1e293b; }
+
+.tab, .tabActive {
+  border: none;
+  background: transparent;
+  padding: 0.4rem 0.95rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  border-radius: 999px;
+  cursor: pointer;
+  color: #57534e;
+  transition: all 160ms ease;
+}
+
+.tab:hover { color: #1c1917; }
+[data-theme='dark'] .tab { color: #94a3b8; }
+[data-theme='dark'] .tab:hover { color: #f1f5f9; }
+
+.tabActive {
+  background: #ffffff;
+  color: #1c1917;
+  box-shadow: 0 1px 2px rgba(28, 25, 23, 0.08);
+}
+
+[data-theme='dark'] .tabActive {
+  background: #334155;
+  color: #f1f5f9;
+}
+
+.stage {
+  position: relative;
+  min-height: 240px;
+}
+
+.bareBox, .promptBox {
+  position: relative;
+  padding: 1rem 1.1rem 1.2rem;
+  border-radius: 14px;
+  border: 1.5px dashed #cbd5e1;
+  background: #ffffff;
+}
+
+.promptBox {
+  border-style: solid;
+  border-color: #fed7aa;
+  background: linear-gradient(180deg, #fff7ed 0%, #ffffff 100%);
+}
+
+[data-theme='dark'] .bareBox {
+  background: #0f172a;
+  border-color: #475569;
+}
+
+[data-theme='dark'] .promptBox {
+  background: linear-gradient(180deg, #431407 0%, #1c1917 100%);
+  border-color: #c2410c;
+}
+
+.bareLabel, .promptLabel {
+  display: inline-block;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #78716c;
+  margin-bottom: 0.5rem;
+}
+
+.promptLabel { color: #c2410c; }
+
+[data-theme='dark'] .bareLabel { color: #a8a29e; }
+[data-theme='dark'] .promptLabel { color: #fdba74; }
+
+.bareBox p {
+  margin: 0 0 0.6rem;
+  font-size: 1.05rem;
+  font-weight: 500;
+  font-family: 'SF Mono', Monaco, monospace;
+  color: #1c1917;
+}
+
+[data-theme='dark'] .bareBox p { color: #f5f5f4; }
+
+.bareWarn {
+  display: block;
+  font-size: 0.78rem;
+  color: #b91c1c;
+  font-weight: 500;
+}
+
+[data-theme='dark'] .bareWarn { color: #fca5a5; }
+
+.chunk {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.65rem;
+  padding: 0.55rem 0.75rem;
+  margin-bottom: 0.45rem;
+  border-radius: 10px;
+  background: #ffffff;
+  border-left: 3px solid #d4d4d8;
+  opacity: 0;
+  animation: slideIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+[data-theme='dark'] .chunk {
+  background: rgba(15, 23, 42, 0.65);
+  border-color: #475569;
+}
+
+.chunkTag {
+  flex-shrink: 0;
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  padding: 0.18rem 0.5rem;
+  border-radius: 999px;
+  color: #fff;
+  background: #94a3b8;
+  margin-top: 1px;
+}
+
+.chunkText {
+  font-size: 0.86rem;
+  line-height: 1.45;
+  color: #292524;
+}
+
+[data-theme='dark'] .chunkText { color: #e7e5e4; }
+
+.role { border-left-color: #ec4899; }
+.role .chunkTag { background: #ec4899; }
+
+.context { border-left-color: #0ea5e9; }
+.context .chunkTag { background: #0ea5e9; }
+
+.task { border-left-color: #16a34a; }
+.task .chunkTag { background: #16a34a; }
+
+.format { border-left-color: #f59e0b; }
+.format .chunkTag { background: #f59e0b; }
+
+.glow {
+  position: absolute;
+  inset: 0;
+  border-radius: 14px;
+  pointer-events: none;
+  background: radial-gradient(circle at 70% 100%, rgba(251, 146, 60, 0.18), transparent 70%);
+  opacity: 0;
+  animation: glowIn 1s ease-out 0.9s forwards;
+}
+
+.legend {
+  margin-top: 1rem;
+  font-size: 0.8rem;
+  color: #57534e;
+  line-height: 1.5;
+  text-align: center;
+}
+
+.legend strong { color: #c2410c; }
+
+[data-theme='dark'] .legend { color: #a8a29e; }
+[data-theme='dark'] .legend strong { color: #fdba74; }
+
+@keyframes slideIn {
+  0%   { opacity: 0; transform: translateX(-10px); }
+  100% { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes glowIn {
+  0%   { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .chunk, .glow {
+    animation: none !important;
+    opacity: 1 !important;
+  }
+}
