@@ -186,9 +186,12 @@ body.prof-scrolled .navbar {
   flex: 1;
 }
 
-/* Right side — back link */
+/* Right side — search + back link */
 .prof-navbar__right {
   margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
 }
 
 .prof-navbar__back {
@@ -205,7 +208,51 @@ body.prof-scrolled .navbar {
   text-decoration: none;
 }
 
-/* Hide track links and back link on mobile — Docusaurus handles mobile via sidebar toggle */
+/* ===== Brand-match the search bar to navbar dropdowns ===== */
+.prof-navbar__search .navbar__search-input,
+.prof-navbar__search .DocSearch-Button,
+.prof-navbar__search .aa-DetachedSearchButton {
+  font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+  font-size: 0.8rem;
+  background: #fafafa;
+  border: 1px solid #e5e5e5;
+  border-radius: 999px;
+  height: 36px;
+  padding: 0 0.875rem;
+  color: #525252;
+  transition: border-color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
+  min-width: 200px;
+}
+
+.prof-navbar__search .navbar__search-input:hover,
+.prof-navbar__search .DocSearch-Button:hover {
+  border-color: #d4d4d4;
+  background: #ffffff;
+}
+
+.prof-navbar__search .navbar__search-input:focus {
+  outline: none;
+  border-color: #ff7f50;
+  background: #ffffff;
+  box-shadow: 0 0 0 3px rgba(255, 127, 80, 0.15);
+}
+
+/* The keyboard-shortcut hint pill (⌘K) */
+.prof-navbar__search .DocSearch-Button-Keys,
+.prof-navbar__search .navbar__search-input + kbd {
+  background: #ffffff;
+  border: 1px solid #e5e5e5;
+  border-radius: 6px;
+  font-size: 0.65rem;
+  color: #a3a3a3;
+}
+
+/* Hide search results placeholder magnifying glass collision on hover */
+.prof-navbar__search .navbar__search {
+  margin: 0;
+}
+
+/* Hide track links, search, and back link on mobile — Docusaurus handles mobile via sidebar toggle */
 @media (max-width: 996px) {
   .prof-navbar__links,
   .prof-navbar__right {
@@ -725,4 +772,139 @@ pre {
 
 [data-theme='dark'] .theme-doc-sidebar-item-link-level-1 > .menu__link--active {
   color: #e5e5e5;
+}
+/* ----------------------------------------------------------------------- */
+/* Prose readability — applies only to lesson content, not nav / sidebar.  */
+/* ----------------------------------------------------------------------- */
+
+/* Bump base font size on prose for breathing room.
+   Targets the markdown body; navigation/sidebar/footer stay at their sizes. */
+.markdown {
+  font-size: 17.5px;
+  line-height: 1.78;
+  letter-spacing: 0.005em;
+}
+
+/* Slightly more vertical space between paragraphs */
+.markdown p {
+  margin-bottom: 1.3rem;
+}
+
+/* Stronger separation between sections */
+.markdown > h2,
+.markdown > h3 {
+  margin-top: 2.75rem;
+  margin-bottom: 1rem;
+}
+.markdown > h2 {
+  padding-top: 0.25rem;
+}
+
+/* Lists inherit better line-height */
+.markdown ul,
+.markdown ol {
+  line-height: 1.78;
+  margin-bottom: 1.3rem;
+}
+.markdown li {
+  margin-bottom: 0.35rem;
+}
+
+/* Tables: a touch denser than prose so they scan as a unit */
+.markdown table {
+  font-size: 0.96rem;
+}
+.markdown table th {
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+
+/* Code inline: slightly tighter than prose so it visually reads as code */
+.markdown :not(pre) > code {
+  font-size: 0.92em;
+}
+
+/* Blockquote — make pull-quote-y for italicised emphasis */
+.markdown blockquote {
+  border-left: 3px solid var(--lexai-coral-500);
+  background: rgba(255, 127, 80, 0.04);
+  padding: 0.85rem 1.25rem;
+  margin: 1.75rem 0;
+  font-style: italic;
+  color: #334155;
+  border-radius: 0 6px 6px 0;
+}
+[data-theme='dark'] .markdown blockquote {
+  background: rgba(255, 127, 80, 0.06);
+  color: #cbd5e1;
+}
+
+/* Section dividers — fade in/out instead of hard line */
+.markdown hr {
+  margin: 3rem auto;
+  width: 100%;
+  border: 0;
+  height: 1px;
+  background: linear-gradient(to right, transparent, #cbd5e1 25%, #cbd5e1 75%, transparent);
+}
+[data-theme='dark'] .markdown hr {
+  background: linear-gradient(to right, transparent, #334155 25%, #334155 75%, transparent);
+}
+
+/* Slightly wider content column for prose-heavy pages.
+   Default Docusaurus is ~960px including sidebar; loosen the article a touch. */
+.theme-doc-markdown {
+  max-width: 800px;
+}
+
+/* ----------------------------------------------------------------------- */
+/* Visual polish (Pass 2 — CSS-only items)                                 */
+/* ----------------------------------------------------------------------- */
+
+/* Coral H2 underline — 4px bar under every section heading in lesson body */
+.markdown > h2 {
+  position: relative;
+  padding-bottom: 0.6rem;
+}
+.markdown > h2::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 56px;
+  height: 4px;
+  background: var(--lexai-coral-500);
+  border-radius: 2px;
+}
+
+/* Diagram styling — rounded corners + soft shadow.
+   Scoped to <figure> images and explicit .diagram class so it does NOT
+   affect company logos, hero badges, or InterviewGuide avatars. */
+.markdown figure {
+  margin: 1.75rem 0;
+}
+.markdown figure img,
+.markdown img.diagram {
+  border-radius: 12px;
+  box-shadow: 0 4px 16px rgba(15, 23, 42, 0.08);
+  max-width: 100%;
+  height: auto;
+  background: #ffffff;
+}
+[data-theme='dark'] .markdown figure img,
+[data-theme='dark'] .markdown img.diagram {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+  background: #f8fafc;
+}
+
+/* Optional figcaption styling — for when we add captions later */
+.markdown figure figcaption {
+  margin-top: 0.75rem;
+  text-align: center;
+  font-size: 0.88rem;
+  color: #64748b;
+  font-style: italic;
+}
+[data-theme='dark'] .markdown figure figcaption {
+  color: #94a3b8;
 }

@@ -4,6 +4,7 @@ import { useLocation } from '@docusaurus/router';
 import useBaseUrl from '@docusaurus/useBaseUrl';
 import { useNavbarMobileSidebar } from '@docusaurus/theme-common/internal';
 import NavbarMobileSidebarToggle from '@theme/Navbar/MobileSidebar/Toggle';
+import SearchBar from '@theme/SearchBar';
 
 const HOME_URL = 'https://prof.lexailabs.com';
 
@@ -136,6 +137,9 @@ export default function NavbarContent(): ReactNode {
       </div>
 
       <div className="navbar__items navbar__items--right prof-navbar__right">
+        <div className="prof-navbar__search">
+          <SearchBar />
+        </div>
         <a href={HOME_URL} className="prof-navbar__back">
           ← lexailabs.com
         </a>
