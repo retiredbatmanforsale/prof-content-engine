@@ -1,0 +1,238 @@
+---
+hide_title: true
+sidebar_label: '14 · Case — ETA prediction'
+title: 'Lesson 14 — Case study: ETA prediction (Uber-style)'
+description: "Apply the framework to ETA prediction — wrinkles include spatial-temporal features, asymmetric loss, and quantile regression with P50 / P90 outputs."
+mvp_status: drafted
+tutor_topic: "ETA prediction system design — Uber-style ride hailing"
+tutor_concepts: []
+---
+
+<LessonHero
+  number="14"
+  title="Case — ETA prediction"
+  subtitle="A regression problem with deep spatial-temporal structure. The wrinkles: H3 hexagon features, asymmetric loss, and quantile outputs. Single-point regression with MSE is the L4 ceiling."
+  course="ML System Design"
+/>
+
+<InterviewerSignal
+  level="L4"
+  message="Predicts mean ETA with MSE loss and a single point output. Splits the data randomly across cities. Treats lat / long as plain numerical features. No spatial generalisation strategy. No real-time traffic in the feature set."
+/>
+<InterviewerSignal
+  level="L5"
+  message="Volunteers quantile regression with pinball loss and P50 / P90 outputs to the UI. Names H3 hexagon spatial features and spatial cross-validation (hold out cities, not random samples). Streams real-time traffic and weather as first-class features. Mentions online learning for fast-moving conditions."
+/>
+
+---
+
+## 1. The prompt
+
+> **"Design ETA prediction for Uber."**
+
+A regression problem. Given a request — pickup point, drop-off point, current time — predict how long the ride will take. The output is a number of minutes shown to the rider in the UI before they confirm the booking. This case is structurally different from recsys (no ranking), RAG (no generation), and fraud (no classification): it is point prediction over a deeply spatial-temporal input space.
+
+---
+
+## 2. The wrinkles — what's different from the flagships and other case studies
+
+### 2.1 Geographic features are central
+
+Every primitive of the model is geographic. The input is two points and a time. Useful features include road-graph features (distance along the optimal route, number of turns, number of intersections), spatial-bucket features (H3 hexagons, geohash), and historical aggregates (mean ETA for this origin-destination pair at this time of day). **Treating lat / long as plain numerical features is L4 ceiling** — the model cannot generalise across cities and route shapes without explicit spatial inductive bias.
+
+### 2.2 Temporal-spatial features
+
+Real-time conditions dominate the residual after the static features explain the bulk: current traffic state, weather, road incidents, recent events (a concert just ended in this hexagon). These features are computed in **streaming aggregators with millisecond-to-minute freshness** — the feature store from Lesson 5, configured for spatial-temporal aggregations.
+
+### 2.3 Asymmetric loss
+
+Under-prediction is worse than over-prediction. If the displayed ETA is 8 minutes and the actual is 14, the rider is angry, the driver looks bad, and the trip earns a 1-star rating. If the displayed is 14 and the actual is 11, the rider is mildly happy. **MSE penalises both directions equally** — which is the wrong product behaviour. The fix: **pinball loss** at an asymmetric quantile, or a custom asymmetric loss function.
+
+### 2.4 Quantile outputs, not point estimates
+
+The production UI shows two numbers: "typically 12 minutes" (P50) and "up to 18 minutes if traffic" (P90). A single point estimate cannot communicate uncertainty; the rider has no way to plan. **Quantile regression with explicit P50 and P90 outputs** is the L5 default. Using a single point regression and showing it as "12 ± something" is L4.
+
+---
+
+## 3. Walking the framework
+
+### 3.1 Define the problem
+
+Metric tree:
+
+- **Business goal** — rider satisfaction (rating, repeat rate), driver utilisation (low idle time), trip completion rate
+- **Product metric** — mean absolute error of displayed-vs-actual ETA, P90 over-shoot rate (how often actual exceeds the displayed P90), rider complaint rate, cancellation rate post-booking
+- **ML objective** — pinball-loss-trained quantile regression at $\tau = 0.5$ as primary (the displayed point estimate), $\tau = 0.9$ as secondary (the displayed buffer); calibration of the quantiles against held-out actuals as a guardrail
+
+The unit is **a single ETA prediction** for one (origin, destination, time, conditions) input. There is no funnel — the input fan-in is bounded by the request, and the output is a small number of quantile values.
+
+### 3.2 Data pipeline
+
+Inherits the feature store + temporal-split discipline from Lesson 2. ETA-specific:
+
+- **H3 spatial bucketing** — both pickup and drop-off encoded as H3 hex IDs at multiple resolutions (city-scale, neighbourhood-scale, block-scale)
+- **Road-graph features** — distance along the optimal route, number of turns, intersection count, historical congestion at each hex along the route
+- **Streaming temporal-spatial aggregations** — current avg speed in each hex over the last 5 minutes; weather state per hex; active incident reports
+- **Spatial cross-validation** — never split randomly. Either hold out entire cities (test generalisation across cities) or hold out time-blocks within cities (test temporal generalisation). Random split allows leakage because nearby trips on the same day are highly correlated.
+
+### 3.3 Model architecture
+
+A practical production stack is a **gradient-boosted tree** (XGBoost / LightGBM) on engineered spatial features for the primary score, optionally augmented with a small neural network on graph embeddings (H3 hex embeddings, road-segment embeddings) for tail cases. Because the dominant features are already-engineered streaming aggregations, GBDTs perform competitively with deep models — same observation as Lesson 13.
+
+For quantile outputs, **train two models** (one for P50, one for P90) or use a **single multi-quantile model** with separate output heads per quantile. The L5 candidate names both options; production teams typically use multi-head for parameter sharing.
+
+### 3.4 Train and evaluate
+
+- **Loss design**: pinball loss at quantile $\tau$:
+
+  $$
+  \rho_\tau(y - \hat{y}) = \max\big(\tau \cdot (y - \hat{y}),\ (\tau - 1) \cdot (y - \hat{y})\big)
+  $$
+
+  At $\tau = 0.5$, pinball reduces to mean absolute error (symmetric). At $\tau = 0.9$, it penalises under-predictions 9× more than over-predictions, encouraging the model to over-shoot in that head.
+
+- **Eval**: MAE on the P50 head against actuals; **calibration of the P90** measured by the empirical hit rate of the actual being below the predicted P90 (should be ~90%); per-segment metrics (city, time of day, distance bucket); spatial holdout MAE.
+
+- **Spatial cross-validation** is not optional. A model that performs well on a random split can fail catastrophically on a held-out city because it has memorised the local spatial patterns it saw in training.
+
+### 3.5 Deploy and serve
+
+Inherits the latency budget from Lesson 5. ETA-specific:
+
+- **Sub-100ms p99** typical, since the prediction blocks the booking confirmation flow
+- **Streaming feature store** for the temporal-spatial features (avg speed per hex, weather, incidents) — refreshed every minute or faster
+- **Caching on origin-destination-time tuples** for repeated common queries (popular routes during rush hour repeat thousands of times per minute)
+- **Graceful degradation** to a distance-based heuristic if the model or the feature store is unavailable
+
+### 3.6 Monitor and maintain
+
+Inherits Lesson 7. ETA-specific:
+
+- **Online learning / fast retraining** for road incidents — when a major road closure or accident is reported, the model needs updated features within minutes, not hours. The feature store handles most of this; the model itself is retrained daily or hourly on the latest residuals.
+- **Per-city drift monitoring** — different cities drift independently (a new highway opens in Bangalore, traffic patterns shift in São Paulo); monitor per-city PSI and trigger city-level retraining
+- **P90 calibration drift** as a first-class signal — if the P90 hit rate drops below 85% (target 90%), the calibration is stale and the buffer is no longer protecting users from surprise ETA over-shoots
+
+---
+
+## 4. Back-of-envelope math
+
+### 4.1 Pinball loss worked example
+
+For a single observation $y = 12$ minutes, prediction $\hat{y} = 10$ minutes, at $\tau = 0.9$:
+
+$$
+y - \hat{y} = 2 \text{ (positive — under-prediction)}
+$$
+
+$$
+\rho_{0.9}(2) = \max(0.9 \times 2,\ -0.1 \times 2) = \max(1.8,\ -0.2) = 1.8
+$$
+
+For $\hat{y} = 14$ (over-prediction by 2):
+
+$$
+\rho_{0.9}(-2) = \max(0.9 \times (-2),\ -0.1 \times (-2)) = \max(-1.8,\ 0.2) = 0.2
+$$
+
+The same magnitude of error costs **9× more** when the prediction is too low than too high. This is what pushes the P90 head to over-shoot — exactly the asymmetric behaviour the product needs.
+
+<Stat
+  value="9× cost asymmetry"
+  caption="Pinball loss at τ=0.9 penalises a 2-minute under-prediction (cost: 1.8) nine times more than a 2-minute over-prediction (cost: 0.2). This is what trains the P90 head to deliberately over-shoot — the asymmetry that ride-hailing actually needs to avoid 'displayed 8 min, actual 14' rider rage."
+  source="ρ_τ(y - ŷ) at τ = 0.9"
+/>
+
+### 4.2 H3 hex area scaling
+
+H3 resolution 8 hexes are roughly 0.74 km² in area (about a city block); resolution 9 are ~0.10 km²; resolution 10 are ~0.015 km² (intersection-scale). For pickup-point bucketing in dense urban areas, resolution 9 or 10 is typical; for cross-city aggregations, resolution 7 or 6. **The L5 candidate names a specific resolution** based on the use case — generic "use H3" is L4.
+
+### 4.3 Spatial cross-validation cost
+
+Random splits routinely show 2-5× lower MAE than spatial holdouts because of leakage from nearby same-day trips. Reporting random-split MAE as the model's quality is **a real production failure mode** — teams have shipped models that looked good in eval and failed catastrophically on the first new city. The L5 candidate flags this without being asked.
+
+<PinballLossDemo />
+
+---
+
+## 5. What the interviewer is actually grading (case-specific)
+
+- **Did you propose quantile regression unprompted?** Single-point regression with MSE is L4 ceiling.
+- **Did you name pinball loss?** Naming the loss makes the asymmetric handling concrete.
+- **Did you mention P50 / P90 outputs to the UI?** Communicating uncertainty to the rider is a product decision, not just a metric.
+- **Did you mention H3 or geohash spatial bucketing?** Treating lat / long as plain features is L4.
+- **Did you propose spatial cross-validation?** Random splits are the canonical leakage failure for spatial models.
+- **Did you stream real-time traffic / weather features?** Static features cannot capture road incidents.
+
+Failure modes to avoid:
+
+- **MSE on a single point estimate.** Wrong loss + wrong output shape = double L4 ceiling.
+- **Random train/test split.** Leakage from spatially correlated trips inflates eval scores.
+- **Lat / long as raw features.** No spatial generalisation possible without an explicit spatial inductive bias.
+- **No real-time features.** Static models cannot react to road incidents.
+- **No P90 calibration monitoring.** A miscalibrated P90 silently fails users.
+
+---
+
+## 6. Quiz
+
+<Quiz
+  lessonId="ai-for-engineering/ml-system-design/case-eta-prediction"
+  questions={[
+    {
+      id: "eta-q1",
+      prompt: "A team trains an ETA model with MSE loss and a single-point output. Riders complain that ETAs are 'usually right' but 'sometimes way off, and we can't plan.' What's the L5-grade fix?",
+      options: [
+        "Reduce the model's variance.",
+        "Switch to quantile regression with pinball loss, training separate or multi-head outputs for P50 (the typical case) and P90 (the buffered upper bound). Display both in the UI ('typically 12 minutes; up to 18 if traffic'). Pinball loss at τ=0.9 penalises under-prediction 9× more than over-prediction, training the P90 head to over-shoot in exactly the asymmetric direction the product needs.",
+        "Add more training data.",
+        "Use absolute error instead of squared error.",
+      ],
+      correctIndex: 1,
+    },
+    {
+      id: "eta-q2",
+      prompt: "A team uses a random train/test split on rider trip data. Offline MAE is excellent. The model is shipped to a new city and performs disastrously. What is the most likely cause?",
+      options: [
+        "The new city has different weather.",
+        "Random splits leak: nearby trips on the same day are highly correlated, so a random split allows the model to memorise local spatial patterns rather than generalise. The L5 fix is spatial cross-validation — hold out entire cities (testing cross-city generalisation) or held-out time blocks within cities (testing temporal generalisation). Random-split eval routinely shows 2-5× lower MAE than spatial holdouts because of this leakage.",
+        "The new city has different roads.",
+        "Insufficient training data for the new city.",
+      ],
+      correctIndex: 1,
+    },
+    {
+      id: "eta-q3",
+      prompt: "An interviewer asks: 'You said your features include H3 hexagons. Why H3 specifically, and what resolution would you pick for pickup-point bucketing in a dense city?'",
+      options: [
+        "H3 is the industry standard.",
+        "H3 (Uber's hierarchical hex grid) gives uniform-sized bucket areas regardless of latitude (unlike geohash, which distorts toward the poles), enables efficient parent / child / neighbour relationships, and supports multi-resolution embedding lookups. For dense urban pickup bucketing, resolution 9 (~0.10 km², roughly a few city blocks) or 10 (~0.015 km², intersection-scale) is typical; resolution 7 (~5 km²) is too coarse for pickup-side decisions but useful for city-level aggregates.",
+        "H3 reduces memory.",
+        "H3 is built into TensorFlow.",
+      ],
+      correctIndex: 1,
+    },
+    {
+      id: "eta-q4",
+      prompt: "A team's P90 ETA was calibrated to 90% empirical hit rate. After three months of production traffic, the empirical hit rate has drifted to 78%. What does this mean and what's the response?",
+      options: [
+        "The model is fine.",
+        "The P90 buffer is no longer protecting users — 22% of actual arrivals exceed the displayed P90 (vs the 10% target). This is calibration drift and is monitored as a first-class signal, not a downstream metric. Response: re-fit the calibrator on the latest held-out data, possibly with a quick model retrain if the drift is feature-distribution-driven. P90 calibration drift is an immediate-action signal, not a wait-for-next-cycle issue.",
+        "Increase the model size.",
+        "The drift is acceptable.",
+      ],
+      correctIndex: 1,
+    },
+  ]}
+/>
+
+---
+
+## 7. What's next
+
+In **Lesson 15 — Multimodal search** the framework transfers to a CLIP-style joint-embedding system. Many primitives recur from Lesson 3 (two-tower retrieval, ANN, embedding store) — but the wrinkle is **joint training across modalities**: contrastive InfoNCE loss, cross-modal recall, modality alignment, and per-modality temperature calibration. This is the final case study; after it, the closing `interview-readiness.mdx` consolidates the framework into a 45-minute mock-round walkthrough.
+
+<div className="not-prose mt-8 flex justify-end">
+  <a href="./case-multimodal-search" className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white no-underline hover:bg-emerald-500">
+    Lesson 15 — Multimodal search →
+  </a>
+</div>

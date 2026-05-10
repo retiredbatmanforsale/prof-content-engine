@@ -1,0 +1,166 @@
+---
+title: "Build a CNN · 06 · Mini CNN Forward (Capstone)"
+description: CNN series capstone — wire conv, ReLU, pool, flatten, linear, and softmax into a complete image classifier forward pass.
+sidebar_position: 6
+practice_mode: true
+hide_table_of_contents: true
+---
+
+import PracticeProblem from '@site/src/components/viz/PracticeProblemPro';
+
+<PracticeProblem
+  id="build-cnn-06-mini-cnn-forward"
+  title="Mini-CNN forward (image -> class probabilities)"
+  difficulty="Medium"
+  tags={["numpy", "cnn", "classification", "capstone", "build-cnn"]}
+  linkedLessons={[
+    { url: '/courses/ai-for-engineering/computer-vision/intro', title: 'Computer vision intro' },
+  ]}
+  starter={`
+import numpy as np
+
+# Helpers from earlier problems (provided so you can focus on wiring):
+def conv2d_naive(x, W):
+    C_in, H, Wd = x.shape; C_out, _, kH, kW = W.shape
+    out = np.zeros((C_out, H - kH + 1, Wd - kW + 1))
+    for o in range(C_out):
+        for i in range(out.shape[1]):
+            for j in range(out.shape[2]):
+                out[o, i, j] = np.sum(x[:, i:i+kH, j:j+kW] * W[o])
+    return out
+
+def relu(x):
+    return np.maximum(0, x)
+
+def max_pool_2d(x, kernel_size, stride):
+    C, H, W = x.shape; k, s = kernel_size, stride
+    out_H = (H - k) // s + 1; out_W = (W - k) // s + 1
+    out = np.zeros((C, out_H, out_W))
+    for c in range(C):
+        for i in range(out_H):
+            for j in range(out_W):
+                out[c, i, j] = x[c, i*s:i*s+k, j*s:j*s+k].max()
+    return out
+
+def softmax(z):
+    z = z - z.max()
+    e = np.exp(z); return e / e.sum()
+
+
+def mini_cnn_forward(x, W_conv, W_fc):
+    """
+    Forward pass of a tiny image classifier:
+        conv2d -> ReLU -> max_pool(2,2) -> flatten -> linear -> softmax
+
+    Args:
+        x:      (1, 8, 8) — single grayscale image, range any.
+        W_conv: (C_out, 1, 3, 3) — convolution kernel.
+        W_fc:   (C_out * 3 * 3, 2) — final fully-connected weights producing
+                 2-class logits. (After 3x3 conv on 8x8 -> 6x6, pool 2 stride 2 -> 3x3.)
+
+    Returns:
+        (2,) — probability distribution over 2 classes (sums to 1).
+    """
+    # YOUR CODE HERE
+    pass
+`}
+  tests={`
+import numpy as np
+
+@__test__("Output is a 2-element 1-D array")
+def t():
+    rng = np.random.default_rng(0)
+    x = rng.standard_normal((1, 8, 8))
+    W_conv = rng.standard_normal((4, 1, 3, 3)) * 0.1
+    W_fc = rng.standard_normal((4 * 3 * 3, 2)) * 0.1
+    out = mini_cnn_forward(x, W_conv, W_fc)
+    assert out is not None, "function returned None"
+    assert out.shape == (2,), f"expected shape (2,), got {out.shape}"
+
+@__test__("Output sums to 1 (valid probability distribution)")
+def t():
+    rng = np.random.default_rng(7)
+    x = rng.standard_normal((1, 8, 8))
+    W_conv = rng.standard_normal((4, 1, 3, 3)) * 0.1
+    W_fc = rng.standard_normal((4 * 3 * 3, 2)) * 0.1
+    out = mini_cnn_forward(x, W_conv, W_fc)
+    assert np.isclose(out.sum(), 1.0, atol=1e-7), f"sum={out.sum()}, expected 1.0"
+    assert np.all(out >= 0) and np.all(out <= 1), f"out of [0,1]: {out}"
+
+@__test__("Determinism: same inputs -> same output")
+def t():
+    rng = np.random.default_rng(2)
+    x = rng.standard_normal((1, 8, 8))
+    W_conv = rng.standard_normal((4, 1, 3, 3)) * 0.1
+    W_fc = rng.standard_normal((4 * 3 * 3, 2)) * 0.1
+    a = mini_cnn_forward(x, W_conv, W_fc)
+    b = mini_cnn_forward(x, W_conv, W_fc)
+    assert np.allclose(a, b, atol=1e-12), "non-deterministic output"
+
+@__test__("Diagnostic: produces the expected logits chain end-to-end")
+def t():
+    # Reference: replicate the chain explicitly.
+    rng = np.random.default_rng(11)
+    x = rng.standard_normal((1, 8, 8))
+    W_conv = rng.standard_normal((4, 1, 3, 3)) * 0.1
+    W_fc = rng.standard_normal((4 * 3 * 3, 2)) * 0.1
+    out = mini_cnn_forward(x, W_conv, W_fc)
+
+    # Compute reference manually.
+    h = conv2d_naive(x, W_conv)        # (4, 6, 6)
+    h = relu(h)
+    h = max_pool_2d(h, 2, 2)           # (4, 3, 3)
+    h = h.reshape(-1)                  # (36,)
+    logits = h @ W_fc                  # (2,)
+    expected = softmax(logits)
+    assert np.allclose(out, expected, atol=1e-7), \\
+        f"max diff {np.max(np.abs(out - expected)):.2e} — chain wired wrong"
+
+@__test__("Argmax flips when fc weights are flipped (sanity that classification works)")
+def t():
+    rng = np.random.default_rng(13)
+    x = rng.standard_normal((1, 8, 8))
+    W_conv = rng.standard_normal((4, 1, 3, 3)) * 0.1
+    W_fc = rng.standard_normal((4 * 3 * 3, 2)) * 0.1
+    out_a = mini_cnn_forward(x, W_conv, W_fc)
+    # Flip the columns of W_fc — class 0 logit becomes class 1's, and vice versa.
+    W_fc_flip = W_fc[:, ::-1].copy()
+    out_b = mini_cnn_forward(x, W_conv, W_fc_flip)
+    assert np.argmax(out_a) != np.argmax(out_b) or np.isclose(out_a[0], out_a[1]), \\
+        "swapping the fc columns should flip argmax (unless the two logits are tied)"
+`}
+  solution={`
+import numpy as np
+
+def mini_cnn_forward(x, W_conv, W_fc):
+    h = conv2d_naive(x, W_conv)        # (C_out, 6, 6)
+    h = relu(h)                         # ReLU non-linearity
+    h = max_pool_2d(h, 2, 2)            # (C_out, 3, 3)
+    h = h.reshape(-1)                   # flatten to (C_out * 9,)
+    logits = h @ W_fc                   # (2,) — 2-class logits
+    return softmax(logits)              # (2,) — probabilities
+`}
+  hints={[
+    "Six lines: conv2d_naive(x, W_conv) -> relu -> max_pool_2d(_, 2, 2) -> reshape(-1) -> @ W_fc -> softmax. The shapes thread through naturally.",
+    "Shape arithmetic: 8x8 input + 3x3 conv (no pad, stride 1) -> 6x6 feature map. Then 2x2 max pool stride 2 -> 3x3 feature map. With C_out output channels, flattening gives C_out * 9 features.",
+    "softmax goes at the end. Use the helper that's already provided (numerically-stable softmax on a 1-D array). The output is a length-2 vector summing to 1.",
+  ]}
+>
+
+The CNN series capstone. Wire your earlier conv (`build-cnn-01`), ReLU, max pool (`build-cnn-03`), and a softmax classifier into a complete forward pass for a tiny 2-class image classifier.
+
+The architecture:
+
+`(1, 8, 8) image  →  conv 3×3 (C_out filters)  →  ReLU  →  2×2 max pool stride 2`
+
+`              →  flatten  →  Linear(C_out·9 → 2)  →  softmax  →  (2,) probabilities`
+
+The shape walk: 8×8 → 6×6 (conv with kH=3, no pad) → 6×6 (ReLU preserves shape) → 3×3 (pool kernel=stride=2) → flatten to `C_out·9` → matmul with `W_fc: (C_out·9, 2)` → softmax over 2 classes.
+
+Helpers are provided in the starter. Your job: six lines wiring the chain, with the right shapes flowing through.
+
+The diagnostic test reconstructs the chain explicitly and compares — if your forward differs by more than numerical precision, the chain is wired wrong. The "argmax flips when fc columns flip" test is a sanity check that the classification head actually depends on `W_fc`.
+
+This is the capstone of the build-a-CNN series. Once you've shipped this, you can read [LeCun 1998 (LeNet-5)](http://yann.lecun.com/exdb/publis/pdf/lecun-98.pdf) and recognise every piece — same building blocks, more layers and channels.
+
+</PracticeProblem>

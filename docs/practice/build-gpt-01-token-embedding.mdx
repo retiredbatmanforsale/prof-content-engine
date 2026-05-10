@@ -1,0 +1,120 @@
+---
+title: "Build a GPT · 01 · Token Embedding"
+description: First problem of the GPT series — turn a (B, T) tensor of integer token ids into a (B, T, C) tensor of dense vectors via row lookup.
+sidebar_position: 1
+practice_mode: true
+hide_table_of_contents: true
+---
+
+import PracticeProblem from '@site/src/components/viz/PracticeProblemPro';
+
+<PracticeProblem
+  id="build-gpt-01-token-embedding"
+  title="Token embedding lookup"
+  difficulty="Easy"
+  tags={["numpy", "transformer", "embeddings", "build-gpt"]}
+  linkedLessons={[
+    { url: '/courses/ai-for-engineering/build-and-train-your-own-gpt2-model/token-embeddings', title: 'Token embeddings' },
+  ]}
+  starter={`
+import numpy as np
+
+def token_embedding(idx, weight):
+    """
+    Token embedding via row lookup.
+
+    Args:
+        idx:    (B, T) int — batch of token id sequences. Each entry is in [0, V).
+        weight: (V, C)    — the embedding table. Row i is the embedding vector
+                            for token id i.
+
+    Returns:
+        (B, T, C) float — the embedding vector for each token in idx.
+    """
+    # YOUR CODE HERE
+    pass
+`}
+  tests={`
+import numpy as np
+
+@__test__("Output shape is (B, T, C)")
+def t():
+    rng = np.random.default_rng(0)
+    weight = rng.standard_normal((10, 4))
+    idx = np.array([[1, 2, 3], [4, 5, 6]])
+    out = token_embedding(idx, weight)
+    assert out is not None, "function returned None"
+    assert out.shape == (2, 3, 4), f"expected (2, 3, 4), got {out.shape}"
+
+@__test__("Result matches direct row indexing weight[idx]")
+def t():
+    rng = np.random.default_rng(7)
+    weight = rng.standard_normal((20, 8))
+    idx = np.array([[0, 5, 19], [10, 10, 10]])
+    out = token_embedding(idx, weight)
+    expected = weight[idx]
+    assert np.allclose(out, expected, atol=1e-9), \\
+        f"max diff {np.max(np.abs(out - expected)):.2e}"
+
+@__test__("Same id at different positions returns identical vectors")
+def t():
+    rng = np.random.default_rng(1)
+    weight = rng.standard_normal((5, 16))
+    # Token id 2 appears 3 times in this sequence.
+    idx = np.array([[2, 0, 2, 1, 2]])
+    out = token_embedding(idx, weight)
+    # All three occurrences should give the same vector.
+    assert np.allclose(out[0, 0], out[0, 2], atol=1e-12)
+    assert np.allclose(out[0, 0], out[0, 4], atol=1e-12)
+    # And that vector should be weight[2].
+    assert np.allclose(out[0, 0], weight[2], atol=1e-12)
+
+@__test__("Single batch (B=1) works")
+def t():
+    weight = np.eye(5)   # identity table — vector i is the i-th basis vector
+    idx = np.array([[3, 0, 1]])
+    out = token_embedding(idx, weight)
+    expected = np.array([[[0, 0, 0, 1, 0],
+                          [1, 0, 0, 0, 0],
+                          [0, 1, 0, 0, 0]]], dtype=float)
+    assert np.allclose(out, expected), f"got {out}, expected {expected}"
+
+@__test__("GPT-2-scale shapes work (vocab=50257, n_embd=64, B=2, T=8)")
+def t():
+    rng = np.random.default_rng(42)
+    V, C = 50257, 64
+    weight = rng.standard_normal((V, C)) * 0.02
+    idx = rng.integers(0, V, size=(2, 8))
+    out = token_embedding(idx, weight)
+    assert out.shape == (2, 8, C), f"shape {out.shape}"
+    # Spot-check: the (0, 3) entry is row idx[0, 3] of weight.
+    assert np.allclose(out[0, 3], weight[idx[0, 3]])
+`}
+  solution={`
+import numpy as np
+
+def token_embedding(idx, weight):
+    return weight[idx]
+`}
+  hints={[
+    "NumPy fancy indexing does this in one character: weight[idx]. When idx is (B, T) and weight is (V, C), the result is (B, T, C) — NumPy broadcasts the indexing to add an extra dim for each axis of idx.",
+    "If you reach for a manual for-loop over (B, T), stop — that would be O(B*T) Python overhead. Fancy indexing is one C-level operation regardless of size.",
+    "Equivalently: a one-hot matmul. The naive form is `np.eye(V)[idx] @ weight`, but it materialises a (B, T, V) tensor — fine for V=10, fatal for V=50257. The lookup form skips that entirely.",
+  ]}
+>
+
+The first thing every transformer touches: turning a sequence of integer token ids into a sequence of learnable vectors. About a third of GPT-2's 124M parameters live in this single embedding table.
+
+The mechanic is the simplest in the model — a row lookup. Given:
+
+`idx ∈ ℤ^(B × T)` — token ids in `[0, V)`
+
+`weight ∈ ℝ^(V × C)` — the embedding table
+
+Return `(B, T, C)` where `out[b, t] = weight[idx[b, t]]`.
+
+The diagnostic test the harness runs: token id `2` appearing three times in a sequence must produce the **exact same** 768-dim vector at all three positions. That's only true if you use the lookup form — a manual loop or a one-hot multiplication would also satisfy it, but you'd be wasting compute.
+
+NumPy gives you this in one character of code. The point of the problem is to know that you don't need to write a for-loop over the batch.
+
+</PracticeProblem>

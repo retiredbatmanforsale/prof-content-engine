@@ -10,6 +10,7 @@ tutor_concepts:
   - "adding position to token embeddings"
   - "learned vs fixed encodings"
   - "position encoding dimensionality"
+mvp_status: drafted
 ---
 
 <LessonHero course="Build and Train Your Own GPT-2" number="3" title="Positional embeddings" subtitle="Injecting order into a position-blind architecture" />
@@ -20,8 +21,308 @@ tutor_concepts:
   aspectRatio={54.37}
 />
 
+---
 
-## Overview
+## Where we are in the build
 
-This lesson explains positional embeddings/encodings and why they are needed to represent order in transformer models.
+After Lesson 2, you can turn `"Hello world"` into a `(1, 2, 768)` tensor of token vectors. But there's a problem you can't see from the shape alone: **the model has no idea which token came first.** Self-attention treats its input as a *set*, not a *sequence*. If you reorder the tokens, the attention layer (without positional information) will reorder its outputs the exact same way — the outputs are *equivariant to permutation*.
 
+That makes attention permutation-blind in a way that's catastrophic for language. "Dog bites man" and "man bites dog" become the same multiset of tokens. The model has no architectural reason to treat them differently.
+
+Today's lesson fixes that with **positional embeddings** — a second 768-dim vector for each position in the sequence, summed onto the token vector before the first attention block. After this lesson, the input to the first transformer block carries both *what* the token is and *where* it sits in the sequence.
+
+<div className="not-prose my-8 rounded-2xl border-2 border-emerald-400 bg-gradient-to-br from-emerald-50 to-teal-50 px-5 py-4 dark:border-emerald-700 dark:from-emerald-950/40 dark:to-teal-950/40">
+  <p className="m-0 text-xs font-bold uppercase tracking-widest text-emerald-800 dark:text-emerald-200">What you're building</p>
+  <p className="mt-2 mb-1 text-base font-bold text-slate-900 dark:text-slate-100"><code>embeddings.py</code> — PositionalEmbedding + Embeddings wrapper</p>
+  <p className="mt-0 mb-0 text-sm text-slate-700 dark:text-slate-300">Input: token ids of shape (B, T) → Output: (B, T, 768) tensor with token meaning <em>and</em> position information. The single input the first transformer block sees.</p>
+</div>
+
+---
+
+## The naive solution — no positional info
+
+Skip positional embeddings entirely. Just feed token vectors straight into attention:
+
+```python
+import torch
+import torch.nn as nn
+
+n_embd = 32
+T = 4
+
+# A toy "attention layer" — actually just a linear projection here.
+# The point is that it operates on (B, T, n_embd) and does NOT care about position.
+attn = nn.Linear(n_embd, n_embd)
+
+token_emb = nn.Embedding(10, n_embd)
+ids_a = torch.tensor([[1, 2, 3, 4]])      # "the cat sat down"
+ids_b = torch.tensor([[4, 3, 2, 1]])      # "down sat cat the" (reversed)
+
+out_a = attn(token_emb(ids_a))
+out_b = attn(token_emb(ids_b))
+
+# The outputs are exact reversals of each other — element-wise.
+print(torch.allclose(out_a, out_b.flip(dims=[1])))   # True
+```
+
+Real attention is a bit more interesting than `Linear` — but the same property holds: with no positional information, **permuting the inputs permutes the outputs identically**. There is no preferred order. The model literally cannot tell `[A, B, C]` from `[C, B, A]` once you account for the symmetric output permutation.
+
+For language modelling that's fatal. The model needs to predict the *next* token, which requires distinguishing past from future. Word order encodes meaning — "kill the lights" and "the lights kill" share a token set and disagree on basically everything else. Without an order signal, the model is forced to learn from pure co-occurrence, throwing away most of the structure of language.
+
+---
+
+## The motivated solution — add a position vector
+
+The fix is small and clever: give every position $t \in [0, \text{block\_size})$ its own 768-dimensional vector $p_t$, and **add it to the token vector** before the first transformer block:
+
+$$
+x_t = E_{\text{idx}_t} + p_t
+$$
+
+Now the input at position 0 always has $p_0$ baked in; the input at position 1 always has $p_1$. Two identical tokens at different positions become *different vectors*, so attention can distinguish them. The downstream layers learn to read off "this is the token at position $t$" from this combined signal.
+
+Two design choices for the positional vectors $p_t$:
+
+### Option A: sinusoidal (the original Transformer)
+
+[Vaswani et al. (2017)](https://arxiv.org/abs/1706.03762) used **fixed** sinusoidal vectors. Half the dimensions are sines, half cosines, with frequencies that span many orders of magnitude:
+
+$$
+PE_{(t, 2i)} = \sin\!\left(\frac{t}{10000^{2i/d}}\right), \qquad
+PE_{(t, 2i+1)} = \cos\!\left(\frac{t}{10000^{2i/d}}\right)
+$$
+
+This has a nice mathematical property: the encoding for position $t + k$ is a linear function of the encoding for position $t$. In principle, the model can learn to attend to "the token 5 positions back" because the offset has a fixed linear representation. Sinusoidal encodings also extrapolate beyond the training context length without any extra parameters.
+
+### Option B: learned (GPT-2's choice)
+
+[Radford et al. (2019)](https://cdn.openai.com/better-language-models/language_models_are_unsupervised_multitask_learners.pdf) chose **learned** positional embeddings — the same `nn.Embedding` mechanism we used for tokens, but the lookup index is the position rather than the token id:
+
+$$
+p_t \;=\; P_{t, :}, \qquad P \in \mathbb{R}^{\text{block\_size} \times C}
+$$
+
+Same shape as a token embedding row. Learned by gradient descent alongside everything else. The empirical result GPT-2 reports: at scale, learned positional embeddings match or slightly beat sinusoidal on perplexity, and the implementation is one line of PyTorch. The price is one extra `block_size × n_embd` parameter table (~0.79M params for GPT-2 small) and the hard cap that $t < \text{block\_size}$ at inference — sequences longer than the training context need a different scheme.
+
+For this course we follow GPT-2: learned positional embeddings. We build sinusoidal in the section above and stop there — the code we ship uses `nn.Embedding`.
+
+### Code: extend `embeddings.py`
+
+```python
+# nanogpt-from-scratch/embeddings.py  (extended in Lesson 3)
+
+import torch
+import torch.nn as nn
+
+from config import GPTConfig
+
+
+class TokenEmbedding(nn.Module):
+    """Map token ids -> dense vectors. (B, T) -> (B, T, n_embd)."""
+    def __init__(self, config: GPTConfig):
+        super().__init__()
+        self.weight = nn.Embedding(config.vocab_size, config.n_embd)
+
+    def forward(self, idx):
+        return self.weight(idx)
+
+
+class PositionalEmbedding(nn.Module):
+    """Map a position index in [0, block_size) to a dense vector.
+
+    GPT-2 uses learned positional embeddings, not sinusoidal.
+    """
+    def __init__(self, config: GPTConfig):
+        super().__init__()
+        self.weight = nn.Embedding(config.block_size, config.n_embd)
+
+    def forward(self, T: int, device: torch.device) -> torch.Tensor:
+        # returns: (T, n_embd) — broadcasts across the batch dim
+        pos = torch.arange(T, dtype=torch.long, device=device)
+        return self.weight(pos)
+
+
+class Embeddings(nn.Module):
+    """Sum token + positional embeddings. (B, T) -> (B, T, n_embd)."""
+    def __init__(self, config: GPTConfig):
+        super().__init__()
+        self.tok = TokenEmbedding(config)
+        self.pos = PositionalEmbedding(config)
+
+    def forward(self, idx: torch.Tensor) -> torch.Tensor:
+        B, T = idx.shape
+        tok = self.tok(idx)                   # (B, T, n_embd)
+        pos = self.pos(T, idx.device)         # (T, n_embd) -> broadcasts
+        return tok + pos
+```
+
+Three things to notice:
+
+- **Element-wise sum, not concat.** Adding keeps the dimensionality at `n_embd = 768` so the rest of the model is unchanged. Concatenating would double the dimension and force every downstream layer to be wider.
+- **`forward(T, device)` builds the position indices on the fly.** The `Embeddings` wrapper passes the actual sequence length `T`, so we never compute positional vectors for tokens we don't have.
+- **`block_size` is a hard cap.** A 1024-position table cannot embed position 1024 — sequences longer than the training context would need extrapolation tricks (rotary, ALiBi, sliding-window). GPT-2 just truncates.
+
+<AnimationPlaceholder
+  name="positional-encoding-viz"
+  description="Slider over position 0..1023 showing the 768-dim positional vector. A second tab overlays sinusoidal vs learned patterns side by side, with a frequency slider for the sinusoidal version."
+/>
+
+---
+
+## Math by typing it
+
+The combined input at position $t$ is the element-wise sum:
+
+$$
+x_t \;=\; E_{\text{idx}_t,\,:} \;+\; P_{t,\,:}, \qquad x_t \in \mathbb{R}^{C}
+$$
+
+For a batch of token ids $\text{idx} \in \mathbb{Z}^{B \times T}$:
+
+$$
+y_{b, t, c} \;=\; E_{\text{idx}_{b,t},\, c} \;+\; P_{t,\, c}
+$$
+
+Sinusoidal alternative (not used in GPT-2, included for reference):
+
+$$
+PE_{(t, 2i)} = \sin\!\left(\frac{t}{10000^{2i/d}}\right), \qquad
+PE_{(t, 2i+1)} = \cos\!\left(\frac{t}{10000^{2i/d}}\right)
+$$
+
+Parameter count for GPT-2 small's positional table:
+
+$$
+\text{block\_size} \times n_{\text{embd}} \;=\; 1024 \times 768 \;=\; 786{,}432 \;\approx\; 0.79 \text{M params}
+$$
+
+That's ~50× smaller than the token embedding table. Position is a much smaller universe than vocabulary.
+
+| Quantity                       | Token table       | Positional table |
+|--------------------------------|-------------------|------------------|
+| Rows                           | 50,257            | 1,024            |
+| Columns (`n_embd`)             | 768               | 768              |
+| Parameters                     | 38.6M             | 0.79M            |
+| Lookup key                     | token id          | position index   |
+| Trainable in GPT-2             | yes               | yes              |
+
+---
+
+## Run it on your laptop
+
+<div className="not-prose my-6 rounded-xl border-l-4 border-sky-500 bg-sky-50/70 py-3 pl-4 pr-3 dark:bg-sky-950/25">
+  <p className="m-0 text-sm font-semibold text-sky-900 dark:text-sky-200">Your task</p>
+  <p className="mt-2 mb-0 text-sm text-slate-800 dark:text-slate-200">
+    Extend <code>embeddings.py</code> with <code>PositionalEmbedding</code> and the <code>Embeddings</code> wrapper. Then run the smoke test below — it should print a (1, 5, 768) tensor and confirm that the same token at two different positions produces two different vectors.
+  </p>
+</div>
+
+```python
+# Extend smoke_test.py from Lesson 2.
+
+import torch
+
+from config import GPTConfig
+from embeddings import Embeddings
+
+config = GPTConfig()
+embed = Embeddings(config)
+
+ids = torch.tensor([[15496, 995, 11, 995, 13]])    # "Hello world , world ."
+out = embed(ids)
+print("output shape:", out.shape)                  # torch.Size([1, 5, 768])
+
+# The token "world" appears at positions 1 and 3.
+# Their token-embedding contributions are identical, but the positional
+# contributions differ — so the combined vectors should not match.
+v_pos1 = out[0, 1]
+v_pos3 = out[0, 3]
+print("same vector at positions 1 and 3?", torch.allclose(v_pos1, v_pos3))   # False
+
+# Sanity: the parameter count grew by exactly block_size * n_embd over Lesson 2.
+n_params = sum(p.numel() for p in embed.parameters())
+print(f"total embedding params: {n_params:,}")     # 39,383,808 = 38,597,376 + 786,432
+```
+
+If `same vector at positions 1 and 3?` prints `False`, your positional embedding is doing its job — the model can now distinguish two occurrences of the same token.
+
+<PlaygroundPlaceholder
+  name="positional-encoding-explorer"
+  description="In-browser cell: type a sequence with repeated tokens, see the output (B, T, 768); a slider toggles between learned and sinusoidal positional encodings; a heatmap shows positional similarity between any two positions."
+/>
+
+---
+
+## What you can now do
+
+- Turn a sequence of token ids into a `(B, T, n_embd)` tensor that carries both token meaning and position.
+- Distinguish the same token at two different positions — the input to the first transformer block is order-aware.
+- Recognise the trade-off between learned positional embeddings (GPT-2's choice — slightly better at scale, capped at `block_size`) and sinusoidal encodings (Vaswani 2017 — extrapolates, no parameters).
+- Reason about the parameter cost: ~0.79M for GPT-2 small's positional table — a rounding error compared to the 38.6M token table.
+
+---
+
+## Quiz
+
+<Quiz
+  lessonId="ai-for-engineering/build-and-train-your-own-gpt2-model/positional-embeddings"
+  questions={[
+    {
+      id: "gpt2-l3-q1",
+      prompt: "Why does a transformer need positional embeddings at all? RNNs didn't.",
+      options: [
+        "RNNs were also broken without positional info, but nobody noticed",
+        "Transformers process the whole sequence in parallel through self-attention, which is permutation-equivariant — without positional information, the layer cannot distinguish [A, B, C] from [C, B, A]. RNNs got order for free from their sequential update; transformers must inject it explicitly",
+        "Positional embeddings make training faster",
+        "RNNs have a hidden state that carries position; transformers replace that with positional embeddings",
+      ],
+      correctIndex: 1,
+    },
+    {
+      id: "gpt2-l3-q2",
+      prompt: "GPT-2 uses learned positional embeddings instead of the sinusoidal encodings from the original Transformer paper. What's the main practical trade-off?",
+      options: [
+        "Learned embeddings train faster on a GPU",
+        "Learned: slightly better perplexity at scale and one line of PyTorch, but capped at block_size positions and no extrapolation. Sinusoidal: works at any sequence length and adds zero parameters, but empirically slightly worse at GPT-scale",
+        "Sinusoidal is mathematically required for causal masking",
+        "Learned positional embeddings are larger than sinusoidal ones",
+      ],
+      correctIndex: 1,
+    },
+    {
+      id: "gpt2-l3-q3",
+      prompt: "GPT-2 small uses block_size=1024 and n_embd=768. How many parameters live in the positional embedding table?",
+      options: [
+        "1024 (one per position)",
+        "768 (one per dimension)",
+        "About 0.79M (1024 × 768) — roughly 2% of the 38.6M in the token embedding table",
+        "About 38.6M (the same as the token embeddings)",
+      ],
+      correctIndex: 2,
+    },
+    {
+      id: "gpt2-l3-q4",
+      prompt: "You wrote `out = embeddings(idx)` where idx has shape (1, 1500). The model was configured with block_size=1024. What goes wrong?",
+      options: [
+        "Nothing — embeddings extrapolate",
+        "PyTorch raises an IndexError on the positional embedding lookup: position 1024 is out of range for an `nn.Embedding(1024, 768)` table. Solutions: truncate to 1024 tokens, increase block_size and retrain, or switch to a positional scheme like rotary or ALiBi that extrapolates",
+        "The token embedding silently truncates the sequence",
+        "The output has the wrong dtype",
+      ],
+      correctIndex: 1,
+    },
+  ]}
+/>
+
+---
+
+## What's next
+
+Token meaning + position now live in a single `(B, T, 768)` tensor. The next layer of the model finally does what made transformers famous: every token looks at every other token and decides who matters. **Lesson 4** opens up `attention.py` and builds scaled dot-product attention — first as plain NumPy so the math is naked, then ported to multi-head PyTorch with three projection matrices ($W_Q, W_K, W_V$) and a recombined output.
+
+---
+
+<div className="not-prose mt-10 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-6 dark:border-slate-700">
+  <a href="./token-embeddings" className="text-sm font-medium text-slate-600 no-underline hover:text-emerald-700 hover:underline dark:text-slate-400 dark:hover:text-emerald-400">← Lesson 2 · Token embeddings</a>
+  <a href="./attention-multi-head-attention" className="text-sm font-semibold text-emerald-700 no-underline hover:underline dark:text-emerald-400">Lesson 4 · Attention →</a>
+</div>

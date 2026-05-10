@@ -10,11 +10,288 @@ tutor_concepts:
   - "learned scale and shift parameters"
   - "layer vs batch normalization"
   - "placement within transformer blocks"
+mvp_status: drafted
 ---
 
-<LessonHero course="Build and Train Your Own GPT-2" number="7" title="Layer normalization" subtitle="Normalizing across the feature dimension to control scale" />
+<LessonHero course="Build and Train Your Own GPT-2" number="7" title="Layer normalization" subtitle="Per-token rescaling that keeps activations sane across 12 stacked blocks" />
 
-## Overview
+---
 
-This lesson introduces layer normalization and its role in stabilizing training in transformer blocks.
+## Where we are in the build
 
+Lesson 6 gave you a residual highway. Gradients now survive depth — no matter how many blocks you stack, there's an identity path back to the embeddings. Stability problem solved.
+
+Except it isn't. Run a residual-only stack for a while and watch the activations:
+
+> *"Layer 0: max activation = 2.3.  Layer 6: max activation = 41.  Layer 11: max activation = 187."*
+
+Each block adds to the residual stream. Without normalisation, the residual stream grows without bound. Attention scores at deep layers reach the saturation regime we fought off with the $\sqrt{d_k}$ scaling in Lesson 4 — softmax goes hard, gradients die. Loss diverges or plateaus high.
+
+The fix is **LayerNorm**: at the input to each sub-layer, rescale every token's vector to have mean 0 and variance 1, then apply learned per-feature scale and shift. Today's lesson adds `nn.LayerNorm(n_embd)` to your `Block`, in **pre-LN** position — sitting *inside* the residual sum, not on it.
+
+<div className="not-prose my-8 rounded-2xl border-2 border-emerald-400 bg-gradient-to-br from-emerald-50 to-teal-50 px-5 py-4 dark:border-emerald-700 dark:from-emerald-950/40 dark:to-teal-950/40">
+  <p className="m-0 text-xs font-bold uppercase tracking-widest text-emerald-800 dark:text-emerald-200">What you're building</p>
+  <p className="mt-2 mb-1 text-base font-bold text-slate-900 dark:text-slate-100"><code>blocks.py</code> — pre-LayerNorm added</p>
+  <p className="mt-0 mb-0 text-sm text-slate-700 dark:text-slate-300">Same input/output shape as Lesson 6. The change: <code>x + attn(x)</code> becomes <code>x + attn(LN(x))</code>. Activation magnitudes stay bounded across all 12 blocks.</p>
+</div>
+
+---
+
+## The naive solution — no LayerNorm
+
+Stack residual blocks without any normalisation. The residual stream is a running sum:
+
+$$
+y_\ell = y_{\ell - 1} + \text{attn}_\ell(y_{\ell - 1})
+$$
+
+Each block adds something to $y$. If $\text{attn}_\ell$ outputs vectors with magnitude $m$, after $L$ blocks the residual stream has magnitude growing roughly like $\sqrt{L} \cdot m$ (independent random additions) or worse if the additions correlate. At GPT-2 small's depth ($L = 12$) this is already noticeable; at GPT-3 ($L = 96$) it's catastrophic.
+
+```python
+import torch
+
+from config import GPTConfig
+from blocks import Block
+
+# Hypothetical: a Block with only `attn + residual`, no LayerNorm.
+config = GPTConfig(n_layer=24, n_embd=128, n_head=4, block_size=32)
+
+# Stack 24 blocks (deeper than GPT-2 small, to make the explosion obvious).
+stack = torch.nn.Sequential(*[Block(config) for _ in range(24)])
+
+x = torch.randn(2, 16, config.n_embd)
+print(f"layer  0: max abs = {x.abs().max().item():.2f}")
+
+for i, block in enumerate(stack):
+    x = block(x)
+    if (i + 1) % 4 == 0:
+        print(f"layer {i+1:2d}: max abs = {x.abs().max().item():.2f}")
+```
+
+What you'd see (in the no-LN version): max activations climbing from $\sim 3$ at layer 0 to tens or hundreds by layer 24. Once the input to the next attention block has values in the tens, the QKV projections produce dot products with std much larger than $\sqrt{d_k}$ — softmax saturates again, despite our Lesson-4 fix. The carefully-engineered scaling no longer holds because we changed the scale of the inputs.
+
+The deeper issue: the parameters of each layer were initialised assuming inputs of roughly unit variance. Once that assumption breaks, every weight is in the wrong regime. We need to **re-establish unit variance at the start of every sub-layer.**
+
+---
+
+## The motivated solution — LayerNorm
+
+[Layer Normalization](https://arxiv.org/abs/1607.06450) (Ba, Kiros, Hinton 2016) does exactly that. For each token's hidden vector $x \in \mathbb{R}^C$, compute its mean and variance **across the feature dimension only**, normalise, then apply learned scale and shift:
+
+$$
+\mu = \frac{1}{C}\sum_{c=1}^{C} x_c, \qquad
+\sigma^2 = \frac{1}{C}\sum_{c=1}^{C} (x_c - \mu)^2
+$$
+
+$$
+\text{LN}(x) \;=\; \gamma \;\odot\; \frac{x - \mu}{\sqrt{\sigma^2 + \epsilon}} \;+\; \beta
+$$
+
+where $\gamma, \beta \in \mathbb{R}^C$ are learnable per-feature parameters and $\epsilon$ (typically $10^{-5}$) prevents division by zero. **No batch axis, no time axis** — every token gets normalised independently using only its own $C = 768$ features. The variance baseline is re-established at every block.
+
+### Why per-token, not per-batch?
+
+The original Transformer paper [(Vaswani 2017)](https://arxiv.org/abs/1706.03762) tried both — BatchNorm and LayerNorm — and chose LN. Two reasons specific to language modelling:
+
+1. **Variable sequence lengths.** BatchNorm's running statistics depend on which positions are in the batch, but every batch has different padding/lengths. LN doesn't care: each token is its own normalisation universe.
+2. **Generation breaks BatchNorm.** At inference, you generate one token at a time — no batch to compute statistics over. BatchNorm has to fall back to running averages from training, which never quite match. LN's stats are always in-distribution because they come from the input itself.
+
+### The placement question — pre-LN vs post-LN
+
+The original Transformer used **post-LN**:
+
+$$
+y \;=\; \text{LN}\bigl(x + \text{attn}(x)\bigr)
+$$
+
+The LayerNorm sits *on* the residual stream. Gradients flowing back have to traverse the LN's normalisation step, which scales them down. For models with $L \lesssim 12$ this is fine; for $L \gtrsim 24$, training becomes unstable without elaborate warmup schedules.
+
+GPT-2 (and every modern decoder-only LLM) uses **pre-LN**:
+
+$$
+y \;=\; x + \text{attn}\bigl(\text{LN}(x)\bigr)
+$$
+
+The LayerNorm sits *inside* the residual sum, before the attention. The residual path stays an exact identity — $\partial y / \partial x$ along the skip is just $I$, no LN in the way. Gradients flow back unscaled. Pre-LN is what makes 96-layer GPT-3 feasible; post-LN would need painful warmup tricks.
+
+### Code: extend `blocks.py`
+
+```python
+# nanogpt-from-scratch/blocks.py  (Lesson 7 — pre-LN added)
+
+import torch
+import torch.nn as nn
+
+from attention import MultiHeadAttention
+from config import GPTConfig
+
+
+class Block(nn.Module):
+    """Lesson 7: x = x + attn(LN(x)). Pre-LN sits inside the residual."""
+
+    def __init__(self, config: GPTConfig):
+        super().__init__()
+        self.ln1 = nn.LayerNorm(config.n_embd)
+        self.attn = MultiHeadAttention(config)
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        x = x + self.attn(self.ln1(x))
+        return x
+```
+
+Two notes on the implementation:
+
+- **`nn.LayerNorm(n_embd)`** allocates two learnable vectors of length `n_embd` for $\gamma$ (scale, init to 1) and $\beta$ (shift, init to 0). At init, LN is the identity — it learns to deviate from identity only as needed. Each LN adds $2 \times 768 = 1{,}536$ parameters.
+- **One LN per sub-layer.** Lesson 8 will add a second `ln2` before the MLP. So every Block ends up with `ln1` (before attention) and `ln2` (before the MLP) — two LNs, two residual sums. That's the full GPT-2 block.
+
+<AnimationPlaceholder
+  name="activation-distribution"
+  description="Histogram of layer-12 activation magnitudes across 1000 training steps. Toggle 'no LN' (heavy tail growing right over time) vs 'pre-LN' (steady, bounded distribution). Optional second tab: side-by-side pre-LN vs post-LN gradient-norm-vs-depth at step 100."
+/>
+
+---
+
+## Math by typing it
+
+LayerNorm of a single token vector $x \in \mathbb{R}^C$:
+
+$$
+\mu = \frac{1}{C}\sum_{c=1}^{C} x_c, \qquad
+\sigma^2 = \frac{1}{C}\sum_{c=1}^{C} (x_c - \mu)^2
+$$
+
+$$
+\text{LN}(x) \;=\; \gamma \odot \frac{x - \mu}{\sqrt{\sigma^2 + \epsilon}} + \beta
+$$
+
+Comparison with BatchNorm: BN normalises along the **batch and time** dimensions for each feature ($\mu, \sigma$ have shape $C$, computed over $B \times T$ values). LN normalises along the **feature** dimension for each token ($\mu, \sigma$ are scalars per token, computed over $C$ values). Different axis, completely different statistics.
+
+| Property                           | LayerNorm           | BatchNorm           |
+|------------------------------------|---------------------|---------------------|
+| Normalisation axis                 | features (`n_embd`) | batch + time        |
+| Statistics shape per token         | scalar              | length-`C` vector   |
+| Depends on other tokens in batch?  | no                  | yes                 |
+| Works at batch size 1?             | yes                 | barely              |
+| Works during generation (B=1, T=1)?| yes                 | needs running stats |
+| Parameters per LN                  | $2C$                | $2C$                |
+
+Parameter count: each LN adds $2C$ parameters ($\gamma$ and $\beta$). For GPT-2 small with two LNs per block × 12 blocks plus one final LN before the unembedding (added in Lesson 10), that's $25 \times 2 \times 768 \approx 38{,}400$ parameters total. Negligible compared to attention (28M) and the MLP (57M, coming Lesson 8) — but architecturally critical.
+
+---
+
+## Run it on your laptop
+
+<div className="not-prose my-6 rounded-xl border-l-4 border-sky-500 bg-sky-50/70 py-3 pl-4 pr-3 dark:bg-sky-950/25">
+  <p className="m-0 text-sm font-semibold text-sky-900 dark:text-sky-200">Your task</p>
+  <p className="mt-2 mb-0 text-sm text-slate-800 dark:text-slate-200">
+    Update <code>blocks.py</code> to add <code>self.ln1 = nn.LayerNorm(n_embd)</code> and use it as <code>attn(ln1(x))</code>. Then run the activation-magnitude check below — it should show the residual stream staying bounded across 24 blocks.
+  </p>
+</div>
+
+```python
+import torch
+
+from config import GPTConfig
+from blocks import Block
+
+config = GPTConfig(n_layer=24, n_embd=128, n_head=4, block_size=32, dropout=0.0)
+stack = torch.nn.Sequential(*[Block(config) for _ in range(24)])
+stack.eval()
+
+x = torch.randn(2, 16, config.n_embd)
+print(f"layer  0: max|x| = {x.abs().max().item():.2f}, std = {x.std().item():.2f}")
+
+for i, block in enumerate(stack):
+    x = block(x)
+    if (i + 1) % 4 == 0:
+        print(f"layer {i+1:2d}: max|x| = {x.abs().max().item():.2f}, std = {x.std().item():.2f}")
+
+# Sanity: every Block should see input with roughly unit variance after LN.
+# Inspect the first block's LN output.
+y_ln = stack[0].ln1(torch.randn(2, 16, config.n_embd) * 10.0)   # pretend input is huge
+print(f"\npost-LN std (input had std=10): {y_ln.std().item():.3f}")    # ~1.0
+print(f"post-LN mean (input had std=10): {y_ln.mean().item():.3f}")    # ~0.0
+```
+
+The residual stream's `max|x|` will still grow — pre-LN doesn't prevent the residual stream from accumulating, it just makes sure each block sees normalised input. The growth should be a **gentle linear-ish climb**, not the runaway exponential you'd get without LN.
+
+<PlaygroundPlaceholder
+  name="layernorm-explorer"
+  description="In-browser cell: plot activation histograms at every depth, slider over n_layer, toggle pre-LN/post-LN/no-LN. The post-LN curve diverges past depth 24; pre-LN stays controlled."
+/>
+
+---
+
+## What you can now do
+
+- Build the canonical pre-LN block: `x + attn(LN(x))`.
+- Distinguish LayerNorm from BatchNorm by which axis they normalise along, and explain why LN wins for variable-length, autoregressive language models.
+- Justify GPT-2's pre-LN choice over the original Transformer's post-LN — keeping the residual path identity makes deep stacks trainable without warmup hacks.
+- Estimate LayerNorm's parameter cost ($2C$ per LN) and recognise it as architecturally critical despite contributing well under 0.1% of model parameters.
+
+---
+
+## Quiz
+
+<Quiz
+  lessonId="ai-for-engineering/build-and-train-your-own-gpt2-model/layer-normalization"
+  questions={[
+    {
+      id: "gpt2-l7-q1",
+      prompt: "Across what dimension does LayerNorm compute its mean and variance?",
+      options: [
+        "The batch dimension B",
+        "The time dimension T",
+        "The feature dimension C (n_embd) — for each token independently. Mean and variance are scalars per token, computed over the 768 hidden features. No information leaks between tokens or between sequences in the batch",
+        "All three (B, T, C)",
+      ],
+      correctIndex: 2,
+    },
+    {
+      id: "gpt2-l7-q2",
+      prompt: "Why does GPT-2 use LayerNorm instead of BatchNorm?",
+      options: [
+        "LN has fewer parameters",
+        "Two reasons specific to language modelling: (1) BatchNorm's statistics depend on other tokens in the batch, which breaks at inference when you generate one token at a time (B=T=1, no statistics to compute); (2) variable sequence lengths make BatchNorm's running statistics noisy and out-of-distribution. LN normalises each token in isolation, so it works identically at training and inference",
+        "BatchNorm doesn't support GPUs",
+        "LN was published more recently than BN",
+      ],
+      correctIndex: 1,
+    },
+    {
+      id: "gpt2-l7-q3",
+      prompt: "What is the difference between pre-LN (`x + attn(LN(x))`) and post-LN (`LN(x + attn(x))`), and why does GPT-2 use pre-LN?",
+      options: [
+        "Pre-LN is faster on GPUs",
+        "With pre-LN, LayerNorm sits *inside* the residual sum, so the residual path stays an exact identity — gradients flow back through the skip unchanged. With post-LN, LayerNorm sits *on* the residual path and rescales gradients as they flow back, which makes very deep stacks unstable. Pre-LN is what makes 96-layer GPT-3 feasible without learning-rate warmup tricks",
+        "Pre-LN uses fewer parameters",
+        "Post-LN is incompatible with causal masking",
+      ],
+      correctIndex: 1,
+    },
+    {
+      id: "gpt2-l7-q4",
+      prompt: "GPT-2 small has n_embd=768 and 12 blocks, with two LayerNorms per block (one before attention, one before the MLP) plus one final LN. How many LN parameters in total?",
+      options: [
+        "About 768 (one per dimension)",
+        "About 38,400 — that's 2 × 768 = 1,536 per LN, times 25 LNs (12 × 2 + 1 final). A rounding error compared to the 124M total, but architecturally non-negotiable",
+        "About 1.5M",
+        "About 9.2M",
+      ],
+      correctIndex: 1,
+    },
+  ]}
+/>
+
+---
+
+## What's next
+
+Attention mixes information *across* tokens. But within a token, you still need a non-linear transformation that mixes information *across* the embedding dimension. That's what the **feed-forward network** (FFN) does: a two-layer MLP with a wide hidden dimension and a GELU non-linearity, sitting after attention in every block. **Lesson 8** finishes `blocks.py` by adding the MLP and the second pre-LN — at which point you have the full GPT-2 transformer block, ready to be stacked twelve times.
+
+---
+
+<div className="not-prose mt-10 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-6 dark:border-slate-700">
+  <a href="./residual-connections" className="text-sm font-medium text-slate-600 no-underline hover:text-emerald-700 hover:underline dark:text-slate-400 dark:hover:text-emerald-400">← Lesson 6 · Residual connections</a>
+  <a href="./feed-forward-neural-networks" className="text-sm font-semibold text-emerald-700 no-underline hover:underline dark:text-emerald-400">Lesson 8 · Feed-forward MLP →</a>
+</div>

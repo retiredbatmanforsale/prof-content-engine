@@ -10,6 +10,7 @@ tutor_concepts:
   - "token as model output unit"
   - "context window as input"
   - "temperature effect on randomness"
+mvp_status: drafted
 ---
 
 import GenerationPlayground from '@site/src/components/viz/GenerationPlayground';
@@ -35,3 +36,339 @@ Compare the output of the same prompt under "greedy" vs `temperature=1.0, top-p=
 
 <GenerationPlayground />
 
+---
+
+## Where we are in the build
+
+After Lesson 8, you have the full GPT-2 transformer block. Stack twelve, add a final LayerNorm and an output projection, and you have a model that — given a sequence of token ids — produces a `(B, T, vocab_size)` tensor of logits. The last position's logits are the model's "guess" at what comes next.
+
+But "the model produces logits" is not the same as "the model writes text." Logits are scores over the whole 50,257-token vocabulary, and we have to **pick** one. That choice is the sampling rule, and it matters far more than people expect — the same model with greedy decoding will sound robotic and loop, while the same model with `temperature=0.8, top_p=0.95` can sound startlingly fluent.
+
+Today's lesson opens up `generate.py` and writes the autoregressive sampling loop with four knobs: greedy, temperature, top-k, top-p. The loop wraps the model's `forward` and feeds its own outputs back as inputs — that's what "autoregressive" means.
+
+<div className="not-prose my-8 rounded-2xl border-2 border-emerald-400 bg-gradient-to-br from-emerald-50 to-teal-50 px-5 py-4 dark:border-emerald-700 dark:from-emerald-950/40 dark:to-teal-950/40">
+  <p className="m-0 text-xs font-bold uppercase tracking-widest text-emerald-800 dark:text-emerald-200">What you're building</p>
+  <p className="mt-2 mb-1 text-base font-bold text-slate-900 dark:text-slate-100"><code>generate.py</code> — autoregressive sampling loop</p>
+  <p className="mt-0 mb-0 text-sm text-slate-700 dark:text-slate-300">Input: a trained model, a context tensor of shape (B, T) → Output: (B, T + max_new_tokens) — the context with sampled completions appended one token at a time.</p>
+</div>
+
+---
+
+## The naive solution — greedy decoding
+
+The simplest possible rule: at each step, pick the token with the highest probability. Equivalently, `argmax` over the logits.
+
+```python
+import torch
+import torch.nn.functional as F
+
+@torch.no_grad()
+def generate_greedy(model, idx, max_new_tokens):
+    """Pick argmax at every step. Deterministic, often boring."""
+    model.eval()
+    for _ in range(max_new_tokens):
+        idx_cond = idx[:, -model.config.block_size:]
+        logits, _ = model(idx_cond)
+        next_id = logits[:, -1, :].argmax(dim=-1, keepdim=True)
+        idx = torch.cat([idx, next_id], dim=1)
+    return idx
+```
+
+Two failures show up almost immediately:
+
+1. **Repetition cycles.** Once the model emits a phrase like "the the", the highest-probability continuation is often "the" again. The output gets stuck in 2-token or 3-token loops: *"the cat the cat the cat the..."* This is well-documented in [Holtzman et al. (2019)](https://arxiv.org/abs/1904.09751), the paper that introduced nucleus sampling specifically to fix this.
+2. **No diversity.** The same prompt always produces the same output. For tasks where you want variety (creative writing, dialogue, anything not pure factual recall), greedy decoding is dead air.
+
+The deeper problem is that argmax throws away ~99.99% of the model's distribution. The model spent 124M parameters learning a careful probability distribution, and the sampling rule is collapsing it to "the single most-likely token." Fluent text is unlikely to be a chain of locally-maximum-likelihood tokens — it lives slightly off the most-probable trajectory.
+
+---
+
+## The motivated solution — temperature, top-k, top-p
+
+Three knobs, applied in order, before the actual sample:
+
+### Temperature
+
+Reshape the distribution by dividing every logit by a scalar $T > 0$ before softmax:
+
+$$
+p'_i \;=\; \frac{\exp(z_i / T)}{\sum_j \exp(z_j / T)}
+$$
+
+- $T = 1$: no change.
+- $T \to 0^+$: the distribution sharpens toward one-hot — equivalent to greedy.
+- $T \to \infty$: the distribution flattens toward uniform — pure noise.
+
+GPT-2 conventional wisdom: $T \in [0.7, 1.0]$ for natural text. Higher gets weird ("creative"), lower gets stiff. Temperature alone is rarely enough — it just changes the shape of the distribution; it doesn't trim the long tail of obviously-wrong tokens.
+
+### Top-k truncation
+
+Keep only the $k$ tokens with the highest logits; mask the rest to $-\infty$ before softmax.
+
+$$
+p'_i \;=\; \begin{cases}
+\dfrac{\exp(z_i)}{\sum_{j \in \text{top}_k} \exp(z_j)} & \text{if } i \in \text{top}_k \\
+0 & \text{otherwise}
+\end{cases}
+$$
+
+- $k = 1$: greedy.
+- $k$ large: no effect (everything in top-$k$).
+
+GPT-2 conventional wisdom: $k = 40$. Big enough to allow diversity, small enough to cut the tail of "this token would be ridiculous here" candidates. The downside: $k$ is fixed regardless of the model's *confidence* on a particular step. When the model is sure (e.g., predicting "world" after "Hello"), top-40 is overkill — most of those candidates have probability $\approx 0$ anyway. When the model is unsure, top-40 might be too restrictive.
+
+### Top-p (nucleus) truncation
+
+[Holtzman et al. (2019)](https://arxiv.org/abs/1904.09751) proposed an adaptive alternative: keep the *smallest set* of tokens whose cumulative probability exceeds threshold $p$.
+
+$$
+\text{nucleus}_p(\text{distribution}) \;=\; \arg\min_{S}\, |S| \;\;\text{s.t.}\;\; \sum_{i \in S} p_i \geq p
+$$
+
+- $p = 0.9$ on a confident step: $|S|$ might be 1–2 tokens.
+- $p = 0.9$ on an uncertain step: $|S|$ might be 50+ tokens.
+
+The set adapts to confidence. This is what most modern LLM APIs default to — `top_p=1.0` (off) is rare; `top_p=0.9` to `0.95` is standard.
+
+### Combining all three
+
+Order matters. Apply temperature first (reshapes the distribution), then top-k (cuts the long tail), then top-p (cuts adaptively), then sample:
+
+```python
+logits = logits / T
+logits = mask_below_topk(logits, k=40)
+logits = mask_outside_nucleus(logits, p=0.95)
+probs = softmax(logits)
+next_id = multinomial(probs)
+```
+
+In practice you often pick *one* of top-k or top-p, not both. nanoGPT and the OpenAI Playground both expose all three knobs; this course's `generate.py` does too.
+
+### Code: `generate.py`
+
+```python
+# nanogpt-from-scratch/generate.py
+
+from __future__ import annotations
+
+import torch
+import torch.nn.functional as F
+
+
+@torch.no_grad()
+def generate(
+    model,
+    idx: torch.Tensor,
+    max_new_tokens: int,
+    temperature: float = 1.0,
+    top_k: int | None = None,
+    top_p: float | None = None,
+) -> torch.Tensor:
+    """Append max_new_tokens autoregressively to idx. (B, T) -> (B, T + N)."""
+    model.eval()
+    block_size = model.config.block_size
+
+    for _ in range(max_new_tokens):
+        # Crop to block_size — model can't see further back than its training context.
+        idx_cond = idx if idx.size(1) <= block_size else idx[:, -block_size:]
+
+        logits, _ = model(idx_cond)                        # (B, T, vocab_size)
+        logits = logits[:, -1, :] / max(temperature, 1e-8) # (B, vocab_size)
+
+        if top_k is not None:
+            v, _ = torch.topk(logits, min(top_k, logits.size(-1)))
+            logits[logits < v[:, [-1]]] = float("-inf")
+
+        if top_p is not None:
+            sorted_logits, sorted_idx = torch.sort(logits, descending=True)
+            sorted_probs = F.softmax(sorted_logits, dim=-1)
+            cum_probs = torch.cumsum(sorted_probs, dim=-1)
+            mask = cum_probs > top_p
+            mask[..., 0] = False                           # always keep top-1
+            sorted_logits[mask] = float("-inf")
+            logits = torch.empty_like(logits).scatter_(-1, sorted_idx, sorted_logits)
+
+        probs = F.softmax(logits, dim=-1)
+        next_id = torch.multinomial(probs, num_samples=1)  # (B, 1)
+        idx = torch.cat([idx, next_id], dim=1)
+
+    return idx
+```
+
+A few things to flag:
+
+- **`@torch.no_grad()`**. We're not training; gradients waste memory and time.
+- **`idx[:, -block_size:]`**. The model can only see `block_size` tokens. Once the prompt + generated text exceeds that, we slide the window — older tokens fall off the left.
+- **`temperature / max(temperature, 1e-8)`**. Avoids divide-by-zero if someone passes `temperature=0` (the natural way to ask for greedy). The scaling sharpens the distribution to effectively one-hot.
+- **`mask[..., 0] = False`**. Top-p edge case: if a single token already has probability ≥ $p$, the mask would zero it out. Always keep the top-1.
+
+<AnimationPlaceholder
+  name="sampling-distribution"
+  description="Bar chart of token probabilities at one generation step (top 30 tokens by probability). Sliders for T, k, p; live update of the truncated/reshaped distribution. A second tab plays a 100-token generation with the chosen settings."
+/>
+
+---
+
+## Math by typing it
+
+Temperature-rescaled softmax:
+
+$$
+p'_i \;=\; \frac{\exp(z_i / T)}{\sum_j \exp(z_j / T)}
+$$
+
+Top-k truncated distribution:
+
+$$
+p'_i \;=\; \frac{p_i \cdot \mathbb{1}[i \in \text{top}_k]}{\sum_j p_j \cdot \mathbb{1}[j \in \text{top}_k]}
+$$
+
+Top-p (nucleus) truncated distribution: let $\pi$ be the permutation that sorts $p$ descending, so $p_{\pi(1)} \geq p_{\pi(2)} \geq \ldots$. Define
+
+$$
+k^*(p) \;=\; \min\!\left\{ k \;:\; \sum_{j=1}^{k} p_{\pi(j)} \geq p \right\}
+$$
+
+Then
+
+$$
+p'_{\pi(j)} \;=\; \begin{cases}
+\dfrac{p_{\pi(j)}}{\sum_{j' \leq k^*} p_{\pi(j')}} & \text{if } j \leq k^* \\
+0 & \text{otherwise}
+\end{cases}
+$$
+
+Entropy as a function of temperature: as $T \to 0$, entropy $\to 0$; as $T \to \infty$, entropy $\to \log V$ (uniform). Temperature is a one-parameter knob that traces a curve from "no randomness" to "pure noise" and lets you pick any point on it.
+
+---
+
+## Run it on your laptop
+
+<div className="not-prose my-6 rounded-xl border-l-4 border-sky-500 bg-sky-50/70 py-3 pl-4 pr-3 dark:bg-sky-950/25">
+  <p className="m-0 text-sm font-semibold text-sky-900 dark:text-sky-200">Your task</p>
+  <p className="mt-2 mb-0 text-sm text-slate-800 dark:text-slate-200">
+    Save the <code>generate</code> function in <code>generate.py</code>. We can't really sample from a trained model until Lesson 10 — but you can sanity-check the truncation logic with a fake "model" that returns hand-crafted logits. The test below verifies that top-k truncation drops everything outside the top 5.
+  </p>
+</div>
+
+```python
+import torch
+
+from generate import generate
+
+
+class FakeModel:
+    """A 'model' that always returns the same logits — useful for testing the sampler."""
+    def __init__(self, vocab_size=20, block_size=8):
+        # 20-token vocab; only tokens 0..4 have non-trivial probability.
+        self.logits = torch.zeros(1, 1, vocab_size)
+        self.logits[0, 0, :5] = torch.tensor([5., 4., 3., 2., 1.])
+        class Cfg:
+            pass
+        Cfg.block_size = block_size
+        self.config = Cfg
+
+    def eval(self): return self
+    def __call__(self, idx):
+        # Broadcast our fixed last-position logits across whatever length idx has.
+        B, T = idx.shape
+        return self.logits.expand(B, T, -1).contiguous(), None
+
+
+model = FakeModel()
+torch.manual_seed(0)
+ctx = torch.zeros(1, 1, dtype=torch.long)
+out = generate(model, ctx, max_new_tokens=200, top_k=5)
+
+# Should never sample a token >= 5, because top_k=5 truncates to ids 0..4.
+assert out.max().item() < 5
+print("top-k=5: never sampled outside top 5. ✓")
+
+# Greedy (temperature->0) should always pick token 0 (the highest logit).
+out_greedy = generate(model, ctx, max_new_tokens=20, temperature=1e-9)
+assert (out_greedy[0, 1:] == 0).all()
+print("greedy: always picks the argmax token. ✓")
+```
+
+After Lesson 10's training run, you'll point this same `generate` at a trained model and see real Shakespeare-style text drop out.
+
+<PlaygroundPlaceholder
+  name="sampling-explorer"
+  description="In-browser cell: prompt + sliders for T, k, p; live token-by-token generation from a tiny pre-trained character model. Shows the (vocab) distribution at each step before and after each truncation rule applies."
+/>
+
+---
+
+## What you can now do
+
+- Implement an autoregressive generation loop that calls `model.forward` repeatedly, feeding its own samples back as inputs.
+- Apply temperature, top-k, and top-p in the standard order (temperature → top-k → top-p → sample).
+- Diagnose greedy decoding's repetition pathology and pick a better sampling rule for fluent text.
+- Reason about top-k vs top-p as a confidence-aware trade-off — top-p adapts to per-step entropy; top-k doesn't.
+
+---
+
+## Quiz
+
+<Quiz
+  lessonId="ai-for-engineering/build-and-train-your-own-gpt2-model/generation-of-next-tokens"
+  questions={[
+    {
+      id: "gpt2-l9-q1",
+      prompt: "Why does greedy decoding (argmax every step) often produce repetitive, low-quality text?",
+      options: [
+        "The model is undertrained",
+        "Argmax picks the locally most-likely token at each step. Once a phrase like 'the cat' appears, the highest-probability continuation is often 'the' again, and the highest after that is 'cat' again — the model gets stuck in 2-3 token loops. Fluent text lives slightly off the maximum-likelihood trajectory; throwing away the rest of the distribution discards the diversity the model worked to learn",
+        "Argmax is stochastic",
+        "Greedy decoding requires labeled data",
+      ],
+      correctIndex: 1,
+    },
+    {
+      id: "gpt2-l9-q2",
+      prompt: "What does temperature T do to the next-token distribution?",
+      options: [
+        "It scales the input embeddings",
+        "It divides every logit by T before softmax. T → 0+ sharpens to one-hot (equivalent to greedy); T = 1 leaves the distribution unchanged; T → ∞ flattens toward uniform. T is a continuous knob between 'fully deterministic' and 'pure noise'",
+        "It changes the model's hidden dimension",
+        "It selects which sampling algorithm to use",
+      ],
+      correctIndex: 1,
+    },
+    {
+      id: "gpt2-l9-q3",
+      prompt: "Top-k and top-p both truncate the distribution before sampling. What's the key trade-off between them?",
+      options: [
+        "Top-k is faster than top-p",
+        "Top-k truncates to a fixed number k of tokens regardless of the model's confidence on this step. Top-p truncates to the smallest set whose cumulative probability exceeds p — *adaptive* to confidence: confident steps draw from few tokens, uncertain steps consider many. Top-p tends to feel more natural; top-k is simpler to implement",
+        "Top-p only works with temperature = 1",
+        "Top-k samples without replacement; top-p samples with replacement",
+      ],
+      correctIndex: 1,
+    },
+    {
+      id: "gpt2-l9-q4",
+      prompt: "In an autoregressive loop, why do we crop the context to the model's block_size before each forward pass?",
+      options: [
+        "PyTorch raises an error otherwise",
+        "The model's positional embedding table only has block_size rows. A context longer than block_size would index into a row that doesn't exist — and even with a positional scheme that supports extrapolation, the model has only ever seen ≤ block_size during training. We slide the window: the most recent block_size tokens become the input; older tokens fall off the left",
+        "Cropping speeds up the GPU",
+        "The KV cache requires it",
+      ],
+      correctIndex: 1,
+    },
+  ]}
+/>
+
+---
+
+## What's next
+
+You have every component a GPT-2 needs: token + positional embeddings (Lessons 2-3), causal multi-head attention (Lessons 4-5), a residual + LayerNorm + MLP transformer block (Lessons 6-8), and a sampling loop (this lesson). **Lesson 10** assembles them all into a single `GPT` class, wires up a training loop on TinyShakespeare with AdamW + cosine LR schedule, and runs it. After ~10 minutes on a Mac, your model will produce text that looks (vaguely) like Shakespeare. End of course.
+
+---
+
+<div className="not-prose mt-10 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-6 dark:border-slate-700">
+  <a href="./feed-forward-neural-networks" className="text-sm font-medium text-slate-600 no-underline hover:text-emerald-700 hover:underline dark:text-slate-400 dark:hover:text-emerald-400">← Lesson 8 · Feed-forward MLP</a>
+  <a href="./decoder-only-transformer" className="text-sm font-semibold text-emerald-700 no-underline hover:underline dark:text-emerald-400">Lesson 10 · Assemble + train →</a>
+</div>

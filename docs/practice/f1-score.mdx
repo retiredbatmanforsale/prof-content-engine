@@ -1,0 +1,146 @@
+---
+title: "F1 Score (Binary)"
+description: F1 from predictions and labels — the harmonic mean of precision and recall, the standard binary-classification eval metric.
+sidebar_position: 26
+practice_mode: true
+hide_table_of_contents: true
+---
+
+import PracticeProblem from '@site/src/components/viz/PracticeProblemPro';
+
+<PracticeProblem
+  id="f1-score"
+  title="F1 score (binary classification)"
+  difficulty="Easy"
+  tags={["numpy", "metrics", "evaluation", "fundamentals"]}
+  linkedLessons={[
+    { url: '/courses/ai-for-engineering/deep-neural-networks/loss-functions', title: 'Loss functions' },
+  ]}
+  starter={`
+import numpy as np
+
+def f1_score(y_pred, y_true):
+    """
+    F1 = 2 * precision * recall / (precision + recall)
+
+    For binary predictions (0/1) and labels (0/1):
+        TP = #{i : y_pred[i] = 1 and y_true[i] = 1}
+        FP = #{i : y_pred[i] = 1 and y_true[i] = 0}
+        FN = #{i : y_pred[i] = 0 and y_true[i] = 1}
+        precision = TP / (TP + FP)        recall = TP / (TP + FN)
+
+    Edge cases (return 0.0):
+        - TP + FP == 0 (no positive predictions): precision is undefined, return 0.
+        - TP + FN == 0 (no positive labels): recall is undefined, return 0.
+        - TP == 0: F1 is 0 (precision and recall are both 0 or one is 0).
+
+    Args:
+        y_pred: 1-D array of 0s and 1s (predictions).
+        y_true: 1-D array of 0s and 1s (ground-truth labels).
+
+    Returns:
+        float — F1 score in [0, 1].
+    """
+    # YOUR CODE HERE
+    pass
+`}
+  tests={`
+import numpy as np
+
+@__test__("Perfect predictions: F1 = 1.0")
+def t():
+    y = np.array([1, 0, 1, 1, 0])
+    out = f1_score(y, y)
+    assert out is not None, "function returned None"
+    assert np.isclose(float(out), 1.0, atol=1e-9), f"perfect F1 should be 1.0, got {out}"
+
+@__test__("All wrong: F1 = 0.0")
+def t():
+    y_true = np.array([1, 1, 0, 0])
+    y_pred = np.array([0, 0, 1, 1])   # all wrong
+    out = float(f1_score(y_pred, y_true))
+    assert np.isclose(out, 0.0, atol=1e-9), f"all-wrong F1 should be 0, got {out}"
+
+@__test__("Diagnostic: matches the harmonic-mean formula on a hand-checked case")
+def t():
+    # 6 examples, predictions: TP=2, FP=1, FN=1, TN=2
+    y_true = np.array([1, 1, 1, 0, 0, 0])
+    y_pred = np.array([1, 1, 0, 1, 0, 0])
+    # precision = 2 / (2 + 1) = 0.6667
+    # recall    = 2 / (2 + 1) = 0.6667
+    # F1 = 2 * 0.6667 * 0.6667 / (0.6667 + 0.6667) = 0.6667
+    out = float(f1_score(y_pred, y_true))
+    assert np.isclose(out, 2/3, atol=1e-7), f"got {out}, expected 2/3"
+
+@__test__("No positive predictions (TP + FP = 0): returns 0.0, not NaN")
+def t():
+    y_true = np.array([1, 1, 0, 0])
+    y_pred = np.array([0, 0, 0, 0])   # never predicts positive
+    out = float(f1_score(y_pred, y_true))
+    assert np.isfinite(out), f"F1 should not be NaN/inf when TP+FP=0; got {out}"
+    assert np.isclose(out, 0.0, atol=1e-9)
+
+@__test__("No positive labels (TP + FN = 0): returns 0.0, not NaN")
+def t():
+    y_true = np.array([0, 0, 0, 0])   # all negatives
+    y_pred = np.array([1, 0, 0, 1])
+    out = float(f1_score(y_pred, y_true))
+    assert np.isfinite(out), f"F1 should not be NaN/inf when TP+FN=0; got {out}"
+    assert np.isclose(out, 0.0, atol=1e-9)
+
+@__test__("F1 is symmetric in precision and recall (high precision + low recall == low precision + high recall)")
+def t():
+    # Case A: high precision, low recall.
+    a_true = np.array([1, 1, 1, 1, 1, 1, 1, 1, 1, 1])
+    a_pred = np.array([1, 1, 0, 0, 0, 0, 0, 0, 0, 0])  # precision=1.0, recall=0.2 -> F1 = 1/3
+    # Case B: low precision, high recall.
+    b_true = np.array([1, 1, 0, 0, 0, 0, 0, 0, 0, 0])
+    b_pred = np.array([1, 1, 1, 1, 1, 1, 1, 1, 1, 1])  # precision=0.2, recall=1.0 -> F1 = 1/3
+    a = float(f1_score(a_pred, a_true))
+    b = float(f1_score(b_pred, b_true))
+    assert np.isclose(a, b, atol=1e-9), f"F1 should be symmetric in P and R: A={a}, B={b}"
+    assert np.isclose(a, 1/3, atol=1e-7)
+`}
+  solution={`
+import numpy as np
+
+def f1_score(y_pred, y_true):
+    tp = int(np.sum((y_pred == 1) & (y_true == 1)))
+    fp = int(np.sum((y_pred == 1) & (y_true == 0)))
+    fn = int(np.sum((y_pred == 0) & (y_true == 1)))
+    if tp + fp == 0 or tp + fn == 0:
+        return 0.0
+    precision = tp / (tp + fp)
+    recall = tp / (tp + fn)
+    if precision + recall == 0:
+        return 0.0
+    return 2 * precision * recall / (precision + recall)
+`}
+  hints={[
+    "Count TP, FP, FN with three boolean masks: (y_pred == 1) & (y_true == 1) for TP, etc. Sum them to get integer counts.",
+    "Edge cases matter: if TP + FP == 0 (no positive predictions) or TP + FN == 0 (no positive labels), precision or recall is 0/0. Return 0.0 explicitly — don't let numpy's RuntimeWarning bite you.",
+    "F1 = 2 * P * R / (P + R) is the harmonic mean — equal to 0 when either P=0 or R=0. The formula is also (2*TP) / (2*TP + FP + FN), which avoids the explicit P, R intermediates.",
+  ]}
+>
+
+F1 score — the harmonic mean of precision and recall, the standard one-number summary of a binary classifier.
+
+The math:
+
+`precision = TP / (TP + FP)`
+
+`recall = TP / (TP + FN)`
+
+`F1 = 2 · precision · recall / (precision + recall)`
+
+Why harmonic mean rather than arithmetic? Because it punishes imbalance — a model with `precision=1.0, recall=0.01` gets `F1 ≈ 0.02`, not `0.5`. Arithmetic mean would let one strong half mask the other.
+
+Three edge cases the harness checks:
+
+1. **No positive predictions** (`TP + FP = 0`) → return `0.0`. Don't let `0/0` produce NaN.
+2. **No positive labels in the test set** (`TP + FN = 0`) → return `0.0`. Same reason.
+3. **Symmetry between precision and recall**: a `(P=1.0, R=0.2)` model and a `(P=0.2, R=1.0)` model should have identical F1. The formula doesn't distinguish "precise but timid" from "noisy but exhaustive" — that's by design.
+
+For multi-class, you'd compute F1 per class and average (macro / weighted / micro). For now: binary only.
+
+</PracticeProblem>

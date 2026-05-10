@@ -1,0 +1,148 @@
+---
+title: "Focal Loss"
+description: Down-weight well-classified examples to focus training on the hard ones — the loss that powers RetinaNet object detection.
+sidebar_position: 19
+practice_mode: true
+hide_table_of_contents: true
+---
+
+import PracticeProblem from '@site/src/components/viz/PracticeProblemPro';
+
+<PracticeProblem
+  id="focal-loss"
+  title="Focal loss (multiclass)"
+  difficulty="Medium"
+  tags={["numpy", "loss", "imbalance", "classification"]}
+  linkedLessons={[
+    { url: '/courses/ai-for-engineering/deep-neural-networks/loss-functions', title: 'Loss functions' },
+  ]}
+  starter={`
+import numpy as np
+
+def focal_loss(logits, target, gamma=2.0, alpha=1.0):
+    """
+    Multiclass focal loss (Lin et al. 2017, RetinaNet).
+
+    Standard cross-entropy: L = -log(p_t)
+    Focal loss adds a modulating factor that down-weights examples where the
+    model is already confident-correct:
+        L_focal = -alpha * (1 - p_t)^gamma * log(p_t)
+
+    where p_t = softmax(logits)[target] is the model's predicted probability of
+    the true class.
+
+    Args:
+        logits: 1-D np.ndarray of shape (K,) — pre-softmax scores for ONE example.
+        target: int — true class index in [0, K).
+        gamma:  float >= 0 — focusing parameter. gamma=0 reduces to weighted CE.
+        alpha:  float >= 0 — class-balancing weight. alpha=1 gives plain focal loss.
+
+    Returns:
+        float — the scalar loss.
+    """
+    # YOUR CODE HERE
+    pass
+`}
+  tests={`
+import numpy as np
+
+def _softmax(z):
+    z = z - z.max()
+    e = np.exp(z); return e / e.sum()
+
+
+@__test__("gamma=0 reduces to alpha-weighted cross-entropy")
+def t():
+    logits = np.array([1.0, 2.0, 3.0, 0.5])
+    target = 2
+    p_t = _softmax(logits)[target]
+    expected = -1.0 * np.log(p_t)
+    out = focal_loss(logits, target, gamma=0.0, alpha=1.0)
+    assert np.isclose(float(out), expected, atol=1e-7), \\
+        f"gamma=0 alpha=1 should equal CE; got {out}, expected {expected}"
+
+@__test__("Diagnostic: matches the explicit formula -alpha * (1-p_t)^gamma * log(p_t)")
+def t():
+    logits = np.array([0.5, 1.5, -2.0, 3.0])
+    target = 3
+    gamma = 2.0; alpha = 0.25
+    p_t = float(_softmax(logits)[target])
+    expected = -alpha * (1 - p_t) ** gamma * np.log(p_t)
+    out = float(focal_loss(logits, target, gamma=gamma, alpha=alpha))
+    assert np.isclose(out, expected, atol=1e-9), f"got {out}, expected {expected}"
+
+@__test__("Confident-correct prediction has loss approaching 0 (focal effect)")
+def t():
+    # Plain CE on a near-one-hot prediction is small but nonzero. Focal makes it
+    # MUCH smaller because (1 - p_t)^gamma is tiny.
+    logits = np.array([0.0, 100.0, 0.0])
+    target = 1
+    ce = -np.log(_softmax(logits)[target])
+    fl = float(focal_loss(logits, target, gamma=2.0, alpha=1.0))
+    assert fl < ce / 100, f"focal should crush confident-correct loss; CE={ce}, FL={fl}"
+
+@__test__("Hard example (low p_t) has loss similar to CE — modulation factor ~1")
+def t():
+    # If p_t is, say, 0.1, then (1 - 0.1)^2 = 0.81 — modulation barely matters.
+    logits = np.array([0.0, 0.0, 0.0])  # uniform; p_t = 1/3
+    target = 1
+    fl = float(focal_loss(logits, target, gamma=2.0, alpha=1.0))
+    ce = -np.log(1 / 3)
+    # FL should be (1 - 1/3)^2 * CE = (2/3)^2 * CE ~= 0.444 * CE
+    expected = (2/3) ** 2 * ce
+    assert np.isclose(fl, expected, atol=1e-7), f"got {fl}, expected {expected}"
+
+@__test__("alpha scales the loss linearly")
+def t():
+    logits = np.array([0.5, 1.5, 2.5])
+    target = 1
+    a = float(focal_loss(logits, target, gamma=2.0, alpha=0.25))
+    b = float(focal_loss(logits, target, gamma=2.0, alpha=0.5))
+    assert np.isclose(b, 2.0 * a, atol=1e-9), \\
+        f"doubling alpha should double the loss; got a={a}, b={b}"
+
+@__test__("Numerically stable for large logits")
+def t():
+    logits = np.array([1000.0, 1001.0, 1002.0])
+    out = focal_loss(logits, target=2, gamma=2.0, alpha=1.0)
+    assert np.isfinite(out), f"got {out}"
+    assert out > 0
+`}
+  solution={`
+import numpy as np
+
+def focal_loss(logits, target, gamma=2.0, alpha=1.0):
+    # numerically-stable softmax
+    z = logits - logits.max()
+    e = np.exp(z)
+    probs = e / e.sum()
+    p_t = float(probs[target])
+    # Clip p_t to avoid log(0) — the harness inputs don't trigger this but
+    # production logits can produce p_t=0 in fp16.
+    p_t = max(p_t, 1e-30)
+    return float(-alpha * (1.0 - p_t) ** gamma * np.log(p_t))
+`}
+  hints={[
+    "Compute the standard softmax probability p_t at the target index. Then the loss is one line: -alpha * (1 - p_t)^gamma * log(p_t).",
+    "When gamma=0, (1 - p_t)^0 = 1 and focal loss collapses to -alpha * log(p_t) = alpha-weighted cross-entropy. The 'gamma=0 reduces to CE' test verifies this.",
+    "The focusing factor (1 - p_t)^gamma is the key insight: when p_t is close to 1 (confident-correct), the factor is near 0, so the loss is suppressed. Hard examples (low p_t) keep their loss intact and dominate the gradient.",
+  ]}
+>
+
+Focal loss — introduced by [Lin et al. (2017)](https://arxiv.org/abs/1708.02002) for RetinaNet object detection. The training problem they solved: 99% of object-detection candidate boxes are "easy negatives" — clearly background — and they swamp the loss, drowning out gradients from the rare hard examples.
+
+The fix: down-weight examples where the model is already correct.
+
+`L_focal = −α · (1 − p_t)^γ · log(p_t)`
+
+The new factor `(1 − p_t)^γ` is what does the work. Three regimes:
+
+- **`p_t ≈ 1`** (confident-correct): `(1 − p_t)^γ → 0`, loss is crushed near zero. The model "moves on" from solved examples.
+- **`p_t ≈ 0`** (confident-wrong): `(1 − p_t)^γ → 1`, loss looks like normal CE but with the `α` reweight.
+- **`p_t ≈ 0.5`** (uncertain): `(1 − p_t)^γ ≈ 0.5^γ`, loss is moderately reduced.
+
+Hyperparameters: `γ = 2.0` is the canonical RetinaNet setting; `α` is per-class balancing (`α = 0.25` for the rare class in binary detection). When `γ = 0`, focal loss reduces to alpha-weighted cross-entropy — the harness's "reduces to CE" test verifies this.
+
+Used in object detection (RetinaNet, YOLO derivatives) and any classification problem with severe class imbalance.
+
+</PracticeProblem>

@@ -1,0 +1,127 @@
+---
+title: "Build a CNN · 04 · Avg Pool 2D"
+description: 2D average pooling forward — downsample by averaging values within each spatial window.
+sidebar_position: 4
+practice_mode: true
+hide_table_of_contents: true
+---
+
+import PracticeProblem from '@site/src/components/viz/PracticeProblemPro';
+
+<PracticeProblem
+  id="build-cnn-04-avg-pool-2d"
+  title="Average pooling 2D forward"
+  difficulty="Easy"
+  tags={["numpy", "cnn", "pooling", "build-cnn"]}
+  linkedLessons={[
+    { url: '/courses/ai-for-engineering/computer-vision/intro', title: 'Computer vision intro' },
+  ]}
+  starter={`
+import numpy as np
+
+def avg_pool_2d(x, kernel_size, stride):
+    """
+    2D average pooling — applied independently per channel.
+
+    Args:
+        x:           (C, H, W) — input feature map.
+        kernel_size: int — the spatial size of the pooling window.
+        stride:      int — step size between windows.
+
+    Returns:
+        (C, out_H, out_W) where:
+            out_H = (H - kernel_size) // stride + 1
+            out_W = (W - kernel_size) // stride + 1
+    """
+    # YOUR CODE HERE
+    pass
+`}
+  tests={`
+import numpy as np
+
+@__test__("Output shape: (C, out_H, out_W) per the standard formula")
+def t():
+    rng = np.random.default_rng(0)
+    x = rng.standard_normal((3, 8, 8))
+    out = avg_pool_2d(x, kernel_size=2, stride=2)
+    assert out is not None, "function returned None"
+    assert out.shape == (3, 4, 4), f"expected (3, 4, 4), got {out.shape}"
+
+@__test__("Diagnostic: 4x4 input, k=2 stride=2 produces correct 2x2 means")
+def t():
+    x = np.array([[[1, 2,  3, 4],
+                   [5, 6,  7, 8],
+                   [9, 10, 11, 12],
+                   [13, 14, 15, 16]]], dtype=float)
+    out = avg_pool_2d(x, kernel_size=2, stride=2)
+    # Top-left 2x2 = (1+2+5+6)/4 = 3.5
+    # Top-right 2x2 = (3+4+7+8)/4 = 5.5
+    # Bottom-left 2x2 = (9+10+13+14)/4 = 11.5
+    # Bottom-right 2x2 = (11+12+15+16)/4 = 13.5
+    expected = np.array([[[3.5, 5.5], [11.5, 13.5]]], dtype=float)
+    assert np.allclose(out, expected), f"got {out}, expected {expected}"
+
+@__test__("Constant input: output is the same constant everywhere")
+def t():
+    x = np.full((4, 6, 6), 7.5)
+    out = avg_pool_2d(x, kernel_size=3, stride=1)
+    assert np.allclose(out, 7.5), f"constant input -> constant output; got {out}"
+
+@__test__("kernel=stride=1 is the identity")
+def t():
+    rng = np.random.default_rng(2)
+    x = rng.standard_normal((2, 5, 5))
+    out = avg_pool_2d(x, kernel_size=1, stride=1)
+    assert np.allclose(out, x, atol=1e-12), "k=s=1 should return x unchanged"
+
+@__test__("Avg pool divides by k*k (not by something else)")
+def t():
+    # If you accidentally divide by H*W or by stride*stride, this catches it.
+    x = np.ones((1, 4, 4))
+    out = avg_pool_2d(x, kernel_size=2, stride=2)
+    # Sum of a 2x2 of ones = 4; divided by k*k = 4 -> 1.0.
+    assert np.allclose(out, 1.0), f"expected all 1s, got {out}"
+
+@__test__("Pooling is per-channel — no mixing across the C axis")
+def t():
+    x = np.zeros((2, 4, 4))
+    x[0] = 4.0  # channel 0 all 4s
+    x[1] = 10.0 # channel 1 all 10s
+    out = avg_pool_2d(x, kernel_size=2, stride=2)
+    assert np.allclose(out[0], 4.0), f"ch0 should be 4, got {out[0]}"
+    assert np.allclose(out[1], 10.0), f"ch1 should be 10, got {out[1]}"
+`}
+  solution={`
+import numpy as np
+
+def avg_pool_2d(x, kernel_size, stride):
+    C, H, W = x.shape
+    k, s = kernel_size, stride
+    out_H = (H - k) // s + 1
+    out_W = (W - k) // s + 1
+    out = np.zeros((C, out_H, out_W))
+    for c in range(C):
+        for i in range(out_H):
+            for j in range(out_W):
+                out[c, i, j] = x[c, i*s:i*s+k, j*s:j*s+k].mean()
+    return out
+`}
+  hints={[
+    "Identical loop structure to max_pool_2d — only the reduction changes from .max() to .mean(). The mean of a (k, k) patch is the sum of its k*k elements divided by k*k.",
+    "Make sure you divide by k*k (the patch size), not by H*W or stride*stride. The 'pool divides by k*k' diagnostic test catches that mistake.",
+    "Per-channel pooling: same as max pool — the C axis is the outer loop, no cross-channel mixing.",
+  ]}
+>
+
+Average pooling — the gentler twin of max pooling. Same loop structure, same shape formula, but reduces a window with `mean` instead of `max`.
+
+Why both pooling ops? They have different inductive biases:
+
+- **Max pool** says "the strongest signal in this region wins" — sparse gradients, translation-invariance, sharp feature detection.
+- **Avg pool** says "smooth the signal across this region" — dense gradients (every input contributes equally), more like a fixed low-pass filter.
+
+Modern architectures use **average pool** primarily as a *global* pool at the end of the network — turning a `(C, H, W)` feature map into a `(C,)` vector before the final linear classifier. ResNet, MobileNet, and Vision Transformers all do this. **Max pool** is more common between conv blocks for spatial downsampling, though `stride=2` convolutions have largely replaced both in modern CNNs.
+
+The implementation is the same three nested loops as `build-cnn-03`, with `.max()` swapped for `.mean()`. The diagnostic test the harness probes for: divide by `k*k`, not by anything else.
+
+</PracticeProblem>

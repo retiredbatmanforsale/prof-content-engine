@@ -16,9 +16,6 @@ tutor_concepts:
 access: free
 ---
 
-import perceptronLesson2 from './perceptron-lesson-2.png';
-import neuronsRecurrenceLesson2 from './neurons-recurrence-lesson2.png';
-
 <LessonHero course="Deep Sequence Modelling (RNN)" number="2" title="From static networks to time-aware models" subtitle="Adding memory so networks understand order, not just values" />
 
 In the previous section, we established the <strong>importance of modeling sequential dependencies</strong>. We now turn to how the field historically addressed this problem, beginning with a shift from traditional <strong>feedforward architectures</strong> to networks capable of handling <em>temporal dynamics</em>.
@@ -33,7 +30,7 @@ Let us return briefly to the basic building block introduced in <strong>Lecture 
   <p className="mb-2 text-center text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">The perceptron revisited</p>
   <div className="overflow-hidden rounded-xl border-2 border-slate-200 bg-slate-50/90 shadow-md dark:border-slate-600 dark:bg-slate-900/60">
     <img
-      src={perceptronLesson2}
+      src="/img/rnn/perceptron-lesson-2.png"
       alt="Diagram: inputs x^(1) through x^(m) with weights w_1 to w_m feed into summation node z, then y equals g of z, output node y-hat"
       className="mx-auto block h-auto max-w-full object-contain"
       loading="lazy"
@@ -203,7 +200,7 @@ There are <strong>two primary ways</strong> to visualize an RNN:
   <p className="mb-2 text-center text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">Neurons with recurrence</p>
   <div className="overflow-hidden rounded-xl border-2 border-slate-200 bg-slate-50/90 shadow-md dark:border-slate-600 dark:bg-slate-900/60">
     <img
-      src={neuronsRecurrenceLesson2}
+      src="/img/rnn/neurons-recurrence-lesson2.png"
       alt="Folded RNN cell with recurrence loop beside unfolded chain over time steps t=0,1,2 with inputs, outputs, and hidden flow; summary equation y-hat sub t equals f of x sub t and h sub t minus 1"
       className="mx-auto block h-auto max-w-full object-contain"
       loading="lazy"

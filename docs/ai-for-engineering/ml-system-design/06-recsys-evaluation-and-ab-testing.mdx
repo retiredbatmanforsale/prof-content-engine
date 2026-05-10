@@ -1,0 +1,314 @@
+---
+hide_title: true
+sidebar_label: '6 · Evaluation and A/B testing'
+title: 'Lesson 6 — Evaluation and A/B testing'
+description: >-
+  Offline metrics lie. The model that wins on AUC may lose on watch time. The
+  model that wins week-1 may be a novelty effect that decays by week-3.
+  Statistical power, novelty effects, CUPED variance reduction, network
+  effects, counterfactual logging, and the guardrails that turn a candidate
+  into a shipped model.
+mvp_status: drafted
+tutor_topic: "Online evaluation and A/B testing for production recsys"
+tutor_concepts: []
+---
+
+<LessonHero
+  number="6"
+  title="Evaluation and A/B testing"
+  subtitle="Offline metrics tell you the model is plausible. Online A/B tests tell you whether to ship it. Most production recsys mistakes happen in the gap between the two."
+  course="ML System Design"
+/>
+
+<InterviewerSignal
+  level="L4"
+  message="Says 'AUC went up offline so we shipped it.' Doesn't mention novelty effects. Picks a primary metric and ignores guardrails. Treats the A/B test as 'compare two numbers.'"
+/>
+<InterviewerSignal
+  level="L5"
+  message="Volunteers offline ≠ online divergence in the first sentence. Names statistical power, CUPED variance reduction, novelty effects with a 2-week-minimum runtime, guardrail metrics, and counterfactual logging — usually unprompted. Mentions network effects (SUTVA violation) for recsys specifically."
+/>
+
+---
+
+## 1. Where we are in the framework
+
+Still inside **Step 4 of the 6-step framework** — train and evaluate — but with the focus shifted from offline training to **online experimentation**. Time-budget: **~8 minutes**.
+
+By the end of this step you should have on the board:
+
+- A clear story of **offline metrics → online metrics**, with named offline proxies and the online primary metric
+- An **A/B test design** with random assignment, primary metric, guardrail metrics, and statistical power
+- A **runtime decision** that accounts for **novelty effects**
+- A discussion of **network effects** and how they violate the standard A/B assumptions for recsys
+- An optional but high-signal mention of **counterfactual logging** for off-policy evaluation and **CUPED** for variance reduction
+
+Lesson 4 told you how the model is trained. Lesson 6 tells you how you decide whether to ship it.
+
+---
+
+## 2. The problem at this layer
+
+You have a candidate model. It performs better than the baseline on offline metrics — say, +1% AUC, +2% NDCG, lower log loss. The question: **does it ship?**
+
+The naive answer is "yes, the metrics are better." This is wrong roughly half the time. The right answer requires:
+
+- An online A/B test on real users
+- A primary metric that aligns with the metric tree from Lesson 1
+- Guardrail metrics that prevent winning the war and losing the peace
+- Enough runtime and sample size to distinguish signal from noise — and from novelty
+- Awareness of the ways recsys violates standard A/B assumptions
+
+This step is where engineering meets statistics meets product. L5 candidates volunteer all three.
+
+---
+
+<SplitCompare>
+<SplitLeft title="Naive">
+
+- Compare offline AUC, ship if higher
+- Single primary metric, no guardrails
+- Run the A/B for 5 days
+- Treat users as IID; ignore network effects
+
+</SplitLeft>
+<SplitRight title="Motivated">
+
+- **Offline as a gate** (AUC, NDCG, calibration), **online A/B as the decision**
+- Pre-registered primary metric + guardrails (retention, diversity, latency)
+- **2-week minimum runtime** for novelty wear-off; 30+ days for retention metrics
+- Statistical power computed live: $n = 16\sigma^2 / \delta^2$
+- **CUPED variance reduction** with pre-experiment covariate (30–50% smaller σ)
+- **SUTVA-violation mitigations**: cluster-randomised or switchback designs for marketplace effects
+- Counterfactual logging for off-policy estimation
+
+</SplitRight>
+</SplitCompare>
+
+## 3. The naive solution — and why it breaks
+
+The naive answer:
+
+> "We compute AUC on a held-out test set. If the new model has higher AUC than the production model, we ship it."
+
+This fails in at least four ways.
+
+### 3.1 Offline metrics measure the wrong thing
+
+AUC is **rank-invariant**: it tells you whether positives are ranked above negatives, but not whether the absolute predictions match real-world rates. NDCG measures ordering quality on logged data, but the **logged data is biased** by the previous policy (Lesson 2). A model that wins on logged-NDCG may lose on real users because the logs are not the real world.
+
+### 3.2 Single metric, no guardrails
+
+A model that aggressively maximises CTR may **tank retention** by over-recommending engagement bait. A model that maximises watch time may **collapse diversity** by over-recommending similar long-form content. A single offline metric cannot detect either failure. The metric tree from Lesson 1 is multi-dimensional; the evaluation has to be too.
+
+### 3.3 No runtime accounting for novelty
+
+When you swap the model, users **see new things** they have not seen before. The first week of CTR data shows a spike — not because the new model is better, but because the recommendations are unfamiliar. Wait two more weeks and the lift erodes. Shipping after one week is shipping a **novelty effect**, not a real win.
+
+### 3.4 No accounting for network effects
+
+A recommendation model affects what gets watched. What gets watched affects what creators upload. What creators upload affects future recommendations. **Treatment users and control users are not independent** — they share the catalogue, the trending lists, the creator behaviours. Standard A/B test math assumes the **stable unit treatment value assumption (SUTVA)**, which says one user's treatment does not affect another's outcome. Recsys violates this routinely.
+
+---
+
+## 4. The motivated solution
+
+### 4.1 Offline as a filter, online as the decision
+
+Offline evaluation is a **gate, not a verdict**. The pipeline:
+
+1. **Offline gates** — AUC, NDCG, log loss, calibration error. These must be roughly on par with the baseline. A new model with materially worse log loss or ECE never goes online.
+2. **Counterfactual offline replay** — using **inverse propensity weighting** (Lesson 2's IPW) to estimate online performance from logged data. Approximates online lift before paying for an experiment.
+3. **Online A/B test** — the actual decision. Real users, real metrics, real runtime.
+
+The L5 candidate volunteers all three layers; the L4 candidate stops at AUC.
+
+### 4.2 Random assignment and primary metric
+
+The A/B test design:
+
+- **Unit of randomisation** — user-level (or cookie-level for logged-out). Per-request randomisation contaminates because the same user sees both treatments and adapts.
+- **Treatment / control split** — typically 50/50 for a small launch, ramped (1% → 10% → 50% → 100%) for a high-stakes one.
+- **Primary metric** — the product metric from Lesson 1's metric tree (e.g. **total watch minutes per user per day**). Pre-registered: chosen before the experiment, not after.
+- **Guardrail metrics** — retention (day-7, day-30), diversity (intra-list category entropy), creator fairness (Gini coefficient over creator impressions), latency (p99 of the serving stack from Lesson 5). Any guardrail failure blocks the launch even if the primary metric wins.
+
+Pre-registration matters. Without it, teams cherry-pick the metric that won and call it the primary. This is the canonical p-hacking failure.
+
+### 4.3 Statistical power and sample size
+
+The standard sample size formula for detecting a difference in means:
+
+$$
+n = \frac{(z_{\alpha/2} + z_{\beta})^2 \cdot 2\sigma^2}{\delta^2} \approx \frac{16 \sigma^2}{\delta^2}
+$$
+
+(for $\alpha = 0.05$ two-sided, $\beta = 0.2$, i.e. 80% power). Here $\sigma$ is the standard deviation of the primary metric and $\delta$ is the **minimum detectable effect** (MDE) — the smallest lift you care about.
+
+Concrete: for daily watch time per user with $\sigma \approx 30$ minutes, an MDE of $\delta = 0.3$ minutes (1% of mean of ~30 min) requires:
+
+$$
+n \approx \frac{16 \times 30^2}{0.3^2} = \frac{14{,}400}{0.09} = 160{,}000 \text{ users per arm}
+$$
+
+For a sub-1% MDE you need millions of users per arm — readily available at YouTube scale, scarce in early-stage products. **Always compute sample size before the experiment.** Underpowered experiments are worse than no experiments because they generate false negatives that look like decisions.
+
+### 4.4 Novelty effects and minimum runtime
+
+When recommendations change, users explore. Click-through rates spike for the first week and decay over the next few. The honest decision rule: **run the experiment for at least two complete weeks**, and report metrics on the **second week** as the steady-state estimate.
+
+<NoveltyEffect />
+
+For longer-tail metrics like retention, the honest runtime is **30+ days**. Some teams operate **holdback experiments**: ramp the new model to 99%, keep 1% on the old model indefinitely, and measure long-run delta. This is how you catch slow-burn regressions.
+
+### 4.5 CUPED — variance reduction with pre-experiment data
+
+The MDE is bounded by $\sigma$. Anything that shrinks $\sigma$ shrinks the required sample size or runtime. **CUPED** (Controlled-experiment Using Pre-Experiment Data, from Microsoft) is a single-line trick:
+
+$$
+Y_i^{\text{adj}} = Y_i - \theta \cdot (X_i - \bar{X})
+$$
+
+where $Y_i$ is the user's outcome in the experiment, $X_i$ is a pre-experiment covariate (the same metric measured for the same user before the experiment), and $\theta$ is the regression coefficient of $Y$ on $X$. Subtracting the pre-experiment expectation removes per-user baseline variance.
+
+For metrics with high user-level autocorrelation (watch time, sessions per day), CUPED routinely reduces variance by 30-50%, equivalent to running the experiment 1.4-2× longer for free.
+
+### 4.6 Network effects and SUTVA violations
+
+Recsys experiments routinely violate the assumption that one user's outcome is independent of another's. Examples:
+
+- **Creator-side feedback** — treatment-arm users watch different videos, which changes creator-side metrics, which changes future recommendations for the control arm
+- **Trending lists** — what trends is a function of all users' behaviour; treatment changes trending which affects control
+- **Two-sided marketplaces** — every recsys is one (users + creators); changing the user side affects the creator side
+
+Mitigations:
+
+- **Cluster-randomised experiments** — randomise at a higher level (geographic region, social cluster) so spillover is contained
+- **Time-shifted designs** — switchback experiments that alternate treatment / control by day
+- **Marketplace-aware analysis** — measure both user-side and creator-side metrics
+
+L5 candidates name SUTVA violations as a class and propose at least one mitigation.
+
+### 4.7 Counterfactual logging and off-policy estimation
+
+To estimate what *would have happened* under a new model without running an experiment, you need counterfactual logs:
+
+- At serving time, log not just the chosen action but the **propensity of every action under the current policy**
+- Apply the IPW estimator (Lesson 2's formula, generalised) to estimate expected reward under any new policy
+- Use this as a pre-experiment screen: only run online A/B tests on candidates whose offline counterfactual estimate beats baseline
+
+This is how mature recsys teams run **dozens of offline experiments per online experiment**, cutting the slow online iteration loop down dramatically.
+
+---
+
+## 5. Back-of-envelope math
+
+### 5.1 Power analysis worked example
+
+For watch time per user per day:
+
+- Baseline mean $\mu = 40$ minutes
+- Standard deviation $\sigma \approx 60$ minutes (heavy tail; $\sigma > \mu$ is common)
+- MDE $\delta = 0.4$ minutes (1% relative)
+
+$$
+n = \frac{16 \times 60^2}{0.4^2} = \frac{57{,}600}{0.16} = 360{,}000 \text{ users per arm}
+$$
+
+At 100K daily active users seeing the experiment per day, you need **~7 days of accumulation per arm** before the first read. Add the 2-week novelty buffer and the actual decision date is **~3 weeks after launch**.
+
+### 5.2 CUPED gain
+
+If pre-experiment watch time has correlation $\rho = 0.7$ with experiment-period watch time, CUPED reduces variance by $\rho^2 = 0.49$ — almost 50%. The 360K-per-arm requirement drops to ~180K, cutting runtime to ~10 days from ~3 weeks. This is why every mature experimentation platform implements CUPED as a default.
+
+### 5.3 Multiple testing
+
+Running 50 experiments simultaneously at $\alpha = 0.05$ each yields an expected ~2.5 false positives **per round**. Mitigations: Bonferroni correction (divide $\alpha$ by number of tests), false discovery rate control, or **always-valid p-values** (sequential testing methods that allow continuous monitoring without inflating type I error). Naming this class of problem is L5.
+
+<ABTestPower />
+
+---
+
+## 6. What the interviewer is actually grading
+
+By minute 48 — Step 4 wrapping — the interviewer is checking whether you can defend a launch decision under stress.
+
+- **Did you separate offline gates from online decisions?** Treating offline AUC as the verdict is L4 ceiling.
+- **Did you propose a primary metric pre-registered before the experiment?** Cherry-picking is the most common rookie mistake.
+- **Did you mention guardrails?** Retention, diversity, latency — even one is L5-grade.
+- **Did you name statistical power and a minimum detectable effect?** Computing sample size live is the L5 closing move.
+- **Did you account for novelty effects?** A 2-week minimum runtime is the L5-grade default.
+- **Did you flag SUTVA / network effects?** This is the recsys-specific failure mode that distinguishes L5 from L4.
+- **Did you mention CUPED, counterfactual logging, or sequential testing?** These are senior-staff signals — extra credit.
+
+Failure modes to avoid:
+
+- **Underpowered experiments treated as decisions.** "We saw a 0.3% lift but it was not significant" is sometimes shipped as a win. It is not.
+- **Single primary metric, no guardrails.** A win on CTR with a tank on retention is not a win.
+- **Shipping on week 1.** This is the canonical novelty-effect mistake.
+- **Treating users as IID.** They are not — same user contributes many sessions, and treatment users affect control users via marketplace dynamics.
+
+---
+
+## 7. Quiz
+
+<Quiz
+  lessonId="ai-for-engineering/ml-system-design/recsys-evaluation-and-ab-testing"
+  questions={[
+    {
+      id: "eval-q1",
+      prompt: "A team runs an A/B test for 5 days. The new model shows a +3% CTR lift, statistically significant at p=0.03. They want to ship. What is the L5 objection?",
+      options: [
+        "Five days is plenty of time.",
+        "Five days is too short — recommendation changes produce a novelty effect that spikes early-week metrics and decays. The honest decision rule runs the experiment for at least two complete weeks and reads the second-week steady-state, often longer for retention metrics. Shipping on week 1 ships a novelty effect, not a real lift.",
+        "p=0.03 is not significant enough.",
+        "CTR is not a valid metric.",
+      ],
+      correctIndex: 1,
+    },
+    {
+      id: "eval-q2",
+      prompt: "Watch time per user per day has σ ≈ 60 min. A team wants to detect an MDE of 0.6 min (1% relative) at 80% power, two-sided α = 0.05. Approximate users needed per arm:",
+      options: [
+        "1,000.",
+        "Roughly 16 σ² / δ² = 16 × 3600 / 0.36 ≈ 160,000 per arm. CUPED with strong pre-experiment correlation can cut this by 30-50% by removing per-user baseline variance.",
+        "10,000.",
+        "10 million.",
+      ],
+      correctIndex: 1,
+    },
+    {
+      id: "eval-q3",
+      prompt: "An A/B test changes the recommendation model for 50% of users. Treatment users watch different videos, which changes which videos trend, which affects what control users see. What is this called and how is it typically mitigated?",
+      options: [
+        "It's not a real problem.",
+        "A SUTVA violation (network effect) — the stable unit treatment value assumption is violated because treatment users affect control outcomes via shared catalogues, trending lists, and creator-side dynamics. Mitigations: cluster-randomised experiments (geographic regions, social clusters), switchback designs that alternate treatment by time window, or marketplace-aware analyses that explicitly model creator-side spillover.",
+        "Position bias.",
+        "Selection bias.",
+      ],
+      correctIndex: 1,
+    },
+    {
+      id: "eval-q4",
+      prompt: "A team uses pre-experiment user-level watch time as a covariate in their A/B test analysis, regressing experiment-period outcomes on the pre-experiment baseline. They report a 40% reduction in variance. What is this technique and why does it matter?",
+      options: [
+        "Stratification — it splits the sample by demographic.",
+        "CUPED (Controlled-experiment Using Pre-Experiment Data). By subtracting the per-user baseline, CUPED removes between-user variance from the estimator, shrinking σ and therefore the required sample size or runtime — typically 30-50% reduction for autocorrelated metrics like watch time. It cuts experiment cost by nearly half for free.",
+        "Bonferroni correction.",
+        "Inverse propensity weighting.",
+      ],
+      correctIndex: 1,
+    },
+  ]}
+/>
+
+---
+
+## 8. What's next
+
+In **Lesson 7 — Monitoring and retraining** you walk through Step 5 of the framework: maintain the system after launch. Models decay. Features drift. Users change. Your own recommendations create feedback loops that change the data you train on. Drift detectors, multi-tier retraining cadences, shadow and canary deployments, and the rollback path that catches a regression before it ships to 100%.
+
+<div className="not-prose mt-8 flex justify-end">
+  <a href="./recsys-monitoring-and-retraining" className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white no-underline hover:bg-emerald-500">
+    Lesson 7 — Monitoring and retraining →
+  </a>
+</div>

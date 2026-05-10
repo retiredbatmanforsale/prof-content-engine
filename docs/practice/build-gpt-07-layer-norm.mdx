@@ -1,0 +1,131 @@
+---
+title: "Build a GPT · 07 · Layer Norm"
+description: Layer Normalization across the feature dimension — per-token mean/variance shift with learnable scale and bias.
+sidebar_position: 7
+practice_mode: true
+hide_table_of_contents: true
+---
+
+import PracticeProblem from '@site/src/components/viz/PracticeProblemPro';
+
+<PracticeProblem
+  id="build-gpt-07-layer-norm"
+  title="LayerNorm forward"
+  difficulty="Easy"
+  tags={["numpy", "transformer", "normalization", "build-gpt"]}
+  linkedLessons={[
+    { url: '/courses/ai-for-engineering/build-and-train-your-own-gpt2-model/layer-normalization', title: 'Layer normalization' },
+  ]}
+  starter={`
+import numpy as np
+
+def layer_norm(x, gamma, beta, eps=1e-5):
+    """
+    Layer Normalization over the last axis (per token, NOT per batch).
+
+    For each vector v along the last axis of x:
+        v' = (v - mean(v)) / sqrt(var(v) + eps)
+        out = gamma * v' + beta
+
+    Args:
+        x:     np.ndarray, shape (..., C). Last axis is the feature dim.
+        gamma: (C,) — learnable scale.
+        beta:  (C,) — learnable shift.
+        eps:   float — small constant for numerical stability.
+
+    Returns:
+        np.ndarray of the same shape as x.
+    """
+    # YOUR CODE HERE
+    pass
+`}
+  tests={`
+import numpy as np
+
+@__test__("Output shape matches input")
+def t():
+    rng = np.random.default_rng(0)
+    x = rng.standard_normal((2, 4, 8))
+    gamma = np.ones(8); beta = np.zeros(8)
+    out = layer_norm(x, gamma, beta)
+    assert out is not None, "function returned None"
+    assert out.shape == x.shape, f"shape {out.shape} != {x.shape}"
+
+@__test__("Diagnostic: with gamma=1, beta=0, each token has mean 0 and std 1 along the last axis")
+def t():
+    rng = np.random.default_rng(7)
+    x = rng.standard_normal((3, 5, 16)) * 100 + 50   # arbitrary scale and shift
+    out = layer_norm(x, np.ones(16), np.zeros(16), eps=1e-5)
+    # Compute mean and std along the LAST axis only.
+    mean = out.mean(axis=-1)
+    std = out.std(axis=-1)
+    assert np.allclose(mean, 0.0, atol=1e-6), f"per-token mean not 0: max abs {np.max(np.abs(mean))}"
+    # Std uses biased (population) variance — matches our 1/N normalisation.
+    assert np.allclose(std, 1.0, atol=1e-3), f"per-token std not 1: max diff {np.max(np.abs(std - 1.0))}"
+
+@__test__("gamma scales, beta shifts")
+def t():
+    rng = np.random.default_rng(2)
+    x = rng.standard_normal((2, 6))
+    gamma = np.array([2.0, 0.5, 3.0, 1.0, 0.0, -1.0])
+    beta = np.array([1.0, 1.0, 0.0, -2.0, 7.0, 0.0])
+    out = layer_norm(x, gamma, beta)
+    # First normalise, then verify gamma*v + beta applied per dim.
+    mu = x.mean(axis=-1, keepdims=True)
+    var = x.var(axis=-1, keepdims=True)
+    v = (x - mu) / np.sqrt(var + 1e-5)
+    expected = gamma * v + beta
+    assert np.allclose(out, expected, atol=1e-7), \\
+        f"max diff {np.max(np.abs(out - expected)):.2e}"
+
+@__test__("Constant input -> output is just beta (zero variance after eps)")
+def t():
+    # When all features are equal, variance is 0; sqrt(eps) tiny but nonzero.
+    # The numerator (x - mean) is exactly 0, so output = gamma * 0 + beta = beta.
+    x = np.full((2, 4, 8), 7.0)
+    gamma = np.array([1, 2, 3, 4, 5, 6, 7, 8], dtype=float)
+    beta = np.array([10, 20, 30, 40, 50, 60, 70, 80], dtype=float)
+    out = layer_norm(x, gamma, beta)
+    expected = np.broadcast_to(beta, (2, 4, 8))
+    assert np.allclose(out, expected, atol=1e-7), \\
+        f"constant-input case wrong: got {out[0,0]}, expected {beta}"
+
+@__test__("Numerically stable for large-magnitude inputs")
+def t():
+    x = np.array([[1e6, 2e6, 3e6, 4e6]])
+    out = layer_norm(x, np.ones(4), np.zeros(4))
+    assert not np.any(np.isnan(out)), "NaN in output"
+    assert not np.any(np.isinf(out)), "inf in output"
+    # Should still be normalised: mean ~ 0, std ~ 1.
+    assert abs(out.mean()) < 1e-3
+    assert abs(out.std() - 1.0) < 1e-2
+`}
+  solution={`
+import numpy as np
+
+def layer_norm(x, gamma, beta, eps=1e-5):
+    mu = x.mean(axis=-1, keepdims=True)
+    var = x.var(axis=-1, keepdims=True)
+    x_norm = (x - mu) / np.sqrt(var + eps)
+    return gamma * x_norm + beta
+`}
+  hints={[
+    "Compute mean and variance along the LAST axis (keepdims=True so they broadcast back). Then z-score: (x - mu) / sqrt(var + eps). Then gamma * x_norm + beta.",
+    "Important: axis=-1 only. LayerNorm normalises per-token (each row of the C-dim feature axis is its own normalisation universe). NOT per batch — that's BatchNorm, a different thing.",
+    "The eps inside the sqrt prevents division by zero when the variance is exactly 0 (constant input). Don't add eps OUTSIDE the sqrt — that changes the math when var > 0.",
+  ]}
+>
+
+LayerNorm — the per-token normalisation that re-establishes unit variance at the start of every sub-layer in a transformer. Without it, activations across stacked blocks grow unboundedly; the residual stream's magnitudes blow up, attention saturates, training diverges.
+
+The math:
+
+`x_norm = (x - mean(x)) / sqrt(var(x) + eps)`
+
+`out = gamma * x_norm + beta`
+
+Where `mean` and `var` are computed **along the last axis only** (per token, not per batch). `gamma` and `beta` are learnable parameters of shape `(C,)` — `gamma` initialised to 1, `beta` initialised to 0 (so LN starts as the identity).
+
+The diagnostic the harness checks: with `gamma=1, beta=0`, each token's output should have mean ≈ 0 and std ≈ 1 along the feature axis, regardless of input scale. If you accidentally normalise across the batch axis (BatchNorm), the test fails immediately on the first `(B, T, C)` input — those statistics would mix tokens across positions and across batch elements.
+
+</PracticeProblem>

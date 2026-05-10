@@ -1,0 +1,141 @@
+---
+title: "Build a NN · 02 · ReLU + Backward"
+description: ReLU forward and its sub-gradient — the activation function that broke through the deep-learning depth ceiling.
+sidebar_position: 2
+practice_mode: true
+hide_table_of_contents: true
+---
+
+import PracticeProblem from '@site/src/components/viz/PracticeProblemPro';
+
+<PracticeProblem
+  id="build-nn-02-relu-and-backward"
+  title="ReLU forward + backward"
+  difficulty="Easy"
+  tags={["numpy", "neural-net", "activation", "backprop", "build-nn"]}
+  linkedLessons={[
+    { url: '/courses/ai-for-engineering/deep-neural-networks/activation-functions', title: 'Activation functions' },
+    { url: '/courses/ai-for-engineering/deep-neural-networks/backward-pass', title: 'Backward pass' },
+  ]}
+  starter={`
+import numpy as np
+
+def relu(x):
+    """
+    Forward pass of ReLU.
+
+    Args:
+        x: np.ndarray of any shape.
+
+    Returns:
+        np.ndarray of the same shape, with max(0, x) applied elementwise.
+    """
+    # YOUR CODE HERE
+    pass
+
+
+def relu_backward(grad_out, x):
+    """
+    Backward pass of ReLU.
+
+    Args:
+        grad_out: gradient of the loss w.r.t. the layer's output (same shape as x).
+        x:        the *input* to relu (NOT the output) — same shape.
+
+    Returns:
+        np.ndarray of the same shape — gradient of the loss w.r.t. x.
+        Convention: at exactly x = 0, sub-gradient is 0.
+    """
+    # YOUR CODE HERE
+    pass
+`}
+  tests={`
+import numpy as np
+
+@__test__("relu: output shape matches input")
+def t():
+    rng = np.random.default_rng(0)
+    x = rng.standard_normal((4, 5))
+    out = relu(x)
+    assert out is not None, "relu returned None"
+    assert out.shape == x.shape, f"shape {out.shape} != {x.shape}"
+
+@__test__("relu: zeroes out negatives, keeps non-negatives")
+def t():
+    x = np.array([-2.0, -0.1, 0.0, 0.1, 5.0])
+    expected = np.array([0.0, 0.0, 0.0, 0.1, 5.0])
+    assert np.allclose(relu(x), expected), f"got {relu(x)}, expected {expected}"
+
+@__test__("relu_backward: grad passes through where x > 0, blocked where x <= 0")
+def t():
+    x = np.array([-1.0, 0.0, 2.0, -3.0, 4.0])
+    grad_out = np.array([1.0, 1.0, 1.0, 1.0, 1.0])
+    expected = np.array([0.0, 0.0, 1.0, 0.0, 1.0])
+    out = relu_backward(grad_out, x)
+    assert out is not None, "relu_backward returned None"
+    assert np.allclose(out, expected), f"got {out}, expected {expected}"
+
+@__test__("relu_backward: at exactly x=0 sub-gradient is 0 (the convention)")
+def t():
+    # The "dying ReLU" boundary. Most frameworks pick 0; we follow that.
+    x = np.zeros(5)
+    grad_out = np.full(5, 7.0)
+    out = relu_backward(grad_out, x)
+    assert np.allclose(out, np.zeros(5)), \\
+        f"at x=0 the sub-gradient should be 0, got {out}"
+
+@__test__("relu_backward: matches finite-difference gradient")
+def t():
+    rng = np.random.default_rng(2)
+    x = rng.standard_normal(20)
+    # Avoid points exactly at 0 — we already test that case separately.
+    x = np.where(np.abs(x) < 1e-3, 1e-3, x)
+
+    # Pretend the loss is sum(relu(x) ** 2). Then d_loss/d_x = 2*relu(x) * d_relu/d_x.
+    grad_out = 2 * relu(x)
+    analytic = relu_backward(grad_out, x)
+
+    # Numerical gradient of the loss w.r.t. each x_i.
+    eps = 1e-5
+    numeric = np.zeros_like(x)
+    for i in range(len(x)):
+        h = x.copy(); h[i] += eps
+        l_plus = (relu(h) ** 2).sum()
+        h[i] -= 2 * eps
+        l_minus = (relu(h) ** 2).sum()
+        numeric[i] = (l_plus - l_minus) / (2 * eps)
+
+    assert np.allclose(analytic, numeric, atol=1e-3), \\
+        f"max diff {np.max(np.abs(analytic - numeric)):.2e}"
+`}
+  solution={`
+import numpy as np
+
+def relu(x):
+    return np.maximum(0, x)
+
+
+def relu_backward(grad_out, x):
+    return grad_out * (x > 0)
+`}
+  hints={[
+    "Forward: `np.maximum(0, x)` is the cleanest one-liner. (`np.clip(x, 0, None)` also works.)",
+    "Backward: ReLU's derivative is 1 where x > 0 and 0 where x ≤ 0. Multiply that mask elementwise by `grad_out`.",
+    "The mask `x > 0` returns a boolean array; multiplying by it implicitly casts to {0.0, 1.0}. No need for `.astype(float)`.",
+  ]}
+>
+
+ReLU — `max(0, x)` — is the workhorse non-linearity that made deep networks tractable. It's cheap, doesn't saturate on the positive side, and has a gradient of exactly 1 where it's active. Implement both halves: the forward pass and the backward.
+
+The math:
+
+`forward:  y = max(0, x)`
+
+`backward: dx = dy * 1[x > 0]`
+
+Two subtleties the harness checks:
+
+1. **The sub-gradient at x = 0.** ReLU isn't differentiable at exactly 0; we pick the sub-gradient = 0 by convention. (PyTorch, JAX, and TensorFlow all pick this.) The "dying ReLU" problem flows directly from this choice — once a unit's pre-activation goes ≤ 0 across all training data, its gradient is 0 forever and the unit never recovers.
+2. **Backward takes the input, not the output.** Many candidates accidentally write `relu_backward(grad_out, relu_out)` instead of `relu_backward(grad_out, x)`. Both happen to be equivalent for ReLU specifically (since `relu_out > 0 ⟺ x > 0`), but the convention this course uses is to pass the input — that generalises to other activations where it matters.
+
+</PracticeProblem>

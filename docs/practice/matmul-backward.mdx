@@ -1,0 +1,147 @@
+---
+title: "Matmul Backward"
+description: dC/dA and dC/dB for C = A @ B — the backward pass every framework's linear layer ultimately calls.
+sidebar_position: 21
+practice_mode: true
+hide_table_of_contents: true
+---
+
+import PracticeProblem from '@site/src/components/viz/PracticeProblemPro';
+
+<PracticeProblem
+  id="matmul-backward"
+  title="Matmul backward"
+  difficulty="Medium"
+  tags={["numpy", "backprop", "matmul", "calculus"]}
+  linkedLessons={[
+    { url: '/courses/ai-for-engineering/deep-neural-networks/backward-pass', title: 'Backward pass' },
+  ]}
+  starter={`
+import numpy as np
+
+def matmul_backward(grad_out, A, B):
+    """
+    Backward pass for C = A @ B.
+
+    Forward shapes: A: (M, K), B: (K, N), C: (M, N).
+
+    Args:
+        grad_out: (M, N) — d_loss / d_C.
+        A:        (M, K) — the left operand from the forward pass.
+        B:        (K, N) — the right operand from the forward pass.
+
+    Returns:
+        (dA, dB) where:
+            dA: (M, K) — d_loss / d_A.
+            dB: (K, N) — d_loss / d_B.
+    """
+    # YOUR CODE HERE
+    pass
+`}
+  tests={`
+import numpy as np
+
+@__test__("Returns two arrays with correct shapes")
+def t():
+    rng = np.random.default_rng(0)
+    A = rng.standard_normal((4, 3))
+    B = rng.standard_normal((3, 5))
+    grad_out = rng.standard_normal((4, 5))
+    out = matmul_backward(grad_out, A, B)
+    assert out is not None and len(out) == 2, "expected (dA, dB) tuple"
+    dA, dB = out
+    assert dA.shape == A.shape, f"dA shape {dA.shape} != {A.shape}"
+    assert dB.shape == B.shape, f"dB shape {dB.shape} != {B.shape}"
+
+@__test__("dA matches grad_out @ B.T")
+def t():
+    rng = np.random.default_rng(1)
+    A = rng.standard_normal((4, 3))
+    B = rng.standard_normal((3, 5))
+    grad_out = rng.standard_normal((4, 5))
+    dA, _ = matmul_backward(grad_out, A, B)
+    expected = grad_out @ B.T
+    assert np.allclose(dA, expected, atol=1e-9), \\
+        f"max diff {np.max(np.abs(dA - expected)):.2e}"
+
+@__test__("dB matches A.T @ grad_out")
+def t():
+    rng = np.random.default_rng(2)
+    A = rng.standard_normal((6, 4))
+    B = rng.standard_normal((4, 2))
+    grad_out = rng.standard_normal((6, 2))
+    _, dB = matmul_backward(grad_out, A, B)
+    expected = A.T @ grad_out
+    assert np.allclose(dB, expected, atol=1e-9), \\
+        f"max diff {np.max(np.abs(dB - expected)):.2e}"
+
+@__test__("Diagnostic: matches finite-difference numerical gradient")
+def t():
+    rng = np.random.default_rng(3)
+    A = rng.standard_normal((3, 2))
+    B = rng.standard_normal((2, 3))
+    grad_out = np.ones((3, 3))   # so loss = sum(C)
+    dA_a, dB_a = matmul_backward(grad_out, A, B)
+
+    eps = 1e-5
+    dA_n = np.zeros_like(A)
+    for i in range(A.shape[0]):
+        for j in range(A.shape[1]):
+            A[i, j] += eps; lp = (A @ B).sum()
+            A[i, j] -= 2 * eps; lm = (A @ B).sum()
+            A[i, j] += eps
+            dA_n[i, j] = (lp - lm) / (2 * eps)
+
+    dB_n = np.zeros_like(B)
+    for i in range(B.shape[0]):
+        for j in range(B.shape[1]):
+            B[i, j] += eps; lp = (A @ B).sum()
+            B[i, j] -= 2 * eps; lm = (A @ B).sum()
+            B[i, j] += eps
+            dB_n[i, j] = (lp - lm) / (2 * eps)
+
+    assert np.allclose(dA_a, dA_n, atol=1e-3), \\
+        f"dA fd-mismatch: max diff {np.max(np.abs(dA_a - dA_n)):.2e}"
+    assert np.allclose(dB_a, dB_n, atol=1e-3), \\
+        f"dB fd-mismatch: max diff {np.max(np.abs(dB_a - dB_n)):.2e}"
+
+@__test__("Zero grad_out -> zero gradients")
+def t():
+    A = np.array([[1.0, 2.0], [3.0, 4.0]])
+    B = np.array([[5.0, 6.0], [7.0, 8.0]])
+    dA, dB = matmul_backward(np.zeros((2, 2)), A, B)
+    assert np.allclose(dA, 0.0)
+    assert np.allclose(dB, 0.0)
+`}
+  solution={`
+import numpy as np
+
+def matmul_backward(grad_out, A, B):
+    dA = grad_out @ B.T   # (M, N) @ (N, K) -> (M, K)
+    dB = A.T @ grad_out   # (K, M) @ (M, N) -> (K, N)
+    return dA, dB
+`}
+  hints={[
+    "Two lines: dA = grad_out @ B.T; dB = A.T @ grad_out. The shapes alone force this — only one way to multiply (M,N), (M,K), (K,N), (K,N) such that the answers come out (M,K) and (K,N).",
+    "Why those expressions? Forward is C = A @ B. The element C[i,j] = sum_k A[i,k] * B[k,j]. So d(C[i,j]) / d(A[i,k]) = B[k,j] — and the gradient at A[i,k] is sum_j grad_out[i,j] * B[k,j], which is exactly the (i, k) entry of grad_out @ B.T.",
+    "Sanity check by transposing both sides: if forward is (A @ B).T = B.T @ A.T, then dB^T = grad_out.T @ A and dA^T = B @ grad_out.T. Take the transpose and you get the same answers — symmetry confirms the formulas.",
+  ]}
+>
+
+The backward pass for plain matrix multiplication. Underneath every linear layer, attention head, and convolution-via-im2col is exactly this two-line gradient.
+
+Forward: `C = A @ B` with `A: (M, K)`, `B: (K, N)`, `C: (M, N)`.
+
+Backward, given `grad_out = ∂L/∂C` of shape `(M, N)`:
+
+`dA = grad_out @ B.T          # shape (M, K)`
+
+`dB = A.T @ grad_out          # shape (K, N)`
+
+The shapes alone force the formulas — only one way to multiply the available matrices to land on `(M, K)` and `(K, N)`. Get the order or transposes wrong and the matmul fails entirely.
+
+The harness's diagnostic test is finite-difference cross-validation — perturb each entry of `A` (then `B`) by a small epsilon and check that the analytic gradient matches the numerical one within `1e-3`. If your `dA` is `B @ grad_out.T` instead of `grad_out @ B.T` (a common transpose flip), this test catches it.
+
+This is the same pattern as `build-nn-05-linear-backward`'s dx and dW — Linear is a thin wrapper around matmul, with an extra bias term.
+
+</PracticeProblem>

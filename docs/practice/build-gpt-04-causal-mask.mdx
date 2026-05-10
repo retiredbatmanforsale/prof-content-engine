@@ -1,0 +1,146 @@
+---
+title: "Build a GPT · 04 · Causal Mask"
+description: Build the lower-triangular causal mask and apply it to attention scores so position t cannot attend to positions > t.
+sidebar_position: 4
+practice_mode: true
+hide_table_of_contents: true
+---
+
+import PracticeProblem from '@site/src/components/viz/PracticeProblemPro';
+
+<PracticeProblem
+  id="build-gpt-04-causal-mask"
+  title="Causal mask: build + apply"
+  difficulty="Easy"
+  tags={["numpy", "transformer", "masking", "build-gpt"]}
+  linkedLessons={[
+    { url: '/courses/ai-for-engineering/build-and-train-your-own-gpt2-model/causal-masking', title: 'Causal masking' },
+  ]}
+  starter={`
+import numpy as np
+
+def build_causal_mask(T):
+    """
+    Build a lower-triangular causal mask of shape (T, T).
+
+    mask[i, j] = True  if j <= i  (position i can attend to position j)
+    mask[i, j] = False if j >  i  (i cannot attend to future j)
+
+    Args:
+        T: int — sequence length.
+
+    Returns:
+        np.ndarray of shape (T, T), dtype bool.
+    """
+    # YOUR CODE HERE
+    pass
+
+
+def apply_causal_mask(scores):
+    """
+    Apply a causal mask to attention scores by setting the upper triangle to -inf.
+
+    The result has -inf above the diagonal (and the original scores at and below).
+    After softmax, those -inf entries become 0.
+
+    Args:
+        scores: (T, T) float — raw attention scores (Q @ K.T / sqrt(d)).
+
+    Returns:
+        (T, T) float — masked scores.
+    """
+    # YOUR CODE HERE
+    pass
+`}
+  tests={`
+import numpy as np
+
+@__test__("build_causal_mask: shape and dtype")
+def t():
+    m = build_causal_mask(5)
+    assert m is not None, "build_causal_mask returned None"
+    assert m.shape == (5, 5), f"shape {m.shape}"
+    assert m.dtype == bool, f"dtype {m.dtype}, expected bool"
+
+@__test__("build_causal_mask: diagonal True; below diagonal True; above False")
+def t():
+    m = build_causal_mask(4)
+    expected = np.array([
+        [True,  False, False, False],
+        [True,  True,  False, False],
+        [True,  True,  True,  False],
+        [True,  True,  True,  True],
+    ])
+    assert np.array_equal(m, expected), f"got {m}, expected {expected}"
+
+@__test__("apply_causal_mask: upper triangle becomes -inf")
+def t():
+    scores = np.full((4, 4), 1.0)   # all ones
+    out = apply_causal_mask(scores)
+    assert out is not None, "apply_causal_mask returned None"
+    # Below and on diagonal: unchanged
+    assert out[0, 0] == 1.0
+    assert out[2, 1] == 1.0
+    assert out[3, 3] == 1.0
+    # Above diagonal: -inf
+    assert np.isneginf(out[0, 1])
+    assert np.isneginf(out[1, 3])
+    assert np.isneginf(out[2, 3])
+
+@__test__("After softmax, masked positions are exactly 0 — the diagnostic")
+def t():
+    rng = np.random.default_rng(0)
+    scores = rng.standard_normal((6, 6))
+    masked = apply_causal_mask(scores)
+    # Stable softmax over the last axis.
+    s = masked - masked.max(axis=-1, keepdims=True)
+    e = np.exp(s)
+    probs = e / e.sum(axis=-1, keepdims=True)
+
+    for i in range(6):
+        for j in range(6):
+            if j > i:
+                assert probs[i, j] == 0.0, \\
+                    f"position ({i},{j}) should have 0 probability after softmax, got {probs[i,j]}"
+        assert np.isclose(probs[i].sum(), 1.0, atol=1e-9), \\
+            f"row {i} sums to {probs[i].sum()}, expected 1.0"
+
+@__test__("Larger T works without quadratic blowup")
+def t():
+    m = build_causal_mask(128)
+    assert m.shape == (128, 128)
+    # Each row i should have i+1 True values.
+    for i in range(128):
+        assert m[i].sum() == i + 1, f"row {i} has {m[i].sum()} Trues, expected {i+1}"
+`}
+  solution={`
+import numpy as np
+
+def build_causal_mask(T):
+    return np.tril(np.ones((T, T), dtype=bool))
+
+
+def apply_causal_mask(scores):
+    T = scores.shape[-1]
+    mask = build_causal_mask(T)
+    return np.where(mask, scores, -np.inf)
+`}
+  hints={[
+    "build_causal_mask: np.tril(np.ones((T, T), dtype=bool)) gives the lower-triangular True pattern in one call. The 'tril' name is short for 'triangular lower'.",
+    "apply_causal_mask: np.where(mask, scores, -np.inf) keeps the original score where mask is True and replaces with -inf where False. Then softmax sends those -inf entries to exactly 0.",
+    "Using -1e9 instead of -np.inf also works in practice (and is friendlier to fp16). Both pass the harness, but -inf is conceptually cleaner.",
+  ]}
+>
+
+GPT-2 is a *decoder* — at training time, predicting token `t+1` from tokens `0..t` requires position `t` cannot attend to positions `> t`. Otherwise the model "cheats" by reading the answer directly from its input. The fix is one matrix and one `where` call.
+
+Two functions:
+
+1. `build_causal_mask(T)` — a `(T, T)` bool mask. `True` at and below the diagonal, `False` above.
+2. `apply_causal_mask(scores)` — given a `(T, T)` score matrix from `Q @ K.T / sqrt(d)`, replace the upper triangle with `-inf` so softmax kills it.
+
+The diagnostic test is the one that matters: after the mask is applied and softmax is taken, positions `j > i` must have **exactly** 0 probability — not 0.001, not 0.0001. That's only true if you mask **before** softmax with `-inf` (or a very large negative number). Zeroing weights *after* softmax leaves the rest of the row summing to less than 1, and changes the gradient incorrectly.
+
+Your `apply_causal_mask` will be plugged into `build-gpt-06-multi-head-attention` later in the series.
+
+</PracticeProblem>

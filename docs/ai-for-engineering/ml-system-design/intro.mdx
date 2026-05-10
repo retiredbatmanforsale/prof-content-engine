@@ -1,0 +1,100 @@
+---
+sidebar_label: 'Course intro'
+title: 'ML System Design'
+description: >-
+  Reverse-engineer two real production ML systems — YouTube's recommender and a
+  modern RAG search system — layer by layer. Then transfer the framework to four
+  case studies. By the end, the 45-minute ML system design interview round is a
+  rehearsed walkthrough, not a guess.
+access: public
+tutor_topic: "ML System Design — course overview"
+tutor_concepts:
+  - "what an ML system design interview is"
+  - "the 6-step framework"
+  - "reverse-engineering production systems"
+  - "the difference between ML SD and SWE system design"
+---
+
+# ML System Design
+
+This course has one rule: **you reverse-engineer real production ML systems, layer by layer, until you can design one in 45 minutes from a blank whiteboard.**
+
+By the end you will be able to walk into the ML system design round at Meta E5, Google L5, or Amazon SDE-III and execute a framework you have rehearsed against two real systems and four case studies.
+
+Every lesson follows the same shape: the problem at this layer, the naive solution that breaks, the production design that works, the math, and what the interviewer is actually grading.
+
+:::note[Prerequisites]
+
+- **Recommended:** Attention Is All You Need (transformers will appear in retrieval and generation)
+- **Useful for Part 2:** Build Your Own GPT-2 (LLM serving math)
+- **Useful for Part 2:** Agentic AI (RAG sits on top of agent loops)
+- **Not required:** any prior system design background. We motivate every primitive when you first need it.
+
+:::
+
+---
+
+## The arc
+
+| Part | What you build | Layer |
+|---|---|---|
+| **0** | The 6-step framework | The interview itself |
+| **1** | YouTube-style recommender | The classical interview canon |
+| **2** | Production RAG search system | The modern interview surface |
+| **3** | 4 case studies | Framework transfer to ad CTR, fraud, ETA, multimodal |
+| **IR** | Interview readiness | Mock-round walkthroughs + final quiz |
+
+---
+
+## What you reverse-engineer in Part 1 (this is where you start)
+
+| Lesson | What you add | What breaks without it |
+|---|---|---|
+| **0** | The 6-step framework | You wing it and lose the round |
+| **1** | Define the problem | You optimise the wrong metric |
+| **2** | Data pipeline | Your model trains on lies |
+| **3** | Retrieval (two-tower + ANN) | You can't serve at 1B scale |
+| **4** | Ranking (with calibration) | A/B test results stop making sense |
+| **5** | Online serving | You blow the latency budget |
+| **6** | Evaluation and A/B testing | You ship novelty effects as wins |
+| **7** | Monitoring and retraining | Your model rots in production |
+
+## What you reverse-engineer in Part 2
+
+| Lesson | What you add | What breaks without it |
+|---|---|---|
+| **8** | Define the problem (RAG) | You confuse "use a vector DB" with a real RAG system |
+| **9** | Retrieval and reranking | Pure dense retrieval misses rare entities; no reranker means precision dies |
+| **10** | Generation and LLM serving | Hallucinations ship; cost runs away; latency tanks |
+| **11** | RAG evaluation | You can't tell if the system is faithful or just fluent |
+
+## What you transfer in Part 3 (case studies)
+
+The framework now applied to four distinct interview prompts — each lesson walks the full 6 steps end-to-end on one canonical case, highlighting the wrinkles that distinguish it from the two flagships.
+
+| Lesson | Case | The wrinkle |
+|---|---|---|
+| **12** | Ad CTR prediction (Google-style) | Auction mechanics; calibration is mandatory; counterfactual logging |
+| **13** | Real-time fraud detection (Stripe-style) | Class imbalance + adversarial drift; streaming features; asymmetric cost |
+| **14** | ETA prediction (Uber-style) | Spatial-temporal features; pinball loss; quantile outputs (P50 / P90) |
+| **15** | Multimodal search (CLIP-style) | Contrastive joint training (InfoNCE); cross-modal eval; modality alignment |
+
+## Interview readiness
+
+The closing lesson — two fully-narrated 45-minute mock rounds (recsys and RAG), the framework cheat sheet, the consolidated L4 ceilings and L5 promote signals across the entire course, and the day-of playbook for the actual interview.
+
+---
+
+## What this course is not
+
+It is **not** a survey of every ML architecture. The architectures appear when the system needs them. It is not a generic SWE system design course either — distributed systems primitives appear in the lessons that need them, never as standalone abstraction.
+
+It is **not** Exponent or HelloInterview's framework restated. We adopt the 6-step framework as the spine because it is industry-standard — and then we layer in the practitioner-grade depth those courses skip: real latency budgets, real embedding store sizing, real drift detectors, real A/B test power calculations.
+
+---
+
+<div className="not-prose mt-8 flex justify-end">
+  <a href="./00-the-ml-sd-interview" className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white no-underline hover:bg-emerald-500">
+    Start with the framework →
+  </a>
+</div>

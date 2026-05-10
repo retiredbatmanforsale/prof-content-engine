@@ -1,0 +1,159 @@
+---
+title: "Build a NN · 07 · Train MLP on XOR"
+description: NN series capstone — wire forward, backward, and SGD into a full training loop and watch a 2-layer MLP learn the XOR function.
+sidebar_position: 7
+practice_mode: true
+hide_table_of_contents: true
+---
+
+import PracticeProblem from '@site/src/components/viz/PracticeProblemPro';
+
+<PracticeProblem
+  id="build-nn-07-train-mlp-xor"
+  title="Train a 2-layer MLP on XOR"
+  difficulty="Hard"
+  tags={["numpy", "neural-net", "training-loop", "capstone", "build-nn"]}
+  linkedLessons={[
+    { url: '/courses/ai-for-engineering/deep-neural-networks/neural-network-from-scratch', title: 'Neural network from scratch' },
+    { url: '/courses/ai-for-engineering/deep-neural-networks/backward-pass', title: 'Backward pass' },
+  ]}
+  starter={`
+import numpy as np
+
+# Helpers from earlier problems (provided so you can focus on the training loop):
+def linear_forward(x, W, b): return x @ W + b
+def relu(x): return np.maximum(0, x)
+def relu_backward(grad_out, x): return grad_out * (x > 0)
+def sigmoid(x):
+    out = np.empty_like(x, dtype=float)
+    pos = x >= 0
+    out[pos] = 1.0 / (1.0 + np.exp(-x[pos]))
+    e = np.exp(x[~pos]); out[~pos] = e / (1.0 + e)
+    return out
+def sigmoid_backward(g, s): return g * s * (1.0 - s)
+def mse_loss(p, t): return np.mean((p - t) ** 2)
+def mse_loss_backward(p, t): return 2.0 * (p - t) / p.size
+def linear_backward(g, x, W):
+    return g @ W.T, x.T @ g, g.sum(axis=0)
+def sgd_step(params, grads, lr):
+    for p, g in zip(params, grads): p -= lr * g
+
+
+def train_xor(seed=0, hidden=4, lr=0.5, steps=5000):
+    """
+    Train a 2 -> hidden -> 1 MLP on the XOR problem.
+
+    Architecture:
+        Linear(2 -> hidden) -> ReLU -> Linear(hidden -> 1) -> Sigmoid
+        Loss: MSE.
+
+    Args:
+        seed:   RNG seed for weight init (use np.random.default_rng(seed)).
+        hidden: hidden-layer width.
+        lr:     SGD learning rate.
+        steps:  number of full-batch updates.
+
+    Returns:
+        float — final MSE loss on the 4 XOR examples after training.
+    """
+    rng = np.random.default_rng(seed)
+
+    # XOR truth table — full batch every step.
+    X = np.array([[0., 0.], [0., 1.], [1., 0.], [1., 1.]])
+    Y = np.array([[0.], [1.], [1.], [0.]])
+
+    # Init weights with a small std so sigmoid doesn't saturate at step 0.
+    W1 = rng.standard_normal((2, hidden)) * 0.5
+    b1 = np.zeros(hidden)
+    W2 = rng.standard_normal((hidden, 1)) * 0.5
+    b2 = np.zeros(1)
+
+    # YOUR CODE HERE
+    # 1. Forward pass on X -> y_pred.
+    # 2. Backward pass to compute grads w.r.t. all four params (W1, b1, W2, b2).
+    # 3. sgd_step on the params.
+    # 4. Repeat for "steps" iterations.
+    # 5. Return final loss as a python float.
+    pass
+`}
+  tests={`
+import numpy as np
+
+@__test__("Returns a python float")
+def t():
+    out = train_xor(seed=1, steps=10)   # short run — just type-check
+    assert out is not None, "train_xor returned None"
+    assert isinstance(out, float) or (hasattr(out, 'shape') and out.shape == ()), \\
+        f"expected scalar float, got {type(out).__name__}"
+
+@__test__("Loss decreases over training")
+def t():
+    short = train_xor(seed=0, steps=20)
+    long  = train_xor(seed=0, steps=5000)
+    assert long < short, \\
+        f"loss didn't decrease: {short:.4f} (20 steps) -> {long:.4f} (5000 steps)"
+
+@__test__("Reaches loss < 0.1 in 5000 steps (the diagnostic — model actually learned XOR)")
+def t():
+    loss = train_xor(seed=0)
+    assert loss < 0.1, \\
+        f"final loss {loss:.4f} >= 0.1 — the loop didn't converge. Common bugs: " \\
+        "wrong gradient flow through sigmoid, sgd_step not in-place, or sign error in mse_loss_backward."
+
+@__test__("Works across multiple seeds (not seed-dependent)")
+def t():
+    losses = [train_xor(seed=s) for s in [0, 1, 2, 7]]
+    # Allow some seeds to be slightly worse (XOR + small hidden + relu can hit dead units),
+    # but on average should solve it.
+    good = sum(1 for l in losses if l < 0.15)
+    assert good >= 3, \\
+        f"only {good} of 4 seeds converged (losses {[round(l,3) for l in losses]})"
+
+@__test__("More hidden units → can still solve it (sanity)")
+def t():
+    loss = train_xor(seed=0, hidden=8, steps=3000)
+    assert loss < 0.1, f"hidden=8 should also solve XOR easily, got {loss:.4f}"
+`}
+  solution={`
+import numpy as np
+
+# (helpers omitted — same as starter)
+
+def train_xor(seed=0, hidden=4, lr=0.5, steps=5000):
+    rng = np.random.default_rng(seed)
+    X = np.array([[0., 0.], [0., 1.], [1., 0.], [1., 1.]])
+    Y = np.array([[0.], [1.], [1.], [0.]])
+    W1 = rng.standard_normal((2, hidden)) * 0.5; b1 = np.zeros(hidden)
+    W2 = rng.standard_normal((hidden, 1)) * 0.5; b2 = np.zeros(1)
+
+    for _ in range(steps):
+        # forward
+        z1 = linear_forward(X, W1, b1); a1 = relu(z1)
+        z2 = linear_forward(a1, W2, b2); y = sigmoid(z2)
+        # backward
+        dy = mse_loss_backward(y, Y)
+        dz2 = sigmoid_backward(dy, y)
+        da1, dW2, db2 = linear_backward(dz2, a1, W2)
+        dz1 = relu_backward(da1, z1)
+        _, dW1, db1 = linear_backward(dz1, X, W1)
+        # update
+        sgd_step([W1, b1, W2, b2], [dW1, db1, dW2, db2], lr)
+
+    return float(mse_loss(y, Y))
+`}
+  hints={[
+    "Three things per iteration: forward pass through Linear -> ReLU -> Linear -> Sigmoid; backward pass to get gradients for all four parameters; sgd_step to update.",
+    "Backward order: start from mse_loss_backward(y_pred, Y); push through sigmoid_backward; through the second linear_backward; through relu_backward; through the first linear_backward. Each call returns the gradient at the previous activation.",
+    "If your loss plateaus around 0.25 (not learning), check the sigmoid_backward step — its second arg is sigmoid_OUTPUT (y_pred), not the pre-activation z2. Many people mix that up.",
+  ]}
+>
+
+This is the capstone of the NN series. Wire together every function you've built so far — `linear_forward`, `relu`, `sigmoid`, `mse_loss`, the three backwards, and `sgd_step` — into a complete training loop. Train a tiny 2 → 4 → 1 MLP on XOR. After 5000 full-batch updates with `lr=0.5`, the MSE loss should land below 0.1.
+
+The architecture and helpers are provided. Your job is the **training loop body**: forward, backward, update, repeat.
+
+Why XOR? It's the smallest non-linearly-separable problem — a single linear layer cannot solve it. A 2-layer MLP with a non-linearity in the middle can. If your training loop converges on XOR, every component is wired correctly: the gradients flow, the optimiser updates in place, the loss decreases.
+
+If you've shipped problems 01–06 and the loss in this problem doesn't drop, the bug is almost always in the backward chain — re-derive each step's `grad_*` shape on paper before running.
+
+</PracticeProblem>

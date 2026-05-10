@@ -1,0 +1,154 @@
+---
+title: "Rotary Position Embedding (Apply)"
+description: Apply RoPE to a (B, T, C) tensor — pairwise rotation of feature dims by angles that grow with position.
+sidebar_position: 23
+practice_mode: true
+hide_table_of_contents: true
+---
+
+import PracticeProblem from '@site/src/components/viz/PracticeProblemPro';
+
+<PracticeProblem
+  id="rotary-embedding-apply"
+  title="Rotary Position Embedding (RoPE)"
+  difficulty="Hard"
+  tags={["numpy", "transformer", "positional-encoding", "rope"]}
+  linkedLessons={[
+    { url: '/courses/ai-for-engineering/build-and-train-your-own-gpt2-model/positional-embeddings', title: 'Positional embeddings' },
+  ]}
+  starter={`
+import numpy as np
+
+def apply_rotary(x):
+    """
+    Apply Rotary Position Embedding (Su et al. 2021) to a (B, T, C) tensor.
+
+    For each position t and each pair of feature dims (2i, 2i+1):
+        theta = t / 10000 ** (2i / C)
+        [x_{2i}, x_{2i+1}] are ROTATED by angle theta:
+            new_{2i}    = x_{2i}     * cos(theta) - x_{2i+1} * sin(theta)
+            new_{2i+1}  = x_{2i}     * sin(theta) + x_{2i+1} * cos(theta)
+
+    Position 0 has theta = 0 -> identity rotation. Later positions rotate
+    progressively faster on the low-frequency dims, slower on the high-frequency.
+
+    Args:
+        x: (B, T, C) np.ndarray. C must be even.
+
+    Returns:
+        np.ndarray of shape (B, T, C) — RoPE applied.
+    """
+    # YOUR CODE HERE
+    pass
+`}
+  tests={`
+import numpy as np
+
+@__test__("Output shape matches input")
+def t():
+    rng = np.random.default_rng(0)
+    x = rng.standard_normal((2, 4, 8))
+    out = apply_rotary(x)
+    assert out is not None, "function returned None"
+    assert out.shape == x.shape, f"shape {out.shape} != {x.shape}"
+
+@__test__("Diagnostic: position t=0 is the identity (theta=0 -> rotation by 0)")
+def t():
+    rng = np.random.default_rng(7)
+    x = rng.standard_normal((2, 5, 8))
+    out = apply_rotary(x)
+    # At t=0, all angles are 0, so each pair is unchanged.
+    assert np.allclose(out[:, 0, :], x[:, 0, :], atol=1e-9), \\
+        f"position 0 should be identity, max diff {np.max(np.abs(out[:, 0, :] - x[:, 0, :])):.2e}"
+
+@__test__("Norm-preserving: ||rotated|| == ||original|| (rotation preserves L2 norm)")
+def t():
+    rng = np.random.default_rng(2)
+    x = rng.standard_normal((1, 8, 12))
+    out = apply_rotary(x)
+    norms_in  = np.linalg.norm(x,   axis=-1)   # (1, 8)
+    norms_out = np.linalg.norm(out, axis=-1)
+    assert np.allclose(norms_out, norms_in, atol=1e-6), \\
+        f"RoPE should be norm-preserving; max diff {np.max(np.abs(norms_out - norms_in)):.2e}"
+
+@__test__("Hand-checked rotation at position 1, dim pair 0")
+def t():
+    # Use a fixed input so we can compute the expected rotation by hand.
+    # C = 4, so the dim-pair frequencies are theta_0 = t / 10000^(0/4) = t
+    # and theta_1 = t / 10000^(2/4) = t / 100.
+    # At t=1: theta_0 = 1, theta_1 = 0.01.
+    x = np.array([[[1.0, 0.0, 0.0, 0.0],     # pos 0
+                   [1.0, 0.0, 1.0, 0.0]]])   # pos 1
+    out = apply_rotary(x)
+    # Position 0 unchanged (identity).
+    assert np.allclose(out[0, 0], [1.0, 0.0, 0.0, 0.0])
+    # Position 1, pair 0: [1, 0] rotated by 1 rad -> [cos(1), sin(1)]
+    assert np.isclose(out[0, 1, 0], np.cos(1.0), atol=1e-9)
+    assert np.isclose(out[0, 1, 1], np.sin(1.0), atol=1e-9)
+    # Position 1, pair 1: [1, 0] rotated by 0.01 rad -> [cos(0.01), sin(0.01)]
+    assert np.isclose(out[0, 1, 2], np.cos(0.01), atol=1e-9)
+    assert np.isclose(out[0, 1, 3], np.sin(0.01), atol=1e-9)
+
+@__test__("Pairs of dimensions are rotated independently (no cross-pair mixing)")
+def t():
+    # Set the second pair to zeros: rotating zeros by anything stays zeros.
+    x = np.zeros((1, 3, 4))
+    x[0, :, 0] = 1.0   # only first pair has signal
+    out = apply_rotary(x)
+    # Second pair should remain zero across all positions.
+    assert np.allclose(out[0, :, 2:4], 0.0), \\
+        f"second pair should stay zero, got {out[0, :, 2:4]}"
+
+@__test__("Larger C and T runs without error")
+def t():
+    rng = np.random.default_rng(3)
+    x = rng.standard_normal((2, 16, 32))   # GPT-2 small head_size, modest T
+    out = apply_rotary(x)
+    assert out.shape == (2, 16, 32)
+    assert not np.any(np.isnan(out))
+    assert not np.any(np.isinf(out))
+`}
+  solution={`
+import numpy as np
+
+def apply_rotary(x):
+    B, T, C = x.shape
+    assert C % 2 == 0, "C must be even"
+    # Pair up the last axis: (B, T, C/2, 2)
+    x_pairs = x.reshape(B, T, C // 2, 2)
+    x_e = x_pairs[..., 0]   # even-indexed dims
+    x_o = x_pairs[..., 1]   # odd-indexed dims
+
+    # Per-(t, i) rotation angle.
+    pos = np.arange(T)[:, None]                       # (T, 1)
+    i = np.arange(0, C, 2)                            # (C/2,)
+    inv_freq = 1.0 / (10000 ** (i / C))               # (C/2,)
+    theta = pos * inv_freq                            # (T, C/2)
+    cos_t = np.cos(theta); sin_t = np.sin(theta)      # both (T, C/2)
+
+    y_e = x_e * cos_t - x_o * sin_t
+    y_o = x_e * sin_t + x_o * cos_t
+    return np.stack([y_e, y_o], axis=-1).reshape(B, T, C)
+`}
+  hints={[
+    "Reshape the last axis into pairs: x.reshape(B, T, C//2, 2). Now x[..., 0] is the even-indexed dim of each pair and x[..., 1] is the odd-indexed.",
+    "Compute the angle table theta = pos * (1 / 10000 ** (i / C)) where pos is (T,) and i is the even index 0, 2, 4, ..., C-2. The result is (T, C/2). Then cos(theta) and sin(theta) broadcast against the (B, T, C/2) pair tensors.",
+    "Apply the 2D rotation per pair: y_even = x_e cos - x_o sin, y_odd = x_e sin + x_o cos. Stack them back along axis=-1 to get (B, T, C/2, 2), then reshape to (B, T, C).",
+  ]}
+>
+
+Rotary Position Embedding — [Su et al. (2021)](https://arxiv.org/abs/2104.09864). The positional encoding scheme that displaced sinusoidal and learned positional embeddings in modern LLMs (Llama, Mistral, Qwen, Gemma all use it). Applied directly to query and key vectors before attention, not added to the embeddings.
+
+The mechanic: split each token's `(C,)` feature vector into `C/2` pairs, then rotate each pair `(x_{2i}, x_{2i+1})` by an angle `θ = t / 10000^(2i/C)`:
+
+`new = [cos · x_e − sin · x_o,   sin · x_e + cos · x_o]`
+
+Three properties that make it work for attention:
+
+1. **Norm-preserving.** A rotation in 2D preserves vector length, so RoPE doesn't change `||q||` or `||k||` — it only re-aligns their angles. Attention scores `q · k` then capture both content similarity AND relative position via the angle difference.
+2. **Position 0 is the identity.** `t=0 → θ=0 → cos(0)=1, sin(0)=0` → no rotation. The first token is unchanged.
+3. **Frequency spread.** Different pairs rotate at different rates: low-index pairs rotate fast (`θ ∝ t`), high-index pairs slow (`θ ∝ t / 10000`). Attention can pick out short-range or long-range patterns by attending to different frequency bands.
+
+The diagnostic the harness checks: norm preservation across every position. Get the cos/sin signs wrong and rotations turn into reflections — norms still equal, but the test for position-0-identity fails.
+
+</PracticeProblem>

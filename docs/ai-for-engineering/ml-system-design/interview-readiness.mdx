@@ -1,0 +1,463 @@
+---
+hide_title: true
+sidebar_label: 'Interview readiness'
+title: 'Interview readiness — The 45-minute mock round'
+description: "The closing lesson — two fully-narrated 45-minute mock rounds (recsys and RAG), the framework cheat sheet, consolidated L4 ceilings and L5 promote signals across the entire course, and the day-of playbook for the actual interview."
+mvp_status: drafted
+tutor_topic: "ML system design interview readiness — mock-round walkthroughs and framework consolidation"
+tutor_concepts: []
+---
+
+<LessonHero
+  number="IR"
+  title="Interview readiness"
+  subtitle="You've read 17 lessons. Now you walk the round. Two narrated 45-minute mock walkthroughs, the framework cheat sheet, and the L4 / L5 signals consolidated across the entire course."
+  course="ML System Design"
+/>
+
+---
+
+## 1. What this lesson is for
+
+You finished the course. You can draw the YouTube funnel from memory. You know what calibration is, why the feature store exists, what a SUTVA violation looks like, when to use pinball loss. The course was the **content**. This lesson is the **rehearsal** — turning that content into 45 minutes of confident whiteboarding under interviewer pressure.
+
+Three things happen here:
+
+- The **framework cheat sheet** condenses the 6 steps into something you can recall on the bus to the interview
+- Two **fully-narrated mock rounds** show what an L5 candidate's actual answer sounds like, minute by minute, including probes and back-fills
+- The **L4 ceilings and L5 promote signals** are consolidated from across all 17 lessons into one referenceable list
+
+Read this lesson the day before the interview. Read it again on the morning of.
+
+---
+
+## 2. The 60-second pre-round checklist
+
+Before drawing anything, ask. The interviewer's first impression is whether you ground the prompt or just sprint at it. These are the questions that come out of your mouth in the first ~90 seconds:
+
+| Ask | Why |
+|---|---|
+| **Surface** — home feed, watch-next, search, ads, support? | Each is a different system |
+| **Business goal** — revenue, retention, watch time, satisfaction? | Drives the metric tree |
+| **Scale** — DAU, catalogue size, QPS, peak vs steady-state? | Drives the architecture |
+| **Latency budget** — sync vs async, p99 target | Drives the funnel and the model size |
+| **Constraints** — fairness, freshness, diversity, cost cap, regulatory | Surface these before designing |
+
+Then write **the goal sentence** on the whiteboard, in the interviewer's words. "We are designing X to optimise Y subject to Z." Now you have a contract for the rest of the round.
+
+---
+
+## 3. The framework cheat sheet
+
+The mnemonic — keep it on the tip of your tongue — is **PDATDM**:
+
+<Stepper
+  steps={[
+    { keyword: 'PROBLEM',      time: '8 min', subtitle: 'Define it' },
+    { keyword: 'DATA',         time: '8 min', subtitle: 'Pipeline' },
+    { keyword: 'ARCHITECTURE', time: '8 min', subtitle: 'Model design' },
+    { keyword: 'TRAINING',     time: '8 min', subtitle: 'And evaluation' },
+    { keyword: 'DEPLOYMENT',   time: '8 min', subtitle: 'And serving' },
+    { keyword: 'MONITORING',   time: '5 min', subtitle: 'And maintenance' },
+  ]}
+/>
+
+Six steps, time-budgeted to 45 minutes. What you produce at each step:
+
+| # | Step | Time | What goes on the whiteboard |
+|---|---|---|---|
+| 1 | **PROBLEM** — define it | 8 min | Layered metric tree (business → product → ML), unit of recommendation, candidate-generation funnel |
+| 2 | **DATA** — pipeline | 8 min | Where labels come from, how features flow, training-serving consistency, leakage discussion |
+| 3 | **ARCHITECTURE** — model design | 8 min | Retrieval + ranking (or single-stage) with reasoning |
+| 4 | **TRAINING** — and evaluation | 8 min | Loss design, offline metrics, A/B test plan with guardrails |
+| 5 | **DEPLOYMENT** — and serving | 8 min | Latency budget, feature store, caching, capacity, graceful degradation |
+| 6 | **MONITORING** — and maintenance | 5 min | Drift detection, retraining cadence, feedback loops, rollback path |
+
+The framework is the **spine**. You aren't following it linearly under pressure — you're using it as a checklist so that when the interviewer asks "and how do you handle X?" the answer is somewhere in your structure.
+
+---
+
+## 4. Mock round 1 — Meta E5: "Design YouTube recommendations"
+
+The classical interview surface. The interviewer is a senior engineer on the recommendation systems team. The whiteboard is shared in a video call.
+
+### [0:00] Interviewer
+
+> "Design YouTube's recommendation system."
+
+### [0:00–0:02] Clarification
+
+> *Candidate:* "Two minutes of clarification before I design. Which surface — home feed, watch-next, search? I'll go with home feed unless you redirect.
+>
+> Scale assumption — roughly 2B DAU, 1B videos in the catalogue, 100K QPS at peak. Latency budget around 200ms p99 for a feed request. Any product constraints I should know about — diversity floor, creator fairness, freshness?"
+
+> *Interviewer:* "Home feed is fine. Your scale numbers are roughly right. Diversity matters but not formally constrained. Go ahead."
+
+### [0:02–0:10] Step 1 — Define the problem
+
+> *Candidate (writing on whiteboard):* "Let me lay out the metric tree.
+>
+> Business goal — long-term retention. The two-week product proxy is total watch time per user per day. The ML objective stack is multi-task with **watch time as primary regression target** plus **calibrated CTR / completion / like rate** as secondary calibration heads. The combined ranking score is a weighted geometric combination — and the weights themselves are tuned **online via A/B tests**, not learned.
+>
+> Unit of recommendation: a **slate of N items**, not a single video. Set-level concerns like diversity apply at re-rank, not at the per-item ranker.
+>
+> A quick number — 2B users × 40 min/day = 80 billion minutes/day. A 1% lift is 800 million minutes/day — about 1500 person-years of attention per day. That's why it's worth doing properly.
+>
+> The funnel: 1B → ~hundreds (retrieval) → tens (ranking) → ordered slate (re-rank). Each stage trades recall for precision."
+
+> *Interviewer (probing):* "Why not just one big model that scores everything?"
+
+> *Candidate:* "At 1B candidates per request and even a tiny model at 1ms per scoring call, you're looking at 10⁶ seconds per request — physically impossible. The funnel exists because the latency budget forces it."
+
+### [0:10–0:18] Step 2 — Data pipeline
+
+> *Candidate:* "Step 2. The labels are click logs but the logs are **biased by the previous policy**. Position bias dominates — top-slot CTR is roughly 10× bottom-slot CTR. So labels need de-biasing.
+>
+> Concrete moves: watch time as continuous regression target instead of binary click. Implicit negatives — impressed-but-not-clicked beats random catalogue negatives because the model needs to discriminate within retrieved candidates. Inverse propensity weighting with clipping at $w_{\max} = 5$ to handle position bias.
+>
+> Feature store separately — the same definition reads online (sub-ms) and offline (point-in-time historical snapshots). Without it, training-serving skew silently degrades production AUC by ~5 points relative to offline.
+>
+> Temporal split — never random. Train on weeks 1 to N, validate on week N+1. Random shuffle leaks future trending features into the past."
+
+### [0:18–0:26] Step 3 — Model architecture
+
+> *Candidate:* "Two-stage funnel.
+>
+> **Retrieval** — two-tower architecture. User tower runs at request time (~5ms forward pass). Item tower precomputed nightly; embeddings indexed in HNSW or ScaNN. Dot-product score at query time, ANN lookup at p99 ~10ms. The structural insight: item embeddings precomputed offline is what makes 1B-scale serving possible. A deep cross at scoring time would force per-(user, item) compute, which doesn't fit the budget.
+>
+> Embedding store math — 1B × 128 dims × 4 bytes = 512 GB. Doesn't fit one machine; sharded across ~100 nodes. Quantise to int8 if budget tightens — 128 GB and one big machine.
+>
+> Training: in-batch negatives with sampled-softmax logQ correction, otherwise the model overfits to popularity bias.
+>
+> **Ranking** — wide-and-deep over the ~100 retrieved candidates. Multi-task heads (watch time, click, completion, like). Calibration via Platt scaling — uncalibrated probabilities break the multi-task fusion because the geometric combination depends on absolute values, not just ranks.
+>
+> Loss is pointwise multi-task with a pairwise auxiliary; listwise is computationally prohibitive at this scale."
+
+> *Interviewer (probing):* "Why calibration if you're just ranking?"
+
+> *Candidate:* "Because the final score is a geometric combination of multiple head outputs. Uncalibrated heads multiply incorrectly — you can have correct ranking on AUC and wrong absolute scores, which breaks A/B test interpretation downstream. And we'll see in the next step that some downstream guardrails read raw probabilities, not ranks."
+
+### [0:26–0:34] Step 4 — Train and evaluate
+
+> *Candidate:* "Offline metrics — AUC and NDCG as gates, not as the verdict. They're rank-invariant; they don't catch the calibration failure I just mentioned. Online A/B test is the actual ship decision.
+>
+> A/B design: user-level randomisation, 50/50 split for early launches, ramped (1% → 10% → 50% → 100%) for high-stakes ones. Primary metric is total watch minutes per user per day from the metric tree. Guardrails: day-7 retention, intra-list diversity, creator fairness, p99 latency.
+>
+> Statistical power — for σ ≈ 60 min, MDE 0.6 min (1% relative), 80% power: $n = 16σ^2/δ^2 ≈ 160{,}000$ per arm. Run for at least two weeks for novelty wear-off; for retention, 30+ days. Holdback experiments — keep 1% on the old model indefinitely to catch slow-burn regressions.
+>
+> CUPED variance reduction with pre-experiment user-level watch time as the covariate — typically 30-50% variance reduction, equivalent to running the experiment 1.4-2× longer for free.
+>
+> SUTVA caveat — this is a recsys, so treatment and control share trending lists and catalogue dynamics. Cluster-randomised experiments at the geographic-region level for high-stakes launches."
+
+### [0:34–0:42] Step 5 — Deploy and serve
+
+> *Candidate:* "Latency budget — 200ms p99 total. Decomposed: network in 10ms, auth 5ms, user-side feature fetch 15ms, user tower 5ms, ANN query 10ms, item-side feature fetch over ~100 candidates 25ms, ranker 80ms, re-rank 15ms, network out 25ms. Total ~190ms with 10ms slack.
+>
+> Feature store from earlier handles training-serving consistency. Three caching levels: per-item for hot videos like Bieber's latest upload (request coalescing + per-key TTL); per-user features cached at session start; per-query results cached short-window for refresh-spam.
+>
+> Hot keys — sharding by item-bucket plus per-key cache plus precomputed lists for celebrity content served from a CDN-like layer.
+>
+> Graceful degradation: if the ranker times out, return retrieval results in retrieval order; if retrieval times out, return cached recs; all-fail fallback is today's popularity baseline.
+>
+> Capacity — Little's Law. 100K QPS × 0.1s avg latency = 10K concurrent requests. At 100 concurrent per node, that's 100 nodes minimum, double for headroom and tail spikes. ~200 nodes."
+
+### [0:42–0:45] Step 6 — Monitor, retraining, wrap
+
+> *Candidate:* "Three drift kinds — feature, label, concept. PSI per feature, daily, threshold 0.25 auto-triggers retraining. Label drift on the marginal P(y); concept drift via held-out scoring set re-scored periodically.
+>
+> Multi-tier retraining: real-time for item embeddings (cold-start fresh content); daily for ranker; weekly full pipeline.
+>
+> Deployment safety net — shadow → canary → ramp → auto-rollback on guardrail violations. Rollback in minutes, not hours.
+>
+> Recsys-specific: feedback loop. The model's recommendations change user behaviour, which changes labels, which biases the next model. Mitigate with exploration injection (random unranked items at small probability) and off-policy correction (IPW reweighting at training time)."
+
+> *Interviewer:* "Anything you'd flag if we had more time?"
+
+> *Candidate:* "Three things. Counterfactual logging for off-policy evaluation — log propensity per chosen item so we can estimate online lift offline before paying for an A/B test. Creator-side fairness as a guardrail metric, not just user-side. And a slate-level re-rank with diversity / freshness rules I implied but didn't expand on — it's where the per-item scores become a feed."
+
+> *Interviewer:* "Good. We're done."
+
+**End of mock round 1.**
+
+What just happened: every step was 1-2 minutes of speaking with diagrams. The candidate **volunteered** the metric tree, funnel, two-tower distinction, calibration, statistical power, Little's Law, multi-tier retraining, and feedback loops — without being prompted. The two interviewer probes were absorbed into the framework, not surprises. That is the L5 promote signal — the candidate is the one walking through the framework; the interviewer is stress-testing.
+
+---
+
+## 5. Mock round 2 — Senior L5: "Design a search system that answers natural-language queries with citations"
+
+The modern surface. The interviewer is a senior engineer on a search / assistant team. Same setup.
+
+### [0:00] Interviewer
+
+> "Design a search system that answers natural-language queries with citations."
+
+### [0:00–0:02] Clarification
+
+> *Candidate:* "What corpus — open web, enterprise wiki, product docs? What's the user expecting — direct answer with citations, or summary plus links? Latency budget? Domain — general or high-stakes like medical or legal?"
+
+> *Interviewer:* "Enterprise wiki, ~10M document chunks. Direct answer with citations. ~2-second response. General-purpose — not high-stakes."
+
+### [0:02–0:10] Step 1 — Define the problem
+
+> *Candidate:* "Metric tree inverts vs the recsys case. Faithfulness is the **primary** metric — every claim in the answer must be supported by a retrieved passage. Answer quality and citation accuracy are guardrails. Latency and cost are constraints, not objectives.
+>
+> Unit is a **single composed answer** with inline citations and a bibliography section. Refusal is a feature — if passages don't support a confident answer, the system says so explicitly.
+>
+> Funnel — three stages. Retrieval over 10M chunks → top ~50. Reranking → top 5-10 passages. Generation → cited answer.
+>
+> Cost intuition — typical RAG request is ~3K input tokens (5 passages × 512 + system prompt + query) plus ~500 output tokens. At representative pricing that's ~\$0.002 per request. At 1M requests/day that's ~\$730K/year — a real budget item, ~100× more than the recsys ranker per request."
+
+### [0:10–0:18] Step 2 — Data and retrieval
+
+> *Candidate:* "Chunking strategy first. Recursive splitting — paragraph → sentence → word — at the largest natural boundary that fits the size budget. ~512 tokens per chunk, ~50-100 token overlap. Metadata preserved: source doc, section, page number.
+>
+> For the retrieval models, **hybrid is the answer**. Pure dense embeddings collapse on rare named entities — product names, version numbers, error codes. BM25 handles those natively. Run both in parallel, fuse via Reciprocal Rank Fusion.
+>
+> Embeddings — bge-large or text-embedding-3-large, 1024-dim. For 10M chunks at fp32 that's 40 GB; fits one machine. For 100M (open-web hybrid) — 400 GB, sharded, possibly quantised to int8 → 100 GB at small recall cost."
+
+### [0:18–0:26] Step 3 — Reranking and generation
+
+> *Candidate:* "After retrieval — top-50 candidates. Cross-encoder reranker. Bi-encoder retrieval is cheap and coarse; cross-encoder takes (query, passage) as joint input with full attention, much higher precision but ~10× slower per scoring call. Production pattern is bi-encoder for retrieval (recall over millions), cross-encoder for reranking (precision over ~50). Output is top-K = 5-10 passages forwarded to generation.
+>
+> Generation — structured prompt with three parts: system role with grounding directive ('cite every claim with [doc-N]; refuse if passages don't support an answer'), passages with explicit labels, user query last. Citation enforcement is structural, not optional. Post-generation, a citation validator confirms every [doc-N] reference points to a real passage."
+
+> *Interviewer (probing):* "What if I told you the team is using OpenAI's API for generation. Anything you'd change?"
+
+> *Candidate:* "Short-term, fine — fastest path to a working product. Medium-term, the cost gap forces self-hosting. With vLLM-class serving plus continuous batching plus KV cache plus prefix caching for the shared system prompt, throughput per accelerator goes up ~5-10×, and per-request cost drops dramatically. The architectural moves are the same — the prompt structure, citation enforcement, refusal pattern — just the inference path differs."
+
+### [0:26–0:34] Step 4 — Serving and streaming
+
+> *Candidate:* "Latency budget for the 2-second response. Retrieval ~50ms, reranking ~200ms with batched cross-encoder, prefill ~200ms for 2.5K tokens, generation ~1500ms for 500 tokens streamed at ~300 tokens/sec via speculative decoding, network ~50ms.
+>
+> Streaming is non-negotiable at this scale. Time-to-first-token at ~450ms is the user-facing metric, not total latency. Server-sent events for the streaming path; UI renders the cited answer progressively.
+>
+> KV cache size for a 70B model — 80 layers × 64 heads × 128 dim × 3500 tokens × 2 (K+V) × 2 bytes = ~9 GB per request. At batch 8, ~73 GB of KV cache — close to a single H100's memory. Paged attention manages this efficiently.
+>
+> Fallback under load — route cheap queries to a smaller model with quality guardrail; serve cached answers with a 'served from cache' badge for repeated FAQ-style queries; refuse with 'service degraded' as the last resort."
+
+### [0:34–0:42] Step 5 — Evaluation
+
+> *Candidate:* "Offline-as-gate, online-as-decision — same as recsys. But the components matter here.
+>
+> Component-wise eval: retrieval recall@K against gold passages; faithfulness via per-claim entailment scoring (decompose answer into claims, check each claim is entailed by its cited passage); end-to-end answer quality via LLM-as-judge calibrated to a ~500-sample human gold set with Spearman ρ > 0.8.
+>
+> Online — thumbs up/down at scale plus ~100 sampled queries per week rated by humans on a 5-point scale. With σ ≈ 1, MDE 0.2 needs ~400 samples per arm at 80% power.
+>
+> Hallucination detection — runs on every shipped answer in real time. Per-claim entailment check; below threshold → withhold or annotate. ~50ms added to the response path."
+
+### [0:42–0:45] Step 6 — Monitor, wrap
+
+> *Candidate:* "Drift on retrieval recall (corpus shifts), on faithfulness (model drifts), on LLM-judge calibration (judge model is updated upstream). Re-fit the LLM-judge calibrator periodically. Re-fit the calibrator monthly even if no model changes — judge drift is real.
+>
+> Multi-tier — embedding refresh on doc updates, daily re-fit of the cross-encoder reranker if engagement signals are available, judge calibrator monthly. Shadow + canary + auto-rollback same as recsys.
+>
+> Two things I'd flag if we had more time. First, a confidence threshold on retrieval — if top-K passages all score below threshold, the system refuses rather than forcing the LLM to fabricate. Second, the cost / quality routing tier — ~80% of queries route to a small fast model, the hard 20% to the big model, with quality monitoring on both."
+
+> *Interviewer:* "Good. Any final thoughts?"
+
+> *Candidate:* "The L4 trap on this round is treating RAG as 'use a vector DB.' The thing that makes a real RAG system is the **discipline at every stage** — chunking, hybrid retrieval, cross-encoder reranking, structured prompts with citation enforcement, hallucination detection on every shipped answer, calibrated LLM-judge for eval. Each stage individually is undergrad-feasible; together they're the production stack."
+
+**End of mock round 2.**
+
+---
+
+## 6. The 10 L5 promote signals — across the entire course
+
+Distilled from every lesson. These are the things the interviewer is hoping you volunteer:
+
+1. **Layered metric tree, unprompted.** Business → product → ML, in the first three minutes.
+2. **Funnel architecture by minute six.** Retrieval / ranking separation, with reasoning about scale.
+3. **Calibration named.** Always. Whether for ranking, A/B test fusion, fraud cost-curve, ad auctions, or LLM-judge.
+4. **Training-serving skew named.** With a feature store as the cure.
+5. **Latency budget decomposed.** Numbers per component, not just a total.
+6. **Statistical power computed live.** $n = 16\sigma^2 / \delta^2$ in 30 seconds.
+7. **The feedback loop named.** Recsys-specific failure mode that L5 candidates volunteer; recsys feedback, fraud adversarial drift, LLM-judge drift.
+8. **The right loss for the problem.** Pointwise + pairwise auxiliary for ranking; focal loss for class imbalance; pinball for asymmetric regression; InfoNCE for joint embeddings.
+9. **A back-of-envelope number.** 800M minutes/day, 512 GB embedding store, $730K/year RAG cost, 9 GB KV cache. Compute one live.
+10. **Graceful degradation and rollback.** Auto-rollback in minutes, not the team-as-rollback-path.
+
+If you can produce 7+ of these unprompted in any 45-minute round, you're in L5 territory.
+
+---
+
+## 7. The 10 L4 ceilings — across the entire course
+
+The fastest ways to get capped at L4. Each one was the canonical mistake in some lesson; here they are consolidated:
+
+1. **Jump to model architecture** before defining the metric.
+2. **Single metric, no guardrails.** A win on CTR with a tank on retention is not a win.
+3. **Random train/test split** when temporal or spatial structure exists.
+4. **Use clicks (or whatever logs say) as truth** without flagging position bias.
+5. **No calibration.** Skipping it on rankers, ad auctions, LLM-judges, fraud thresholds — pick any.
+6. **No latency budget** in the serving discussion.
+7. **No feature store.** "Fetch from the database" online while training reads from a snapshot.
+8. **Ship on week 1** of an A/B test (novelty effect).
+9. **Trust the LLM-judge** without calibrating against humans.
+10. **Hand-wave monitoring.** "We'll monitor it" with no drift metrics, no retraining cadence, no rollback path.
+
+Read these slowly. Each one is recoverable if the interviewer probes — but only if you recognise it. The promote signals above only fire if the ceilings aren't hit first.
+
+---
+
+## 8. Cross-cutting consolidation quiz
+
+Ten questions that span multiple framework steps, designed to make you think across lessons rather than within one.
+
+<Quiz
+  lessonId="ai-for-engineering/ml-system-design/interview-readiness"
+  questions={[
+    {
+      id: "ir-q1",
+      prompt: "An interviewer asks: 'Why does calibration matter even when you're just ranking?' Strongest L5 answer:",
+      options: [
+        "Calibration is always needed.",
+        "Because (1) production rankers combine multi-task head outputs into a final score (geometric or arithmetic combination), and miscalibrated heads multiply incorrectly; (2) downstream A/B test interpretation depends on probabilities being comparable across model versions; (3) for ad auctions or fraud cost-curves, the absolute probability enters the decision math directly. AUC can be perfect while probabilities are wrong, because AUC is rank-invariant.",
+        "Calibration improves AUC.",
+        "Calibration is required by law.",
+      ],
+      correctIndex: 1,
+    },
+    {
+      id: "ir-q2",
+      prompt: "Why is training-serving skew the silent killer in production ML, and what's the structural cure?",
+      options: [
+        "Skew is just noise.",
+        "Features computed offline (batch ETL) and online (streaming aggregator) drift apart subtly — different window boundaries, late-arriving event handling, missing-value strategies — so the model trained offline sees a different feature distribution at serving time. Production AUC degrades by several points relative to offline for reasons that are hard to debug. The cure is a feature store enforcing one feature definition shared across both paths, with point-in-time historical reads for training.",
+        "Skew is a bug in the data lake.",
+        "Skew can be ignored if you retrain often.",
+      ],
+      correctIndex: 1,
+    },
+    {
+      id: "ir-q3",
+      prompt: "An A/B test runs for one week. Treatment shows +3% lift on the primary metric, p < 0.05. What is the L5 objection to shipping?",
+      options: [
+        "p < 0.05 is too lax.",
+        "One week is too short — recommendation / search / RAG model changes produce a novelty effect that spikes early-week metrics and decays. The honest decision rule runs for at least two complete weeks and reads the second-week steady state. For retention metrics, 30+ days. Holdback experiments (1% kept on the old model indefinitely) catch slow-burn regressions. Shipping on week 1 ships novelty, not signal.",
+        "More users are needed.",
+        "The lift is too small.",
+      ],
+      correctIndex: 1,
+    },
+    {
+      id: "ir-q4",
+      prompt: "You have ~200ms p99 budget. The ranker's forward pass is 80ms. The team wants to halve total latency. Where is the highest-leverage improvement, given a typical recsys serving stack?",
+      options: [
+        "Halve the ranker.",
+        "The tail is usually dominated by feature fetch over ~100 candidates (often 25-50ms p99 with bounded fan-out, more without). Adding per-item caching with bounded parallelism and shrinking the feature footprint per candidate often closes more than half the gap without touching the ranker. The model is rarely the bottleneck after the first round of optimisation; feature fetch and ANN tail are.",
+        "Increase the number of nodes.",
+        "Use a smaller model.",
+      ],
+      correctIndex: 1,
+    },
+    {
+      id: "ir-q5",
+      prompt: "PSI on a critical feature crosses 0.25 in one day. Retraining is currently weekly. What's the production-grade response?",
+      options: [
+        "Wait for the weekly retrain.",
+        "Auto-trigger retraining immediately. PSI greater than 0.25 indicates significant drift; calendar-cadence retraining is a default for stochastic drift, but adversarial drift (fraud) or rapid-shift drift (a viral trend, a road incident, a corpus update) demands event-driven retraining. The drift detector is the trigger; the retraining pipeline runs on demand. Shadow + canary still apply on the way to 100%.",
+        "Disable the feature.",
+        "Increase the threshold.",
+      ],
+      correctIndex: 1,
+    },
+    {
+      id: "ir-q6",
+      prompt: "In a recsys A/B test, treatment users watch different videos, which changes which videos trend, which affects what control users see. What is this and what's the mitigation?",
+      options: [
+        "Position bias.",
+        "A SUTVA violation (network effect) — the stable unit treatment value assumption fails because treatment users affect control outcomes via shared catalogues, trending lists, and creator-side dynamics. Mitigations: cluster-randomised experiments (geographic regions, social clusters); switchback designs (alternate treatment by time block); marketplace-aware analyses that explicitly model creator-side spillover.",
+        "Selection bias.",
+        "It's not a real problem.",
+      ],
+      correctIndex: 1,
+    },
+    {
+      id: "ir-q7",
+      prompt: "For a fraud detector at 0.1% prevalence, an interviewer asks 'how do you set the decision threshold?' Strongest L5 answer:",
+      options: [
+        "Pick the threshold that maximises accuracy.",
+        "Minimise expected cost: FPR × c_FP + FNR × c_FN, where c_FP is the customer-trust cost of blocking a legitimate transaction and c_FN is the average fraud loss. The cost ratio is typically 5-50× (FN much more expensive than FP), shifting per segment (high-value transactions tolerate more false positives because fraud cost scales with transaction value). This is a product decision parameterised by cost weights, not an accuracy hyperparameter.",
+        "Use the elbow of the ROC curve.",
+        "Threshold at 0.5.",
+      ],
+      correctIndex: 1,
+    },
+    {
+      id: "ir-q8",
+      prompt: "You are designing a RAG system. The team proposes 'use OpenAI and a vector DB.' What's the strongest single L5 push-back?",
+      options: [
+        "OpenAI is too expensive.",
+        "That's two components, not a system. A real RAG system requires: (1) a deliberate chunking strategy with overlap; (2) hybrid retrieval (BM25 + dense) for rare entities; (3) a cross-encoder reranker on top of bi-encoder retrieval; (4) a structured prompt with grounding directives, citation tags, and refusal pattern; (5) hallucination detection on every shipped answer; (6) component-wise eval with calibrated LLM-as-judge. Skipping any of these produces fluent answers that aren't grounded — the canonical L4 ceiling on RAG rounds.",
+        "Build it from scratch.",
+        "Use Pinecone instead.",
+      ],
+      correctIndex: 1,
+    },
+    {
+      id: "ir-q9",
+      prompt: "An interviewer asks: 'You're doing ETA prediction. Why not just MSE?' Strongest L5 answer:",
+      options: [
+        "MSE is fine.",
+        "Under-prediction is worse than over-prediction for ride-hailing — if displayed ETA is 8 minutes and actual is 14, the rider is angry; if displayed is 14 and actual is 11, the rider is mildly happy. MSE penalises both directions equally, which is the wrong product behaviour. Pinball loss at τ=0.9 penalises under-prediction 9× more than over-prediction, training the P90 head to over-shoot in the right direction. Combined with a P50 head, the UI shows 'typically 12 min, up to 18 if traffic.'",
+        "MSE doesn't work for time prediction.",
+        "MSE is too sensitive to outliers.",
+      ],
+      correctIndex: 1,
+    },
+    {
+      id: "ir-q10",
+      prompt: "Across all six interview prompts in this course (recsys, RAG, ad CTR, fraud, ETA, multimodal), which framework step is the most universally underweighted by L4 candidates?",
+      options: [
+        "The model architecture.",
+        "Step 5 — Deploy and serve. L4 candidates spend disproportionate time on model architecture (which is the easiest step to talk about) and treat serving as 'we deploy it' with no decomposed latency budget, no feature store, no caching strategy, no graceful degradation, and no capacity calculation. The L5 promote signal here is decomposing the latency budget per component and naming the feature store as the cure for training-serving skew — both are nearly universal across all six prompts.",
+        "Step 1 — Define the problem.",
+        "Step 6 — Monitor and maintain.",
+      ],
+      correctIndex: 1,
+    },
+  ]}
+/>
+
+---
+
+## 9. The day-of playbook
+
+Practical advice for the morning of the actual interview.
+
+### Before the round
+
+- **Sleep.** Practitioner-grade answers come from rested working memory, not from re-reading material at 2am.
+- **Re-read this lesson and the framework cheat sheet.** Read mock round 1 once; do not memorise it. The point is to internalise the rhythm, not the script.
+- **Have one BoE number ready.** Pick any of the course's anchor numbers — 800M minutes/day, 512 GB embedding store, 9 GB KV cache — and have one ready to drop unprompted.
+
+### In the round
+
+- **First 90 seconds: clarify, don't design.** Surface, scale, latency, constraints. Then write the goal sentence on the whiteboard.
+- **Every step should produce something on the board.** A diagram, a table, a number. If five minutes have passed without writing something, you're rambling.
+- **When the interviewer probes, absorb don't pivot.** "Good question — that's covered by [primitive from a later step]; let me come back to it when we reach Step N." Or back-fill if the question is genuinely earlier than you got to.
+- **Watch the clock.** Pull out your phone or a watch and check at minute 8 (Step 1 done), 18 (Steps 1-2 done), 26 (Steps 1-3 done), 34 (Steps 1-4 done), 42 (Steps 1-5 done), 45 (wrap).
+- **Volunteer one number every step.** The 1% lift = 800M minutes/day kind of number. It signals practitioner maturity faster than any architectural detail.
+- **End with two things you'd cover with more time.** This is L5. It says you have unfinished depth and you know what it is.
+
+### When you get stuck
+
+- **Go back to the framework.** "Where in the 6 steps am I?" The structure unsticks you.
+- **Reach for a flagship analogy.** "This is similar to YouTube recsys at the retrieval layer, but with [wrinkle]."
+- **Volunteer the L5 signal you haven't said yet.** Calibration. Feature store. Latency budget. Statistical power. Feedback loop. One of these probably hasn't been said yet; saying it un-sticks the round.
+
+### After the round
+
+- **Write down what you said within 24 hours.** Patterns repeat across companies; your second round goes better when you remember what worked in the first.
+
+---
+
+## 10. What's next
+
+You have the course content. You have the mock-round muscle memory. You have the consolidated promote and ceiling signals. You have a day-of playbook.
+
+The remaining work is **practice**. Take a prompt you have not seen — "design Spotify playlist generation," "design a copilot for software engineers," "design content moderation at scale" — and walk the framework against it for 45 minutes, on a real whiteboard or shared doc, with a timer. The framework was built to be applied to prompts you have not seen. Use it. The interview is the third or fourth time you will have done this; the round itself becomes muscle memory.
+
+Then the next thread is the actual interview — which is something this course cannot rehearse for you, but for which it has prepared you as well as a course can.
+
+Good luck.

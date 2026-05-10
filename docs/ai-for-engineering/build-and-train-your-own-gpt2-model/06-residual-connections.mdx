@@ -10,13 +10,289 @@ tutor_concepts:
   - "enabling deeper network training"
   - "gradient flow improvement"
   - "layer output stabilization"
+mvp_status: drafted
 ---
 
-<LessonHero course="Build and Train Your Own GPT-2" number="6" title="Residual connections" subtitle="Skip connections that make training deep networks stable" />
+<LessonHero course="Build and Train Your Own GPT-2" number="6" title="Residual connections" subtitle="The gradient highway that makes 12-deep transformers actually train" />
 
-## Overview
+---
 
-This lesson describes residual (skip) connections and how they help stabilize and deepen transformer networks.
+## Where we are in the build
+
+Lesson 5 left you with a `MultiHeadAttention` module that's correct (causal) but lonely — it lives at the top level of the model, not inside any wrapping structure. Real transformers stack twelve of these (in GPT-2 small) on top of each other. The naive way to do that is `out = attn_12(attn_11(...attn_1(x)...))`. That is the *one thing you must not do*.
+
+Twelve composed attention layers form a deep, narrow chain. Gradients backpropagating from the loss have to traverse twelve sequential Jacobians. Each Jacobian is a learned matrix near initialisation — small singular values multiply into smaller ones, and by the time the gradient reaches `attn_1`, it's numerical noise. Same vanishing-gradient story we saw with RNNs in Lesson 1, only this time the depth is layer-depth instead of time-depth.
+
+The fix is the [ResNet trick](https://arxiv.org/abs/1512.03385) (He et al. 2015), borrowed by every modern transformer: **wrap each attention layer in a residual sum**. The output of block $\ell$ is the input *plus* what the attention layer produced, not just what it produced.
+
+Today's lesson creates `blocks.py` and adds a minimal `Block` class with that residual sum. It still doesn't have LayerNorm (Lesson 7) or the FFN (Lesson 8) — we'll add those one at a time so you can see what each piece buys you.
+
+<div className="not-prose my-8 rounded-2xl border-2 border-emerald-400 bg-gradient-to-br from-emerald-50 to-teal-50 px-5 py-4 dark:border-emerald-700 dark:from-emerald-950/40 dark:to-teal-950/40">
+  <p className="m-0 text-xs font-bold uppercase tracking-widest text-emerald-800 dark:text-emerald-200">What you're building</p>
+  <p className="mt-2 mb-1 text-base font-bold text-slate-900 dark:text-slate-100"><code>blocks.py</code> — Block (attention + residual)</p>
+  <p className="mt-0 mb-0 text-sm text-slate-700 dark:text-slate-300">Input: (B, T, n_embd) → Output: (B, T, n_embd). The unit that gets stacked n_layer times. Today's version: <code>x + attn(x)</code>. Lessons 7-8 will grow this into the real GPT-2 block.</p>
+</div>
 
 <ResidualConnectionFlowViz />
 
+---
+
+## The naive solution — sequential composition
+
+Stack the attention layers in a `nn.Sequential` and call it a day:
+
+```python
+import torch
+import torch.nn as nn
+
+from attention import MultiHeadAttention
+from config import GPTConfig
+
+config = GPTConfig(n_layer=12, block_size=64)
+plain_stack = nn.Sequential(*[MultiHeadAttention(config) for _ in range(12)])
+
+x = torch.randn(4, 32, config.n_embd, requires_grad=True)
+y = plain_stack(x)
+
+# Pretend we have a loss and backprop.
+loss = y.sum()
+loss.backward()
+
+# Look at the gradient norm at each layer's parameters.
+for i, layer in enumerate(plain_stack):
+    grad_norm = layer.qkv.weight.grad.norm().item()
+    print(f"layer {i}: grad norm = {grad_norm:.6f}")
+```
+
+What you see: gradient norms at the **late** layers (layer 11) are reasonable; gradient norms at the **early** layers (layer 0) are orders of magnitude smaller. By the time the optimiser sees layer 0, the update is too tiny to matter — early layers stop learning. With deeper stacks, this gets exponentially worse. Even at 12 layers, training won't converge.
+
+The mathematical reason: the gradient of the loss with respect to layer-0 weights factors as a product of twelve learned Jacobians, $\prod_{\ell=1}^{12} J_\ell$. Each $J_\ell$ has spectral radius around $0.5$–$1.0$ early in training, so the product shrinks. The deeper the stack, the deader the gradient.
+
+This is exactly the trap that kept neural networks shallow for two decades, until residual connections cracked it open in 2015.
+
+---
+
+## The motivated solution — add a skip connection
+
+Instead of $y = f(x)$, compute:
+
+$$
+y \;=\; x \;+\; f(x)
+$$
+
+The output is the input plus a "delta" the attention layer learned. Now compute the gradient:
+
+$$
+\frac{\partial y}{\partial x} \;=\; I \;+\; \frac{\partial f}{\partial x}
+$$
+
+The crucial term is the identity $I$. **Even if $\partial f / \partial x$ collapses to zero, the gradient through the residual path is still $1$.** The gradient cannot vanish to zero because there's a direct, unmediated copy of $x$ flowing forward (and a direct unit gradient flowing back).
+
+Stack twelve of these:
+
+$$
+\frac{\partial y_{12}}{\partial x_0} \;=\; \prod_{\ell=1}^{12} \!\left( I + \frac{\partial f_\ell}{\partial x_{\ell - 1}} \right)
+$$
+
+Expand the product and you get sums of paths — the gradient is the sum of contributions from "go through 0 layers", "go through 1 layer", ..., "go through 12 layers". The "go through 0 layers" path is exactly $I$. **There's always a direct gradient highway from the loss back to the very first token embedding**, no matter how deep the model gets. Training ResNet-152 (152 layers) and GPT-3 (96 layers) is only possible because of this.
+
+### Code: start `blocks.py`
+
+```python
+# nanogpt-from-scratch/blocks.py  (Lesson 6 — minimal Block)
+
+import torch
+import torch.nn as nn
+
+from attention import MultiHeadAttention
+from config import GPTConfig
+
+
+class Block(nn.Module):
+    """One transformer block. (B, T, n_embd) -> (B, T, n_embd).
+
+    Lesson 6: x = x + attn(x). Just a skip connection around attention.
+    Lessons 7 and 8 will add pre-LayerNorm and the feed-forward MLP.
+    """
+
+    def __init__(self, config: GPTConfig):
+        super().__init__()
+        self.attn = MultiHeadAttention(config)
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        x = x + self.attn(x)
+        return x
+```
+
+This is intentionally minimal. The full GPT-2 block — what Lesson 8 ends with — will look like:
+
+```python
+def forward(self, x):
+    x = x + self.attn(self.ln1(x))     # added by L7
+    x = x + self.mlp(self.ln2(x))      # added by L8
+    return x
+```
+
+…the same residual pattern, applied twice (around attention and around the MLP), with a LayerNorm in front of each sub-layer. The full block has **two** skip connections, not one. Same gradient-highway logic; we just give it twice the bandwidth.
+
+A subtle point about the order: GPT-2 uses **pre-LN** (`x + attn(LN(x))`), whereas the original Transformer used **post-LN** (`LN(x + attn(x))`). With pre-LN, the residual path stays an exact identity — gradients flow back unchanged. With post-LN, the LayerNorm sits *on* the residual path and rescales gradients as they flow back, which makes very deep models harder to train. Lesson 7 picks this up properly; for now, just notice that the *position* of the LN relative to the addition matters.
+
+<AnimationPlaceholder
+  name="gradient-flow-animation"
+  description="A 12-block transformer with a slider over training step. Plot the gradient norm at each layer's W_Q. Toggle 'with residuals' vs 'no residuals' to see the deep layers' gradients vanish without skips and stay healthy with them."
+/>
+
+---
+
+## Math by typing it
+
+The chain rule on the residual:
+
+$$
+y = x + f(x) \;\;\Longrightarrow\;\; \frac{\partial y}{\partial x} = I + \frac{\partial f}{\partial x}
+$$
+
+Through $L$ stacked residual blocks $y_\ell = y_{\ell - 1} + f_\ell(y_{\ell - 1})$:
+
+$$
+\frac{\partial y_L}{\partial y_0} \;=\; \prod_{\ell = 1}^{L} \!\left( I + \frac{\partial f_\ell}{\partial y_{\ell - 1}} \right)
+$$
+
+Expanding the product (binomial-style, but with non-commuting matrices):
+
+$$
+\frac{\partial y_L}{\partial y_0} \;=\; I \;+\; \sum_\ell \frac{\partial f_\ell}{\partial y_{\ell-1}} \;+\; \sum_{\ell < m} \frac{\partial f_m}{\partial y_{m-1}} \frac{\partial f_\ell}{\partial y_{\ell-1}} \;+\; \ldots
+$$
+
+The constant $I$ term is the "no-layers" path — it never goes away, no matter how deep the stack. **The lower-order terms (paths that traverse few layers) dominate during early training**, and they all carry healthy gradient. As training progresses and individual layers grow larger Jacobians, the deeper paths start contributing, but you never lose the unconditional unit gradient through the skip.
+
+Residuals also do **not** add parameters. Adding `x + attn(x)` is a pointwise sum — zero new weights, zero new biases. The capacity of the model is unchanged; only the geometry of the loss landscape gets nicer.
+
+---
+
+## Run it on your laptop
+
+<div className="not-prose my-6 rounded-xl border-l-4 border-sky-500 bg-sky-50/70 py-3 pl-4 pr-3 dark:bg-sky-950/25">
+  <p className="m-0 text-sm font-semibold text-sky-900 dark:text-sky-200">Your task</p>
+  <p className="mt-2 mb-0 text-sm text-slate-800 dark:text-slate-200">
+    Create <code>blocks.py</code> with the minimal <code>Block</code> class. Then run the gradient-flow comparison below — it should show that gradients at the early layers are roughly an order of magnitude healthier <em>with</em> residuals than without.
+  </p>
+</div>
+
+```python
+import torch
+import torch.nn as nn
+
+from config import GPTConfig
+from attention import MultiHeadAttention
+from blocks import Block
+
+config = GPTConfig(n_layer=12, block_size=32, n_embd=128, n_head=4)
+
+
+def grad_norms(model, x):
+    y = model(x)
+    y.sum().backward()
+    return [m.attn.qkv.weight.grad.norm().item() if hasattr(m, "attn")
+            else m.qkv.weight.grad.norm().item()
+            for m in model]
+
+
+x = torch.randn(2, 16, config.n_embd, requires_grad=True)
+
+# Without residuals: bare attention layers, sequential.
+plain = nn.Sequential(*[MultiHeadAttention(config) for _ in range(12)])
+plain_norms = grad_norms(plain, x)
+
+# With residuals: Block layers.
+x.grad = None
+blocks = nn.Sequential(*[Block(config) for _ in range(12)])
+block_norms = grad_norms(blocks, x.clone().requires_grad_(True))
+
+print("layer   plain         residual   ratio")
+for i, (a, b) in enumerate(zip(plain_norms, block_norms)):
+    print(f"  {i:2d}    {a:8.5f}     {b:8.5f}   {b/a if a > 0 else float('inf'):.2f}x")
+```
+
+You should see the `plain` numbers crash by 1-3 orders of magnitude as you walk back from layer 11 → layer 0, while the `residual` numbers stay roughly flat. That's the gradient highway in action.
+
+<PlaygroundPlaceholder
+  name="residual-gradient-flow"
+  description="In-browser cell: slider over n_layer in [4, 24]; live bar chart of gradient norm at each layer; toggle residuals on/off to watch the early-layer gradient go from healthy to dead."
+/>
+
+---
+
+## What you can now do
+
+- Wrap any sub-layer in a residual connection and explain the additive structure $y = x + f(x)$.
+- Justify why deep transformers (or ResNets) need skip connections: the unconditional identity in $\partial y / \partial x$ keeps the gradient alive at depth.
+- Recognise that residuals add zero parameters — they only reshape the loss landscape, they don't grow the model.
+- Anticipate the role of LayerNorm in Lesson 7 and why GPT-2's **pre-LN** ordering matters for keeping the residual path clean.
+
+---
+
+## Quiz
+
+<Quiz
+  lessonId="ai-for-engineering/build-and-train-your-own-gpt2-model/residual-connections"
+  questions={[
+    {
+      id: "gpt2-l6-q1",
+      prompt: "Why are residual connections critical to training a 12-layer transformer?",
+      options: [
+        "They double the model's capacity",
+        "Because backprop through L composed sub-layers multiplies L Jacobians; with no skip, that product collapses to ~0 at the early layers and they stop learning. The residual y = x + f(x) makes ∂y/∂x = I + ∂f/∂x, so even if f's Jacobian is zero, the gradient through the identity path is 1 — there's always a direct gradient highway from the loss back to layer 0",
+        "They make attention faster",
+        "They add positional information",
+      ],
+      correctIndex: 1,
+    },
+    {
+      id: "gpt2-l6-q2",
+      prompt: "How many extra parameters does adding a residual connection introduce?",
+      options: [
+        "One scalar α (the residual weight)",
+        "Zero — it's a pointwise addition. The capacity of the model is unchanged; only the loss landscape becomes friendlier to optimise. Compare to the LayerNorm and MLP we'll add next, both of which DO introduce parameters",
+        "n_embd extra parameters per layer",
+        "It depends on the dropout rate",
+      ],
+      correctIndex: 1,
+    },
+    {
+      id: "gpt2-l6-q3",
+      prompt: "GPT-2 uses pre-LayerNorm — `x + attn(LN(x))` — rather than the post-LN of the original Transformer — `LN(x + attn(x))`. Why does this matter for training stability?",
+      options: [
+        "Pre-LN is faster to compute",
+        "With pre-LN the residual path stays an exact identity x → x; gradients flow back unchanged through the skip. With post-LN, LayerNorm sits *on* the residual path and rescales gradients as they flow back, which makes very deep models harder to train. The original Transformer used post-LN; GPT-2, GPT-3, and most subsequent LLMs switched to pre-LN",
+        "Pre-LN uses fewer parameters",
+        "Post-LN is incompatible with multi-head attention",
+      ],
+      correctIndex: 1,
+    },
+    {
+      id: "gpt2-l6-q4",
+      prompt: "You add residuals to a transformer that was failing to train, and now training is stable but the loss plateaus high — much higher than expected. What's the most likely missing piece, given what we've covered so far?",
+      options: [
+        "More heads",
+        "Residuals fix gradient flow but don't normalise activations — without LayerNorm (Lesson 7), the magnitudes of x at deeper layers can grow unboundedly because each block keeps adding to the residual stream. Activations explode, attention scores get extreme, training plateaus or diverges. Residuals are necessary but not sufficient",
+        "A bigger learning rate",
+        "Smaller batch size",
+      ],
+      correctIndex: 1,
+    },
+  ]}
+/>
+
+---
+
+## What's next
+
+The residual highway lets gradients survive depth, but it does nothing about activation *magnitudes*. Each block adds to the residual stream, and without normalisation, the values $x_\ell$ at deep layers grow unboundedly — attention scores get huge, softmax saturates, training diverges. **Lesson 7** opens up `blocks.py` again and adds **LayerNorm** in pre-LN ordering — the second piece of GPT-2's training-stability cocktail.
+
+---
+
+<div className="not-prose mt-10 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-6 dark:border-slate-700">
+  <a href="./causal-masking" className="text-sm font-medium text-slate-600 no-underline hover:text-emerald-700 hover:underline dark:text-slate-400 dark:hover:text-emerald-400">← Lesson 5 · Causal masking</a>
+  <a href="./layer-normalization" className="text-sm font-semibold text-emerald-700 no-underline hover:underline dark:text-emerald-400">Lesson 7 · LayerNorm →</a>
+</div>

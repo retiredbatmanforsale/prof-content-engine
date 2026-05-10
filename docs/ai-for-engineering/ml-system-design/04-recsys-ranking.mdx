@@ -1,0 +1,284 @@
+---
+hide_title: true
+sidebar_label: '4 · Ranking'
+title: 'Lesson 4 — Ranking'
+description: >-
+  Take ~100 retrieved candidates and pick the best 10 with a deep ranker.
+  Wide-and-deep architecture, multi-task heads (CTR, watch time, like rate),
+  the calibration step that L4 candidates skip, and pointwise vs pairwise
+  vs listwise loss design.
+mvp_status: drafted
+tutor_topic: "Deep ranking models, multi-task learning, calibration for recsys"
+tutor_concepts: []
+---
+
+<LessonHero
+  number="4"
+  title="Ranking"
+  subtitle="Retrieval gave you 100 plausible candidates. The ranker's job is to pick the best 10 — with deep cross-feature modelling, multi-task heads, and calibration. The calibration step is what most candidates skip and most L4 ceilings get set."
+  course="ML System Design"
+/>
+
+<InterviewerSignal
+  level="L4"
+  message="Proposes a deep ranker but never mentions calibration. Picks pointwise binary cross-entropy without comparing alternatives. Forgets that ranker outputs feed downstream A/B tests, where probabilities have to mean something."
+/>
+<InterviewerSignal
+  level="L5"
+  message="Distinguishes pointwise vs pairwise vs listwise loss with a one-line reasoning. Volunteers calibration via Platt scaling or isotonic regression, and explains why uncalibrated logits break online auctions and A/B test interpretation. Proposes multi-task heads with a weighted combination tuned online."
+/>
+
+---
+
+## 1. Where we are in the framework
+
+Still inside **Step 3 of the 6-step framework** — model architecture — now applied to the **ranking** layer. Time-budget: **~8 minutes**.
+
+By the end you should have:
+
+- A **wide-and-deep style architecture** drawn, with feature inputs, embedding lookups, dense layers, and **multi-task heads**
+- A **loss design** with a one-line justification (pointwise / pairwise / listwise)
+- An **explicit calibration step** between the model output and the production score
+- A **score combination rule** that fuses the multi-task heads into the final ranking score
+
+Retrieval (Lesson 3) optimised recall over 1B items. Ranking optimises **precision** over the ~100 candidates retrieval surfaced. The shape of the model is completely different — that's the point.
+
+---
+
+## 2. The problem at this layer
+
+Input: ~100 candidate videos from retrieval, plus the user, plus context. Output: an ordered list, top-10 of which goes into the slate after re-ranking.
+
+The constraint: **the ranker can be expensive**, because it only runs over 100 items, not 1B. A 12-layer transformer with cross-features that would have been impossible in retrieval is now plausible in ranking. The latency budget for the ranker is roughly **80ms** of the total 200ms — about 8× the retrieval budget.
+
+The metric is **predicted-watch-time NDCG** offline, **CTR / watch time / completion rate / day-7 retention** online — the multi-objective stack from Lesson 1. The ranker has to optimise the metric tree, not a single number.
+
+---
+
+<SplitCompare>
+<SplitLeft title="Naive">
+
+- Logistic regression on hand-engineered features
+- Single click-probability head — optimises a noisy proxy
+- No calibration — absolute probabilities are wrong
+- No reasoning about loss design (pointwise vs pairwise vs listwise)
+
+</SplitLeft>
+<SplitRight title="Motivated">
+
+- **Wide-and-deep / DLRM** with multi-task heads (CTR, watch time, completion, like)
+- **Calibration via Platt scaling or isotonic** — uncalibrated probabilities break multi-task fusion
+- **Pointwise loss** as primary + **pairwise auxiliary** (listwise too expensive at scale)
+- Combination weights of multi-task heads tuned via online A/B tests, not learned
+
+</SplitRight>
+</SplitCompare>
+
+## 3. The naive solution — and why it breaks
+
+The naive answer is one or two sentences:
+
+> "I'll train a logistic regression on hand-engineered features to predict click probability, and rank the candidates by predicted probability."
+
+Three failures.
+
+### 3.1 Hand-engineered features lose to learned crosses
+
+Ranking quality depends overwhelmingly on **feature crosses** — interactions between user-side and item-side features. "User likes hip-hop" × "video is hip-hop" is more informative than either feature alone. Hand-engineering all useful crosses for 100M users and 1B items is impossible. Production rankers learn the crosses via factorisation machines or deep architectures.
+
+### 3.2 Single objective ≠ the metric tree
+
+A binary click model predicts click probability. The metric tree from Lesson 1 said the system optimises **watch time** primarily, with click as a calibration signal. Optimising click probability alone reproduces the L4-ceiling failure of recommending clickbait that gets clicked but unwatched.
+
+### 3.3 Uncalibrated outputs break the rest of the system
+
+Logistic regression trained on **biased samples** (per Lesson 2's IPW + sampled negatives) produces logits that **do not match true click probabilities**. The model can rank correctly while being miscalibrated. Why does that matter?
+
+- **Online auctions** (e.g. ads) need predicted probabilities, not just rankings. An uncalibrated 0.5 from one model and 0.5 from another do not mean the same thing.
+- **A/B test interpretation** depends on probabilities being comparable across model versions
+- **Multi-task fusion** (combining `predicted_watch_time × predicted_click_rate × predicted_like_rate` into one score) is broken if any term is miscalibrated — the product term dominates incorrectly
+
+This is the calibration trap. The model's AUC can be excellent and its **probabilities still be wrong**, because AUC is rank-invariant. Calibrate explicitly or pay the cost downstream.
+
+---
+
+## 4. The motivated solution
+
+### 4.1 Wide-and-deep architecture
+
+The canonical ranker shape, established by Cheng et al. (2016) for Google Play and adapted everywhere since:
+
+- **Wide part** — a linear model over a small set of **manually crossed** features (e.g. `user_country × video_country`, `user_topic × video_topic`). Captures memorisation: "users who watched X also watched Y."
+- **Deep part** — embeddings for high-cardinality categorical features (user ID, video ID, channel ID, topic ID) concatenated with dense numerical features, fed through 3–6 fully-connected layers with ReLU. Captures generalisation: "users like this *kind* of video."
+- **Joint training** — a single loss back-propagates through both arms; the final logit is the sum.
+
+A modern variant — **DLRM** (Naumov et al., 2019, Facebook) — replaces the wide part with **factorisation-machine-style explicit pairwise feature interactions** before the dense layers. Both architectures are correct interview answers; pick one and defend it.
+
+### 4.2 Multi-task heads
+
+A single head predicting one metric is the L4 mistake. A modern ranker has **multiple heads sharing a common backbone**:
+
+| Head | Output | Loss | Role |
+|---|---|---|---|
+| **Watch time** | $\hat{t} \in [0, T_{\max}]$ | quantile or log-MSE regression | Primary objective |
+| **Click** | $\hat{p}_c \in [0, 1]$ | BCE | Calibration head + secondary signal |
+| **Completion** | $\hat{p}_{\text{comp}} \in [0, 1]$ | BCE | Quality calibration |
+| **Like** | $\hat{p}_l \in [0, 1]$ | BCE | Sparse explicit feedback |
+| **Long-watch** (≥30s) | $\hat{p}_{\text{lw}} \in [0, 1]$ | BCE | Anti-clickbait calibration |
+
+The heads share representations (the backbone learns user / item / context features once) but specialise on the final layer. The combined ranking score is a weighted geometric or arithmetic combination:
+
+$$
+\text{score} = \hat{t}^{\alpha} \cdot \hat{p}_c^{\beta} \cdot \hat{p}_{\text{comp}}^{\gamma} \cdot \hat{p}_l^{\delta}
+$$
+
+The exponents $\alpha, \beta, \gamma, \delta$ are **not learned**. They are tuned via **online A/B tests** — Lesson 6 covers the experimentation that finds the right combination. This is a structural insight: the model learns predictions; the **weighting of those predictions is a product decision**, ramped via online experiments.
+
+<RankerArchitecture />
+
+### 4.3 Calibration — the step most candidates skip
+
+The model's output probabilities are wrong. They rank correctly but the absolute values are off, because:
+
+- The training set has **non-natural negative sampling** (per Lesson 2) — popular items are over-represented in negatives
+- **Class imbalance** during training shifts logits
+- **Distillation** or label smoothing introduces additional miscalibration
+
+The fix is a post-hoc calibration step on a held-out set:
+
+- **Platt scaling** — fit a single sigmoid $\sigma(a \cdot \hat{p} + b)$ that maps raw model probabilities to calibrated ones; minimal data, parametric
+- **Isotonic regression** — fit a non-decreasing step function from raw to calibrated; needs more data, non-parametric, more flexible
+
+You measure calibration with a **reliability diagram** (predicted bin vs observed empirical rate) and the **expected calibration error**:
+
+$$
+\text{ECE} = \sum_{m=1}^M \frac{|B_m|}{n} \left| \text{acc}(B_m) - \text{conf}(B_m) \right|
+$$
+
+where $B_m$ is the $m$-th bin, $\text{acc}(B_m)$ is the empirical click rate in that bin, and $\text{conf}(B_m)$ is the average predicted probability. ECE = 0 means perfect calibration.
+
+A production ranker re-fits its calibrator **every retrain**. Calibration drifts as the population shifts (Lesson 7).
+
+### 4.4 Loss design — pointwise vs pairwise vs listwise
+
+Three loss families, in order of complexity:
+
+- **Pointwise** — treat each (user, item) pair independently. Loss is BCE for binary heads, MSE / quantile for regression. Easiest to implement, easiest to train on logged data, but **loses ranking-specific signal** (it doesn't know that examples within a query are competing).
+- **Pairwise** — for each (user, query) pair, sample positive and negative items and minimise a hinge or BCE-style loss on the score difference. Bradley-Terry models, RankNet. Captures relative ordering directly.
+- **Listwise** — optimise a ranking metric (NDCG, MAP) directly. LambdaMART, ListNet. Hard to optimise (NDCG is non-differentiable; LambdaMART uses gradients of swap-deltas), but most aligned with the actual objective.
+
+Most production rankers run **pointwise as the primary loss** (it scales) plus **a pairwise auxiliary** (it nudges the model toward correct relative ordering). Listwise is rare in production except in search-ranking systems.
+
+The interview-grade answer: "Pointwise multi-task with a pairwise auxiliary; listwise is too expensive at this scale."
+
+---
+
+## 5. Back-of-envelope math
+
+### 5.1 Ranker compute budget
+
+Latency budget for the ranker is ~80ms. With 100 candidates and a 4-layer MLP at $d = 512$, each forward pass is roughly 1ms on a GPU — 100ms total without batching, **8ms with proper batched inference** (one batched forward over the 100 candidates). That fits.
+
+If the architecture grows to a 12-layer transformer over user history (~50 items per user) ranking 100 candidates, you are looking at roughly 200ms per request — over budget. Production teams use this as the forcing function: distillation to a smaller student model, or a **two-stage ranker** (cheap ranker for 100→30, expensive ranker for 30→10).
+
+### 5.2 Calibration sample size
+
+Platt scaling fits 2 parameters; a few thousand samples is enough. Isotonic regression fits a step function; tens of thousands of samples are typical. A common production setup: re-fit the calibrator weekly on a fresh held-out slice of logged data — 50K to 500K samples — alongside the model retraining cadence (Lesson 7).
+
+### 5.3 Multi-task fusion math
+
+For the score combination $\text{score} = \hat{t}^\alpha \cdot \hat{p}_c^\beta$, taking logs:
+
+$$
+\log \text{score} = \alpha \log \hat{t} + \beta \log \hat{p}_c
+$$
+
+So tuning $(\alpha, \beta)$ is **linearly searchable in log-space**. A grid sweep with online A/B tests — say, 5 settings of $\alpha$ × 5 settings of $\beta$ run as a 5×5 factorial — converges in a few weeks. This is why **Lesson 6 (A/B testing) is load-bearing for this lesson** — without rigorous online tuning, the multi-task fusion is broken.
+
+<RankerMini />
+
+---
+
+## 6. What the interviewer is actually grading
+
+By minute 32 — the rough end of Step 3 (combined retrieval + ranking) — the interviewer is checking whether you can hold the difference between the two stages in your head.
+
+- **Did you propose wide-and-deep, DLRM, or an equivalent named architecture?** "A neural network ranker" is L4 ceiling.
+- **Did you propose multi-task heads?** Single-objective is the canonical L4 mistake.
+- **Did you mention calibration unprompted?** This is the single fastest L5 promote signal in this round. Most candidates forget it.
+- **Did you name a calibration method?** Platt or isotonic, with a one-liner about when to pick each.
+- **Did you discuss loss design?** Pointwise / pairwise / listwise with reasoning.
+- **Did you tie multi-task fusion back to A/B testing?** "We tune the combination weights online" is the L5 closing move.
+
+Failure modes to avoid:
+
+- **Skipping calibration.** Your AUC can be perfect and your probabilities can still be wrong. If you treat ranking as pure ordering, downstream systems break in subtle ways.
+- **Single objective.** Even at L4, propose at least two heads.
+- **Treating ranking as scaled-up retrieval.** They are different shapes of model. The dot-product two-tower from Lesson 3 is *deliberately* incapable of doing what the ranker does — and vice versa.
+- **Forgetting the 100→10 narrowing.** Ranking outputs ~10 final items; the rest of the slate (re-ranking) is a separate set-level step covered in Lesson 4 of the framework, fused with diversity / freshness rules at production time.
+
+---
+
+## 7. Quiz
+
+<Quiz
+  lessonId="ai-for-engineering/ml-system-design/recsys-ranking"
+  questions={[
+    {
+      id: "ranking-q1",
+      prompt: "A team's ranker has excellent offline AUC. Online, the predicted click probabilities are systematically too high — when the model says 0.5, the empirical click rate is 0.3. Predicted-watch-time × predicted-click product scores are misordered. What's the canonical fix?",
+      options: [
+        "Retrain the model with more data.",
+        "Apply post-hoc calibration (Platt scaling fits σ(a·p̂ + b) on a held-out set; isotonic regression fits a step function) — calibration brings predicted probabilities into alignment with empirical rates without changing the rank order, fixing downstream multi-task fusion and A/B test interpretation.",
+        "Increase the model size.",
+        "Switch to listwise loss.",
+      ],
+      correctIndex: 1,
+    },
+    {
+      id: "ranking-q2",
+      prompt: "Why is multi-task ranking with heads for click, watch time, completion, and like preferred to a single click-prediction head?",
+      options: [
+        "Multi-task models are smaller.",
+        "Per the metric tree from Lesson 1, the system optimises a layered objective (watch time as primary; click, completion, like as calibration). A single click head reproduces clickbait failure modes; multi-task heads with a weighted combination — tuned via online A/B tests — let the system trade off the full objective stack.",
+        "Multi-task models train faster.",
+        "Single-task models are not differentiable.",
+      ],
+      correctIndex: 1,
+    },
+    {
+      id: "ranking-q3",
+      prompt: "Which loss design is most commonly used in production large-scale rankers, and why?",
+      options: [
+        "Listwise (NDCG-direct), because it matches the metric exactly.",
+        "Pointwise multi-task as the primary loss (scales to billions of examples; admits multi-task heads naturally) plus a pairwise auxiliary (nudges relative ordering correctly within a query). Listwise is most aligned with NDCG but is computationally prohibitive at production scale for most recsys workloads.",
+        "Pure pairwise (Bradley-Terry), because it captures rank order best.",
+        "Hinge loss, because it is robust to outliers.",
+      ],
+      correctIndex: 1,
+    },
+    {
+      id: "ranking-q4",
+      prompt: "An interviewer pushes back: 'Why not use the two-tower retrieval model directly as the ranker, since it's already trained?' Best answer:",
+      options: [
+        "Two-tower is too slow at this scale.",
+        "Two-tower deliberately uses a dot-product score with no cross-feature interactions — that constraint exists to make 1B-scale offline embedding precomputation possible, but it caps modelling capacity. The ranker only runs over ~100 candidates and can afford expensive cross-feature deep architectures (wide-and-deep, DLRM, transformer over history). They are different shapes of model for different stages of the funnel.",
+        "Two-tower has a different loss function.",
+        "The retrieval model has lower AUC.",
+      ],
+      correctIndex: 1,
+    },
+  ]}
+/>
+
+---
+
+## 8. What's next
+
+In **Lesson 5 — Online serving** you walk through Step 4 of the framework: deploy. The model is trained and calibrated. Now it has to live inside a 200ms request budget, share that budget with feature fetching and ANN queries, survive traffic spikes, handle hot keys, and degrade gracefully when components fail. Latency budget arithmetic, feature stores, and capacity planning take centre stage.
+
+<div className="not-prose mt-8 flex justify-end">
+  <a href="./recsys-online-serving" className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white no-underline hover:bg-emerald-500">
+    Lesson 5 — Online serving →
+  </a>
+</div>

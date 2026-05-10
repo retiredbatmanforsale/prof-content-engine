@@ -10,17 +10,321 @@ tutor_concepts:
   - "activation function role"
   - "identical layers across positions"
   - "feed forward vs attention sublayer"
+mvp_status: drafted
 ---
 
-<LessonHero course="Build and Train Your Own GPT-2" number="8" title="Feed-forward neural networks" subtitle="The dense transformation applied at every position after attention" />
+<LessonHero course="Build and Train Your Own GPT-2" number="8" title="Feed-forward neural networks" subtitle="Per-token non-linearity that holds two-thirds of the model's parameters" />
 
 <LessonVideo
   src="https://player.vimeo.com/video/1185126730?h=3ce448ccb4&badge=0&autopause=0&player_id=0&app_id=58479"
   title="Why Attention Can't Think — Feed-Forward Networks"
 />
 
+---
 
-## Overview
+## Where we are in the build
 
-This lesson explains the position-wise feed forward networks inside each transformer block.
+After Lesson 7 your `Block` is `x + attn(LN(x))` — a residual-wrapped, pre-normalised attention layer. It can mix information **across tokens**: position $t$ now sees a weighted blend of all earlier positions' values. What it cannot do is meaningfully *transform* those values within a single token.
 
+That's because attention's "transformation" is a learned linear projection ($W_O$), and the convex-combination-then-project pipeline is essentially still linear. Stack twelve linear-ish layers and you get a slightly-non-linear linear-ish function — not enough to express the actual computation language modelling needs (lookup tables, conditional logic, n-gram-style patterns, factual recall).
+
+The fix is the **feed-forward network** — a small two-layer MLP applied independently at every token position, with a non-linearity in between. Same MLP shared across all positions; same MLP shared across all tokens in the batch. Sometimes called "position-wise FFN" because it's pointwise in the time dimension.
+
+Today's lesson finishes `blocks.py`. After this, your `Block` is the full GPT-2 block — exactly what gets stacked twelve times in GPT-2 small.
+
+<div className="not-prose my-8 rounded-2xl border-2 border-emerald-400 bg-gradient-to-br from-emerald-50 to-teal-50 px-5 py-4 dark:border-emerald-700 dark:from-emerald-950/40 dark:to-teal-950/40">
+  <p className="m-0 text-xs font-bold uppercase tracking-widest text-emerald-800 dark:text-emerald-200">What you're building</p>
+  <p className="mt-2 mb-1 text-base font-bold text-slate-900 dark:text-slate-100"><code>blocks.py</code> — MLP + second pre-LN added</p>
+  <p className="mt-0 mb-0 text-sm text-slate-700 dark:text-slate-300">Block forward becomes <code>x + attn(ln1(x))</code> then <code>x + mlp(ln2(x))</code>. The MLP holds 2/3 of the parameters in a transformer block — about 4.7M per layer for GPT-2 small.</p>
+</div>
+
+---
+
+## The naive solution — skip the FFN
+
+Try a transformer where every block is `x + attn(LN(x))` and nothing else. Twelve attention layers, twelve LayerNorms, no MLPs. What does it learn?
+
+Empirically: not much. Such a model trains, slowly, but it caps out at much higher loss than a full transformer with the same parameter count redistributed elsewhere. It can do soft routing of token information, but it can't apply rich per-token transformations. You can't easily learn "this token is a verb in past tense" because the transformation from token vector to "verb-in-past-tense vector" is non-linear, and attention alone doesn't do non-linear computation.
+
+A more practical demonstration: take the FFN's hidden dimension to zero and watch validation loss climb. Or, equivalently, replace the MLP with the identity. Either way, you've lost the per-token computation tier. The model collapses to something like a deep linear model with attention mixing — far less expressive than language requires.
+
+Why is one non-linearity not enough? Stacks of linear functions are linear. Even with attention mixing, the per-position transform $x \mapsto W_O \cdot \text{convex\_comb}(W_V x_1, \ldots, W_V x_T)$ is linear in the $x$'s. **Without an explicit non-linearity, the model has no way to learn anything that isn't a sum of linear projections of past tokens.** The MLP injects the non-linearity that makes the whole stack a universal function approximator.
+
+---
+
+## The motivated solution — per-token MLP
+
+The original [Transformer paper](https://arxiv.org/abs/1706.03762) settled on a now-canonical FFN:
+
+$$
+\text{MLP}(x) \;=\; W_2 \cdot \phi\!\left(W_1 x\right)
+$$
+
+with $W_1 \in \mathbb{R}^{4C \times C}$, $W_2 \in \mathbb{R}^{C \times 4C}$, and $\phi$ a non-linear activation. Three design choices:
+
+### Why $4 \times C$ for the hidden dimension?
+
+The hidden layer is **wider** than the input/output dimension by a factor of 4. This isn't deeply principled — Vaswani et al. picked it empirically and it stuck. The intuition: a wider hidden layer gives the network room to project onto many feature directions, apply non-linearities, and recombine. A 1× hidden would be too tight (linear bottleneck); 8× would be wasteful. 4× has been the default for nearly every transformer since 2017, including GPT-2, GPT-3, and Llama.
+
+The cost: this layer dominates the parameter budget. For GPT-2 small ($C = 768$):
+
+$$
+\text{params per MLP} \;=\; \underbrace{C \cdot 4C}_{W_1} \;+\; \underbrace{4C \cdot C}_{W_2} \;=\; 8 C^2 \;=\; 8 \cdot 768^2 \approx 4.72 \text{M}
+$$
+
+Across 12 blocks that's ~56.6M parameters — about **45% of GPT-2 small's 124M**. The MLP is the largest single contributor.
+
+### Why GELU and not ReLU?
+
+[GELU](https://arxiv.org/abs/1606.08415) (Gaussian Error Linear Unit) was introduced by Hendrycks and Gimpel in 2016 and adopted by GPT-2:
+
+$$
+\text{GELU}(x) \;=\; x \cdot \Phi(x)
+$$
+
+where $\Phi$ is the standard normal CDF. Roughly: GELU is a smooth, probabilistic version of ReLU. It "decides" how much of $x$ to pass through based on $x$'s value, rather than the hard 0/1 gate that ReLU uses.
+
+Practical reasons GPT-2 prefers GELU over ReLU:
+
+- **Smooth gradient near zero.** ReLU has a kink at 0 — gradient jumps from 0 to 1. GELU is differentiable everywhere; the gradient varies smoothly with $x$. Better-behaved optimisation, especially with adaptive optimisers like Adam.
+- **Allows small negative values through.** ReLU zeros out negative inputs, killing the gradient for them ("dying ReLU"). GELU lets a small fraction of negative inputs through, keeping their gradient alive. Empirically: a few tenths of a percent better validation perplexity at GPT-2 scale, for the same training compute.
+
+GPT-2 specifically uses the **tanh approximation** to GELU:
+
+$$
+\text{GELU}_{\text{approx}}(x) \;=\; 0.5 x \!\left(1 + \tanh\!\left(\sqrt{\tfrac{2}{\pi}}(x + 0.044715 x^3)\right)\right)
+$$
+
+…because the exact form involves the $\Phi$ CDF, which is slow to compute. The approximation is within $10^{-4}$ of the exact value across the relevant input range and computes ~3× faster. PyTorch's `nn.GELU(approximate="tanh")` uses this form. nanoGPT and the original OpenAI GPT-2 codebase do too.
+
+### Code: extend `blocks.py`
+
+```python
+# nanogpt-from-scratch/blocks.py  (Lesson 8 — full GPT-2 block)
+
+import torch
+import torch.nn as nn
+
+from attention import MultiHeadAttention
+from config import GPTConfig
+
+
+class MLP(nn.Module):
+    """Position-wise feed-forward: Linear(C, 4C) -> GELU -> Linear(4C, C) -> Dropout."""
+
+    def __init__(self, config: GPTConfig):
+        super().__init__()
+        self.fc = nn.Linear(config.n_embd, 4 * config.n_embd, bias=False)
+        self.act = nn.GELU(approximate="tanh")
+        self.proj = nn.Linear(4 * config.n_embd, config.n_embd, bias=False)
+        self.dropout = nn.Dropout(config.dropout)
+
+    def forward(self, x):
+        return self.dropout(self.proj(self.act(self.fc(x))))
+
+
+class Block(nn.Module):
+    """Full GPT-2 transformer block. Pre-LN, attention + residual, MLP + residual."""
+
+    def __init__(self, config: GPTConfig):
+        super().__init__()
+        self.ln1 = nn.LayerNorm(config.n_embd)
+        self.attn = MultiHeadAttention(config)
+        self.ln2 = nn.LayerNorm(config.n_embd)
+        self.mlp = MLP(config)
+
+    def forward(self, x):
+        x = x + self.attn(self.ln1(x))
+        x = x + self.mlp(self.ln2(x))
+        return x
+```
+
+Three things worth flagging:
+
+- **Position-wise.** `nn.Linear` on a `(B, T, C)` tensor implicitly applies the same `(C → 4C)` transformation independently at every (batch, time) position. There is no "communication" between tokens inside the MLP — that's attention's job, and we've already done it before reaching the MLP.
+- **`bias=False`.** Same reason as in attention: GPT-2 turns biases off everywhere they're not strictly required. They cost parameters without measurably improving performance at scale.
+- **Two residual sums per block.** `x + attn(...)` mixes across tokens; `x + mlp(...)` transforms within each token. The block has *two* gradient highways now, not one.
+
+<AnimationPlaceholder
+  name="gelu-vs-relu"
+  description="Plot of GELU and ReLU overlaid on the same axes from x=-3 to 3, with a third curve showing GELU's tanh approximation. A second tab shows the derivative of each — flat at 0 or 1 for ReLU, smooth bell-shape near 0 for GELU."
+/>
+
+---
+
+## Math by typing it
+
+The full transformer block, pre-LN, in one line of math:
+
+$$
+\text{Block}(x) \;=\; x' + \text{MLP}(\text{LN}_2(x'))
+\quad \text{where} \quad
+x' \;=\; x + \text{Attn}(\text{LN}_1(x))
+$$
+
+The MLP itself:
+
+$$
+\text{MLP}(x) \;=\; W_2 \cdot \text{GELU}(W_1 x)
+$$
+
+GELU exact form:
+
+$$
+\text{GELU}(x) \;=\; x \cdot \Phi(x) \;=\; \tfrac{x}{2}\!\left(1 + \text{erf}\!\left(\tfrac{x}{\sqrt 2}\right)\right)
+$$
+
+GELU tanh approximation (used by GPT-2, nanoGPT, this course):
+
+$$
+\text{GELU}_{\text{approx}}(x) \;=\; 0.5 x \!\left(1 + \tanh\!\left(\sqrt{\tfrac{2}{\pi}}(x + 0.044715 x^3)\right)\right)
+$$
+
+Parameter accounting per Block, using GPT-2 small ($C = 768$):
+
+| Component                 | Parameters       | Fraction of block       |
+|---------------------------|------------------|--------------------------|
+| `ln1` ($2C$)              | 1,536            | 0.02%                   |
+| `attn` ($4C^2$)           | 2,359,296        | 33.3%                   |
+| `ln2` ($2C$)              | 1,536            | 0.02%                   |
+| `mlp` ($8C^2$)            | 4,718,592        | 66.6%                   |
+| **Block total**           | **7,080,960**    | 100%                    |
+
+The MLP is **twice the size of the attention** by parameter count. Across 12 blocks, ~56.6M of GPT-2 small's 124M parameters live in the MLP layers. This is sometimes called the "key-value memory" of the model — a body of work [(Geva et al. 2021)](https://arxiv.org/abs/2012.14913) argues that the MLP layers store the bulk of factual knowledge, with attention acting as the routing mechanism that decides which facts to recall.
+
+---
+
+## Run it on your laptop
+
+<div className="not-prose my-6 rounded-xl border-l-4 border-sky-500 bg-sky-50/70 py-3 pl-4 pr-3 dark:bg-sky-950/25">
+  <p className="m-0 text-sm font-semibold text-sky-900 dark:text-sky-200">Your task</p>
+  <p className="mt-2 mb-0 text-sm text-slate-800 dark:text-slate-200">
+    Add the <code>MLP</code> class and extend <code>Block</code> with <code>ln2</code> + <code>mlp</code>. Then run the param-count check below — your full block should have exactly 7,080,960 parameters (no biases).
+  </p>
+</div>
+
+```python
+import torch
+
+from config import GPTConfig
+from blocks import Block
+
+config = GPTConfig()
+block = Block(config)
+
+# Shape sanity.
+B, T, C = 2, 16, config.n_embd
+x = torch.randn(B, T, C)
+y = block(x)
+assert y.shape == x.shape, "Block must preserve (B, T, C)"
+
+# Parameter count breakdown.
+def count(module):
+    return sum(p.numel() for p in module.parameters())
+
+print(f"ln1:  {count(block.ln1):>10,}")
+print(f"attn: {count(block.attn):>10,}    (= 4 * C^2 = {4 * C**2:,})")
+print(f"ln2:  {count(block.ln2):>10,}")
+print(f"mlp:  {count(block.mlp):>10,}    (= 8 * C^2 = {8 * C**2:,})")
+print(f"--- block total: {count(block):,} ---")
+
+# Stack 12 of them like GPT-2 small.
+stack = torch.nn.Sequential(*[Block(config) for _ in range(12)])
+print(f"\n12-block stack: {count(stack):,} params")
+# Should be roughly 12 * 7,080,960 = 84,971,520
+# Plus embeddings (Lessons 2-3) = ~84.9M + 39.4M = ~124.4M ≈ GPT-2 small.
+```
+
+Twelve blocks plus the embeddings from Lessons 2–3 should land at approximately 124M parameters — within rounding error of GPT-2 small's published count. We're one final LayerNorm and one output projection away from the real thing. Lesson 10 wires those in.
+
+<PlaygroundPlaceholder
+  name="ffn-explorer"
+  description="In-browser cell: visualise the MLP's hidden activations for a real input — show the (B, T, 4C) tensor as a per-token grid; toggle GELU vs ReLU vs SwiGLU to see how the activation curve reshapes the hidden representation."
+/>
+
+---
+
+## What you can now do
+
+- Build the canonical position-wise FFN: `Linear(C, 4C) → GELU → Linear(4C, C)`.
+- Justify the 4× hidden expansion, GPT-2's choice of GELU (and its tanh approximation), and the per-token-wise structure.
+- Account for ~66% of every transformer block's parameters and ~45% of GPT-2 small's total — the MLP is where the model spends its capacity.
+- Recognise the full GPT-2 block: pre-LN, attention + residual, pre-LN, MLP + residual. **Two LNs, two residuals, two sub-layers.** This is what gets stacked.
+
+---
+
+## Quiz
+
+<Quiz
+  lessonId="ai-for-engineering/build-and-train-your-own-gpt2-model/feed-forward-neural-networks"
+  questions={[
+    {
+      id: "gpt2-l8-q1",
+      prompt: "Why does GPT-2's transformer block use a 4× hidden dimension in the MLP rather than 1× or 8×?",
+      options: [
+        "PyTorch is optimised for 4× expansions",
+        "Empirical: Vaswani et al. (2017) tested several hidden multipliers and 4× landed on a sweet spot. Smaller (1-2×) is too tight a bottleneck for the non-linear feature reshuffling the MLP is supposed to do; larger (8×+) wastes parameters without measurable accuracy gains. 4× has been the default for almost every transformer since (GPT-2, GPT-3, Llama)",
+        "It matches the number of attention heads",
+        "It's required for backpropagation to converge",
+      ],
+      correctIndex: 1,
+    },
+    {
+      id: "gpt2-l8-q2",
+      prompt: "GPT-2 small has n_embd=768 and 12 blocks. How many parameters live in the MLPs across the whole model (no biases)?",
+      options: [
+        "About 4.7M (one block's worth)",
+        "About 28M (the same as attention)",
+        "About 56.6M — that's 8 × 768² = 4.72M per block × 12 blocks. Roughly 45% of GPT-2 small's 124M parameters; about twice the size of all the attention layers combined",
+        "About 124M (the whole model)",
+      ],
+      correctIndex: 2,
+    },
+    {
+      id: "gpt2-l8-q3",
+      prompt: "Why does GPT-2 use GELU instead of ReLU in the MLP?",
+      options: [
+        "GELU is faster",
+        "Two reasons: (1) GELU is smooth at 0 — its gradient varies continuously instead of jumping from 0 to 1 at the kink; (2) GELU lets a fraction of small negative inputs through, avoiding ReLU's 'dying neuron' problem where negative-sign units stop learning. Empirically: a fraction of a percent better validation perplexity at GPT-scale, for the same compute",
+        "ReLU is incompatible with attention",
+        "GELU has fewer parameters than ReLU",
+      ],
+      correctIndex: 1,
+    },
+    {
+      id: "gpt2-l8-q4",
+      prompt: "What is the architectural division of labour between attention and the MLP within a single transformer block?",
+      options: [
+        "Attention learns syntax, MLP learns semantics",
+        "Attention mixes information *across token positions* — every output token is a weighted sum of input tokens. The MLP applies a non-linear *per-token* transformation — same MLP weights for every position, no communication between tokens. Combined: 'route then transform, route then transform, ...' for n_layer rounds",
+        "Attention is for training, MLP is for inference",
+        "They're interchangeable; the order doesn't matter",
+      ],
+      correctIndex: 1,
+    },
+    {
+      id: "gpt2-l8-q5",
+      prompt: "You're debugging a transformer where a printout shows the param count of one block as 9.4M instead of the expected 7.08M for GPT-2 small. What's the most likely cause?",
+      options: [
+        "An extra attention layer",
+        "Biases are turned on. Each Linear in attention (qkv, proj) and MLP (fc, proj) by default has a bias term of shape (out_features). With bias=True everywhere: attention adds 4*C, MLP adds 4C + C = 5C, plus per-LN biases. Numbers grow ~30%. nanoGPT and OpenAI's GPT-2 disable biases everywhere — they don't help and they cost millions of parameters at scale",
+        "n_head is set wrong",
+        "The dropout rate is too high",
+      ],
+      correctIndex: 1,
+    },
+  ]}
+/>
+
+---
+
+## What's next
+
+Your `Block` is now the full GPT-2 transformer block. Stacking twelve of them, wiring an embedding layer at the front and an output projection at the back, is what Lesson 10 will assemble. But before we have a full model that can be trained, we need one last piece: at inference time, the model produces a probability distribution over the vocabulary — we need a way to **sample** the next token from that distribution. **Lesson 9** opens up `generate.py` with greedy, temperature, top-k, and top-p (nucleus) sampling — all of which become important once we have a trained model that's worth sampling from.
+
+---
+
+<div className="not-prose mt-10 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-6 dark:border-slate-700">
+  <a href="./layer-normalization" className="text-sm font-medium text-slate-600 no-underline hover:text-emerald-700 hover:underline dark:text-slate-400 dark:hover:text-emerald-400">← Lesson 7 · LayerNorm</a>
+  <a href="./generation-of-next-tokens" className="text-sm font-semibold text-emerald-700 no-underline hover:underline dark:text-emerald-400">Lesson 9 · Generation →</a>
+</div>

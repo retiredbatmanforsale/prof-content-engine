@@ -1,0 +1,163 @@
+---
+title: "Build a NN · 03 · Sigmoid + Backward"
+description: Sigmoid forward and backward — and the numerical-stability trick that keeps the gradient finite at extreme inputs.
+sidebar_position: 3
+practice_mode: true
+hide_table_of_contents: true
+---
+
+import PracticeProblem from '@site/src/components/viz/PracticeProblemPro';
+
+<PracticeProblem
+  id="build-nn-03-sigmoid-and-backward"
+  title="Sigmoid forward + backward"
+  difficulty="Easy"
+  tags={["numpy", "neural-net", "activation", "backprop", "build-nn"]}
+  linkedLessons={[
+    { url: '/courses/ai-for-engineering/deep-neural-networks/activation-functions', title: 'Activation functions' },
+    { url: '/courses/ai-for-engineering/deep-neural-networks/backward-pass', title: 'Backward pass' },
+  ]}
+  starter={`
+import numpy as np
+
+def sigmoid(x):
+    """
+    Forward pass of sigmoid: 1 / (1 + exp(-x)).
+
+    Must NOT produce NaN or inf for large |x| (e.g. x = -1000 or x = +1000).
+
+    Args:
+        x: np.ndarray of any shape.
+
+    Returns:
+        np.ndarray of the same shape, with values in (0, 1).
+    """
+    # YOUR CODE HERE
+    pass
+
+
+def sigmoid_backward(grad_out, sigmoid_out):
+    """
+    Backward pass of sigmoid.
+
+    Note: takes the *output* of sigmoid (sigmoid_out), not the input — the
+    derivative is cheaper to express that way: d/dx sigmoid(x) = s * (1 - s).
+
+    Args:
+        grad_out:    gradient of the loss w.r.t. the layer's output.
+        sigmoid_out: the *output* of the sigmoid forward pass (same shape).
+
+    Returns:
+        np.ndarray of the same shape — gradient of the loss w.r.t. the input.
+    """
+    # YOUR CODE HERE
+    pass
+`}
+  tests={`
+import numpy as np
+
+@__test__("sigmoid: output shape matches input")
+def t():
+    rng = np.random.default_rng(0)
+    x = rng.standard_normal((3, 4))
+    out = sigmoid(x)
+    assert out is not None, "sigmoid returned None"
+    assert out.shape == x.shape, f"shape {out.shape} != {x.shape}"
+
+@__test__("sigmoid: matches the formula on a moderate-magnitude input")
+def t():
+    x = np.array([-2.0, -0.5, 0.0, 0.5, 2.0])
+    expected = 1.0 / (1.0 + np.exp(-x))
+    assert np.allclose(sigmoid(x), expected, atol=1e-7), \\
+        f"got {sigmoid(x)}, expected {expected}"
+
+@__test__("sigmoid: numerically stable at extreme inputs (no NaN, no inf)")
+def t():
+    # The naive 1/(1+exp(-x)) overflows for x = -1000 (exp(1000) = inf).
+    x = np.array([-1000.0, -100.0, 0.0, 100.0, 1000.0])
+    out = sigmoid(x)
+    assert not np.any(np.isnan(out)), f"NaN produced: {out}"
+    assert not np.any(np.isinf(out)), f"inf produced: {out}"
+    # Saturation: very negative -> ~0, very positive -> ~1.
+    assert out[0] < 1e-10, f"sigmoid(-1000) should saturate to ~0, got {out[0]}"
+    assert out[-1] > 1.0 - 1e-10, f"sigmoid(1000) should saturate to ~1, got {out[-1]}"
+
+@__test__("sigmoid_backward: matches s * (1 - s) * grad_out")
+def t():
+    rng = np.random.default_rng(7)
+    x = rng.standard_normal(20)
+    s = sigmoid(x)
+    grad_out = rng.standard_normal(20)
+    expected = grad_out * s * (1 - s)
+    out = sigmoid_backward(grad_out, s)
+    assert out is not None, "sigmoid_backward returned None"
+    assert np.allclose(out, expected, atol=1e-9), \\
+        f"max diff {np.max(np.abs(out - expected)):.2e}"
+
+@__test__("sigmoid_backward: matches finite-difference numerical gradient")
+def t():
+    rng = np.random.default_rng(2)
+    x = rng.standard_normal(15)
+    s = sigmoid(x)
+
+    # Pretend the loss is sum(sigmoid(x)). Then d_loss/d_x_i = sigmoid'(x_i).
+    grad_out = np.ones_like(s)
+    analytic = sigmoid_backward(grad_out, s)
+
+    eps = 1e-5
+    numeric = np.zeros_like(x)
+    for i in range(len(x)):
+        h = x.copy(); h[i] += eps
+        l_plus = sigmoid(h).sum()
+        h[i] -= 2 * eps
+        l_minus = sigmoid(h).sum()
+        numeric[i] = (l_plus - l_minus) / (2 * eps)
+
+    assert np.allclose(analytic, numeric, atol=1e-4), \\
+        f"max diff {np.max(np.abs(analytic - numeric)):.2e}"
+
+@__test__("sigmoid_backward: gradient saturates at extreme inputs (≈ 0)")
+def t():
+    # When sigmoid(x) is very near 0 or 1, the gradient s*(1-s) collapses to ~0.
+    # This is the classic "vanishing gradient through saturated sigmoids" failure mode.
+    x = np.array([-100.0, 0.0, 100.0])
+    s = sigmoid(x)
+    grad_out = np.ones_like(s)
+    out = sigmoid_backward(grad_out, s)
+    assert out[0] < 1e-10, f"saturated negative should give ~0 grad, got {out[0]}"
+    assert out[2] < 1e-10, f"saturated positive should give ~0 grad, got {out[2]}"
+    assert abs(out[1] - 0.25) < 1e-7, f"sigmoid'(0) = 0.25, got {out[1]}"
+`}
+  solution={`
+import numpy as np
+
+def sigmoid(x):
+    # Stable form: branch on the sign of x so the exp argument is always negative.
+    out = np.empty_like(x, dtype=float)
+    pos = x >= 0
+    out[pos] = 1.0 / (1.0 + np.exp(-x[pos]))
+    e = np.exp(x[~pos])
+    out[~pos] = e / (1.0 + e)
+    return out
+
+
+def sigmoid_backward(grad_out, sigmoid_out):
+    return grad_out * sigmoid_out * (1.0 - sigmoid_out)
+`}
+  hints={[
+    "Forward: the textbook form `1 / (1 + np.exp(-x))` overflows for very negative x because `exp(-x)` becomes `inf`. Branch on the sign of x and use the algebraically-equivalent form `exp(x) / (1 + exp(x))` for negative inputs.",
+    "Backward is the easy part: `s * (1 - s) * grad_out` where `s` is the saved sigmoid output. We pass `s` instead of `x` so you don't have to recompute it.",
+    "If your saturated-input test fails, you used the naive formula. The fix is purely a numerical-stability rewrite — algebraically the same function.",
+  ]}
+>
+
+Sigmoid — `1 / (1 + exp(-x))` — predates the deep learning era and is still the activation of choice when you need a probability between 0 and 1. Implement both halves: the forward pass and the backward.
+
+Two interview-grade subtleties the harness probes for:
+
+1. **Numerical stability.** The textbook form overflows for very negative inputs because `exp(-x)` blows up. The fix is one of two equivalent forms — pick the one whose `exp(...)` argument is always non-positive. (`exp(x) / (1 + exp(x))` for `x < 0`, the original for `x >= 0`. Both equal sigmoid; only one stays finite.)
+2. **The `s * (1 - s)` shortcut.** The derivative of sigmoid w.r.t. its input is `sigmoid(x) * (1 - sigmoid(x))`. If you save the forward output, the backward is one cheap multiply — no extra `exp` calls. This is why every framework's API takes the saved output, not the input.
+
+The saturation in the gradient — `s * (1 - s) ≈ 0` at the tails — is exactly the "vanishing gradient through deep sigmoid stacks" problem that ReLU was invented to fix.
+
+</PracticeProblem>

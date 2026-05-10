@@ -1,0 +1,138 @@
+---
+title: "SGD with Momentum Step"
+description: One step of heavy-ball SGD with momentum — accumulate a velocity buffer, then update parameters.
+sidebar_position: 16
+practice_mode: true
+hide_table_of_contents: true
+---
+
+import PracticeProblem from '@site/src/components/viz/PracticeProblemPro';
+
+<PracticeProblem
+  id="sgd-momentum-step"
+  title="SGD with momentum (one step)"
+  difficulty="Easy"
+  tags={["numpy", "optimization", "sgd", "momentum"]}
+  linkedLessons={[
+    { url: '/courses/ai-for-engineering/deep-neural-networks/trainable-parameters-and-hyperparameters', title: 'Trainable parameters and hyperparameters' },
+  ]}
+  starter={`
+import numpy as np
+
+def sgd_momentum_step(params, grads, velocities, lr, momentum):
+    """
+    Heavy-ball SGD with momentum (PyTorch's convention). Mutates params AND
+    velocities in place.
+
+    For each parameter p, gradient g, velocity v:
+        v_new = momentum * v_old + g
+        p_new = p_old - lr * v_new
+
+    Args:
+        params:     list[np.ndarray] — model parameters (mutated in place).
+        grads:      list[np.ndarray] — gradients, same shapes as params.
+        velocities: list[np.ndarray] — momentum buffers, same shapes (mutated in place).
+        lr:         scalar learning rate.
+        momentum:   scalar in [0, 1) — typically 0.9.
+
+    Returns:
+        None. Updates happen in place.
+    """
+    # YOUR CODE HERE
+    pass
+`}
+  tests={`
+import numpy as np
+
+@__test__("Single step from zero velocity is equivalent to plain SGD")
+def t():
+    p = np.array([1.0, 2.0, 3.0])
+    g = np.array([0.1, 0.2, 0.3])
+    v = np.zeros(3)
+    sgd_momentum_step([p], [g], [v], lr=0.5, momentum=0.9)
+    # First step: v = 0.9*0 + g = g; p -= 0.5*g
+    assert np.allclose(p, [0.95, 1.9, 2.85], atol=1e-9), f"first-step p wrong: {p}"
+    assert np.allclose(v, [0.1, 0.2, 0.3], atol=1e-9), f"first-step v wrong: {v}"
+
+@__test__("After several steps with constant gradient, velocity approaches g/(1-momentum)")
+def t():
+    # The velocity update v = beta*v + g converges to g/(1-beta) for constant g.
+    # With g=1, beta=0.9, that's v -> 10.
+    p = np.array([0.0])
+    g = np.array([1.0])
+    v = np.array([0.0])
+    for _ in range(200):
+        sgd_momentum_step([p], [g], [v], lr=0.0, momentum=0.9)  # lr=0 so we only update v
+    assert np.isclose(float(v[0]), 10.0, atol=1e-3), \\
+        f"velocity should approach 1 / (1 - 0.9) = 10, got {v[0]}"
+
+@__test__("Diagnostic: with momentum=0, equivalent to plain SGD step")
+def t():
+    p = np.array([10.0, 20.0])
+    g = np.array([1.0, 2.0])
+    v = np.array([0.0, 0.0])
+    sgd_momentum_step([p], [g], [v], lr=0.1, momentum=0.0)
+    # v_new = 0*0 + g = g; p -= 0.1 * g  =>  p = [9.9, 19.8]
+    assert np.allclose(p, [9.9, 19.8], atol=1e-9)
+    assert np.allclose(v, [1.0, 2.0], atol=1e-9), \\
+        "with momentum=0, v should equal current g (no decay)"
+
+@__test__("Multiple parameter tensors all update")
+def t():
+    W = np.full((2, 2), 1.0)
+    b = np.full(2, 5.0)
+    dW = np.full((2, 2), 0.5)
+    db = np.full(2, 1.0)
+    vW = np.zeros((2, 2))
+    vb = np.zeros(2)
+    sgd_momentum_step([W, b], [dW, db], [vW, vb], lr=0.1, momentum=0.9)
+    # Initial v=0, v_new = g; p_new = p - 0.1*g
+    assert np.allclose(W, np.full((2, 2), 0.95))
+    assert np.allclose(b, np.full(2, 4.9))
+
+@__test__("Mutation is in place — caller's references see the new values")
+def t():
+    p = np.array([10.0])
+    p_ref = p
+    g = np.array([1.0])
+    v = np.array([0.0])
+    v_ref = v
+    sgd_momentum_step([p], [g], [v], lr=0.1, momentum=0.9)
+    assert p_ref is p, "param array reference changed — must update in place"
+    assert v_ref is v, "velocity array reference changed — must update in place"
+`}
+  solution={`
+import numpy as np
+
+def sgd_momentum_step(params, grads, velocities, lr, momentum):
+    for p, g, v in zip(params, grads, velocities):
+        # v *= momentum then v += g, in place.
+        v *= momentum
+        v += g
+        p -= lr * v
+`}
+  hints={[
+    "Two updates per parameter, both in place. v_new = momentum * v_old + g (use v *= momentum then v += g, both in place). Then p -= lr * v.",
+    "PyTorch's convention is what we use here: the velocity is the running average of gradients (no learning rate inside it). Sutskever's older form folds lr into v; both are equivalent up to scaling, but the PyTorch form is more common in 2024 codebases.",
+    "If you write `v = momentum * v + g`, you've rebound the local name and the caller's velocity buffer is untouched. Use *= and += so the buffer mutates.",
+  ]}
+>
+
+The simplest optimiser upgrade after vanilla SGD — and still the dominant choice for ConvNets. Adam and AdamW have largely replaced it for transformer training, but momentum is the foundation both build on.
+
+The "heavy-ball" intuition: instead of stepping in the gradient direction, accumulate a velocity that smooths over recent gradients. Steady descents speed up; stochastic noise averages out.
+
+Update rule (PyTorch convention):
+
+`v ← momentum · v + g`
+
+`p ← p − lr · v`
+
+Two subtleties the harness probes:
+
+1. **Velocity convergence.** With a constant gradient `g` and no parameter updates (set `lr=0`), the velocity update is a geometric series — it converges to `g / (1 - momentum)`. For `momentum=0.9`, that's `10·g`. Test `iv-2` verifies this — get the formula wrong and the limit will be off.
+2. **In-place mutation of BOTH params and velocities.** Velocity buffers persist across training steps; if you create new arrays each step, the optimiser is effectively SGD without memory.
+
+Typical setting: `lr=0.01, momentum=0.9` for ResNet-style CNNs. Not used directly for transformers (which prefer AdamW), but every implementation of SGD+momentum starts from this exact two-line update.
+
+</PracticeProblem>

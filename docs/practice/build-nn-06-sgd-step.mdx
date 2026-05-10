@@ -1,0 +1,135 @@
+---
+title: "Build a NN · 06 · SGD Step"
+description: One vanilla SGD parameter update — the simplest optimiser, applied to a list of parameter tensors.
+sidebar_position: 6
+practice_mode: true
+hide_table_of_contents: true
+---
+
+import PracticeProblem from '@site/src/components/viz/PracticeProblemPro';
+
+<PracticeProblem
+  id="build-nn-06-sgd-step"
+  title="SGD step (in place)"
+  difficulty="Easy"
+  tags={["numpy", "neural-net", "optimization", "sgd", "build-nn"]}
+  linkedLessons={[
+    { url: '/courses/ai-for-engineering/deep-neural-networks/trainable-parameters-and-hyperparameters', title: 'Trainable parameters and hyperparameters' },
+    { url: '/courses/ai-for-engineering/deep-neural-networks/backward-pass', title: 'Backward pass' },
+  ]}
+  starter={`
+import numpy as np
+
+def sgd_step(params, grads, lr):
+    """
+    One vanilla stochastic gradient descent step. Mutates params IN PLACE.
+
+    For each parameter tensor p_i with gradient g_i:
+        p_i -= lr * g_i
+
+    Args:
+        params: list of np.ndarray — model parameters (mutated in place).
+        grads:  list of np.ndarray — gradients, same length as params and
+                same shape per element.
+        lr:     scalar learning rate.
+
+    Returns:
+        None. Updates happen in place — the caller sees the new values via
+        their existing references.
+
+    Raises:
+        ValueError: if len(params) != len(grads), or if any params[i].shape
+        does not match grads[i].shape.
+    """
+    # YOUR CODE HERE
+    pass
+`}
+  tests={`
+import numpy as np
+
+@__test__("Updates a single parameter in place")
+def t():
+    p = np.array([1.0, 2.0, 3.0])
+    g = np.array([0.1, 0.2, 0.3])
+    sgd_step([p], [g], lr=0.5)
+    expected = np.array([1.0 - 0.05, 2.0 - 0.10, 3.0 - 0.15])
+    assert np.allclose(p, expected, atol=1e-9), \\
+        f"got {p}, expected {expected}"
+
+@__test__("Updates multiple parameters of mixed shapes in place")
+def t():
+    W = np.full((3, 2), 1.0)
+    b = np.full(2, 5.0)
+    dW = np.full((3, 2), 0.5)
+    db = np.full(2, 1.0)
+    sgd_step([W, b], [dW, db], lr=0.1)
+    assert np.allclose(W, np.full((3, 2), 0.95)), f"W={W}"
+    assert np.allclose(b, np.full(2, 4.9)), f"b={b}"
+
+@__test__("lr=0 leaves parameters unchanged")
+def t():
+    p = np.array([7.0, -3.0, 2.5])
+    p_before = p.copy()
+    g = np.array([100.0, -50.0, 1.0])
+    sgd_step([p], [g], lr=0.0)
+    assert np.allclose(p, p_before), f"lr=0 should not change params, got {p}"
+
+@__test__("Length mismatch between params and grads raises ValueError")
+def t():
+    p1 = np.array([1.0])
+    p2 = np.array([2.0])
+    g = np.array([0.1])
+    raised = False
+    try:
+        sgd_step([p1, p2], [g], lr=0.1)
+    except ValueError:
+        raised = True
+    assert raised, "expected ValueError for len(params) != len(grads)"
+
+@__test__("Shape mismatch within a pair raises ValueError")
+def t():
+    p = np.zeros((3, 2))
+    g = np.zeros((3, 5))   # wrong second dim
+    raised = False
+    try:
+        sgd_step([p], [g], lr=0.1)
+    except ValueError:
+        raised = True
+    assert raised, "expected ValueError when params[i].shape != grads[i].shape"
+
+@__test__("Mutation happens IN PLACE — caller's reference sees new values")
+def t():
+    # If a candidate writes "p = p - lr * g" (rebind), the test catches them.
+    p = np.array([10.0, 20.0])
+    p_ref = p   # save reference; should still point to the same buffer after the step
+    g = np.array([1.0, 2.0])
+    sgd_step([p], [g], lr=0.5)
+    assert p_ref is p, "param array reference changed — must update in place"
+    assert np.allclose(p, [9.5, 19.0]), f"got {p}"
+`}
+  solution={`
+import numpy as np
+
+def sgd_step(params, grads, lr):
+    if len(params) != len(grads):
+        raise ValueError(f"len(params)={len(params)} != len(grads)={len(grads)}")
+    for p, g in zip(params, grads):
+        if p.shape != g.shape:
+            raise ValueError(f"shape mismatch: param {p.shape} vs grad {g.shape}")
+        p -= lr * g     # in-place subtraction
+`}
+  hints={[
+    "The math is one line per parameter: `p -= lr * g`. The catch is the in-place part — `p = p - lr * g` would *rebind* the local name and not mutate the caller's array.",
+    "Use `p -= lr * g` or equivalently `np.subtract(p, lr * g, out=p)`. NumPy's `-=` operator mutates in place.",
+    "For the validation, check `len()` first (avoids zip silently truncating), then iterate and check each pair's `.shape` before updating.",
+  ]}
+>
+
+Stochastic gradient descent is the simplest optimiser there is — but writing it correctly trips up more people than you'd expect. The two failure modes the harness probes for:
+
+1. **In-place mutation.** The function returns nothing — it updates the parameters by mutating them. If you write `p = p - lr * g` inside the loop, you've created a new local array and the caller's reference still points to the old values. Use `p -= lr * g` (or `np.subtract(p, lr * g, out=p)`) to modify the underlying buffer.
+2. **Validation.** `len(params) != len(grads)` should raise (otherwise `zip` silently truncates and some parameters never update — a very ugly real-world bug). Same for per-element shape mismatches.
+
+In future problems we'll layer momentum, weight decay, and adaptive learning rates on top — but everything starts from this two-line update.
+
+</PracticeProblem>

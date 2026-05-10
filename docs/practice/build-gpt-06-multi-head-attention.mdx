@@ -1,0 +1,174 @@
+---
+title: "Build a GPT · 06 · Multi-Head Attention"
+description: Wire QKV projection, head splitting, scaled dot-product attention, and head recombination into one Multi-Head Attention layer.
+sidebar_position: 6
+practice_mode: true
+hide_table_of_contents: true
+---
+
+import PracticeProblem from '@site/src/components/viz/PracticeProblemPro';
+
+<PracticeProblem
+  id="build-gpt-06-multi-head-attention"
+  title="Multi-Head Attention (full layer)"
+  difficulty="Medium"
+  tags={["numpy", "transformer", "multi-head-attention", "build-gpt"]}
+  linkedLessons={[
+    { url: '/courses/ai-for-engineering/build-and-train-your-own-gpt2-model/attention-multi-head-attention', title: 'Attention + multi-head attention' },
+  ]}
+  starter={`
+import numpy as np
+
+# Helpers from earlier problems (provided so you can focus on the wiring):
+def split_heads(x, n_head):
+    B, T, C = x.shape
+    D = C // n_head
+    return x.reshape(B, T, n_head, D).transpose(0, 2, 1, 3)
+
+def combine_heads(x):
+    B, H, T, D = x.shape
+    return x.transpose(0, 2, 1, 3).reshape(B, T, H * D)
+
+def attention_batched(Q, K, V, mask=None):
+    # Vectorised scaled dot-product attention. Works on any leading dims.
+    # Q, K, V have shape (..., T, D). Returns (..., T, D).
+    d = Q.shape[-1]
+    scores = Q @ K.swapaxes(-2, -1) / np.sqrt(d)
+    if mask is not None:
+        scores = np.where(mask, scores, -1e9)
+    s = scores - scores.max(axis=-1, keepdims=True)
+    e = np.exp(s)
+    w = e / e.sum(axis=-1, keepdims=True)
+    return w @ V
+
+
+def multi_head_attention(x, W_qkv, W_o, n_head, mask=None):
+    """
+    Multi-Head Attention: project to Q,K,V together, split into n_head heads,
+    run scaled dot-product attention per head in parallel, recombine, project.
+
+    Args:
+        x:      (B, T, C) input.
+        W_qkv:  (C, 3*C) — fused projection that produces Q, K, V together.
+        W_o:    (C, C)   — output projection that mixes heads back to C dims.
+        n_head: int — number of heads. Must divide C.
+        mask:   optional (T, T) bool — True = attend, False = block.
+
+    Returns:
+        (B, T, C) — attention output.
+    """
+    # YOUR CODE HERE
+    pass
+`}
+  tests={`
+import numpy as np
+
+def _ref(x, W_qkv, W_o, n_head, mask=None):
+    B, T, C = x.shape
+    qkv = x @ W_qkv
+    Q, K, V = np.split(qkv, 3, axis=-1)
+    Q = split_heads(Q, n_head); K = split_heads(K, n_head); V = split_heads(V, n_head)
+    out = attention_batched(Q, K, V, mask=mask)
+    return combine_heads(out) @ W_o
+
+@__test__("Output shape is (B, T, C)")
+def t():
+    rng = np.random.default_rng(0)
+    B, T, C, H = 2, 4, 8, 2
+    x = rng.standard_normal((B, T, C))
+    W_qkv = rng.standard_normal((C, 3 * C)) * 0.1
+    W_o = rng.standard_normal((C, C)) * 0.1
+    out = multi_head_attention(x, W_qkv, W_o, n_head=H)
+    assert out is not None, "function returned None"
+    assert out.shape == (B, T, C), f"expected ({B},{T},{C}), got {out.shape}"
+
+@__test__("Matches reference implementation (no mask)")
+def t():
+    rng = np.random.default_rng(42)
+    B, T, C, H = 3, 8, 16, 4
+    x = rng.standard_normal((B, T, C))
+    W_qkv = rng.standard_normal((C, 3 * C)) * 0.1
+    W_o = rng.standard_normal((C, C)) * 0.1
+    out = multi_head_attention(x, W_qkv, W_o, n_head=H)
+    expected = _ref(x, W_qkv, W_o, H)
+    assert np.allclose(out, expected, atol=1e-6), \\
+        f"max diff {np.max(np.abs(out - expected)):.2e}"
+
+@__test__("Causal mask is honoured — early positions don't see future")
+def t():
+    rng = np.random.default_rng(7)
+    B, T, C, H = 2, 6, 8, 2
+    x = rng.standard_normal((B, T, C))
+    W_qkv = rng.standard_normal((C, 3 * C)) * 0.1
+    W_o = rng.standard_normal((C, C)) * 0.1
+    mask = np.tril(np.ones((T, T), dtype=bool))
+    out = multi_head_attention(x, W_qkv, W_o, n_head=H, mask=mask)
+    expected = _ref(x, W_qkv, W_o, H, mask=mask)
+    assert np.allclose(out, expected, atol=1e-6), "mask not applied correctly"
+
+@__test__("Diagnostic: H=1 reduces to a single-head attention (vs explicit ref)")
+def t():
+    rng = np.random.default_rng(11)
+    B, T, C = 1, 4, 6
+    x = rng.standard_normal((B, T, C))
+    W_qkv = rng.standard_normal((C, 3 * C)) * 0.1
+    W_o = rng.standard_normal((C, C)) * 0.1
+    out = multi_head_attention(x, W_qkv, W_o, n_head=1)
+    expected = _ref(x, W_qkv, W_o, 1)
+    assert np.allclose(out, expected, atol=1e-7), \\
+        f"H=1 case differs by {np.max(np.abs(out - expected)):.2e}"
+
+@__test__("Different H values produce different outputs (heads aren't trivially equal)")
+def t():
+    rng = np.random.default_rng(13)
+    B, T, C = 1, 8, 16
+    x = rng.standard_normal((B, T, C))
+    W_qkv = rng.standard_normal((C, 3 * C)) * 0.1
+    W_o = rng.standard_normal((C, C)) * 0.1
+    out_2 = multi_head_attention(x, W_qkv, W_o, n_head=2)
+    out_4 = multi_head_attention(x, W_qkv, W_o, n_head=4)
+    assert not np.allclose(out_2, out_4, atol=1e-3), \\
+        "H=2 and H=4 should produce different outputs (different attention patterns)"
+`}
+  solution={`
+import numpy as np
+
+def multi_head_attention(x, W_qkv, W_o, n_head, mask=None):
+    # 1) Project to Q, K, V (fused).
+    qkv = x @ W_qkv                               # (B, T, 3C)
+    Q, K, V = np.split(qkv, 3, axis=-1)           # each (B, T, C)
+
+    # 2) Split each into heads.
+    Q = split_heads(Q, n_head)                    # (B, H, T, D)
+    K = split_heads(K, n_head)
+    V = split_heads(V, n_head)
+
+    # 3) Scaled dot-product attention per head.
+    out = attention_batched(Q, K, V, mask=mask)   # (B, H, T, D)
+
+    # 4) Recombine heads and project out.
+    out = combine_heads(out)                      # (B, T, C)
+    return out @ W_o                              # (B, T, C)
+`}
+  hints={[
+    "Five steps: fused QKV projection (x @ W_qkv -> (B, T, 3C)); split into Q, K, V along the last axis; split each into heads via split_heads; run attention_batched; combine_heads then output projection.",
+    "Use np.split(qkv, 3, axis=-1) to split (B, T, 3C) into three (B, T, C) tensors. Then call split_heads on each individually.",
+    "The mask (if provided) is a (T, T) bool. attention_batched broadcasts it across the (B, H) leading dims automatically — no special handling needed.",
+  ]}
+>
+
+The full Multi-Head Attention layer — the unit that gets stacked twelve times in GPT-2 small. This problem composes everything from earlier in the series: the projection, head split (problem 05), single-head attention (problem 03), the optional causal mask (problem 04), head combine (problem 05), output projection.
+
+The shapes and parameter budget:
+
+`x:      (B, T, C)`
+
+`W_qkv:  (C, 3C)`  → 3·C² params (fused Q, K, V projections)
+
+`W_o:    (C, C)`   → C² params (output projection)
+
+**Total parameters per attention block: 4 · C².** For GPT-2 small (C = 768) that's 2.36M per block × 12 blocks = ~28M, about 23% of the 124M-parameter model.
+
+Helpers are provided in the starter — your job is the five-line wiring that turns a `(B, T, C)` input plus the projection matrices into a `(B, T, C)` output. The mask (if given) flows through unchanged; the causal triangular mask is the standard choice for autoregressive language modelling.
+
+</PracticeProblem>

@@ -1,0 +1,293 @@
+---
+hide_title: true
+sidebar_label: '8 · Define the problem (RAG)'
+title: 'Lesson 8 — Define the problem (RAG)'
+description: >-
+  Translate "design a search system that answers natural-language queries with
+  citations" into a metric stack with faithfulness as primary, define the unit
+  as a cited answer (not a ranked list), and propose the multi-stage RAG funnel
+  that makes grounded generation possible.
+mvp_status: drafted
+tutor_topic: "Defining a production RAG search problem"
+tutor_concepts: []
+---
+
+<LessonHero
+  number="8"
+  title="Define the problem (RAG)"
+  subtitle="The modern interview surface. Recsys taught you to rank items; RAG asks you to compose an answer. The metric tree shifts, the unit shifts, but the framework holds."
+  course="ML System Design"
+/>
+
+<InterviewerSignal
+  level="L4"
+  message="Treats RAG as 'use a vector database and return the top-3 chunks.' Optimises for fluent answers without grounding. Doesn't distinguish faithfulness from answer quality. Skips the reranker."
+/>
+<InterviewerSignal
+  level="L5"
+  message="Opens with faithfulness as the primary metric. Volunteers citation accuracy as a guardrail unprompted. Explains why retrieval + reranking + generation is one connected system, with each stage owning a different failure mode. Names the cost gap vs traditional recsys."
+/>
+
+---
+
+## 1. Where we are in the framework
+
+This is **Step 1 of the 6-step framework** — define the problem — applied to a different problem class. Time-budget: **~8 minutes**.
+
+The framework hasn't changed. The metric tree shifts (faithfulness becomes primary, not watch time). The unit shifts (a cited answer, not a slate of items). The funnel shifts (LLM generation replaces ranking). Everything else — the discipline of metric layering, the demand for a defended unit, the requirement to pre-commit to a funnel before talking model — is identical to Lesson 1.
+
+By the end of this step you should have:
+
+- A **layered metric stack** with **faithfulness/groundedness as the primary metric**
+- A **unit of recommendation** — a single answer composed of generated text plus citations to retrieved passages
+- A **multi-stage RAG funnel** drawn on the whiteboard
+- A one-line cost intuition explaining why RAG is **roughly 100× more expensive per request** than the recsys ranker from Lesson 4
+
+---
+
+## 2. The problem at this layer
+
+The interviewer hands you the prompt:
+
+> **"Design a search system that answers natural-language queries with citations."**
+
+This is the modern surface — the round being asked at OpenAI, Anthropic, Perplexity, Glean, customer-support tooling, legal research, internal enterprise search, and increasingly at FAANG-class generalists running their own LLM-backed search products in 2026.
+
+Clarification questions you ask out loud:
+
+- **What is the corpus?** Open web (~10B documents)? Enterprise wiki (~1M)? Product docs (~10K)? Domain shapes everything downstream.
+- **What is the user expecting?** A direct answer with citations? A summary of relevant docs? A list of links? They are different products.
+- **What latency budget?** Real-time chat (~1-3s end-to-end) is different from offline batch summarisation (minutes are fine).
+- **What freshness?** Today's news? Yesterday's? Never changes? Index strategy depends on this.
+- **What domain?** General-purpose? Medical / legal / financial (high-stakes hallucination cost)? Domain shapes both the model and the eval.
+
+Pick **a general-purpose enterprise search product** for the rest of the lesson — corpus of ~10M chunks, latency budget ~2s, freshness within hours, mostly text. This is the modal interview prompt.
+
+---
+
+<SplitCompare>
+<SplitLeft title="Naive">
+
+- Send the user query directly to GPT-4 — return whatever it generates
+- Hallucinates confidently without grounding
+- No citations, no traceability, no fresh / proprietary data
+- Optimises for fluency rather than truth
+
+</SplitLeft>
+<SplitRight title="Motivated">
+
+- **Faithfulness as the primary metric**; answer quality and citation accuracy as guardrails
+- **Unit is a cited answer** (not a ranked list); **refusal is a feature**, not a bug
+- **Three-stage RAG funnel**: retrieval → reranking → generation
+- Cost intuition: a RAG request costs roughly **100× more** than the recsys ranker — drives architectural choices
+
+</SplitRight>
+</SplitCompare>
+
+## 3. The naive solution — and why it breaks
+
+The naive answer:
+
+> "I'll send the user's query to GPT-4 and return whatever it generates."
+
+This fails in **four distinct ways**, and the strong interviewer will probe at least three.
+
+### 3.1 Hallucinations without grounding
+
+A bare LLM produces text that *sounds* authoritative whether or not it is correct. Asked "What was Acme Corp's Q3 2025 revenue?" the model returns a confident number that may or may not be real. The system is **fluent and unfaithful**. For most production search use cases — enterprise, legal, medical, news — this is unshippable.
+
+### 3.2 No access to fresh or proprietary data
+
+LLM training cutoffs lag months to years. Internal company docs were never in the training set. A bare LLM cannot answer "What does our refund policy say about a 90-day window?" with confidence — and will hallucinate a plausible-sounding policy if asked.
+
+### 3.3 No citations, no traceability
+
+Even when the bare LLM happens to produce correct facts, the user has **no way to verify**. The model cannot point to the document the claim came from because it did not look at any document. Citation is structurally impossible without retrieval.
+
+### 3.4 No guardrail metric
+
+The naive design optimises for fluency — does the answer read well? — but cannot detect the failure modes above. An L4 candidate proposes "use a benchmark to measure quality." But generic benchmarks (MMLU, MS MARCO) measure narrow proxies on public data, not the actual product question of "is this answer faithful and useful for *my* corpus?"
+
+---
+
+## 4. The motivated solution
+
+The production answer has three components: a metric tree with faithfulness on top, a unit definition that includes citations, and a three-stage funnel.
+
+### 4.1 The metric tree — faithfulness is primary
+
+For a production RAG system the metric stack inverts the recsys ordering. Fluency / answer quality is **secondary** to faithfulness:
+
+- **Business goal:** users get useful, trustworthy answers to real-world questions
+- **Product metric:** answer-acceptance rate (thumbs up / down), citation-click rate (signal that citations are real), time-to-resolution for support, weekly active users
+- **ML objective stack (in priority order):**
+  1. **Faithfulness / groundedness** — every claim in the answer is supported by a retrieved passage. Operationally measured as passage-level entailment or citation accuracy. **Primary metric.**
+  2. **Answer quality** — does the answer address the question, with appropriate scope and tone. Measured via LLM-as-judge calibrated to human ratings (Lesson 11 covers this).
+  3. **Citation accuracy** — when the answer cites passage [doc-N], does that passage actually support the claim. Often a guardrail, not a primary.
+  4. **Latency** — time to first token, total response time. Constraint, not objective.
+  5. **Cost** — tokens-in × tokens-out × price. Constraint.
+
+Saying this in the interview, out loud:
+
+> *"Faithfulness is the primary metric — every claim has to be supported by a retrieved passage. Answer quality and citation accuracy are guardrails. Latency and cost are constraints. A fluent but unfaithful answer is a regression, not a win."*
+
+That sentence alone is an L5 promote signal in this round.
+
+### 4.2 The unit — a cited answer, not a ranked list
+
+The unit is **one answer**, composed of:
+
+- A natural-language response (200–800 tokens for most products)
+- **Inline citations** — `[doc-3], [doc-7]` — pointing into the retrieved passage set
+- A **bibliography section** at the bottom listing the cited passages with source links
+
+This is **categorically different** from the recsys unit (an ordered slate of items). The retrieval and reranking layers serve the **generation step**, not the user directly. The user sees the answer; the passages are an artefact the system needs to ground its claims.
+
+Why this matters:
+
+- **Citation enforcement** is a structural requirement of the system, baked into the prompt and the eval — not an optional add-on
+- **Refusal is a feature**, not a bug. If the retrieved passages don't support a confident answer, the system should say so explicitly
+- **Cost scales with output length**, not with number of items. A long answer is expensive even if the user only reads the first sentence
+
+### 4.3 The three-stage RAG funnel
+
+You cannot stuff every relevant document into the LLM context window and you wouldn't want to even if you could (cost, distraction, latency). The canonical resolution is a **three-stage funnel**:
+
+<RAGFunnel />
+
+The four layers, top to bottom:
+
+| Layer | Input | Output | What runs here |
+|---|---|---|---|
+| **Corpus** | All docs | All docs | Indexed once, refreshed on doc updates |
+| **Retrieval** | Query, all docs (~10M chunks) | Top ~50 candidates | Bi-encoder (dense + sparse hybrid) + ANN — Lesson 9 |
+| **Reranking** | ~50 candidates | Top K = 5–10 passages | Cross-encoder reranker — Lesson 9 |
+| **Generation** | Top-K passages + query + system prompt | Cited answer | LLM with prompt-enforced citation — Lesson 10 |
+
+Each stage trades different things. **Retrieval is recall-oriented** (don't drop the right answer; cheap). **Reranking is precision-oriented** (every passage in context costs tokens; expensive cross-encoder is worth it). **Generation is composition-oriented** (compose a faithful answer; the most expensive stage by far).
+
+A bare LLM (the naive answer) compresses all three stages into a single forward pass. The funnel **gives the system the structure to be both fast and faithful** at scale.
+
+---
+
+## 5. Back-of-envelope numbers (cost intuition)
+
+A quick numeric anchor to show you reason in real numbers. The headline: **RAG is roughly 100× more expensive per request than the recsys ranker from Lesson 4.**
+
+A typical RAG request burns:
+
+- **Retrieval:** ~5ms p99 against an indexed corpus (Lesson 9 covers the math); negligible cost vs the LLM stage
+- **Reranking:** cross-encoder over 50 candidates at ~2ms each = ~100ms; small dollar cost
+- **LLM generation input tokens:** 5 passages × ~512 tokens = ~2,500 tokens of context, plus ~500 tokens for the system prompt and the user query — total ~3,000 input tokens
+- **LLM generation output tokens:** ~500 tokens for a typical answer
+
+At a representative price point of **$0.50 per 1M input tokens** and **$1.50 per 1M output tokens** (mid-2026 prices for a strong open-weight model served on an H100):
+
+$$
+\text{cost per request} \approx \frac{3000 \times 0.5}{10^6} + \frac{500 \times 1.5}{10^6} = 0.0015 + 0.00075 \approx \$0.002
+$$
+
+Two-tenths of a cent per request. Sounds cheap. At 100K daily active users running 10 queries/day:
+
+$$
+10^5 \times 10 \times \$0.002 = \$2{,}000 \text{ per day} \approx \$730{,}000 \text{ per year}
+$$
+
+<Stat
+  value="~$730K / year"
+  caption="LLM inference cost for a mid-size RAG product at 100K DAU × 10 queries/day. Roughly 100× the recsys ranker cost per request. A real line item in the operational budget — not a hand-wavable 'small cost.'"
+  source="$0.002/req × 1M req/day × 365 days"
+/>
+
+This is a **real budget item** in a way that recsys serving cost almost never is. By comparison, the recsys ranker from Lesson 4 — a 4-layer MLP over 100 candidates — costs fractions of a millisecond and effectively no marginal dollars per request. **The cost shift drives the system design**: you cannot afford to call the LLM speculatively, you must batch and stream aggressively, and answer length is an actual cost lever.
+
+<PlaygroundPlaceholder
+  name="RAGProblemTree"
+  description="Interactive tool: pick a use case (general search / customer support / legal research / internal enterprise search) and see how the metric stack and constraints reweight. Observe how high-stakes domains push faithfulness even harder; how chat-style products tighten latency; how niche corpora relax retrieval recall thresholds."
+/>
+
+---
+
+## 6. What the interviewer is actually grading
+
+By minute 8 of the 45-minute round — the rough end of Step 1 for this prompt — the interviewer has formed a strong prior. For RAG specifically, the grading dimensions are:
+
+- **Did you ask clarification questions about the corpus?** "Is this the open web or an enterprise corpus?" is the first L5 question to volunteer.
+- **Did you put faithfulness on top of the metric tree?** Putting answer quality first is the L4 mistake.
+- **Did you define the unit as a cited answer, not a ranked list?** A surprising number of candidates copy recsys here and lose the round structurally.
+- **Did you draw a three-stage funnel?** "Use a vector DB" without retrieval + rerank + generation as separate stages is L4 ceiling.
+- **Did you mention cost?** RAG cost per request is unique — the L5 candidate calls it out within the first eight minutes.
+- **Did you mention refusal as a feature?** Acknowledging "if the passages don't support an answer, the system says so" is an L5 detail that signals product maturity.
+
+Failure modes to avoid:
+
+- **Treating RAG as recsys with words.** It is not. The unit is composed, not ranked. Citations are structural, not decorative.
+- **Optimising for fluency.** Fluent + unfaithful is the canonical failure of bare-LLM systems. Faithfulness must be primary.
+- **Skipping the reranker.** Going from retrieval directly to generation forces the LLM to filter noise out of context. Cross-encoder reranking is cheap insurance.
+- **Forgetting cost.** Every other ML round can hand-wave cost. RAG cannot — it dominates the operational story.
+
+---
+
+## 7. Quiz
+
+<Quiz
+  lessonId="ai-for-engineering/ml-system-design/rag-define-the-problem"
+  questions={[
+    {
+      id: "rag-define-q1",
+      prompt: "A candidate proposes 'I'll send the user query to GPT-4 and return its answer.' What is the strongest single L4-ceiling objection?",
+      options: [
+        "GPT-4 is too expensive.",
+        "The system has no grounding — answers will be fluent but unfaithful, with no citations and no access to fresh or proprietary data. Faithfulness must be the primary metric, and a bare LLM cannot satisfy it without retrieval-augmented context.",
+        "GPT-4 is slow.",
+        "Open-weight models are better.",
+      ],
+      correctIndex: 1,
+    },
+    {
+      id: "rag-define-q2",
+      prompt: "Which of the following metric stacks is correct for a general-purpose RAG search product, in priority order?",
+      options: [
+        "Answer quality > latency > cost > faithfulness",
+        "Faithfulness/groundedness > answer quality > citation accuracy > latency > cost — faithfulness is primary because a fluent but ungrounded answer is a regression, not a win; latency and cost are constraints, not objectives.",
+        "Cost > faithfulness > quality",
+        "Latency > everything else",
+      ],
+      correctIndex: 1,
+    },
+    {
+      id: "rag-define-q3",
+      prompt: "An interviewer asks 'What is the unit of recommendation in your RAG design?' Which answer is the L5 signal?",
+      options: [
+        "'A ranked list of documents.'",
+        "'A single composed answer with inline citations into the retrieved passages, plus a bibliography section listing the cited sources. The user reads the answer; the passages are the substrate the answer must ground in. Refusal is a feature when the retrieved passages don't support a confident response.'",
+        "'Whatever the LLM produces.'",
+        "'Top-K passages, ordered by relevance.'",
+      ],
+      correctIndex: 1,
+    },
+    {
+      id: "rag-define-q4",
+      prompt: "Why is a three-stage funnel (retrieval → reranking → generation) preferred to going directly from retrieval to generation?",
+      options: [
+        "Reranking is required for citations.",
+        "Retrieval is recall-oriented (cheap, must not drop the right answer); reranking is precision-oriented (a cross-encoder is more accurate than a bi-encoder, and every passage in the LLM context window costs tokens — both dollars and quality, since irrelevant passages distract the model). The reranker is cheap insurance: it lets retrieval cast wide, then narrows to a small precise set the LLM can ground in.",
+        "It's industry standard.",
+        "Reranking is faster than retrieval.",
+      ],
+      correctIndex: 1,
+    },
+  ]}
+/>
+
+---
+
+## 8. What's next
+
+In **Lesson 9 — Retrieval and reranking** we walk through Step 3 of the framework applied to the RAG retrieval layer. Many of the primitives recur from Lesson 3 (bi-encoder, ANN, embedding store sizing) — but the unit changes from videos to text passages, and the retrieval stack adds two RAG-specific layers: **chunking strategy** (how to slice documents into retrievable units without losing semantic coherence) and **hybrid retrieval** (BM25 + dense embeddings fused via Reciprocal Rank Fusion, with a cross-encoder reranker on top).
+
+<div className="not-prose mt-8 flex justify-end">
+  <a href="./rag-retrieval-and-reranking" className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white no-underline hover:bg-emerald-500">
+    Lesson 9 — Retrieval and reranking →
+  </a>
+</div>

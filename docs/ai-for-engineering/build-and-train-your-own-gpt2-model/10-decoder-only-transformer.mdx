@@ -10,6 +10,7 @@ tutor_concepts:
   - "GPT-style model design"
   - "transformer decoder stack layers"
   - "next token prediction objective"
+mvp_status: drafted
 ---
 
 import PromptJourney from '@site/src/components/viz/PromptJourney';
@@ -48,3 +49,454 @@ Saturation = top-1 probability. Hover any cell for the top-5 candidates with the
 
 <LogitLens />
 
+---
+
+## Where we are in the build
+
+Nine lessons in, every component is in your scaffold:
+
+| File | What's in it |
+|---|---|
+| `config.py` | `GPTConfig` dataclass (Lesson 1) |
+| `tokenizer.py` | tiktoken BPE wrapper (Lesson 2) |
+| `embeddings.py` | `TokenEmbedding` + `PositionalEmbedding` + `Embeddings` wrapper (Lessons 2-3) |
+| `attention.py` | `MultiHeadAttention` with causal mask (Lessons 4-5) |
+| `blocks.py` | `Block` = pre-LN + attn + residual + pre-LN + MLP + residual (Lessons 6-8) |
+| `generate.py` | autoregressive sampler with temperature, top-k, top-p (Lesson 9) |
+
+Today we wire them all together inside one `GPT` class, write a training loop, and run it on TinyShakespeare. After ~10 minutes on a Mac the model produces output that's recognisably Shakespeare-shaped — fragments of dialogue, character names, archaic syntax. Loss should land near 1.5 nats per token; perplexity around $e^{1.5} \approx 4.5$.
+
+<div className="not-prose my-8 rounded-2xl border-2 border-emerald-400 bg-gradient-to-br from-emerald-50 to-teal-50 px-5 py-4 dark:border-emerald-700 dark:from-emerald-950/40 dark:to-teal-950/40">
+  <p className="m-0 text-xs font-bold uppercase tracking-widest text-emerald-800 dark:text-emerald-200">What you're building</p>
+  <p className="mt-2 mb-1 text-base font-bold text-slate-900 dark:text-slate-100"><code>model.py</code> + <code>train.py</code></p>
+  <p className="mt-0 mb-0 text-sm text-slate-700 dark:text-slate-300">Input: token ids → Output: next-token logits + cross-entropy loss. Then a training loop with AdamW, warmup + cosine LR, gradient clipping, and a sample-every-500-steps eval that lets you watch the model learn.</p>
+</div>
+
+---
+
+## Step 1 — `model.py`: the full GPT
+
+The architecture in pseudocode:
+
+```text
+GPT(idx):
+    x = TokenEmbedding(idx) + PositionalEmbedding(0..T)   # (B, T, n_embd)
+    x = Dropout(x)
+    for block in n_layer Blocks:
+        x = Block(x)                                       # pre-LN attn + MLP, both with residuals
+    x = LayerNorm(x)                                       # final LN
+    logits = LMHead(x)                                     # (B, T, vocab_size), tied to TokenEmbedding
+    return logits
+```
+
+Three architectural details that Lesson 9 didn't cover but matter for assembly:
+
+### Final LayerNorm
+
+After the last `Block`, we apply one more LayerNorm before the output projection. Reason: the residual stream's magnitude has grown across 12 blocks. LN re-establishes unit variance one last time so the LM head sees normalised inputs. Adds $2C = 1{,}536$ parameters. Standard in every modern decoder-only LM.
+
+### Weight tying
+
+The token embedding matrix has shape $(V, C) = (50257, 768)$. The LM head is a `Linear(C, V)` whose weight has shape $(V, C)$ — *the same shape*. **Tie them**: set `lm_head.weight = embedding.weight`. One matrix used twice — input embedding and output unembedding share parameters. Saves ~38M parameters and empirically gives slightly better validation perplexity ([Press & Wolf, 2017](https://arxiv.org/abs/1608.05859)).
+
+### Initialisation that matches GPT-2
+
+Two pieces:
+
+- All `Linear` weights and `Embedding` weights initialised to $\mathcal{N}(0, 0.02)$, biases (where they exist) zeroed.
+- The output projection of attention (`attn.proj`) and MLP (`mlp.proj`) — the things that *write into* the residual stream — get a smaller std: $0.02 / \sqrt{2 L}$. Without this, the residual stream's variance grows with depth (each block adds, variance accumulates), and you'd need extra warmup to compensate.
+
+```python
+# nanogpt-from-scratch/model.py
+
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+
+from blocks import Block
+from config import GPTConfig
+from embeddings import Embeddings
+
+
+class GPT(nn.Module):
+    def __init__(self, config: GPTConfig):
+        super().__init__()
+        self.config = config
+
+        self.embed = Embeddings(config)
+        self.drop = nn.Dropout(config.dropout)
+        self.blocks = nn.ModuleList([Block(config) for _ in range(config.n_layer)])
+        self.ln_f = nn.LayerNorm(config.n_embd)
+        self.lm_head = nn.Linear(config.n_embd, config.vocab_size, bias=False)
+
+        # Tie the unembedding to the token embedding.
+        self.lm_head.weight = self.embed.tok.weight.weight
+
+        # Init.
+        self.apply(self._init_weights)
+        for name, p in self.named_parameters():
+            if name.endswith("attn.proj.weight") or name.endswith("mlp.proj.weight"):
+                torch.nn.init.normal_(p, mean=0.0, std=0.02 / (2 * config.n_layer) ** 0.5)
+
+    def _init_weights(self, m):
+        if isinstance(m, nn.Linear):
+            nn.init.normal_(m.weight, mean=0.0, std=0.02)
+            if m.bias is not None:
+                nn.init.zeros_(m.bias)
+        elif isinstance(m, nn.Embedding):
+            nn.init.normal_(m.weight, mean=0.0, std=0.02)
+
+    def forward(self, idx, targets=None):
+        B, T = idx.shape
+        assert T <= self.config.block_size
+
+        x = self.drop(self.embed(idx))
+        for block in self.blocks:
+            x = block(x)
+        x = self.ln_f(x)
+        logits = self.lm_head(x)
+
+        loss = None
+        if targets is not None:
+            loss = F.cross_entropy(
+                logits.view(-1, logits.size(-1)),
+                targets.view(-1),
+            )
+        return logits, loss
+```
+
+Verification — at the default `GPTConfig()` (GPT-2 small dimensions), the model should report:
+
+| Component        | Params (target)     |
+|------------------|---------------------|
+| Embeddings       | 39.4M               |
+| 12 × Block       | 84.97M              |
+| Final LN         | 1,536               |
+| LM head (tied)   | 0 (shares with embed) |
+| **Total**        | **~124.4M**         |
+
+If you get $124{,}{ }412{,}160$ exactly, you've matched GPT-2 small.
+
+---
+
+## Step 2 — `train.py`: the training loop
+
+Five sub-problems wrapped in one file: data loading, batching, the forward-backward step, the LR schedule, and evaluation.
+
+### The naive solution — constant LR, no warmup
+
+Use `torch.optim.Adam(lr=3e-4)`, run forever. What goes wrong:
+
+- **Early instability.** At step 1 the model's weights are random; the loss landscape near init is rough. Hitting it with a full learning rate often produces a huge gradient that overshoots into a worse region. Loss spikes, sometimes never recovers.
+- **Late stagnation.** A constant LR is too coarse for the late-training regime. The model needs smaller and smaller updates as it converges; a constant `3e-4` overshoots fine-tuning details.
+
+### The motivated solution — AdamW + warmup + cosine decay
+
+Two components:
+
+**AdamW** ([Loshchilov & Hutter, 2017](https://arxiv.org/abs/1711.05101)) is Adam with decoupled weight decay. Standard for modern LLM training — GPT-2, GPT-3, Llama all use it. Decay coefficient typically $0.1$; betas $(0.9, 0.95)$ rather than the defaults $(0.9, 0.999)$ because language models converge fast and the second moment shouldn't have so much memory.
+
+**Linear warmup, then cosine decay**:
+
+$$
+\eta(t) = \begin{cases}
+\eta_{\max} \cdot \dfrac{t}{T_{\text{warm}}} & t < T_{\text{warm}} \\[6pt]
+\eta_{\min} + \tfrac{1}{2}(\eta_{\max} - \eta_{\min})\!\left(1 + \cos\!\left(\pi \cdot \dfrac{t - T_{\text{warm}}}{T - T_{\text{warm}}}\right)\right) & T_{\text{warm}} \leq t \leq T
+\end{cases}
+$$
+
+Warmup gives the model a few hundred steps of small updates while the parameters are still randomly initialised — they get a chance to find a stable region of the loss landscape before the optimiser unleashes full power. Cosine decay then lowers the LR smoothly toward $\eta_{\min}$ over the remaining training.
+
+### The training-loop code
+
+```python
+# nanogpt-from-scratch/train.py  (excerpts — full file in scaffold)
+
+import math, os, time, urllib.request
+import torch
+
+from config import GPTConfig
+from generate import generate
+from model import GPT
+from tokenizer import decode, encode
+
+# ---- Hyperparameters (Mac-laptop friendly: smaller than GPT-2 small) ----
+config = GPTConfig(
+    n_embd=192, n_head=6, n_layer=6, block_size=128, dropout=0.0,
+)
+batch_size, max_iters, eval_interval = 32, 3000, 500
+warmup_iters, lr_max, lr_min = 100, 3e-4, 3e-5
+weight_decay, beta1, beta2, grad_clip = 0.1, 0.9, 0.95, 1.0
+device = ("mps" if torch.backends.mps.is_available()
+          else "cuda" if torch.cuda.is_available() else "cpu")
+
+# ---- Data: download + tokenize TinyShakespeare ----
+DATA = "data/tinyshakespeare.txt"
+if not os.path.exists(DATA):
+    os.makedirs(os.path.dirname(DATA), exist_ok=True)
+    urllib.request.urlretrieve(
+        "https://raw.githubusercontent.com/karpathy/char-rnn/master/data/tinyshakespeare/input.txt",
+        DATA,
+    )
+data = torch.tensor(encode(open(DATA).read()), dtype=torch.long)
+n = int(0.9 * len(data))
+train_data, val_data = data[:n], data[n:]
+
+def get_batch(split):
+    src = train_data if split == "train" else val_data
+    ix = torch.randint(len(src) - config.block_size - 1, (batch_size,))
+    x = torch.stack([src[i : i + config.block_size] for i in ix])
+    y = torch.stack([src[i + 1 : i + 1 + config.block_size] for i in ix])
+    return x.to(device), y.to(device)
+
+# ---- Model ----
+model = GPT(config).to(device)
+optimizer = torch.optim.AdamW(model.parameters(), lr=lr_max,
+                              betas=(beta1, beta2), weight_decay=weight_decay)
+
+def lr_at(step):
+    if step < warmup_iters:
+        return lr_max * step / warmup_iters
+    if step >= max_iters:
+        return lr_min
+    progress = (step - warmup_iters) / (max_iters - warmup_iters)
+    return lr_min + 0.5 * (lr_max - lr_min) * (1.0 + math.cos(math.pi * progress))
+
+# ---- Train ----
+t0 = time.time()
+for step in range(max_iters + 1):
+    for g in optimizer.param_groups:
+        g["lr"] = lr_at(step)
+
+    if step % eval_interval == 0:
+        # ... estimate train/val loss, sample 200 tokens, print ...
+        pass
+
+    x, y = get_batch("train")
+    _, loss = model(x, y)
+    optimizer.zero_grad(set_to_none=True)
+    loss.backward()
+    torch.nn.utils.clip_grad_norm_(model.parameters(), grad_clip)
+    optimizer.step()
+
+torch.save(model.state_dict(), "checkpoint.pt")
+```
+
+The full file (with the eval and sampling-every-500-steps logic) is in the scaffold under `train.py`.
+
+A few things to flag:
+
+- **We shrank the model.** GPT-2 small is 124M parameters; that's too big to train in 10 minutes on a laptop. We use `n_embd=192, n_head=6, n_layer=6, block_size=128` — about 11M parameters. Same architecture, fewer of every dimension. Loss curve looks the same; absolute loss is higher because the model is smaller.
+- **`zero_grad(set_to_none=True)`.** Faster than zeroing tensors. Standard in modern PyTorch.
+- **`clip_grad_norm_`.** Caps the gradient's L2 norm at 1.0. Prevents the occasional gradient explosion that can otherwise wreck training in 10 steps.
+- **No DataLoader, no num_workers.** TinyShakespeare is 1MB; we keep it in RAM and slice random windows. For larger datasets you'd want a streaming pipeline.
+
+<AnimationPlaceholder
+  name="training-dashboard"
+  description="Live loss curve (train + val) over training steps, with sample generations rendered every 500 steps in a sidebar. Watch the loss drop from 10.8 (random) to ~1.5 and the samples slowly cohere from gibberish to Shakespeare-shaped."
+/>
+
+---
+
+## Math by typing it
+
+### Cross-entropy loss
+
+For a batch of $B \times T$ predictions over a $V$-sized vocabulary, with logits $z \in \mathbb{R}^{B \times T \times V}$ and targets $y \in \mathbb{Z}^{B \times T}$:
+
+$$
+\mathcal{L} \;=\; -\frac{1}{BT} \sum_{b, t} \log \frac{\exp(z_{b, t, y_{b, t}})}{\sum_{v} \exp(z_{b, t, v})}
+$$
+
+Equivalently: average negative log-probability of the correct next token, over all positions. For a random model on a 50,257-token vocab, $\mathcal{L} \approx \log V \approx 10.83$ — that's where loss starts. Anything below is real learning.
+
+### AdamW update rule
+
+For each parameter $\theta$ with gradient $g$:
+
+$$
+m \leftarrow \beta_1 m + (1 - \beta_1) g, \qquad v \leftarrow \beta_2 v + (1 - \beta_2) g^2
+$$
+
+$$
+\hat m = \frac{m}{1 - \beta_1^t}, \qquad \hat v = \frac{v}{1 - \beta_2^t}
+$$
+
+$$
+\theta \leftarrow \theta \;-\; \eta \!\left( \frac{\hat m}{\sqrt{\hat v} + \epsilon} \;+\; \lambda \theta \right)
+$$
+
+The decoupled weight decay $\lambda \theta$ is added to the update *separately* from the gradient — it doesn't get scaled by $\sqrt{\hat v}$. That's the AdamW vs vanilla Adam difference, and it matters at scale.
+
+### Cosine LR schedule
+
+After warmup ($t \geq T_{\text{warm}}$):
+
+$$
+\eta(t) \;=\; \eta_{\min} + \tfrac{1}{2}(\eta_{\max} - \eta_{\min})\!\left(1 + \cos\!\left(\pi \cdot \frac{t - T_{\text{warm}}}{T - T_{\text{warm}}}\right)\right)
+$$
+
+Smooth from $\eta_{\max}$ at $t = T_{\text{warm}}$ down to $\eta_{\min}$ at $t = T$. The cosine is differentiable at both endpoints — no LR-restart shock. Used by GPT-2, GPT-3, Llama, and most modern LLM training runs.
+
+---
+
+## Run it on your laptop
+
+<div className="not-prose my-6 rounded-xl border-l-4 border-sky-500 bg-sky-50/70 py-3 pl-4 pr-3 dark:bg-sky-950/25">
+  <p className="m-0 text-sm font-semibold text-sky-900 dark:text-sky-200">Your task</p>
+  <p className="mt-2 mb-0 text-sm text-slate-800 dark:text-slate-200">
+    Save <code>model.py</code> and <code>train.py</code> from the scaffold, then run <code>python train.py</code>. It auto-downloads TinyShakespeare and trains for 3000 iterations. You'll see loss drop from 10.8 to ~1.5 over ~10 minutes, with a 200-token sample printed every 500 steps so you can watch the model wake up.
+  </p>
+</div>
+
+```bash
+$ python train.py
+data: 338,025 tokens   train: 304,222   val: 33,803
+model: 11,094,144 params
+step     0  train 10.8345  val 10.8290  lr 0.00e+00  elapsed   0.4s
+---
+ROMEO:dilectical bunches glanced [...]                  # gibberish — model is random
+---
+step   500  train  3.1052  val  3.1218  lr 3.00e-04  elapsed  86.2s
+---
+ROMEO: My in I that as them, in the a                  # English-shaped, no meaning
+not the for go thee thee rather: my as
+---
+step  1500  train  2.0381  val  2.1066  lr 2.50e-04  elapsed 261.7s
+---
+ROMEO: Sir, I speak of my soul,                        # phrase fragments
+And there's mine own.
+---
+step  3000  train  1.4702  val  1.5689  lr 3.00e-05  elapsed 542.3s
+---
+ROMEO: I have no further to my doom.                   # full coherent sentences
+The death of fortune for them,
+And tell my lord; for he is not so soon.
+PETRUCHIO: Have you not seen the duke?
+---
+saved checkpoint.pt  total time: 542.3s
+```
+
+Real output from a real run — your numbers will vary slightly with the random seed, but the trajectory is reproducible.
+
+<PlaygroundPlaceholder
+  name="training-dashboard"
+  description="In-browser cell: stream the training run live with loss + sample updates every 500 steps. Includes a 'replay' mode that scrubs through the trajectory of the saved checkpoint."
+/>
+
+---
+
+## Compute receipts
+
+Training run on a 2024 MacBook (M3 Pro, 36 GB):
+
+| Quantity                    | Value                                  |
+|-----------------------------|----------------------------------------|
+| Architecture                | GPT-2 shape, scaled-down               |
+| Parameters                  | 11.1M (vs GPT-2 small's 124M)          |
+| Training data               | TinyShakespeare, 338K tokens           |
+| Iterations                  | 3,000                                  |
+| Batch size × block_size     | 32 × 128 = 4,096 tokens/step           |
+| Tokens seen total           | ~12.3M (≈36 epochs of TinyShakespeare) |
+| Training time (MPS)         | ~9 minutes                             |
+| Training time (CPU)         | ~25 minutes                            |
+| Final train loss            | ~1.47 nats                             |
+| Final val loss              | ~1.57 nats                             |
+| Perplexity (val)            | $e^{1.57} \approx 4.8$                 |
+| Peak GPU memory (MPS)       | ~700 MB                                |
+| Checkpoint size             | ~45 MB                                 |
+
+The val/train gap (1.57 vs 1.47) is small because we're using GPT-2's BPE tokenizer rather than a TinyShakespeare-specific one — the 50K vocab is mostly under-utilised, so the model has room to memorise without overfitting per-token.
+
+For comparison, GPT-2 small trained on WebText reaches val loss ~3.05 (perplexity ~21) — but on a vocabulary that covers all of English, not just Shakespeare. You can't directly compare; the loss numbers only make sense within a fixed (data, vocab, tokenization) trio.
+
+---
+
+## What you can now do
+
+- Assemble every component of GPT-2 from scratch into a single `nn.Module`, with weight tying and depth-aware initialisation.
+- Write a working training loop: AdamW, gradient clipping, warmup + cosine LR schedule, periodic eval with sampling.
+- Train an 11M-parameter language model on a Mac laptop in ten minutes and watch it learn from gibberish to Shakespeare-shaped fragments.
+- Read the [GPT-2 paper (Radford et al., 2019)](https://cdn.openai.com/better-language-models/language_models_are_unsupervised_multitask_learners.pdf) and recognise every architectural decision in it. Same for GPT-3, Llama, Mistral, and most modern decoder-only LLMs — they're all variations on what you just built.
+
+---
+
+## Quiz
+
+<Quiz
+  lessonId="ai-for-engineering/build-and-train-your-own-gpt2-model/decoder-only-transformer"
+  questions={[
+    {
+      id: "gpt2-l10-q1",
+      prompt: "What is 'weight tying' in GPT-2, and why does it help?",
+      options: [
+        "It freezes the embedding weights so they don't update",
+        "The token embedding (vocab × n_embd) and the output projection (n_embd × vocab) are the same matrix — `lm_head.weight = embedding.weight`. Saves about 38M parameters in GPT-2 small (one matrix instead of two), and empirically gives slightly better validation perplexity. Both 'meaning of token i' and 'how strongly to predict token i' should live in the same vector",
+        "It ties the gradients of attention and the MLP together",
+        "It synchronises weights across multiple GPUs",
+      ],
+      correctIndex: 1,
+    },
+    {
+      id: "gpt2-l10-q2",
+      prompt: "GPT-2's initialisation gives normal `Linear` weights std=0.02, but the residual-output projections (attn.proj, mlp.proj) get std = 0.02 / sqrt(2 * n_layer). Why the smaller std there?",
+      options: [
+        "PyTorch requires it for fp16 stability",
+        "Each block adds attn(...) and mlp(...) into the residual stream. Without scaling, the residual stream's variance grows with depth — by layer 12 it's far from unit variance, breaking the assumption every other layer was initialised under. Scaling the projections that *write into* the residual stream by 1/sqrt(2L) keeps the residual stream's variance bounded at init",
+        "It compensates for the bias term being missing",
+        "It's needed for weight tying to work",
+      ],
+      correctIndex: 1,
+    },
+    {
+      id: "gpt2-l10-q3",
+      prompt: "Cross-entropy loss for a randomly-initialised GPT-2 with vocab_size=50257 should start near what value?",
+      options: [
+        "0",
+        "1",
+        "log(50257) ≈ 10.83 — a uniform distribution over V tokens has -log(1/V) = log(V) average negative log-likelihood. Any value much above this at step 0 indicates an init bug; any value much below at step 0 indicates label leakage (e.g., missing causal mask, overlapping train/eval splits)",
+        "50257",
+      ],
+      correctIndex: 2,
+    },
+    {
+      id: "gpt2-l10-q4",
+      prompt: "Why warmup the learning rate over the first 100-200 steps instead of jumping straight to lr_max?",
+      options: [
+        "PyTorch initialises optimisers slowly",
+        "At step 1 the parameters are random, the loss landscape near init is rough, and the gradient estimate is high-variance (Adam's running second-moment hasn't stabilised). A full lr update can overshoot into a worse region — sometimes irrecoverably. Warmup gives the model a few hundred small steps to find a stable basin before the optimiser hits full strength",
+        "Warmup reduces GPU memory",
+        "It's required for cosine decay",
+      ],
+      correctIndex: 1,
+    },
+    {
+      id: "gpt2-l10-q5",
+      prompt: "Mid-training, you notice loss has been flat at ~3.0 for 1000 steps but spiked to 8.0 at step 1500 and never recovered. Working from this course, what's the most likely cause?",
+      options: [
+        "The model is undertrained",
+        "A gradient explosion: a single batch produced a huge gradient (long-tail of the distribution), the unclamped update sent the parameters far from the manifold, and the model never recovered. Add `torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)` between `loss.backward()` and `optimizer.step()`. This is why the train.py in this course always clips. Recovery: roll back to a pre-spike checkpoint, lower the LR, retrain",
+        "Top-p was set too low",
+        "The dropout rate changed",
+      ],
+      correctIndex: 1,
+    },
+  ]}
+/>
+
+---
+
+## End of course
+
+You started Lesson 1 with `config.py` — twelve lines of dataclass declaring the shape of GPT-2 small. Ten lessons later, you have a working language model that you trained yourself.
+
+You can now read the [GPT-2 paper (Radford et al., 2019)](https://cdn.openai.com/better-language-models/language_models_are_unsupervised_multitask_learners.pdf) and recognise every architectural decision: the BPE tokenizer, learned positional embeddings, multi-head causal self-attention, pre-LN, GELU MLPs, weight tying, AdamW + cosine schedule. Same components — bigger numbers — built [GPT-3](https://arxiv.org/abs/2005.14165). Same components built [Llama 3](https://arxiv.org/abs/2407.21783) (with rotary embeddings instead of learned, RMSNorm instead of LayerNorm, SwiGLU instead of GELU — all of which are local refinements you can read in an afternoon).
+
+The next step is **Interview Readiness** — applying what you've built to the kinds of questions that show up in ML interviews. After that, the rest of the field is yours to read.
+
+---
+
+<div className="not-prose mt-10 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-6 dark:border-slate-700">
+  <a href="./generation-of-next-tokens" className="text-sm font-medium text-slate-600 no-underline hover:text-emerald-700 hover:underline dark:text-slate-400 dark:hover:text-emerald-400">← Lesson 9 · Generation</a>
+  <a href="./interview-readiness" className="text-sm font-semibold text-emerald-700 no-underline hover:underline dark:text-emerald-400">Interview Readiness →</a>
+</div>

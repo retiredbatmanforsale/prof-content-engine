@@ -1,0 +1,145 @@
+---
+title: "Build a NN · 04 · MSE Loss + Backward"
+description: Mean squared error loss and its gradient — the regression objective whose closed-form derivative every ML coder should know cold.
+sidebar_position: 4
+practice_mode: true
+hide_table_of_contents: true
+---
+
+import PracticeProblem from '@site/src/components/viz/PracticeProblemPro';
+
+<PracticeProblem
+  id="build-nn-04-mse-loss-and-backward"
+  title="MSE loss + backward"
+  difficulty="Easy"
+  tags={["numpy", "neural-net", "loss", "backprop", "build-nn"]}
+  linkedLessons={[
+    { url: '/courses/ai-for-engineering/deep-neural-networks/loss-functions', title: 'Loss functions' },
+    { url: '/courses/ai-for-engineering/deep-neural-networks/backward-pass', title: 'Backward pass' },
+  ]}
+  starter={`
+import numpy as np
+
+def mse_loss(pred, target):
+    """
+    Mean squared error: scalar = mean((pred - target) ** 2) over ALL elements.
+
+    Args:
+        pred:   np.ndarray of any shape — model predictions.
+        target: np.ndarray of the same shape — ground-truth values.
+
+    Returns:
+        scalar float — the loss.
+    """
+    # YOUR CODE HERE
+    pass
+
+
+def mse_loss_backward(pred, target):
+    """
+    Gradient of mse_loss with respect to pred.
+
+    Args:
+        pred:   np.ndarray.
+        target: np.ndarray of the same shape.
+
+    Returns:
+        np.ndarray of the same shape as pred — d_loss / d_pred.
+    """
+    # YOUR CODE HERE
+    pass
+`}
+  tests={`
+import numpy as np
+
+@__test__("mse_loss: returns a scalar")
+def t():
+    pred = np.array([1.0, 2.0, 3.0])
+    target = np.array([1.0, 2.0, 3.0])
+    out = mse_loss(pred, target)
+    assert out is not None, "mse_loss returned None"
+    assert np.isscalar(out) or (hasattr(out, "shape") and out.shape == ()), \\
+        f"expected scalar, got shape {getattr(out, 'shape', '?')}"
+
+@__test__("mse_loss: zero when pred == target")
+def t():
+    pred = np.array([0.5, -1.0, 2.5])
+    out = mse_loss(pred, pred)
+    assert abs(float(out)) < 1e-10, f"expected 0, got {out}"
+
+@__test__("mse_loss: matches the formula")
+def t():
+    pred = np.array([1.0, 2.0, 3.0, 4.0])
+    target = np.array([1.5, 2.5, 2.5, 4.0])
+    expected = np.mean((pred - target) ** 2)   # 0.5^2 + 0.5^2 + 0.5^2 + 0 = 0.1875
+    assert np.isclose(float(mse_loss(pred, target)), float(expected), atol=1e-9), \\
+        f"got {mse_loss(pred, target)}, expected {expected}"
+
+@__test__("mse_loss: works on 2-D arrays (averages over ALL elements, not just rows)")
+def t():
+    pred = np.array([[1.0, 2.0], [3.0, 4.0]])
+    target = np.array([[2.0, 2.0], [3.0, 5.0]])
+    # Squared diffs: [1, 0, 0, 1]; mean = 0.5.
+    assert np.isclose(float(mse_loss(pred, target)), 0.5, atol=1e-9)
+
+@__test__("mse_loss_backward: matches 2 * (pred - target) / N")
+def t():
+    rng = np.random.default_rng(0)
+    pred = rng.standard_normal((4, 5))
+    target = rng.standard_normal((4, 5))
+    N = pred.size
+    expected = 2.0 * (pred - target) / N
+    out = mse_loss_backward(pred, target)
+    assert out is not None, "mse_loss_backward returned None"
+    assert out.shape == pred.shape, f"shape {out.shape} != {pred.shape}"
+    assert np.allclose(out, expected, atol=1e-9), \\
+        f"max diff {np.max(np.abs(out - expected)):.2e}"
+
+@__test__("mse_loss_backward: matches finite-difference numerical gradient")
+def t():
+    rng = np.random.default_rng(3)
+    pred = rng.standard_normal(8)
+    target = rng.standard_normal(8)
+    analytic = mse_loss_backward(pred, target)
+
+    eps = 1e-5
+    numeric = np.zeros_like(pred)
+    for i in range(len(pred)):
+        h = pred.copy(); h[i] += eps
+        l_plus = float(mse_loss(h, target))
+        h[i] -= 2 * eps
+        l_minus = float(mse_loss(h, target))
+        numeric[i] = (l_plus - l_minus) / (2 * eps)
+
+    assert np.allclose(analytic, numeric, atol=1e-4), \\
+        f"max diff {np.max(np.abs(analytic - numeric)):.2e}"
+`}
+  solution={`
+import numpy as np
+
+def mse_loss(pred, target):
+    return np.mean((pred - target) ** 2)
+
+
+def mse_loss_backward(pred, target):
+    N = pred.size  # divide by total element count, matching the .mean() in forward
+    return 2.0 * (pred - target) / N
+`}
+  hints={[
+    "Forward: square the difference, then `.mean()`. The mean is over ALL elements, not just the leading axis — `pred.size` gives the divisor.",
+    "Backward: differentiate `(1/N) * sum((p_i - t_i) ** 2)` w.r.t. each `p_i`. The chain rule gives `2 * (p_i - t_i) / N`.",
+    "If the finite-difference test fails, you probably divided by `len(pred)` (which is the leading axis size) instead of `pred.size` (total element count). They differ for 2-D inputs.",
+  ]}
+>
+
+Mean squared error is the regression workhorse — used wherever you're predicting continuous values: pixel intensities in autoencoders, value functions in RL, denoising scores in diffusion models. Implement both halves.
+
+The math:
+
+`forward:  L = (1/N) · sum_i (pred_i - target_i)^2`
+
+`backward: dL / d(pred_i) = 2 · (pred_i - target_i) / N`
+
+The single subtlety the harness probes for: **what is `N`?** For 1-D inputs it's the obvious thing — `len(pred)`. For 2-D inputs (batch × features) it's `pred.size`, the total element count. The "loss is averaged over ALL elements" choice matches PyTorch's `MSELoss(reduction='mean')` default and keeps the gradient magnitude scale-invariant to batch size. If you divide by the wrong N, the analytic gradient won't match the finite-difference reference — and the harness will catch it.
+
+</PracticeProblem>

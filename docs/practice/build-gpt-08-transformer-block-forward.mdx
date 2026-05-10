@@ -1,0 +1,202 @@
+---
+title: "Build a GPT · 08 · Transformer Block (Capstone)"
+description: GPT series capstone — wire pre-LN, multi-head attention, residuals, and an MLP into a single GPT-2-style transformer block.
+sidebar_position: 8
+practice_mode: true
+hide_table_of_contents: true
+---
+
+import PracticeProblem from '@site/src/components/viz/PracticeProblemPro';
+
+<PracticeProblem
+  id="build-gpt-08-transformer-block-forward"
+  title="Transformer block forward (pre-LN, residual)"
+  difficulty="Hard"
+  tags={["numpy", "transformer", "capstone", "build-gpt"]}
+  linkedLessons={[
+    { url: '/courses/ai-for-engineering/build-and-train-your-own-gpt2-model/decoder-only-transformer', title: 'Decoder-only transformer' },
+    { url: '/courses/ai-for-engineering/build-and-train-your-own-gpt2-model/residual-connections', title: 'Residual connections' },
+  ]}
+  starter={`
+import numpy as np
+
+# Helpers from earlier problems (provided so you can focus on the block wiring):
+def split_heads(x, n_head):
+    B, T, C = x.shape; D = C // n_head
+    return x.reshape(B, T, n_head, D).transpose(0, 2, 1, 3)
+
+def combine_heads(x):
+    B, H, T, D = x.shape
+    return x.transpose(0, 2, 1, 3).reshape(B, T, H * D)
+
+def attention_batched(Q, K, V, mask=None):
+    d = Q.shape[-1]
+    scores = Q @ K.swapaxes(-2, -1) / np.sqrt(d)
+    if mask is not None:
+        scores = np.where(mask, scores, -1e9)
+    s = scores - scores.max(axis=-1, keepdims=True)
+    e = np.exp(s); w = e / e.sum(axis=-1, keepdims=True)
+    return w @ V
+
+def layer_norm(x, gamma, beta, eps=1e-5):
+    mu = x.mean(axis=-1, keepdims=True)
+    var = x.var(axis=-1, keepdims=True)
+    return gamma * (x - mu) / np.sqrt(var + eps) + beta
+
+def multi_head_attention(x, W_qkv, W_o, n_head, mask=None):
+    qkv = x @ W_qkv
+    Q, K, V = np.split(qkv, 3, axis=-1)
+    Q = split_heads(Q, n_head); K = split_heads(K, n_head); V = split_heads(V, n_head)
+    out = attention_batched(Q, K, V, mask=mask)
+    return combine_heads(out) @ W_o
+
+def gelu(x):
+    return 0.5 * x * (1.0 + np.tanh(np.sqrt(2.0 / np.pi) * (x + 0.044715 * x ** 3)))
+
+def mlp(x, W1, W2):
+    return gelu(x @ W1) @ W2
+
+
+def transformer_block(x, params, n_head, mask=None):
+    """
+    Pre-LN GPT-2 transformer block.
+
+        h = x + multi_head_attention(layer_norm(x, gamma1, beta1))
+        out = h + mlp(layer_norm(h, gamma2, beta2))
+
+    Args:
+        x:       (B, T, C) input.
+        params:  dict with keys:
+                   'gamma1' (C,), 'beta1' (C,)        — pre-attention LN
+                   'W_qkv'  (C, 3C), 'W_o' (C, C)     — attention projections
+                   'gamma2' (C,), 'beta2' (C,)        — pre-MLP LN
+                   'W_mlp1' (C, 4C), 'W_mlp2' (4C, C) — MLP projections
+        n_head:  int — number of attention heads.
+        mask:    optional (T, T) bool — typically the causal mask.
+
+    Returns:
+        (B, T, C) — the block output.
+    """
+    # YOUR CODE HERE
+    pass
+`}
+  tests={`
+import numpy as np
+
+def _make_params(rng, C, n_head):
+    return {
+        'gamma1': rng.standard_normal(C) * 0.1 + 1.0,
+        'beta1':  rng.standard_normal(C) * 0.1,
+        'W_qkv':  rng.standard_normal((C, 3 * C)) * 0.05,
+        'W_o':    rng.standard_normal((C, C)) * 0.05,
+        'gamma2': rng.standard_normal(C) * 0.1 + 1.0,
+        'beta2':  rng.standard_normal(C) * 0.1,
+        'W_mlp1': rng.standard_normal((C, 4 * C)) * 0.05,
+        'W_mlp2': rng.standard_normal((4 * C, C)) * 0.05,
+    }
+
+def _ref(x, p, n_head, mask=None):
+    h = x + multi_head_attention(layer_norm(x, p['gamma1'], p['beta1']),
+                                 p['W_qkv'], p['W_o'], n_head, mask=mask)
+    return h + mlp(layer_norm(h, p['gamma2'], p['beta2']), p['W_mlp1'], p['W_mlp2'])
+
+
+@__test__("Output shape is (B, T, C)")
+def t():
+    rng = np.random.default_rng(0)
+    B, T, C, H = 2, 4, 8, 2
+    x = rng.standard_normal((B, T, C))
+    p = _make_params(rng, C, H)
+    out = transformer_block(x, p, n_head=H)
+    assert out is not None, "function returned None"
+    assert out.shape == (B, T, C), f"expected ({B},{T},{C}), got {out.shape}"
+
+@__test__("Matches reference: pre-LN with two residual sums")
+def t():
+    rng = np.random.default_rng(7)
+    B, T, C, H = 1, 6, 16, 4
+    x = rng.standard_normal((B, T, C))
+    p = _make_params(rng, C, H)
+    out = transformer_block(x, p, n_head=H)
+    expected = _ref(x, p, H)
+    assert np.allclose(out, expected, atol=1e-6), \\
+        f"max diff {np.max(np.abs(out - expected)):.2e}"
+
+@__test__("Diagnostic: zeroed projection weights -> block is identity (residual saves us)")
+def t():
+    # If W_qkv, W_o, W_mlp1, W_mlp2 are all zero, both attn(...) and mlp(...) output zeros.
+    # The two residual sums then give: x + 0 + 0 = x. The block becomes the identity,
+    # regardless of the LN params. This only passes if BOTH residual connections are wired.
+    rng = np.random.default_rng(0)
+    B, T, C, H = 2, 5, 8, 2
+    x = rng.standard_normal((B, T, C))
+    p = {
+        'gamma1': np.ones(C),  'beta1':  np.zeros(C),
+        'W_qkv':  np.zeros((C, 3 * C)),  'W_o': np.zeros((C, C)),
+        'gamma2': np.ones(C),  'beta2':  np.zeros(C),
+        'W_mlp1': np.zeros((C, 4 * C)), 'W_mlp2': np.zeros((4 * C, C)),
+    }
+    out = transformer_block(x, p, n_head=H)
+    assert np.allclose(out, x, atol=1e-6), \\
+        f"identity test failed — likely missing a residual sum. Max diff {np.max(np.abs(out - x)):.2e}"
+
+@__test__("Causal mask is honoured (output deterministic given fixed input + mask)")
+def t():
+    rng = np.random.default_rng(11)
+    B, T, C, H = 1, 6, 8, 2
+    x = rng.standard_normal((B, T, C))
+    p = _make_params(rng, C, H)
+    causal = np.tril(np.ones((T, T), dtype=bool))
+    out = transformer_block(x, p, n_head=H, mask=causal)
+    expected = _ref(x, p, H, mask=causal)
+    assert np.allclose(out, expected, atol=1e-6), "causal mask path differs from reference"
+
+@__test__("Determinism: same input + params -> same output")
+def t():
+    rng = np.random.default_rng(13)
+    B, T, C, H = 2, 4, 8, 2
+    x = rng.standard_normal((B, T, C))
+    p = _make_params(rng, C, H)
+    a = transformer_block(x, p, n_head=H)
+    b = transformer_block(x, p, n_head=H)
+    assert np.allclose(a, b, atol=1e-12), "block is non-deterministic"
+`}
+  solution={`
+import numpy as np
+
+def transformer_block(x, params, n_head, mask=None):
+    p = params
+    # Sub-layer 1: pre-LN -> attention -> residual
+    h = x + multi_head_attention(
+        layer_norm(x, p['gamma1'], p['beta1']),
+        p['W_qkv'], p['W_o'], n_head, mask=mask,
+    )
+    # Sub-layer 2: pre-LN -> MLP -> residual
+    out = h + mlp(
+        layer_norm(h, p['gamma2'], p['beta2']),
+        p['W_mlp1'], p['W_mlp2'],
+    )
+    return out
+`}
+  hints={[
+    "Two sub-layers, each shaped 'pre-LN -> sublayer -> residual sum'. First: x = x + attn(LN(x)); second: x = x + mlp(LN(x)). The order is attention BEFORE MLP — that's the standard transformer block.",
+    "Pre-LN means LayerNorm sits INSIDE the residual sum (not on it). Compare with post-LN: out = LN(x + sublayer(x)). GPT-2 chose pre-LN because it lets gradients flow through the residual unchanged, which makes deep stacks trainable.",
+    "If your zeroed-weights identity test fails, you forgot one of the residual additions. The block must add the input back twice — once after attention, once after the MLP — for the identity to survive.",
+  ]}
+>
+
+The GPT series capstone. Wire together every component you've built — LayerNorm (problem 07), multi-head attention (06, which itself depends on 03/04/05) — plus an MLP into the canonical pre-LN transformer block. This is the unit GPT-2 stacks twelve times.
+
+The structure (two sub-layers, two residuals):
+
+`h    = x + multi_head_attention(layer_norm(x, gamma1, beta1))`
+
+`out  = h + mlp(layer_norm(h, gamma2, beta2))`
+
+Why **pre-LN** (LN inside the residual) and not post-LN (LN around the residual)? Pre-LN keeps the residual path an exact identity — gradients flow back through the skip connection unchanged. Post-LN puts LayerNorm in the gradient path, which destabilises very deep stacks. GPT-2, GPT-3, and Llama all use pre-LN.
+
+The diagnostic the harness runs: zero out the four projection matrices and verify that the block becomes the identity — `block(x) == x` to numerical precision. This only passes if **both** residual sums are wired: zeroed projections make `attn(...)` and `mlp(...)` both produce zeros, so `x + 0 + 0 == x`.
+
+After this problem, you've implemented every piece of a single GPT-2 layer. Stack twelve, add token + positional embeddings on the input and an unembedding+softmax on the output — and you have GPT-2 small.
+
+</PracticeProblem>

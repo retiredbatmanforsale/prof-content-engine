@@ -1,0 +1,354 @@
+---
+hide_title: true
+sidebar_label: '9 · Retrieval and reranking'
+title: 'Lesson 9 — Retrieval and reranking (RAG)'
+description: >-
+  Recursive chunking with overlap. Hybrid retrieval (BM25 + dense embeddings)
+  fused via Reciprocal Rank Fusion. Cross-encoder reranker on top of
+  bi-encoder retrieval. The production RAG retrieval stack, with the math.
+mvp_status: drafted
+tutor_topic: "Hybrid retrieval, chunking, and cross-encoder reranking for RAG"
+tutor_concepts: []
+---
+
+<LessonHero
+  number="9"
+  title="Retrieval and reranking (RAG)"
+  subtitle="Many primitives recur from Lesson 3 — bi-encoder, ANN, embedding store sizing — but the unit is now text, the chunking strategy matters, and the cross-encoder reranker on top is what separates a real RAG system from 'use a vector DB.'"
+  course="ML System Design"
+/>
+
+<InterviewerSignal
+  level="L4"
+  message="Says 'use a vector database with dense embeddings, return the top-3.' Doesn't name a chunking strategy. No reranker. Treats the bi-encoder as the final word."
+/>
+<InterviewerSignal
+  level="L5"
+  message="Volunteers hybrid retrieval (BM25 + dense, fused via RRF). Names recursive chunking with overlap. Adds a cross-encoder reranker on top with a clear bi-encoder vs cross-encoder distinction. Reasons through the embedding store sizing and explains why pure dense retrieval drops rare entities."
+/>
+
+---
+
+## 1. Where we are in the framework
+
+Still inside **Step 3 of the 6-step framework** — model architecture — applied to the **retrieval and reranking** layer of the RAG funnel from Lesson 8. Time-budget: **~8 minutes**.
+
+By the end you should have:
+
+- A **chunking strategy** named with reasoning (recursive with overlap is the canonical interview answer)
+- A **hybrid retrieval design** (BM25 + dense, fused via Reciprocal Rank Fusion)
+- A **cross-encoder reranker** on top of bi-encoder retrieval, with the bi-encoder vs cross-encoder tradeoff stated
+- An **embedding store sizing** computed in real numbers
+- The **top-K passing rule** to generation (typically 5–10 passages)
+
+Many of these primitives are inherited from Lesson 3 (two-tower retrieval for recsys). Where they recur, the L5 candidate **names them as reused** rather than re-deriving. Where they differ — chunking, hybrid, cross-encoder — the L5 candidate goes deep.
+
+---
+
+## 2. The problem at this layer
+
+Input: a corpus of ~10M document chunks (the corpus from Lesson 8) plus a single query. Output: 5–10 passages forwarded to the LLM generation stage in Lesson 10.
+
+The constraint stack:
+
+- **Latency**: ~250ms p99 budget for retrieval + reranking, leaving the rest of the ~2-second budget for generation
+- **Recall** at the retrieval stage: must not drop the right passages from the funnel — generation cannot recover from missing context
+- **Precision** at the rerank stage: every passage forwarded to the LLM costs tokens (both dollars and quality, since irrelevant context distracts the model)
+- **Token budget**: ~3,000 input tokens to the LLM, of which ~2,500 are passage content — so 5 chunks at ~500 tokens each, or 10 chunks at ~250 tokens each
+
+The architecture is forced by these constraints, not chosen freely.
+
+---
+
+<SplitCompare>
+<SplitLeft title="Naive">
+
+- Embed everything with `text-embedding-ada-002`, dump into a vector DB, return top-3
+- Single bi-encoder retrieval, top-K by cosine
+- Fixed-size chunking, no overlap
+- No reranker — generation gets noisy passages
+- No refusal threshold
+
+</SplitLeft>
+<SplitRight title="Motivated">
+
+- **Recursive chunking with overlap** (~512 tokens, 50–100 overlap) preserving structure + metadata
+- **Hybrid retrieval**: BM25 + dense embeddings, fused via Reciprocal Rank Fusion
+- **Cross-encoder reranker** on top-50 → top-K = 5–10 passages forwarded to generation
+- **Refusal threshold**: top-K all below confidence → explicit "I don't have enough" response
+
+</SplitRight>
+</SplitCompare>
+
+## 3. The naive solution — and why it breaks
+
+The naive answer:
+
+> "I'll embed all the documents with `text-embedding-ada-002`, store them in a vector database, and return the top-3 by cosine similarity."
+
+Five distinct failures.
+
+### 3.1 No chunking strategy means semantic loss
+
+Embedding a whole 50-page document into a single vector loses everything. Embedding individual sentences loses context. The unit of retrieval has to be **chunks** — passages of ~256–1024 tokens — and how you chunk dominates downstream quality. Naive fixed-size chunking cuts mid-paragraph, mid-sentence, and mid-table. Recursive chunking with overlap respects structure.
+
+### 3.2 Pure dense retrieval drops rare entities
+
+Dense embeddings excel at semantic similarity but **collapse on rare named entities**. A query for "Acme Corp's Q3 2025 refund policy" will retrieve plausibly-related but wrong passages because "Acme Corp" was rare in the embedding model's training corpus. Sparse methods (BM25) handle exact-match for rare terms natively. **Pure dense retrieval is a partial system.**
+
+### 3.3 Top-3 by bi-encoder cosine is not the final ordering
+
+A bi-encoder produces independent embeddings for query and passage and computes their dot product. It is fast (encode each side once) and **structurally coarse** — it cannot reason about query-passage interactions in detail. A cross-encoder, which takes the (query, passage) pair as joint input, produces much higher-quality scoring at the cost of speed. Production systems use **bi-encoder for retrieval, cross-encoder for reranking** — same pattern as recsys retrieval + ranking.
+
+### 3.4 No quantisation or sharding plan
+
+For a 10M-chunk corpus this still fits on one machine, but the candidate should mention the math anyway. For 100M+ chunks (enterprise + open-web hybrid), it does not — the same sharding and quantisation discussion from Lesson 3 applies.
+
+### 3.5 No fallback for retrieval misses
+
+If retrieval returns zero relevant passages, generation will hallucinate. The system needs a refusal path: when retrieval scores fall below a threshold, the system explicitly declines to answer rather than inventing one. The naive design has no concept of confidence.
+
+---
+
+## 4. The motivated solution
+
+### 4.1 Chunking — recursive, with overlap
+
+The canonical interview answer:
+
+- **Recursive splitting** — a hierarchy of separators (`\n\n` → `\n` → `. ` → ` `) that splits at the largest natural boundary that fits within the token budget
+- **Chunk size** — roughly 256–512 tokens, depending on the embedding model's context limit and the typical passage shape
+- **Overlap** — adjacent chunks share ~50–100 tokens so a fact spanning a chunk boundary is captured by both. Without overlap, a query about "the second quarter results" misses if "second quarter" is the last sentence of one chunk and the figures are the first sentence of the next.
+- **Metadata preserved** — each chunk carries pointers to its source doc, section, page number, and timestamps
+
+For special document types (PDFs with tables, code, structured data), specialised chunking applies. Table rows shouldn't be split mid-row; code shouldn't be split mid-function. The L5 answer flags this case-by-case structure-aware chunking as a real production concern.
+
+### 4.2 Hybrid retrieval — BM25 + dense, fused via RRF
+
+Two retrievers run in parallel, each with different strengths. Click between them:
+
+<Tabs>
+<TabItem value="bm25" label="BM25 (sparse)" default>
+
+**What it is** — classical inverted-index lexical retrieval. The query is tokenised, stop-word-filtered, and matched against term-frequency / inverse-document-frequency statistics over the corpus.
+
+**Strengths**
+
+- Rare named entities, exact-match queries, keyword overlap (product names, version numbers, error codes)
+- Sub-millisecond p99 at scale via inverted index lookup
+- No training, no fine-tuning, no embedding store
+
+**Weaknesses**
+
+- Zero semantic understanding — "ML model" and "machine learning algorithm" are unrelated to BM25
+- Fails on paraphrases, conceptual queries, multi-language
+
+**When to choose** — high-precision queries with specific terms; whenever the query and target share rare-vocabulary tokens.
+
+**Implementations** — pyserini (BM25 in Python), OpenSearch / Elasticsearch, Tantivy, Lucene.
+
+</TabItem>
+<TabItem value="dense" label="Dense (semantic)">
+
+**What it is** — bi-encoder retrieval over a learned text embedding model. Query and chunk are independently encoded into the same dense vector space; an ANN index finds nearest neighbours by cosine similarity or dot product.
+
+**Models** — `bge-large-en-v1.5`, `gte-large`, `text-embedding-3-large`, `voyage-2`, `e5-large`.
+
+**Strengths**
+
+- Semantic similarity, paraphrases, conceptual queries — "how do I cancel" matches "refund policy"
+- Cross-language with multilingual embedding models
+- Captures intent, not just term overlap
+
+**Weaknesses**
+
+- Collapses on rare named entities the embedding model didn't see in training
+- Embedding store is large (Section 4.4 below) and an ANN index is required at scale
+- Domain shift hurts: a generic model trained on web data may underperform on your specific corpus
+
+**When to choose** — natural-language queries with semantic intent; conversational interfaces; multilingual products.
+
+**Implementations** — Pinecone, Weaviate, Qdrant, pgvector, FAISS, Milvus.
+
+</TabItem>
+<TabItem value="hybrid" label="Hybrid (BM25 + dense, RRF)">
+
+**What it is** — run BM25 and dense retrieval **in parallel**, then fuse the two ranked lists. Production RAG defaults to this because it gets the strengths of both with one query.
+
+**Why hybrid wins** — BM25 catches the rare-entity queries dense fails on; dense catches the semantic queries BM25 fails on. Empirically, hybrid retrieval yields ~10-15% recall@K improvement over the better of the two alone, with no model retraining.
+
+**The fusion: Reciprocal Rank Fusion** — score-distribution-agnostic, no calibration required. See the formula immediately below.
+
+**Implementations** — most modern vector DBs support hybrid mode natively: Weaviate (`hybrid` query), OpenSearch (vector + BM25 with rank fusion), Pinecone (`sparse-dense` indexes), Qdrant. Also straightforward to roll your own — run two retrievers, merge with the RRF formula.
+
+</TabItem>
+</Tabs>
+
+The fusion formula:
+
+$$
+\text{rrf}(d) = \sum_{q \in \{\text{BM25}, \text{dense}\}} \frac{1}{k + \text{rank}_q(d)}
+$$
+
+where $k$ is a constant (typically 60) and $\text{rank}_q(d)$ is document $d$'s rank in retriever $q$. Documents appearing high in both retrievers receive boosted RRF scores. RRF has the nice property of being **score-distribution-agnostic** — you don't need to calibrate BM25 scores against cosine similarities. It just uses the ranks.
+
+A simpler alternative is a learned weighted sum, but RRF is the production default because it requires no tuning.
+
+<HybridRetrievalFlow />
+
+### 4.3 Cross-encoder reranker
+
+The bi-encoder retrieval is recall-oriented and structurally limited (it can only learn what's expressible as a dot product — same constraint as Lesson 3's two-tower). The reranker re-scores the top-50 candidates with a model that takes **(query, passage)** as joint input.
+
+| Property | Bi-encoder (retrieval) | Cross-encoder (reranking) |
+|---|---|---|
+| Inference shape | Encode query and passage independently, dot-product the embeddings | Concatenate query + passage, full attention over both |
+| Scoring quality | Coarse | Precise |
+| Latency per (query, passage) | ~0.5ms | ~5ms |
+| Suitable scale | Millions of passages | Tens of passages |
+| Production examples | `bge-large`, `gte-large`, `text-embedding-3-large` | `ms-marco-MiniLM`, `bge-reranker-v2`, `cohere-rerank-v3` |
+
+For 50 candidates × 5ms = 250ms — within the latency budget. Top-K = 5 to 10 passages get passed to generation.
+
+The reranker is the single most-cited reason production RAG systems have higher answer quality than naive ones. It is **cheap relative to the LLM** (one forward pass per candidate, much smaller than the LLM) but **dramatically improves the precision** of what enters the context window.
+
+### 4.4 Embedding store sizing
+
+For a 10M-chunk corpus with `bge-large` (1024-dim) embeddings as float32 (4 bytes per dimension):
+
+$$
+10 \times 10^6 \times 1024 \times 4 = 40 \text{ GB}
+$$
+
+Comfortably fits on one machine. For a 100M-chunk corpus (enterprise + selective open web):
+
+$$
+10^8 \times 1024 \times 4 = 400 \text{ GB}
+$$
+
+Too big for one machine; same sharding discussion as Lesson 3. **Quantising to int8** brings 400 GB → 100 GB at a small recall hit (typically under 2 percentage points on standard benchmarks). For 1B chunks (open-web scale) the discussion mirrors Lesson 3 directly: shard, quantise, accept the recall tradeoff.
+
+### 4.5 Refusal / confidence threshold
+
+When the top-K reranked passages all score below a confidence threshold, the system explicitly returns an "I don't have enough information to answer" response instead of forcing the LLM to fabricate one. The threshold is calibrated against held-out queries — you want the false-refusal rate to be low while the hallucination rate is even lower. Lesson 11 (RAG evaluation) covers how to calibrate this.
+
+---
+
+## 5. Back-of-envelope math
+
+### 5.1 RRF worked example
+
+Document A is rank 2 in BM25 (rrf component: $1/(60+2) = 0.0161$) and rank 5 in dense (rrf component: $1/(60+5) = 0.0154$). Total RRF: $0.0315$.
+
+Document B is rank 1 in BM25 ($0.0164$) but does not appear in the dense top-50 (zero contribution). Total RRF: $0.0164$.
+
+Document C does not appear in BM25 but is rank 1 in dense ($0.0164$). Total RRF: $0.0164$.
+
+Document A wins because it ranked highly in **both** retrievers. RRF's symmetric structure rewards consensus. This is the property that makes hybrid retrieval robust — a document needs to be plausible by both lexical and semantic measures to surface highly.
+
+### 5.2 Latency budget for retrieval + reranking
+
+| Component | p99 latency |
+|---|---|
+| BM25 inverted index lookup | ~5ms |
+| Bi-encoder query embedding | ~3ms |
+| ANN query (HNSW, 10M chunks) | ~5ms |
+| RRF fusion + dedup | ~2ms |
+| Cross-encoder rerank (50 candidates × 5ms, batched on GPU) | ~50ms (with batching), ~250ms (sequential) |
+| Total | ~65ms (batched) |
+
+The win from cross-encoder batching on a GPU is dramatic — 50ms vs 250ms — and is a non-trivial production engineering detail. Mention it.
+
+### 5.3 Token budget at top-K
+
+Top-K = 5 chunks at ~512 tokens each = 2,560 input tokens for passages. Plus ~300 tokens for the system prompt and ~100 tokens for the user query: **~3,000 input tokens to the LLM**. This is the tight constraint. Going to top-K = 10 doubles the input cost; usually it doubles answer faithfulness only marginally because the cross-encoder's top-5 already captured the high-precision passages.
+
+The L5 answer explicitly tunes top-K as a quality-vs-cost knob, with default 5 for cost-sensitive workloads and 8–10 for quality-sensitive ones.
+
+<HybridRetrievalDemo />
+
+---
+
+## 6. What the interviewer is actually grading
+
+By minute 16 — Steps 1 and 2 of the RAG flagship wrapping (or Step 3 in linear interview time) — the interviewer is checking whether you treat retrieval as a real system, not "a vector DB call."
+
+- **Did you name a chunking strategy unprompted?** "Recursive chunking with overlap" is the L5 default.
+- **Did you propose hybrid retrieval?** Pure dense retrieval is the canonical L4 mistake on this question.
+- **Did you mention a cross-encoder reranker?** Skipping it is the second-most-cited L4 ceiling on this round.
+- **Did you compute embedding store size?** Same Lesson 3 discipline.
+- **Did you talk about the token budget?** Top-K connects retrieval to generation cost — name it.
+- **Did you mention refusal / confidence threshold?** Optional at L4, expected at L5+.
+
+Failure modes to avoid:
+
+- **Pure dense retrieval.** Mentioning only one retriever family is L4 ceiling; rare entities + acronyms break the system.
+- **No reranker.** Generation receives noisy passages; the LLM's small remaining capacity is spent filtering instead of composing.
+- **No chunking discussion.** Treating chunks as a black box is L4 — production teams know that bad chunking is the #1 fixable RAG quality bug.
+- **Forgetting metadata.** Each chunk has to carry source pointers; without them, citations in Lesson 10 are impossible.
+
+---
+
+## 7. Quiz
+
+<Quiz
+  lessonId="ai-for-engineering/ml-system-design/rag-retrieval-and-reranking"
+  questions={[
+    {
+      id: "rag-retrieval-q1",
+      prompt: "A team uses pure dense embedding retrieval (text-embedding-3-large) over their enterprise wiki. Quality is good for general queries but terrible for queries involving product names, error codes, and version numbers. What's the root cause and the canonical fix?",
+      options: [
+        "The embedding model is undertrained.",
+        "Dense embeddings excel at semantic similarity but collapse on rare named entities (product names, error codes, version numbers) that were rare in the embedding model's training corpus. The fix is hybrid retrieval — run BM25 in parallel with dense, then fuse via Reciprocal Rank Fusion. BM25 handles rare-term exact-match natively; the fused result is robust to both query types.",
+        "Switch to cross-encoder retrieval.",
+        "Increase chunk size.",
+      ],
+      correctIndex: 1,
+    },
+    {
+      id: "rag-retrieval-q2",
+      prompt: "An interviewer asks: 'You said you'd use a bi-encoder for retrieval and a cross-encoder for reranking. Why not just use the cross-encoder for retrieval too?'",
+      options: [
+        "Cross-encoders are less accurate.",
+        "Cross-encoders take (query, passage) as joint input and compute full attention over both, which is much higher-quality but ~10× slower per scoring call than a bi-encoder. At 10M chunks they cannot run at request time. Bi-encoders precompute passage embeddings and compute dot products against the query — fast at scale but coarse. Production systems use bi-encoder retrieval (recall over millions) + cross-encoder reranking (precision over ~50 candidates) — same pattern as Lesson 3's recsys retrieval + ranking funnel.",
+        "Bi-encoders are easier to deploy.",
+        "Cross-encoders need labelled data.",
+      ],
+      correctIndex: 1,
+    },
+    {
+      id: "rag-retrieval-q3",
+      prompt: "Document A is rank 2 in BM25 and rank 5 in dense. Document B is rank 1 in BM25 but does not appear in dense top-50. With RRF (k=60), which document scores higher and why?",
+      options: [
+        "B, because rank 1 dominates.",
+        "A. RRF score is the sum of 1/(k + rank) across retrievers. A's score is 1/62 + 1/65 ≈ 0.0315; B's score is 1/61 + 0 ≈ 0.0164. RRF rewards documents that appear in both retrievers, even at moderate ranks, more than documents that rank highly in only one. This is exactly what makes hybrid robust.",
+        "Tie.",
+        "B, because BM25 is more reliable.",
+      ],
+      correctIndex: 1,
+    },
+    {
+      id: "rag-retrieval-q4",
+      prompt: "A team uses fixed 256-token chunking with no overlap on company policy PDFs. Retrieval quality is good for queries that match individual chunks but bad for queries spanning two adjacent paragraphs. What is the production-grade fix?",
+      options: [
+        "Reduce chunk size to 128 tokens.",
+        "Use recursive chunking with overlap: split on a hierarchy of separators (paragraph → sentence → word) at the largest natural boundary that fits the size budget, with adjacent chunks sharing ~50-100 tokens. This preserves semantic coherence and ensures facts spanning chunk boundaries are captured by both adjacent chunks. For structured docs with tables, code, or lists, structure-aware chunking should preserve those units.",
+        "Increase chunk size to 1024 tokens.",
+        "Switch to a different embedding model.",
+      ],
+      correctIndex: 1,
+    },
+  ]}
+/>
+
+---
+
+## 8. What's next
+
+In **Lesson 10 — Generation and LLM serving** the funnel hands ~5 reranked passages plus the user query to the LLM. The lesson covers prompt design as system design (forcing grounding and citation through the prompt), LLM serving infrastructure (KV cache, continuous batching, speculative decoding, vLLM-class engines), streaming responses, the cost math that dominates the operational budget, and the fallback strategy when load spikes or generation times out.
+
+<div className="not-prose mt-8 flex justify-end">
+  <a href="./rag-generation-and-serving" className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white no-underline hover:bg-emerald-500">
+    Lesson 10 — Generation and LLM serving →
+  </a>
+</div>

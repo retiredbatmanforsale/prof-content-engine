@@ -1,0 +1,161 @@
+---
+title: "Batch Norm Forward"
+description: BatchNorm forward — batch statistics in training, running statistics at eval, with momentum updates.
+sidebar_position: 22
+practice_mode: true
+hide_table_of_contents: true
+---
+
+import PracticeProblem from '@site/src/components/viz/PracticeProblemPro';
+
+<PracticeProblem
+  id="batch-norm-forward"
+  title="BatchNorm forward (train + eval modes)"
+  difficulty="Medium"
+  tags={["numpy", "normalization", "batch-norm", "regularization"]}
+  linkedLessons={[
+    { url: '/courses/ai-for-engineering/deep-neural-networks/overfitting-in-neural-networks', title: 'Overfitting in neural networks' },
+  ]}
+  starter={`
+import numpy as np
+
+def batch_norm_forward(x, gamma, beta, running_mean, running_var,
+                       momentum, eps, training):
+    """
+    BatchNorm forward over a (B, C) tensor — normalises along the BATCH axis
+    for each feature dimension.
+
+    Train mode (training=True):
+        mu  = mean(x, axis=0)           # (C,)
+        var = var(x,  axis=0)           # (C,) — biased (1/N), not 1/(N-1)
+        x_hat = (x - mu) / sqrt(var + eps)
+        out = gamma * x_hat + beta
+        # Update running buffers in place (mutated for the caller):
+        running_mean = (1 - momentum) * running_mean + momentum * mu
+        running_var  = (1 - momentum) * running_var  + momentum * var
+
+    Eval mode (training=False):
+        x_hat = (x - running_mean) / sqrt(running_var + eps)
+        out   = gamma * x_hat + beta
+        # Running buffers are NOT updated.
+
+    Args:
+        x:           (B, C) input.
+        gamma, beta: (C,) learned scale and shift.
+        running_mean, running_var: (C,) — mutated in place when training=True.
+        momentum: float in [0, 1] — weight on the NEW batch stats. PyTorch default 0.1.
+        eps: float — numerical-stability constant.
+        training: bool — True for train mode, False for eval mode.
+
+    Returns:
+        np.ndarray of the same shape as x.
+    """
+    # YOUR CODE HERE
+    pass
+`}
+  tests={`
+import numpy as np
+
+@__test__("Train mode: output shape matches input")
+def t():
+    rng = np.random.default_rng(0)
+    x = rng.standard_normal((8, 4))
+    gamma = np.ones(4); beta = np.zeros(4)
+    rm = np.zeros(4); rv = np.ones(4)
+    out = batch_norm_forward(x, gamma, beta, rm, rv,
+                             momentum=0.1, eps=1e-5, training=True)
+    assert out is not None, "function returned None"
+    assert out.shape == x.shape, f"shape {out.shape} != {x.shape}"
+
+@__test__("Diagnostic: train mode normalises each feature to mean ~0, std ~1")
+def t():
+    rng = np.random.default_rng(7)
+    x = rng.standard_normal((32, 5)) * 10 + 50  # arbitrary mean and scale
+    gamma = np.ones(5); beta = np.zeros(5)
+    rm = np.zeros(5); rv = np.ones(5)
+    out = batch_norm_forward(x, gamma, beta, rm, rv,
+                             momentum=0.1, eps=1e-5, training=True)
+    # After BN with gamma=1, beta=0, each feature has mean ~0 and std ~1 across the batch.
+    feat_mean = out.mean(axis=0); feat_std = out.std(axis=0)
+    assert np.allclose(feat_mean, 0.0, atol=1e-6), f"feat_mean = {feat_mean}"
+    assert np.allclose(feat_std, 1.0, atol=1e-3), f"feat_std = {feat_std}"
+
+@__test__("Train mode mutates running_mean and running_var")
+def t():
+    rng = np.random.default_rng(2)
+    x = rng.standard_normal((10, 3)) * 2 + 5    # mean ~5
+    gamma = np.ones(3); beta = np.zeros(3)
+    rm = np.zeros(3); rv = np.ones(3)
+    rm_before = rm.copy(); rv_before = rv.copy()
+    batch_norm_forward(x, gamma, beta, rm, rv,
+                       momentum=0.1, eps=1e-5, training=True)
+    assert not np.allclose(rm, rm_before), "running_mean should be updated in train mode"
+    assert not np.allclose(rv, rv_before), "running_var should be updated in train mode"
+    # Specifically: rm should move ~10% toward batch mean ~5, so rm ~ 0.1 * 5 = 0.5.
+    assert np.all(rm > 0.3) and np.all(rm < 0.7), f"rm shifted too little/much: {rm}"
+
+@__test__("Eval mode does NOT mutate running stats and uses them for normalisation")
+def t():
+    x = np.array([[10.0, 20.0], [30.0, 40.0]])
+    gamma = np.ones(2); beta = np.zeros(2)
+    # Set running stats to specific values; eval should use these (not batch).
+    rm = np.array([5.0, 5.0])
+    rv = np.array([4.0, 4.0])
+    rm_before = rm.copy(); rv_before = rv.copy()
+    out = batch_norm_forward(x, gamma, beta, rm, rv,
+                             momentum=0.1, eps=1e-9, training=False)
+    # Each cell: (x - 5) / sqrt(4) = (x - 5) / 2
+    expected = (x - 5.0) / 2.0
+    assert np.allclose(out, expected, atol=1e-6), f"got {out}, expected {expected}"
+    assert np.allclose(rm, rm_before), "running_mean must NOT change in eval mode"
+    assert np.allclose(rv, rv_before), "running_var must NOT change in eval mode"
+
+@__test__("gamma scales, beta shifts (same as LayerNorm)")
+def t():
+    rng = np.random.default_rng(3)
+    x = rng.standard_normal((16, 3))
+    gamma = np.array([2.0, 0.5, 3.0])
+    beta = np.array([1.0, -1.0, 0.0])
+    rm = np.zeros(3); rv = np.ones(3)
+    out = batch_norm_forward(x, gamma, beta, rm, rv,
+                             momentum=0.1, eps=1e-5, training=True)
+    # After x_hat -> mean=0, std=1 per feature; gamma * x_hat + beta has
+    # mean = beta (per feature) and std = |gamma| (per feature).
+    feat_mean = out.mean(axis=0); feat_std = out.std(axis=0)
+    assert np.allclose(feat_mean, beta, atol=1e-6)
+    assert np.allclose(feat_std, np.abs(gamma), atol=1e-3)
+`}
+  solution={`
+import numpy as np
+
+def batch_norm_forward(x, gamma, beta, running_mean, running_var,
+                       momentum, eps, training):
+    if training:
+        mu = x.mean(axis=0)
+        var = x.var(axis=0)        # biased (1/N), matches normalisation
+        x_hat = (x - mu) / np.sqrt(var + eps)
+        # Update running stats in place.
+        running_mean *= (1 - momentum); running_mean += momentum * mu
+        running_var  *= (1 - momentum); running_var  += momentum * var
+    else:
+        x_hat = (x - running_mean) / np.sqrt(running_var + eps)
+    return gamma * x_hat + beta
+`}
+  hints={[
+    "Branch on training. Train: compute batch mean/var ALONG axis=0 (not per-token like LN), normalise, scale-shift, update running buffers in place. Eval: normalise with the saved running stats, scale-shift, return.",
+    "axis=0 is the batch axis. Each feature has its own (mu, var). Across a (32, 5) batch you'll compute 5 means and 5 vars. Compare to LayerNorm: that uses axis=-1 (per-token features).",
+    "Update running buffers IN PLACE: `running_mean *= (1 - momentum)` then `running_mean += momentum * mu`. If you write `running_mean = (1 - momentum) * running_mean + momentum * mu` you've rebound the local name and the caller's buffer is untouched.",
+  ]}
+>
+
+BatchNorm — the original normalisation layer, introduced by [Ioffe & Szegedy (2015)](https://arxiv.org/abs/1502.03167). Two distinct behaviours that the harness checks separately:
+
+**Train mode:** compute batch statistics across `axis=0`, normalise the input, **and update running statistics** for use at eval time. The running stats are exponentially-moving averages with weight `momentum` on the new batch stats and `(1 - momentum)` on the previous running value.
+
+**Eval mode:** use the saved running statistics — don't peek at the eval batch. This is what makes inference deterministic and stable: a single example produces the same output regardless of what other examples are in its (often nonexistent) batch.
+
+The two-mode design is also why BatchNorm fails in autoregressive language modelling: at inference you generate one token at a time, so "the eval batch" is a batch of size 1 where stats are degenerate. That's why GPT-2 uses LayerNorm (which has no batch axis) instead.
+
+The diagnostic the harness probes: in train mode with `gamma=1, beta=0`, each feature's output has `mean ≈ 0, std ≈ 1` along the batch axis. In eval mode, the running stats *don't* change after the call.
+
+</PracticeProblem>

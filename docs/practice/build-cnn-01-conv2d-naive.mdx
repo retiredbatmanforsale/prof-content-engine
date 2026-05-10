@@ -1,0 +1,152 @@
+---
+title: "Build a CNN · 01 · Conv2D Naive"
+description: 2D convolution forward pass — single example, stride 1, no padding. The naive nested-loop version.
+sidebar_position: 1
+practice_mode: true
+hide_table_of_contents: true
+---
+
+import PracticeProblem from '@site/src/components/viz/PracticeProblemPro';
+
+<PracticeProblem
+  id="build-cnn-01-conv2d-naive"
+  title="Conv2D forward (naive, stride 1, no pad)"
+  difficulty="Medium"
+  tags={["numpy", "cnn", "convolution", "build-cnn"]}
+  linkedLessons={[
+    { url: '/courses/ai-for-engineering/computer-vision/intro', title: 'Computer vision intro' },
+  ]}
+  starter={`
+import numpy as np
+
+def conv2d_naive(x, W):
+    """
+    2D convolution forward pass — single example, stride 1, no padding.
+
+    Note: this is the deep-learning "convolution" (no kernel flip), aka cross-correlation.
+
+    Args:
+        x: (C_in, H, W) — input feature map.
+        W: (C_out, C_in, kH, kW) — convolution kernel.
+
+    Returns:
+        (C_out, H - kH + 1, W - kW + 1) — output feature map.
+    """
+    # YOUR CODE HERE
+    pass
+`}
+  tests={`
+import numpy as np
+
+def _ref(x, W):
+    C_in, H, Wd = x.shape
+    C_out, C_in_w, kH, kW = W.shape
+    assert C_in == C_in_w
+    out_H = H - kH + 1
+    out_W = Wd - kW + 1
+    out = np.zeros((C_out, out_H, out_W))
+    for o in range(C_out):
+        for i in range(out_H):
+            for j in range(out_W):
+                out[o, i, j] = np.sum(x[:, i:i+kH, j:j+kW] * W[o])
+    return out
+
+
+@__test__("Output shape is (C_out, H-kH+1, W-kW+1)")
+def t():
+    rng = np.random.default_rng(0)
+    x = rng.standard_normal((3, 5, 5))
+    W = rng.standard_normal((4, 3, 3, 3))
+    out = conv2d_naive(x, W)
+    assert out is not None, "function returned None"
+    assert out.shape == (4, 3, 3), f"expected (4, 3, 3), got {out.shape}"
+
+@__test__("Matches reference on a 1-channel case")
+def t():
+    x = np.array([[[1, 2, 3, 4],
+                   [5, 6, 7, 8],
+                   [9, 10, 11, 12]]], dtype=float)
+    W = np.array([[[[1, 0],
+                    [0, -1]]]], dtype=float)
+    out = conv2d_naive(x, W)
+    expected = _ref(x, W)
+    assert out.shape == expected.shape, f"shape {out.shape} vs {expected.shape}"
+    assert np.allclose(out, expected, atol=1e-9), f"got {out}, expected {expected}"
+
+@__test__("Matches reference on a multi-channel case (random input)")
+def t():
+    rng = np.random.default_rng(7)
+    x = rng.standard_normal((2, 6, 6))
+    W = rng.standard_normal((3, 2, 3, 3))
+    out = conv2d_naive(x, W)
+    expected = _ref(x, W)
+    assert np.allclose(out, expected, atol=1e-9), \\
+        f"max diff {np.max(np.abs(out - expected)):.2e}"
+
+@__test__("Identity kernel returns the centre region of the input (when kH=kW=1)")
+def t():
+    rng = np.random.default_rng(2)
+    x = rng.standard_normal((3, 4, 4))
+    # 1x1 kernels with the identity: a single 1 in the c-th input channel produces channel c.
+    W = np.zeros((3, 3, 1, 1))
+    for c in range(3):
+        W[c, c, 0, 0] = 1.0
+    out = conv2d_naive(x, W)
+    assert out.shape == x.shape, f"shape {out.shape} != {x.shape}"
+    assert np.allclose(out, x, atol=1e-9), "identity 1x1 kernel should reproduce x"
+
+@__test__("Sums across input channels (deterministic crisp test)")
+def t():
+    # x has C_in=2 channels, both filled with constants.
+    x = np.zeros((2, 3, 3))
+    x[0] = 1.0  # channel 0 is all 1s
+    x[1] = 2.0  # channel 1 is all 2s
+    # Single output channel; both kernels are 2x2 of ones.
+    W = np.ones((1, 2, 2, 2))
+    # Each output cell = sum over (kH * kW) per channel * 2 channels = 4*1 + 4*2 = 12.
+    out = conv2d_naive(x, W)
+    assert out.shape == (1, 2, 2)
+    assert np.allclose(out, 12.0), f"expected all 12, got {out}"
+`}
+  solution={`
+import numpy as np
+
+def conv2d_naive(x, W):
+    C_in, H, Wd = x.shape
+    C_out, _, kH, kW = W.shape
+    out_H = H - kH + 1
+    out_W = Wd - kW + 1
+    out = np.zeros((C_out, out_H, out_W))
+    for o in range(C_out):
+        for i in range(out_H):
+            for j in range(out_W):
+                # Element-wise product over the receptive field, summed over (C_in, kH, kW).
+                out[o, i, j] = np.sum(x[:, i:i+kH, j:j+kW] * W[o])
+    return out
+`}
+  hints={[
+    "Three nested loops: over output channels, over output H positions, over output W positions. Inside the loops, slice a (C_in, kH, kW) patch from x and multiply elementwise by the (C_in, kH, kW) kernel for that output channel.",
+    "Output shape: (C_out, H - kH + 1, W - kW + 1) for stride 1, no padding. Each output cell sums over (C_in * kH * kW) elements.",
+    "Deep learning 'convolution' is actually cross-correlation — no kernel flip. If you flip the kernel, you'll fail the matches-reference test.",
+  ]}
+>
+
+The first piece of every CNN — and the most-asked CV implementation question. Implement 2D convolution **forward** for a single example, with stride 1 and no padding. We use the deep-learning convention (cross-correlation, no kernel flip).
+
+The shapes:
+
+`x: (C_in, H, W)` — input feature map
+
+`W: (C_out, C_in, kH, kW)` — kernel
+
+`out: (C_out, H - kH + 1, W - kW + 1)`
+
+For each output `(c_out, i, j)`:
+
+`out[c_out, i, j] = sum over c_in, kh, kw of: x[c_in, i+kh, j+kw] * W[c_out, c_in, kh, kw]`
+
+The naive implementation is three nested loops (over `c_out`, `i`, `j`), with the inner reduction handled by `np.sum` on a sliced patch. It's slow — O(C_out · H · W · C_in · kH · kW) — but it's the right starting point. Faster approaches (im2col, FFT, the Toeplitz trick) build on the same indexing.
+
+In `build-cnn-02` you'll add stride and padding. In `build-cnn-05` you'll write the backward pass.
+
+</PracticeProblem>

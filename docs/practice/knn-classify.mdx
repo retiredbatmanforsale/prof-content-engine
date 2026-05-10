@@ -1,0 +1,140 @@
+---
+title: "K-Nearest Neighbours Classify"
+description: Classify a query point by majority vote of its k nearest training neighbours under Euclidean distance.
+sidebar_position: 27
+practice_mode: true
+hide_table_of_contents: true
+---
+
+import PracticeProblem from '@site/src/components/viz/PracticeProblemPro';
+
+<PracticeProblem
+  id="knn-classify"
+  title="k-NN classification (majority vote)"
+  difficulty="Easy"
+  tags={["numpy", "classical-ml", "classification", "fundamentals"]}
+  linkedLessons={[
+    { url: '/courses/ai-for-engineering/deep-neural-networks/intro', title: 'Deep neural networks intro' },
+  ]}
+  starter={`
+import numpy as np
+
+def knn_classify(x_query, X_train, y_train, k):
+    """
+    Classify a single query point by k-nearest-neighbours majority vote.
+
+    1. Compute Euclidean distance from x_query to every row of X_train.
+    2. Find the k indices with the smallest distances.
+    3. Among the k corresponding labels, return the class with the most votes.
+    4. Tie-breaking: when two or more classes tie for most votes, return the
+       SMALLEST class label (deterministic).
+
+    Args:
+        x_query: 1-D np.ndarray of shape (D,) — the query point.
+        X_train: 2-D np.ndarray of shape (N, D) — training points.
+        y_train: 1-D np.ndarray of shape (N,) — integer class labels (>= 0).
+        k:       int >= 1 — number of neighbours to vote.
+
+    Returns:
+        int — the predicted class label.
+    """
+    # YOUR CODE HERE
+    pass
+`}
+  tests={`
+import numpy as np
+
+@__test__("Returns an int label")
+def t():
+    X = np.array([[0.0, 0.0], [1.0, 1.0], [2.0, 2.0]])
+    y = np.array([0, 1, 0])
+    out = knn_classify(np.array([0.0, 0.0]), X, y, k=1)
+    assert out is not None, "function returned None"
+    out_int = int(out)
+    assert out_int in y, f"prediction {out_int} not in training labels"
+
+@__test__("k=1 returns the label of the single nearest training point")
+def t():
+    X = np.array([[0.0, 0.0], [10.0, 10.0]])
+    y = np.array([0, 1])
+    # Query (0.1, 0.1) is closer to (0,0) -> class 0.
+    assert int(knn_classify(np.array([0.1, 0.1]), X, y, k=1)) == 0
+    # Query (9.0, 9.0) is closer to (10,10) -> class 1.
+    assert int(knn_classify(np.array([9.0, 9.0]), X, y, k=1)) == 1
+
+@__test__("Diagnostic: majority vote among 3 nearest works correctly")
+def t():
+    # Five training points; 3 of class 0 cluster near origin, 2 of class 1 cluster far.
+    X = np.array([[0.0, 0.0], [0.1, 0.0], [0.0, 0.1],
+                  [10.0, 10.0], [10.5, 10.0]])
+    y = np.array([0, 0, 0, 1, 1])
+    # Query at origin — 3 nearest are all class 0.
+    assert int(knn_classify(np.array([0.05, 0.05]), X, y, k=3)) == 0
+    # Query near far cluster — 2 nearest are class 1; with k=3 the third nearest is class 0.
+    # Closest to (10,10): (10,10) d=0, (10.5,10) d=0.5, (0.1,0) d=~14, ...
+    # Top 3 = {1,1,0} -> majority 1.
+    assert int(knn_classify(np.array([10.0, 10.0]), X, y, k=3)) == 1
+
+@__test__("Tie-breaking: when classes tie, return the smallest label")
+def t():
+    # k=2 and the 2 nearest are class 0 and class 1 -> tie -> return 0 (smaller).
+    X = np.array([[0.0, 0.0], [1.0, 0.0]])
+    y = np.array([0, 1])
+    out = int(knn_classify(np.array([0.5, 0.0]), X, y, k=2))
+    assert out == 0, f"tie should resolve to smaller label 0, got {out}"
+
+@__test__("k = N falls back to global majority class")
+def t():
+    X = np.array([[0.0, 0.0], [1.0, 0.0], [2.0, 0.0], [3.0, 0.0], [4.0, 0.0]])
+    y = np.array([0, 0, 0, 1, 1])    # 3 zeros, 2 ones -> majority 0
+    # Query anywhere; with k=N=5 the answer is global majority.
+    for q in [np.array([0.0, 0.0]), np.array([100.0, 100.0]), np.array([2.5, 0.0])]:
+        out = int(knn_classify(q, X, y, k=5))
+        assert out == 0, f"k=N should return global majority 0, got {out}"
+
+@__test__("Multi-class (3+ labels) works")
+def t():
+    X = np.array([[0.0, 0.0], [10.0, 0.0], [0.0, 10.0]])
+    y = np.array([0, 1, 2])
+    # Query close to each, k=1, gives that class.
+    assert int(knn_classify(np.array([0.1, 0.0]), X, y, k=1)) == 0
+    assert int(knn_classify(np.array([10.1, 0.0]), X, y, k=1)) == 1
+    assert int(knn_classify(np.array([0.0, 10.1]), X, y, k=1)) == 2
+`}
+  solution={`
+import numpy as np
+
+def knn_classify(x_query, X_train, y_train, k):
+    # 1. Euclidean distances (vectorised).
+    diffs = X_train - x_query
+    dists = np.sqrt((diffs ** 2).sum(axis=1))
+    # 2. Indices of k smallest distances.
+    nn_idx = np.argpartition(dists, k - 1)[:k]
+    nn_labels = y_train[nn_idx]
+    # 3. Majority vote with smallest-label tie-breaking via np.bincount.
+    counts = np.bincount(nn_labels)
+    return int(np.argmax(counts))   # ties resolve to the smallest index
+`}
+  hints={[
+    "Three steps: Euclidean distance to every training point (vectorised: subtract x_query and take row-wise norms), argpartition for the k smallest indices, np.bincount + np.argmax for the majority vote.",
+    "Vectorised distance: `diffs = X_train - x_query` broadcasts to (N, D), then `np.sqrt((diffs**2).sum(axis=1))` gives the (N,) distance vector. Avoid np.linalg.norm-in-a-loop.",
+    "Tie-breaking via np.argmax: when multiple bins of np.bincount are tied for max, np.argmax returns the SMALLEST index. That gives the deterministic 'smallest label wins' convention for free.",
+  ]}
+>
+
+K-nearest-neighbours classification — the simplest non-parametric classifier and the warm-up problem in every classical-ML interview.
+
+The algorithm is three lines of vectorised numpy:
+
+1. Euclidean distance from `x_query` to every row of `X_train`.
+2. The `k` indices with the smallest distances.
+3. Majority vote among the corresponding labels.
+
+Two subtleties the harness probes for:
+
+1. **Tie-breaking is deterministic.** When two or more classes tie for the most votes among the k neighbours, return the **smallest class label**. Using `np.bincount` + `np.argmax` gives this for free — `argmax` returns the smallest index when bins are tied. If you implement majority voting with a Counter or hashmap, you'll need explicit tie-breaking logic.
+2. **Vectorise the distance calculation.** `np.linalg.norm(X_train - x_query, axis=1)` works, or `np.sqrt(((X_train - x_query) ** 2).sum(axis=1))`. A Python `for i in range(N)` loop will work for the harness's small N but is the wrong instinct for production.
+
+For larger datasets, k-d trees and ball trees beat the naive O(N·D) distance computation — but those don't fit in 25 lines.
+
+</PracticeProblem>

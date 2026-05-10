@@ -1,0 +1,159 @@
+---
+title: "K-Means Step"
+description: One iteration of Lloyd's k-means algorithm — assign points to nearest centroid, then update centroids to cluster means.
+sidebar_position: 28
+practice_mode: true
+hide_table_of_contents: true
+---
+
+import PracticeProblem from '@site/src/components/viz/PracticeProblemPro';
+
+<PracticeProblem
+  id="kmeans-step"
+  title="K-means: one iteration"
+  difficulty="Medium"
+  tags={["numpy", "classical-ml", "clustering"]}
+  linkedLessons={[
+    { url: '/courses/ai-for-engineering/deep-neural-networks/intro', title: 'Deep neural networks intro' },
+  ]}
+  starter={`
+import numpy as np
+
+def kmeans_step(X, centroids):
+    """
+    One full iteration of Lloyd's k-means:
+        1. Assign each point in X to the index of its nearest centroid (Euclidean).
+        2. Update each centroid to the MEAN of points assigned to it.
+        3. If a cluster has no assigned points, leave that centroid unchanged.
+
+    Args:
+        X:         (N, D) np.ndarray — data points.
+        centroids: (K, D) np.ndarray — current centroid positions.
+
+    Returns:
+        (new_centroids, assignments) where:
+            new_centroids: (K, D) np.ndarray — centroids after the update.
+            assignments:   (N,) np.ndarray of int — assignments[i] in [0, K).
+    """
+    # YOUR CODE HERE
+    pass
+`}
+  tests={`
+import numpy as np
+
+@__test__("Returns the right shapes")
+def t():
+    rng = np.random.default_rng(0)
+    X = rng.standard_normal((20, 3))
+    C = rng.standard_normal((4, 3))
+    out = kmeans_step(X, C)
+    assert out is not None and len(out) == 2, "expected (new_centroids, assignments) tuple"
+    new_C, assign = out
+    assert new_C.shape == (4, 3), f"new_centroids shape {new_C.shape}"
+    assert assign.shape == (20,), f"assignments shape {assign.shape}"
+    assert assign.dtype.kind in ("i", "u"), f"assignments should be integer dtype, got {assign.dtype}"
+
+@__test__("Diagnostic: clear-cluster case converges to point-cloud means")
+def t():
+    # Two well-separated clusters, two centroids initialised between them.
+    cluster_a = np.array([[0.0, 0.0], [0.1, 0.1], [-0.1, 0.0]])
+    cluster_b = np.array([[10.0, 10.0], [10.2, 10.0], [10.0, 9.8]])
+    X = np.concatenate([cluster_a, cluster_b])
+    centroids = np.array([[1.0, 1.0], [9.0, 9.0]])
+    new_C, assign = kmeans_step(X, centroids)
+    # First 3 points -> centroid 0; last 3 points -> centroid 1.
+    assert np.array_equal(assign, [0, 0, 0, 1, 1, 1]), f"assignments: {assign}"
+    # New centroids should be cluster means.
+    assert np.allclose(new_C[0], cluster_a.mean(axis=0), atol=1e-9)
+    assert np.allclose(new_C[1], cluster_b.mean(axis=0), atol=1e-9)
+
+@__test__("Empty cluster: centroid stays put (no NaN)")
+def t():
+    # Three points, all near (0,0). Three centroids: (0,0), (10,10), (-10,-10).
+    # Centroids 1 and 2 get NO points assigned; they should be unchanged.
+    X = np.array([[0.1, 0.0], [-0.1, 0.0], [0.0, 0.05]])
+    centroids = np.array([[0.0, 0.0], [10.0, 10.0], [-10.0, -10.0]])
+    new_C, assign = kmeans_step(X, centroids)
+    assert np.all(assign == 0), f"all points should go to centroid 0, got {assign}"
+    assert np.allclose(new_C[1], [10.0, 10.0]), f"empty cluster centroid should be unchanged, got {new_C[1]}"
+    assert np.allclose(new_C[2], [-10.0, -10.0]), f"empty cluster centroid should be unchanged, got {new_C[2]}"
+
+@__test__("Tie-breaking is deterministic (when two centroids are equidistant)")
+def t():
+    # Single point exactly between two centroids; argmin returns the lower index.
+    X = np.array([[5.0, 0.0]])
+    centroids = np.array([[0.0, 0.0], [10.0, 0.0]])
+    _, assign = kmeans_step(X, centroids)
+    assert assign[0] == 0, f"tie should resolve to lowest centroid index, got {assign[0]}"
+
+@__test__("Single centroid (k=1): all points assigned to it; new centroid = X.mean(axis=0)")
+def t():
+    rng = np.random.default_rng(2)
+    X = rng.standard_normal((50, 5))
+    centroids = np.zeros((1, 5))
+    new_C, assign = kmeans_step(X, centroids)
+    assert np.all(assign == 0)
+    assert np.allclose(new_C[0], X.mean(axis=0), atol=1e-9)
+
+@__test__("After one step from a chosen init, repeated calls converge (loss decreases)")
+def t():
+    # 30 random points in 2D; 3 random centroids. Lloyd's algorithm should
+    # decrease the within-cluster sum of squares each step.
+    rng = np.random.default_rng(7)
+    X = rng.standard_normal((30, 2))
+    centroids = rng.standard_normal((3, 2)) * 2
+
+    def wcss(C, A):
+        return float(np.sum((X - C[A]) ** 2))
+
+    _, A = kmeans_step(X, centroids)
+    loss_0 = wcss(centroids, A)
+
+    for _ in range(5):
+        centroids, A = kmeans_step(X, centroids)
+    loss_5 = wcss(centroids, A)
+
+    # 5 steps later, loss must be no greater than at step 0.
+    assert loss_5 <= loss_0 + 1e-9, f"loss increased: {loss_0} -> {loss_5}"
+`}
+  solution={`
+import numpy as np
+
+def kmeans_step(X, centroids):
+    # 1. Distance from every point to every centroid: (N, K).
+    diffs = X[:, None, :] - centroids[None, :, :]      # (N, K, D)
+    dists = (diffs ** 2).sum(axis=-1)                  # (N, K) — squared L2
+    # 2. Argmin gives the assignment.
+    assign = dists.argmin(axis=1)                      # (N,)
+    # 3. Update each centroid.
+    new_centroids = centroids.copy()
+    for k in range(centroids.shape[0]):
+        mask = assign == k
+        if mask.any():
+            new_centroids[k] = X[mask].mean(axis=0)
+        # else: leave unchanged
+    return new_centroids, assign
+`}
+  hints={[
+    "Vectorised distance: diffs = X[:, None, :] - centroids[None, :, :] gives a (N, K, D) tensor; sum over the last axis for squared distances. argmin along axis 1 gives the assignment.",
+    "For the centroid update, loop over k=0..K-1 (K is small) and average the assigned points. Skip the update when no points were assigned to that cluster — copying first and only writing where mask.any() is True handles that cleanly.",
+    "Empty-cluster handling matters: X[mask].mean() on an empty mask returns NaN. Either guard with `if mask.any()` (the cleanest), or reinitialise the centroid to a random data point. The harness tests for the no-NaN behaviour.",
+  ]}
+>
+
+K-means — Lloyd's algorithm in two halves. Repeat until convergence:
+
+1. **Assign** each data point to the nearest centroid (Euclidean distance).
+2. **Update** each centroid to the mean of its assigned points.
+
+Implement one iteration. The function returns `(new_centroids, assignments)` so a caller can compose it into a loop and track convergence.
+
+Three details the harness probes:
+
+1. **Empty clusters.** If a centroid lands somewhere no points are nearest to, its assigned set is empty and the mean is NaN. The standard convention (and what we test): **leave the empty centroid unchanged**. Production k-means often re-seeds it from a random point, but that introduces non-determinism we don't want here.
+2. **Tie-breaking.** When two centroids are exactly equidistant from a point, `np.argmin` returns the lower-index centroid. Deterministic.
+3. **Loss decreases.** Lloyd's algorithm guarantees within-cluster sum-of-squares is non-increasing per iteration. The harness runs 5 iterations and checks loss didn't increase — a sanity check that your update is moving centroids toward their cluster means, not away.
+
+Used in vector quantisation, k-NN preprocessing, codebook learning for image compression, and as the initialisation strategy for many richer clustering algorithms.
+
+</PracticeProblem>

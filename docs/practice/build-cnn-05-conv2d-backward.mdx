@@ -1,0 +1,180 @@
+---
+title: "Build a CNN · 05 · Conv2D Backward"
+description: Backward pass through 2D convolution — derive dx and dW via the chain rule, verify against finite-difference.
+sidebar_position: 5
+practice_mode: true
+hide_table_of_contents: true
+---
+
+import PracticeProblem from '@site/src/components/viz/PracticeProblemPro';
+
+<PracticeProblem
+  id="build-cnn-05-conv2d-backward"
+  title="Conv2D backward (dx, dW)"
+  difficulty="Hard"
+  tags={["numpy", "cnn", "backprop", "build-cnn"]}
+  linkedLessons={[
+    { url: '/courses/ai-for-engineering/computer-vision/intro', title: 'Computer vision intro' },
+    { url: '/courses/ai-for-engineering/deep-neural-networks/backward-pass', title: 'Backward pass' },
+  ]}
+  starter={`
+import numpy as np
+
+def conv2d_naive(x, W):
+    """Forward (provided)."""
+    C_in, H, Wd = x.shape
+    C_out, _, kH, kW = W.shape
+    out = np.zeros((C_out, H - kH + 1, Wd - kW + 1))
+    for o in range(C_out):
+        for i in range(out.shape[1]):
+            for j in range(out.shape[2]):
+                out[o, i, j] = np.sum(x[:, i:i+kH, j:j+kW] * W[o])
+    return out
+
+
+def conv2d_backward(grad_out, x, W):
+    """
+    Backward pass for the stride-1, no-padding 2D convolution from cnn-01.
+
+    Args:
+        grad_out: (C_out, out_H, out_W) — gradient of the loss w.r.t. the conv output.
+        x:        (C_in, H, W) — the input passed to the forward pass.
+        W:        (C_out, C_in, kH, kW) — the kernel from forward.
+
+    Returns:
+        (dx, dW) where:
+            dx: (C_in, H, W)            — gradient w.r.t. x.
+            dW: (C_out, C_in, kH, kW)   — gradient w.r.t. the kernel.
+    """
+    # YOUR CODE HERE
+    pass
+`}
+  tests={`
+import numpy as np
+
+@__test__("Returns two arrays with correct shapes")
+def t():
+    rng = np.random.default_rng(0)
+    x = rng.standard_normal((2, 5, 5))
+    W = rng.standard_normal((3, 2, 3, 3))
+    grad_out = rng.standard_normal((3, 3, 3))
+    out = conv2d_backward(grad_out, x, W)
+    assert out is not None and len(out) == 2, "expected (dx, dW) tuple"
+    dx, dW = out
+    assert dx.shape == x.shape, f"dx shape {dx.shape} != {x.shape}"
+    assert dW.shape == W.shape, f"dW shape {dW.shape} != {W.shape}"
+
+@__test__("Diagnostic: dW matches finite-difference numerical gradient")
+def t():
+    rng = np.random.default_rng(1)
+    x = rng.standard_normal((2, 4, 4))
+    W = rng.standard_normal((2, 2, 2, 2))
+
+    # Loss = sum(forward output) so d_loss/d_y = ones.
+    grad_out = np.ones(conv2d_naive(x, W).shape)
+    _, dW_analytic = conv2d_backward(grad_out, x, W)
+
+    eps = 1e-5
+    dW_numeric = np.zeros_like(W)
+    it = np.nditer(W, flags=['multi_index'], op_flags=['readwrite'])
+    while not it.finished:
+        idx = it.multi_index
+        W[idx] += eps; lp = conv2d_naive(x, W).sum()
+        W[idx] -= 2 * eps; lm = conv2d_naive(x, W).sum()
+        W[idx] += eps  # restore
+        dW_numeric[idx] = (lp - lm) / (2 * eps)
+        it.iternext()
+
+    assert np.allclose(dW_analytic, dW_numeric, atol=1e-3), \\
+        f"dW max diff {np.max(np.abs(dW_analytic - dW_numeric)):.2e}"
+
+@__test__("Diagnostic: dx matches finite-difference numerical gradient")
+def t():
+    rng = np.random.default_rng(2)
+    x = rng.standard_normal((2, 4, 4))
+    W = rng.standard_normal((2, 2, 2, 2))
+    grad_out = np.ones(conv2d_naive(x, W).shape)
+    dx_analytic, _ = conv2d_backward(grad_out, x, W)
+
+    eps = 1e-5
+    dx_numeric = np.zeros_like(x)
+    it = np.nditer(x, flags=['multi_index'], op_flags=['readwrite'])
+    while not it.finished:
+        idx = it.multi_index
+        x[idx] += eps; lp = conv2d_naive(x, W).sum()
+        x[idx] -= 2 * eps; lm = conv2d_naive(x, W).sum()
+        x[idx] += eps
+        dx_numeric[idx] = (lp - lm) / (2 * eps)
+        it.iternext()
+
+    assert np.allclose(dx_analytic, dx_numeric, atol=1e-3), \\
+        f"dx max diff {np.max(np.abs(dx_analytic - dx_numeric)):.2e}"
+
+@__test__("Zero grad_out -> zero gradients on both x and W")
+def t():
+    rng = np.random.default_rng(3)
+    x = rng.standard_normal((1, 4, 4))
+    W = rng.standard_normal((1, 1, 2, 2))
+    grad_out = np.zeros((1, 3, 3))
+    dx, dW = conv2d_backward(grad_out, x, W)
+    assert np.allclose(dx, 0.0), "dx should be all zero when grad_out is zero"
+    assert np.allclose(dW, 0.0), "dW should be all zero when grad_out is zero"
+
+@__test__("With a nonzero grad_out at a single position, dW reflects the corresponding x patch")
+def t():
+    # x is 4x4 with a known pattern; kernel is 2x2.
+    x = np.arange(16, dtype=float).reshape(1, 4, 4)
+    W = np.zeros((1, 1, 2, 2))
+    grad_out = np.zeros((1, 3, 3))
+    grad_out[0, 0, 0] = 1.0   # only the top-left output position contributes.
+    _, dW = conv2d_backward(grad_out, x, W)
+    # Because grad_out is 1 at (0,0,0) only, dW[0, 0] = x[0, 0:2, 0:2].
+    expected = np.array([[0, 1], [4, 5]], dtype=float)
+    assert np.allclose(dW[0, 0], expected), f"dW[0,0] = {dW[0,0]}, expected {expected}"
+`}
+  solution={`
+import numpy as np
+
+def conv2d_backward(grad_out, x, W):
+    C_in, H, Wd = x.shape
+    C_out, _, kH, kW = W.shape
+    out_H, out_W = grad_out.shape[1], grad_out.shape[2]
+    dx = np.zeros_like(x)
+    dW = np.zeros_like(W)
+    for o in range(C_out):
+        for i in range(out_H):
+            for j in range(out_W):
+                g = grad_out[o, i, j]
+                # Each output cell (o,i,j) was: sum over (c_in,kh,kw) of x[c_in,i+kh,j+kw] * W[o,c_in,kh,kw]
+                # So dW[o,:,:,:] += g * x[:, i:i+kH, j:j+kW]
+                dW[o] += g * x[:, i:i+kH, j:j+kW]
+                # And dx[:, i:i+kH, j:j+kW] += g * W[o,:,:,:]
+                dx[:, i:i+kH, j:j+kW] += g * W[o]
+    return dx, dW
+`}
+  hints={[
+    "Three nested loops, same structure as the forward pass. For each output position (o, i, j), look up grad_out[o, i, j] = g. That single scalar contributes to dW[o] (the o-th kernel) AND to a patch of dx (the input region this kernel saw).",
+    "dW accumulation: dW[o, :, :, :] += g * x[:, i:i+kH, j:j+kW]. Each output cell sees a (C_in, kH, kW) patch; multiply by the upstream grad and add to that kernel's gradient.",
+    "dx accumulation: dx[:, i:i+kH, j:j+kW] += g * W[o, :, :, :]. The same input patch fed into this output cell, so the gradient flows back through W[o] times the upstream g. The += is critical — input pixels participate in MULTIPLE output cells, and gradients accumulate.",
+  ]}
+>
+
+The backward pass through `conv2d_naive` from `build-cnn-01`. Two gradients, one elegant pattern: walk the same triple loop as the forward pass and accumulate.
+
+The math from the chain rule. Forward says:
+
+`out[o, i, j] = sum over (c_in, kh, kw): x[c_in, i+kh, j+kw] * W[o, c_in, kh, kw]`
+
+Differentiate w.r.t. each kernel weight:
+
+`dW[o, c_in, kh, kw] = sum over (i, j): grad_out[o, i, j] * x[c_in, i+kh, j+kw]`
+
+Differentiate w.r.t. each input pixel:
+
+`dx[c_in, h, w] = sum over outputs that touched (c_in, h, w): grad_out[o, i, j] * W[o, c_in, kh, kw]`
+
+Implement both with the **same iteration as the forward**: for each output position, take the upstream gradient `g` and accumulate `dW[o] += g * x_patch` and `dx_patch += g * W[o]`.
+
+The diagnostic tests are finite-difference checks — both `dx` and `dW` cross-validated against numerical gradients of `conv2d_naive(x, W).sum()`. If your derivation is wrong, the differences will be order-of-magnitude visible, not subtle.
+
+</PracticeProblem>

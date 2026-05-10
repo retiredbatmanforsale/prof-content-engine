@@ -28,8 +28,7 @@ export default function RecentlyAsked({
     <section className={styles.recent}>
       <h3 className={styles.recentTitle}>{title}</h3>
       <p className={styles.recentDisclaimer}>
-        Sourced from public interview reports (Reddit, Medium, Substack, Glassdoor).
-        Each question links to its source. Dates are when the question was reportedly asked.
+        Community-sourced from public interview reports. Dates are when the question was reportedly asked.
       </p>
       <ul className={styles.recentList}>
         {questions.map((q, i) => {

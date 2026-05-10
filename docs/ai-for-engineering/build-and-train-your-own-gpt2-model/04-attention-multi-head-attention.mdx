@@ -10,9 +10,10 @@ tutor_concepts:
   - "scaled dot-product attention"
   - "parallel attention heads purpose"
   - "concatenating multi-head outputs"
+mvp_status: drafted
 ---
 
-<LessonHero course="Build and Train Your Own GPT-2" number="4" title="Attention + multi-head attention" subtitle="The core mechanism and running multiple heads in parallel" />
+<LessonHero course="Build and Train Your Own GPT-2" number="4" title="Attention + multi-head attention" subtitle="The core mechanism, built from naked NumPy up to multi-head PyTorch" />
 
 <LessonVideo
   src="https://player.vimeo.com/video/1184758543?h=dc9f03b143&badge=0&autopause=0&player_id=0&app_id=58479"
@@ -20,8 +21,376 @@ tutor_concepts:
   aspectRatio={52.78}
 />
 
+---
 
-## Overview
+## Where we are in the build
 
-This lesson covers the attention mechanism and multi-head attention used in transformer architectures.
+After Lesson 3, every position in your sequence is a `(768)`-dim vector that knows both *what* token it is and *where* it sits. Today's lesson is the one that made transformers transformers: **every position looks at every other position and decides who matters**, then mixes their information into its own representation.
 
+We build it three times, in increasing realism:
+
+1. **Naked NumPy**, no scaling, one head. Math you can read.
+2. **Scaled** dot-product attention. Show why the $\sqrt{d_k}$ factor is not optional.
+3. **Multi-head** PyTorch — `n_head` parallel attention computations sharing the same `n_embd` budget.
+
+After this lesson, your scaffold has `attention.py` with a `MultiHeadAttention` module. We do **not** add the causal mask yet — that's Lesson 5. Without it the model can peek at future tokens, which is wrong for language modelling but useful for letting us see attention's behaviour in isolation.
+
+<div className="not-prose my-8 rounded-2xl border-2 border-emerald-400 bg-gradient-to-br from-emerald-50 to-teal-50 px-5 py-4 dark:border-emerald-700 dark:from-emerald-950/40 dark:to-teal-950/40">
+  <p className="m-0 text-xs font-bold uppercase tracking-widest text-emerald-800 dark:text-emerald-200">What you're building</p>
+  <p className="mt-2 mb-1 text-base font-bold text-slate-900 dark:text-slate-100"><code>attention.py</code> — MultiHeadAttention</p>
+  <p className="mt-0 mb-0 text-sm text-slate-700 dark:text-slate-300">Input: (B, T, n_embd) → Output: (B, T, n_embd). Every output position is a learned weighted sum of every input position. Roughly 16% of GPT-2 small's parameters per block live here.</p>
+</div>
+
+---
+
+## Step 1 — attention from scratch in NumPy
+
+Forget projections, forget heads, forget scaling. Start with the simplest possible question: **how does one position pull information from every other position?**
+
+Each position $i$ produces three things:
+
+- A **query** $q_i$ — "what am I looking for?"
+- A **key** $k_i$ — "what do I have to offer?"
+- A **value** $v_i$ — "what information do I carry?"
+
+The score from position $i$ to position $j$ is the dot product $q_i \cdot k_j$ — high if the query is aligned with that key, low otherwise. Softmax across all $j$ turns scores into a probability distribution. Position $i$'s output is the weighted sum of all values, weighted by that distribution.
+
+```python
+import numpy as np
+
+T, D = 4, 8
+np.random.seed(0)
+
+# Three matrices we'll learn — for now, random.
+W_q = np.random.randn(D, D) * 0.1
+W_k = np.random.randn(D, D) * 0.1
+W_v = np.random.randn(D, D) * 0.1
+
+# Input: T tokens, each a D-dim vector.
+x = np.random.randn(T, D)
+
+# Project to Q, K, V.
+Q = x @ W_q                           # (T, D)
+K = x @ W_k                           # (T, D)
+V = x @ W_v                           # (T, D)
+
+# Scores: (T, D) @ (D, T) -> (T, T). scores[i, j] = q_i . k_j.
+scores = Q @ K.T
+
+# Softmax row-wise: each row sums to 1.
+weights = np.exp(scores) / np.exp(scores).sum(axis=-1, keepdims=True)
+
+# Weighted sum of values: (T, T) @ (T, D) -> (T, D).
+out = weights @ V
+
+print(out.shape)             # (4, 8)
+print(weights.sum(axis=-1))  # [1. 1. 1. 1.]
+```
+
+That's the entire mechanism. Three matrices, one matmul for scores, a softmax, one matmul for the weighted sum. Every transformer in production today does this exact thing — with optimisations layered on top.
+
+But there's a numerical bug hiding in those `np.exp` calls. Try it at full GPT-2 scale.
+
+---
+
+## Step 2 — why we scale by $\sqrt{d_k}$
+
+Run the same code with $D = 64$ instead of $8$ — the head dimension GPT-2 small actually uses:
+
+```python
+T, D = 4, 64
+W_q = np.random.randn(D, D)
+W_k = np.random.randn(D, D)
+
+x = np.random.randn(T, D)
+Q = x @ W_q
+K = x @ W_k
+
+scores = Q @ K.T
+print("score range:", scores.min(), scores.max())
+
+weights = np.exp(scores) / np.exp(scores).sum(axis=-1, keepdims=True)
+print("entropy of row 0:", -(weights[0] * np.log(weights[0] + 1e-10)).sum())
+```
+
+The scores blow up to numbers like $-150$ to $+200$. After softmax, each row puts ~99.99% of its mass on a single position. The "attention" is no longer a soft weighted sum — it's a hard argmax. **Gradients through that softmax are essentially zero everywhere except the winning cell**, which is the same vanishing-gradient problem we saw in Lesson 1.
+
+Why does it happen? Each entry of $QK^T$ is a dot product of two vectors with $D$ components each. If those components are roughly $\mathcal{N}(0, 1)$, the dot product has variance $D$ — its magnitude grows like $\sqrt{D}$. At $D = 64$ that's already in the tens, and softmax saturates fast.
+
+The fix from [Vaswani et al. (2017)](https://arxiv.org/abs/1706.03762): divide by $\sqrt{d_k}$ before softmax, where $d_k$ is the per-head key dimension:
+
+$$
+\text{Attention}(Q, K, V) \;=\; \text{softmax}\!\left(\frac{Q K^T}{\sqrt{d_k}}\right) V
+$$
+
+This rescales the dot products to roughly unit variance. The softmax stays in the soft regime. Gradients flow.
+
+```python
+# One-line fix.
+scores = Q @ K.T / np.sqrt(D)
+
+weights = np.exp(scores) / np.exp(scores).sum(axis=-1, keepdims=True)
+print("entropy of row 0:", -(weights[0] * np.log(weights[0] + 1e-10)).sum())
+# entropy is back near log(T) = 1.39 — the row is broadly distributed
+```
+
+That single division is why the original Transformer paper is titled "Attention Is All You Need" and not "Attention And A Numerical Hack You Need." The hack is *built in*.
+
+---
+
+## Step 3 — why multiple heads
+
+A single attention layer with $D = 768$ has $3 \cdot 768^2 \approx 1.77$M parameters and produces a single attention pattern per layer. Empirically, that's both expensive and expressively limited — different "kinds" of relationships (subject-verb agreement, coreference, lexical similarity) want different attention patterns.
+
+Multi-head attention runs $H$ smaller attention computations in parallel, each with its own $W_Q, W_K, W_V$ of dimension $C \to D$ where $D = C / H$. The outputs (each of dim $D$) are concatenated back to dim $C$ and passed through one more linear $W_O$. **Same total compute and parameter count as a single head of dim $C$, but the model gets $H$ different attention patterns to combine.**
+
+For GPT-2 small:
+
+| Quantity         | Value                                       |
+|------------------|---------------------------------------------|
+| `n_embd` ($C$) | 768                                         |
+| `n_head` ($H$) | 12                                          |
+| `head_size` ($D$) | $768 / 12 = 64$                            |
+| Per-block attention params | $4 C^2 = 4 \times 768^2 \approx 2.36$M  |
+| Fraction of GPT-2 small (124M) | ~16% per layer × 12 layers = ~19% in attention |
+
+The factor of $4 C^2$ comes from three projections ($W_Q, W_K, W_V$, each $C \times C$) plus the output projection $W_O$ — also $C \times C$. The number does not depend on $H$: splitting one big $C$-dim head into $H$ smaller $D$-dim heads doesn't change the total weight budget, only how those weights are organised.
+
+### Code: `attention.py`
+
+```python
+# nanogpt-from-scratch/attention.py  (Lesson 4 — no causal mask yet)
+
+import math
+
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+
+from config import GPTConfig
+
+
+class MultiHeadAttention(nn.Module):
+    """(B, T, n_embd) -> (B, T, n_embd)"""
+
+    def __init__(self, config: GPTConfig):
+        super().__init__()
+        assert config.n_embd % config.n_head == 0
+        self.n_head = config.n_head
+        self.n_embd = config.n_embd
+        self.head_size = config.head_size           # C / H
+
+        # One fused projection: (B, T, C) -> (B, T, 3C). Q, K, V at once.
+        self.qkv = nn.Linear(config.n_embd, 3 * config.n_embd, bias=False)
+        self.proj = nn.Linear(config.n_embd, config.n_embd, bias=False)
+
+        self.attn_dropout = nn.Dropout(config.dropout)
+        self.resid_dropout = nn.Dropout(config.dropout)
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        B, T, C = x.shape
+        H = self.n_head
+        D = self.head_size
+
+        q, k, v = self.qkv(x).split(self.n_embd, dim=-1)
+
+        # Reshape into heads: (B, T, C) -> (B, H, T, D) for parallel attention.
+        q = q.view(B, T, H, D).transpose(1, 2)
+        k = k.view(B, T, H, D).transpose(1, 2)
+        v = v.view(B, T, H, D).transpose(1, 2)
+
+        # Scaled dot-product: (B, H, T, T).
+        att = (q @ k.transpose(-2, -1)) / math.sqrt(D)
+        # NOTE: causal mask added in Lesson 5.
+        att = F.softmax(att, dim=-1)
+        att = self.attn_dropout(att)
+
+        y = att @ v                                  # (B, H, T, D)
+        y = y.transpose(1, 2).contiguous().view(B, T, C)
+
+        return self.resid_dropout(self.proj(y))
+```
+
+Three things worth flagging:
+
+- **One fused QKV projection** is faster than three separate `Linear(C, C)`s — same compute, better memory locality.
+- **`bias=False`** on every `Linear`. GPT-2 turns biases off in attention; they don't help and they cost parameters. The GPT-2 paper and nanoGPT both do this.
+- **Two dropouts** — one on the attention weights, one on the residual stream. We'll keep `dropout=0.0` during pretraining (matches the GPT-2 paper) and only crank it up if we finetune later.
+
+<AnimationPlaceholder
+  name="attention-heatmap"
+  description="For a 5-token input sentence, hover any query token to see its attention weights to all keys as a row of the (T, T) heatmap. Toggle the √d_k scaling on/off to see softmax saturate without it."
+/>
+
+---
+
+## Math by typing it
+
+Single-head scaled dot-product attention:
+
+$$
+\text{Attention}(Q, K, V) \;=\; \text{softmax}\!\left(\frac{Q K^T}{\sqrt{d_k}}\right) V
+$$
+
+with $Q, K \in \mathbb{R}^{T \times d_k}$ and $V \in \mathbb{R}^{T \times d_v}$. In GPT-2's self-attention, $d_k = d_v = D$ (the head dimension).
+
+Multi-head attention runs $H$ copies in parallel and concatenates:
+
+$$
+\text{MultiHead}(X) \;=\; \text{Concat}(\text{head}_1, \ldots, \text{head}_H)\, W^O
+$$
+
+$$
+\text{head}_i \;=\; \text{Attention}(X W_i^Q,\, X W_i^K,\, X W_i^V)
+$$
+
+Why the variance argument matters: if $q, k \in \mathbb{R}^D$ have entries with mean 0 and variance 1, the dot product $q \cdot k = \sum_{j=1}^{D} q_j k_j$ has variance $D$. Standard deviation $\sqrt{D}$. Without scaling, softmax inputs grow with $\sqrt{D}$ and saturate. Dividing by $\sqrt{D}$ rescales to unit variance and keeps softmax soft.
+
+Parameter count of one multi-head attention block (matching nanoGPT's no-bias setup):
+
+$$
+\underbrace{3 C^2}_{W_Q, W_K, W_V \text{ fused as one Linear}} \;+\; \underbrace{C^2}_{W_O} \;=\; 4 C^2
+$$
+
+For GPT-2 small ($C = 768$): $4 \cdot 768^2 = 2{,}359{,}296$ parameters per block. Across 12 blocks, ~28.3M total — roughly 23% of the model.
+
+---
+
+## Run it on your laptop
+
+<div className="not-prose my-6 rounded-xl border-l-4 border-sky-500 bg-sky-50/70 py-3 pl-4 pr-3 dark:bg-sky-950/25">
+  <p className="m-0 text-sm font-semibold text-sky-900 dark:text-sky-200">Your task</p>
+  <p className="mt-2 mb-0 text-sm text-slate-800 dark:text-slate-200">
+    Open <code>attention.py</code> and paste the <code>MultiHeadAttention</code> class above. Then run the smoke test below — it should print a (2, 8, 768) output and a parameter count of 2,359,296.
+  </p>
+</div>
+
+```python
+import torch
+
+from config import GPTConfig
+from attention import MultiHeadAttention
+
+config = GPTConfig()
+attn = MultiHeadAttention(config)
+
+# Fake input — pretend we already ran embeddings.
+B, T, C = 2, 8, config.n_embd
+x = torch.randn(B, T, C)
+
+y = attn(x)
+print("output shape:", y.shape)                 # torch.Size([2, 8, 768])
+assert y.shape == x.shape, "attention should preserve (B, T, C)"
+
+# Parameter check: should be exactly 4 * C^2.
+n_params = sum(p.numel() for p in attn.parameters())
+print(f"attention params: {n_params:,}")        # 2,359,296
+assert n_params == 4 * config.n_embd ** 2
+
+# Sanity: feeding the same input twice gives the same output (no randomness in eval).
+attn.eval()
+y1 = attn(x)
+y2 = attn(x)
+assert torch.allclose(y1, y2)
+
+# Sanity: every output position depends on every input position.
+# Perturb x at position 0 and see if y changes at position 5.
+x2 = x.clone()
+x2[:, 0, :] += 1.0
+y_pert = attn(x2)
+print("y changed at pos 5?", not torch.allclose(y[:, 5, :], y_pert[:, 5, :]))   # True
+```
+
+That last sanity check is important: without a causal mask, position 5's output **does** see position 0 — and also position 6 and position 7. That's why we still need Lesson 5 to make this autoregressive.
+
+<PlaygroundPlaceholder
+  name="attention-explorer"
+  description="In-browser cell: input a short sequence, watch the (T, T) attention heatmap for each of the 12 heads in real time. A second tab visualises Q, K, V projections as 2D scatter plots."
+/>
+
+---
+
+## What you can now do
+
+- Compute scaled dot-product attention from raw Q, K, V tensors and explain every term in the softmax.
+- Write the multi-head reshape pattern: `(B, T, C) → (B, H, T, D) → attention → (B, T, C)`.
+- Reason about the parameter budget — exactly $4 C^2$ per block, regardless of how many heads you slice it into.
+- Diagnose softmax saturation when $d_k$ is large and explain why $\sqrt{d_k}$ scaling is the fix.
+
+---
+
+## Quiz
+
+<Quiz
+  lessonId="ai-for-engineering/build-and-train-your-own-gpt2-model/attention-multi-head-attention"
+  questions={[
+    {
+      id: "gpt2-l4-q1",
+      prompt: "In self-attention, what role do Q, K, and V play, and where do they all come from?",
+      options: [
+        "Q is the input, K is the output, V is the gradient",
+        "All three are linear projections of the same input x: Q asks 'what am I looking for?', K offers 'what do I have to match?', V carries 'what information do I pass on if matched?'. The score q_i · k_j weights how much of v_j ends up in output position i",
+        "Q is the prompt embedding, K and V are key-value caches",
+        "Q and K are learned, V is fixed",
+      ],
+      correctIndex: 1,
+    },
+    {
+      id: "gpt2-l4-q2",
+      prompt: "Why does scaled dot-product attention divide by √d_k before the softmax?",
+      options: [
+        "To make the softmax differentiable",
+        "If q, k have entries with variance 1, their dot product has variance d_k. At d_k = 64 the magnitudes are large enough that softmax saturates to a one-hot — gradients through the softmax collapse to zero almost everywhere. Dividing by √d_k rescales the dot products to unit variance and keeps softmax in its soft regime",
+        "It speeds up the matrix multiply",
+        "It compensates for the dimension change between Q and K",
+      ],
+      correctIndex: 1,
+    },
+    {
+      id: "gpt2-l4-q3",
+      prompt: "GPT-2 small uses n_embd=768, n_head=12. How many parameters live in one MultiHeadAttention block (no biases, fused QKV)?",
+      options: [
+        "About 768 (one weight per dimension)",
+        "About 1.18M (3 × 768 × 12 for the heads)",
+        "About 2.36M — exactly 4 × n_embd² (three projections W_Q, W_K, W_V fused as one Linear, plus the output projection W_O)",
+        "About 9.4M (12 heads × 4 × 768²)",
+      ],
+      correctIndex: 2,
+    },
+    {
+      id: "gpt2-l4-q4",
+      prompt: "If you keep n_embd fixed at 768 and change n_head from 12 to 6 (head_size becomes 128), what happens to the parameter count of MultiHeadAttention?",
+      options: [
+        "It doubles, since each head is twice as big",
+        "It halves, since there are half as many heads",
+        "It stays the same — 4 × n_embd² doesn't depend on n_head. You're slicing the same C-dim projection into fewer, larger heads",
+        "It depends on the dropout setting",
+      ],
+      correctIndex: 2,
+    },
+    {
+      id: "gpt2-l4-q5",
+      prompt: "You're debugging a transformer where validation loss diverges after a few hundred steps. You print the attention weights and find that every row is almost exactly one-hot. What's the most likely cause?",
+      options: [
+        "You forgot the residual connection",
+        "Your scaling factor is wrong (or missing) — dot products at head_size=64 produce scores so large that softmax saturates. Either you forgot to divide by √d_k, or you accidentally divided by d_k instead of √d_k. Both produce hard-argmax attention and zero gradients",
+        "Your batch size is too small",
+        "You're using too many heads",
+      ],
+      correctIndex: 1,
+    },
+  ]}
+/>
+
+---
+
+## What's next
+
+You can build a multi-head attention block. But it has a fatal flaw for language modelling: at training time, position $t$ can attend to positions $t+1, t+2, \ldots$ — the future. That means the model can "cheat" and copy the next token from its input. **Lesson 5** fixes that with a single line: a triangular causal mask added to the attention scores before softmax. After Lesson 5, the model is finally autoregressive — and ready to be wrapped in a residual block in Lesson 6.
+
+---
+
+<div className="not-prose mt-10 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-6 dark:border-slate-700">
+  <a href="./positional-embeddings" className="text-sm font-medium text-slate-600 no-underline hover:text-emerald-700 hover:underline dark:text-slate-400 dark:hover:text-emerald-400">← Lesson 3 · Positional embeddings</a>
+  <a href="./causal-masking" className="text-sm font-semibold text-emerald-700 no-underline hover:underline dark:text-emerald-400">Lesson 5 · Causal masking →</a>
+</div>

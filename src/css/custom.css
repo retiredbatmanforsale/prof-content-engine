@@ -908,3 +908,48 @@ pre {
 [data-theme='dark'] .markdown figure figcaption {
   color: #94a3b8;
 }
+
+/* ───────────────────────── Practice mode ─────────────────────────────────
+   Set on <body> when a doc page has `practice_mode: true` in frontmatter.
+   Strips the doc chrome (sidebar, breadcrumbs, TOC, max-width, padding) so
+   the practice IDE component can render edge-to-edge. Light surface to
+   blend with the rest of the site. The navbar stays — same as LeetCode's pattern. */
+
+body.practice-mode {
+  background: #ffffff;
+}
+
+body.practice-mode .theme-doc-sidebar-container,
+body.practice-mode .theme-doc-breadcrumbs,
+body.practice-mode .theme-doc-toc-desktop,
+body.practice-mode .theme-doc-toc-mobile,
+body.practice-mode .theme-doc-footer,
+body.practice-mode .pagination-nav,
+body.practice-mode footer.footer {
+  display: none !important;
+}
+
+/* Let the article go edge-to-edge */
+body.practice-mode .container,
+body.practice-mode .row,
+body.practice-mode .col {
+  max-width: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+body.practice-mode main,
+body.practice-mode article {
+  max-width: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  width: 100% !important;
+}
+
+/* The wrapper our DocItem swizzle adds for practice pages */
+body.practice-mode .practice-page-content {
+  width: 100%;
+  height: calc(100vh - var(--ifm-navbar-height, 60px));
+  overflow: hidden;
+  background: #ffffff;
+}

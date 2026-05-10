@@ -1,0 +1,241 @@
+---
+hide_title: true
+sidebar_label: '13 · Case — Fraud detection'
+title: 'Lesson 13 — Case study: real-time fraud detection (Stripe-style)'
+description: "Apply the framework to real-time fraud detection — wrinkles include class imbalance, adversarial drift, label latency, and asymmetric cost-curve thresholds."
+mvp_status: drafted
+tutor_topic: "Real-time fraud detection system design — Stripe-style"
+tutor_concepts: []
+---
+
+<LessonHero
+  number="13"
+  title="Case — Real-time fraud detection"
+  subtitle="The framework holds, but fraud has four wrinkles that distinguish it from ranking. Class imbalance, adversarial drift, label latency, and asymmetric cost are the L4 traps."
+  course="ML System Design"
+/>
+
+<InterviewerSignal
+  level="L4"
+  message="Trains a binary classifier with BCE loss on whatever labels are available. Treats threshold as a hyperparameter to tune for accuracy. No streaming features. No mention of fraudsters adapting. No mention that chargebacks take 60 days to arrive."
+/>
+<InterviewerSignal
+  level="L5"
+  message="Names focal loss or cost-sensitive learning for class imbalance. Volunteers streaming features (velocity, geo-jump, transaction graph) as first-class. Names adversarial drift detection. Sets the decision threshold by minimising expected cost given asymmetric FP and FN costs. Addresses label latency with proxy labels."
+/>
+
+---
+
+## 1. The prompt
+
+> **"Design Stripe's real-time fraud detection system."**
+
+A binary decision per transaction: approve or block (or send to manual review). The system runs synchronously inside the payment authorisation flow, so latency is part of the product. This case is structurally different from the recsys / RAG flagships — there is no ranking, no funnel, just one classifier behind a strict latency budget.
+
+---
+
+## 2. The wrinkles — what's different from the flagships
+
+### 2.1 Class imbalance and adversarial drift
+
+Fraud is ~0.1% of transactions. Naive training on raw labels learns the constant prediction "not fraud" with 99.9% accuracy and zero recall. **Cost-sensitive losses** (focal loss, weighted BCE, asymmetric label smoothing) are required, not optional.
+
+And the drift is **adversarial**. Unlike recsys, where users drift slowly and stochastically, fraudsters **deliberately probe** and adapt. Drift detection isn't a backstop — it's a primary signal. A drift event is often the first symptom that a new fraud pattern has emerged.
+
+### 2.2 Streaming features are first-class
+
+The dominant features are computed over **windows that close milliseconds before the prediction**: last-5-min spending velocity, last-hour transaction count, geographic distance from the previous transaction, transaction-graph features (does this card share a device fingerprint with a known-bad card?). These cannot be batch-computed and read; they must come from a streaming feature store with millisecond freshness.
+
+### 2.3 Label latency
+
+A chargeback — the canonical fraud label — arrives **30 to 90 days after the transaction**. The model trains on labels that are 1-3 months stale. Two consequences:
+
+- The current production model was trained on the fraud distribution from 1-3 months ago, not today's
+- Short-horizon iteration requires **proxy labels** — manual review decisions, customer-reported fraud, rule-based catches, internal investigation flags — that arrive in hours-to-days
+
+### 2.4 Asymmetric cost
+
+False negatives lose **money** (the fraud loss itself). False positives lose **customer trust** (a legitimate transaction blocked, a frustrated customer, sometimes churn). The two costs are **not equal**. Threshold optimisation is a product decision, not an accuracy maximisation. The team configures the FP/FN cost ratio (often 5–50× depending on segment) and chooses the threshold that minimises expected cost.
+
+---
+
+## 3. Walking the framework
+
+### 3.1 Define the problem
+
+Metric tree:
+
+- **Business goal** — minimise net fraud loss (chargebacks paid + investigation cost) subject to legitimate-transaction throughput and customer satisfaction guardrails
+- **Product metric** — fraud loss rate (basis points of GMV), false-positive rate per segment, manual-review queue volume, customer complaint rate
+- **ML objective** — calibrated probability of fraud per transaction; threshold selected by minimising expected cost given asymmetric FP / FN cost weights
+
+The unit is **a single transaction** with a binary block / allow decision (or three-way: block / allow / send to review).
+
+### 3.2 Data pipeline
+
+Inherits the discipline from Lesson 2 (feature store, training-serving skew). Fraud-specific:
+
+- **Streaming features** — windowed aggregations (velocity, count, sum) over rolling 5-min, 1-hour, 24-hour windows; recent geo-jump; recent device fingerprints
+- **Graph features** — entities (cards, devices, IPs, emails, billing addresses) connected by shared transactions; features like "this card was used on a device that has been associated with N flagged transactions in the past week"
+- **Proxy labels** — for short-loop iteration, use manual-review decisions and rule-based catches as proxy labels alongside the slow chargeback labels. Train on the union, weighting by label confidence.
+- **Negative sampling** — at 0.1% fraud rate, you can train on the full positive set plus a sampled negative set (e.g. 10:1 ratio). Re-weight the loss to reflect the true prior.
+
+### 3.3 Model architecture
+
+Often gradient-boosted trees (XGBoost, LightGBM) are competitive with deep models on this problem because the dominant features are already-engineered streaming aggregations. Where deep models win is on graph features and embedding interactions across the entity graph.
+
+A common production stack is a **hybrid**: GBDT on engineered features for the primary score, plus a deep model on graph embeddings as a secondary signal, blended into a final calibrated probability. The L5 candidate names both options and reasons about when to pick each.
+
+### 3.4 Train and evaluate
+
+- **Loss design**: focal loss
+
+  $$
+  \mathcal{L}_{\text{focal}} = -(1 - p_t)^\gamma \log p_t
+  $$
+
+  where $p_t$ is the predicted probability of the true class and $\gamma$ (typically 2) down-weights well-classified examples so the loss focuses on the hard fraud cases. Alternatively, **class-weighted BCE** with weight ratio matched to the inverse prevalence.
+
+- **Threshold optimisation**: pick the threshold $\theta$ that minimises expected cost:
+
+  $$
+  \mathbb{E}[\text{cost}] = \text{FPR}(\theta) \cdot c_{\text{FP}} + \text{FNR}(\theta) \cdot c_{\text{FN}}
+  $$
+
+  where $c_{\text{FP}}$ is the customer-trust cost of blocking a legitimate transaction and $c_{\text{FN}}$ is the average fraud loss. Typically $c_{\text{FN}} / c_{\text{FP}}$ is in the 5–50× range; the team tunes per-segment.
+
+- **Eval**: precision-recall curve (not ROC, which is misleading at 0.1% prevalence), per-segment metrics (high-value transactions vs low-value), drift-aware backtests on rolling windows.
+
+### 3.5 Deploy and serve
+
+Inherits the latency budget primitives from Lesson 5. Fraud-specific:
+
+- **Strict latency budget** — typically ~50–100ms p99 inside the payment authorisation flow, much tighter than recsys. Feature fetch from streaming store + model forward + threshold check.
+- **Streaming feature store** with millisecond writes (Kafka → streaming aggregator → in-memory key-value) is the load-bearing infrastructure. Without it, the dominant features are unavailable.
+- **Three-way action** (allow, block, send to manual review) — the "review" bucket absorbs the high-uncertainty middle band, with a human-in-the-loop on a slow path
+
+### 3.6 Monitor and maintain
+
+Inherits Lesson 7 (drift detection, retraining cadences, shadow + canary). Fraud-specific:
+
+- **Adversarial drift** detection — continuous PSI monitoring with **rapid-trigger retraining** rather than calendar cadence. A single new fraud pattern can spike PSI in a day; the team must retrain and ship within hours, not weeks.
+- **Proxy-label retraining** — daily incremental retraining on manual-review decisions; full retraining (with the slow chargeback labels) on the weekly cadence
+- **Shadow + canary** with even tighter rollback than recsys, because a regression in fraud detection is a direct revenue loss within hours
+
+---
+
+## 4. Back-of-envelope math
+
+### 4.1 Cost-minimising threshold
+
+Assume average fraud loss per missed transaction is \$200 (so $c_{\text{FN}} = 200$); customer-trust cost of a false positive (lost transaction + churn risk) is roughly \$20 (so $c_{\text{FP}} = 20$). The cost ratio is 10×. At a candidate threshold:
+
+- FPR = 0.5%, FNR = 30% (catches 70% of fraud)
+- Per-transaction expected cost $= 0.005 \times 20 + 0.001 \times 0.30 \times 200 = 0.10 + 0.06 = \$0.16$ per transaction (where the 0.001 is the fraud prior)
+
+<Stat
+  value="~$0.16 / transaction"
+  caption="Optimal expected cost at FPR=0.5%, FNR=30% given a 10× cost asymmetry (fraud loss $200, false-positive customer cost $20). At a more aggressive threshold the cost rises to $0.33 — twice as expensive. The threshold is a product decision, not a hyperparameter."
+  source="FPR × c_FP + prior × FNR × c_FN"
+/>
+
+Lower the threshold to catch more fraud:
+
+- FPR = 1.5%, FNR = 15%
+- Per-transaction expected cost $= 0.015 \times 20 + 0.001 \times 0.15 \times 200 = 0.30 + 0.03 = \$0.33$
+
+The first threshold is better at this cost ratio. If the cost ratio shifts to 50× (high-value fraud segments), the calculus inverts. Producing this calculation live is the L5 closing move.
+
+### 4.2 Class imbalance and the focal-loss intuition
+
+At a 1000:1 negative:positive ratio, naive BCE loss gives roughly 1000× more total gradient to the negatives than to the positives. Focal loss with $\gamma = 2$ down-weights an easy negative (where $p_t$ is near 1) by a factor of $(1 - 0.99)^2 = 0.0001$, effectively focusing the gradient onto the hard examples. The net effect: positive gradient contribution rises from ~0.1% to ~50% of the total loss budget, allowing the model to actually learn the fraud signal.
+
+### 4.3 Label-latency cost
+
+If chargebacks take 60 days to arrive, the model trained today is using labels from 60 days ago. Daily retraining on proxy labels (manual reviews, customer reports) closes most of this gap; the chargeback labels arrive later as a calibration check on the proxy. The L5 candidate states the gap explicitly.
+
+<FraudThresholdOptimizer />
+
+---
+
+## 5. What the interviewer is actually grading (case-specific)
+
+- **Did you flag class imbalance unprompted?** Naive binary classification at 0.1% prevalence is L4 ceiling.
+- **Did you propose focal loss or cost-sensitive learning?** Naming a concrete remediation is L5.
+- **Did you mention streaming features?** This is the dominant feature class for fraud — skipping it is L4.
+- **Did you flag adversarial drift?** Recsys drift is stochastic; fraud drift is goal-directed. Naming this distinction is L5.
+- **Did you address label latency?** "Chargebacks arrive in 60 days, so we use proxy labels for short-loop iteration" is the L5 sentence.
+- **Did you set the threshold by expected cost, not accuracy?** Naming the cost-curve framing is the central L5 closing move.
+
+Failure modes to avoid:
+
+- **Treating fraud as plain binary classification.** It is not — class imbalance, asymmetric cost, and adversarial drift make it structurally different.
+- **AUC as the primary metric.** Use precision-recall instead; AUC is misleading at extreme prevalence.
+- **No streaming features.** The model becomes too coarse without them.
+- **Calendar-cadence retraining.** Adversarial drift demands event-driven retraining.
+
+---
+
+## 6. Quiz
+
+<Quiz
+  lessonId="ai-for-engineering/ml-system-design/case-real-time-fraud-detection"
+  questions={[
+    {
+      id: "fraud-q1",
+      prompt: "A team trains a fraud classifier with binary cross-entropy on a 1000:1 negative:positive dataset. The model achieves 99.9% accuracy but catches almost no fraud. What's the canonical fix?",
+      options: [
+        "Get more training data.",
+        "Class imbalance is overwhelming the gradient signal — naive BCE at 1000:1 gives ~1000× more total gradient to negatives. Use focal loss (down-weights well-classified negatives by (1 - p_t)^γ) or class-weighted BCE matched to the inverse prevalence. The model needs the hard fraud cases to dominate the gradient, not the easy non-fraud examples.",
+        "Switch to a different model architecture.",
+        "Increase the learning rate.",
+      ],
+      correctIndex: 1,
+    },
+    {
+      id: "fraud-q2",
+      prompt: "An interviewer asks: 'How do you set the decision threshold on your fraud probability score?'",
+      options: [
+        "Pick the threshold that maximises accuracy.",
+        "Minimise expected cost: FPR × c_FP + FNR × c_FN, where c_FP is the customer-trust cost of blocking a legitimate transaction and c_FN is the average fraud loss. The cost ratio is typically 5-50× (FN much more expensive than FP), and the threshold shifts per segment (high-value transactions tolerate more false positives because c_FN scales with transaction value). This is a product decision parameterised by cost weights, not a hyperparameter to tune for accuracy.",
+        "Pick the threshold at 0.5.",
+        "Use the elbow of the ROC curve.",
+      ],
+      correctIndex: 1,
+    },
+    {
+      id: "fraud-q3",
+      prompt: "A team monitors feature distributions on their fraud detector with PSI. PSI on a key feature crosses 0.25 within a single day. Recsys-style monthly retraining would catch this in 30 days. What's the production-grade response?",
+      options: [
+        "Wait for the monthly retrain.",
+        "Adversarial drift demands event-driven retraining, not calendar-cadence — fraud patterns shift in days because fraudsters deliberately adapt, unlike recsys where drift is stochastic and slow. The PSI auto-trigger fires retraining immediately; the team ships an updated model within hours via an aggressive shadow + canary path. Treating fraud drift the same as recsys drift is the canonical L4 ceiling on this round.",
+        "Disable the feature.",
+        "Increase the threshold.",
+      ],
+      correctIndex: 1,
+    },
+    {
+      id: "fraud-q4",
+      prompt: "Why do mature fraud teams train on proxy labels (manual review decisions, customer reports, rule-based catches) alongside the canonical chargeback labels?",
+      options: [
+        "Proxy labels are more accurate.",
+        "Chargeback labels arrive 30-90 days after the transaction, so a model trained only on them is 1-3 months stale relative to today's fraud distribution. Proxy labels (which arrive in hours-to-days) close the loop for short-cycle iteration; chargebacks arrive later as a calibration check on the proxy. Training on the union, weighted by label confidence, gives both fast feedback and long-horizon ground truth.",
+        "Proxy labels are cheaper.",
+        "Chargeback labels are unreliable.",
+      ],
+      correctIndex: 1,
+    },
+  ]}
+/>
+
+---
+
+## 7. What's next
+
+In **Lesson 14 — ETA prediction** the framework transfers to a regression problem with strong spatial-temporal structure. The wrinkles: H3 hexagon spatial features, real-time traffic and weather streaming, asymmetric loss (under-prediction is worse than over-prediction for ride-hailing), and **quantile regression** with P50 / P90 outputs to surface uncertainty to the UI.
+
+<div className="not-prose mt-8 flex justify-end">
+  <a href="./case-eta-prediction" className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white no-underline hover:bg-emerald-500">
+    Lesson 14 — ETA prediction →
+  </a>
+</div>

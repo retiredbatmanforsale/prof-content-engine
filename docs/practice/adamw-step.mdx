@@ -1,0 +1,160 @@
+---
+title: "AdamW Step"
+description: AdamW = Adam with DECOUPLED weight decay — the optimiser GPT-2, GPT-3, Llama, and most modern LLMs train with.
+sidebar_position: 15
+practice_mode: true
+hide_table_of_contents: true
+---
+
+import PracticeProblem from '@site/src/components/viz/PracticeProblemPro';
+
+<PracticeProblem
+  id="adamw-step"
+  title="AdamW step (decoupled weight decay)"
+  difficulty="Medium"
+  tags={["numpy", "optimization", "adamw", "weight-decay"]}
+  linkedLessons={[
+    { url: '/courses/ai-for-engineering/build-and-train-your-own-gpt2-model/decoder-only-transformer', title: 'Decoder-only transformer' },
+  ]}
+  starter={`
+import numpy as np
+
+def adamw_step(params, grads, m, v, t, lr, beta1, beta2, eps, weight_decay):
+    """
+    One step of AdamW (Loshchilov & Hutter 2017). Mutates params, m, v in place.
+
+    The KEY difference from vanilla Adam is that weight decay is applied
+    DIRECTLY to the parameters, NOT folded into the gradient before the
+    moment estimates. The decay term is independent of m_hat / sqrt(v_hat).
+
+    For each (p, g, m_p, v_p):
+        m_p   = beta1 * m_p + (1 - beta1) * g
+        v_p   = beta2 * v_p + (1 - beta2) * g * g
+        m_hat = m_p / (1 - beta1 ** t)
+        v_hat = v_p / (1 - beta2 ** t)
+        p    -= lr * (m_hat / (sqrt(v_hat) + eps) + weight_decay * p)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^   ^^^^^^^^^^^^^^^^^^^
+                    Adam update                   decoupled weight decay
+
+    Args:
+        params, grads, m, v: list[np.ndarray] — same shapes throughout.
+        t:       int >= 1 — the current step (1-indexed).
+        lr, beta1, beta2, eps, weight_decay: scalars. weight_decay = 0 is plain Adam.
+
+    Returns:
+        None. Mutates params, m, v in place.
+    """
+    # YOUR CODE HERE
+    pass
+`}
+  tests={`
+import numpy as np
+
+def _adam_only(p, g, m, v, t, lr, beta1, beta2, eps):
+    # Reference: plain Adam (no weight decay).
+    m_new = beta1 * m + (1 - beta1) * g
+    v_new = beta2 * v + (1 - beta2) * g * g
+    m_hat = m_new / (1 - beta1 ** t)
+    v_hat = v_new / (1 - beta2 ** t)
+    return p - lr * m_hat / (np.sqrt(v_hat) + eps), m_new, v_new
+
+
+@__test__("weight_decay=0 reduces to plain Adam")
+def t():
+    p = np.array([1.0]); g = np.array([0.1]); m = np.array([0.0]); v = np.array([0.0])
+    p_ref = p.copy()
+    expected_p, _, _ = _adam_only(p_ref, g, m.copy(), v.copy(),
+                                  t=1, lr=0.001, beta1=0.9, beta2=0.999, eps=1e-8)
+    adamw_step([p], [g], [m], [v], t=1, lr=0.001, beta1=0.9, beta2=0.999, eps=1e-8,
+               weight_decay=0.0)
+    assert np.allclose(p, expected_p, atol=1e-9), \\
+        f"weight_decay=0 should equal Adam; p={p[0]}, expected {expected_p[0]}"
+
+@__test__("Diagnostic: weight decay shrinks parameters even when grad is 0")
+def t():
+    # Pure Adam with g=0 leaves p unchanged; AdamW shrinks p toward 0.
+    p = np.array([1.0]); g = np.array([0.0]); m = np.array([0.0]); v = np.array([0.0])
+    adamw_step([p], [g], [m], [v], t=1, lr=0.1, beta1=0.9, beta2=0.999, eps=1e-8,
+               weight_decay=0.5)
+    # Update: p -= 0.1 * (0 + 0.5 * 1.0) = 0.05
+    expected = 1.0 - 0.05
+    assert np.isclose(float(p[0]), expected, atol=1e-9), \\
+        f"weight decay should shrink p toward 0; got {p[0]}, expected {expected}"
+
+@__test__("Diagnostic: WD is decoupled — not folded into gradient before moments")
+def t():
+    # Compare two scenarios:
+    # (A) g=1, wd=0 plus a manual second update p -= lr * wd * p
+    # (B) AdamW with g=1, wd=0.5 in one call
+    # In Adam-with-L2 (the WRONG-but-common alternative), L2 is folded into g,
+    # so m and v see (g + wd*p). In AdamW, m and v see only g.
+    # We verify the DECOUPLED form by checking m and v have NOT absorbed the WD.
+    p = np.array([1.0]); g = np.array([1.0])
+    m = np.array([0.0]); v = np.array([0.0])
+    adamw_step([p], [g], [m], [v], t=1, lr=0.001, beta1=0.9, beta2=0.999, eps=1e-8,
+               weight_decay=0.1)
+    # m should be exactly (1 - beta1) * g, NOT (1 - beta1) * (g + wd * p_old).
+    expected_m = 0.1 * 1.0   # = 0.1
+    assert np.isclose(float(m[0]), expected_m, atol=1e-9), \\
+        f"m should not absorb wd*p (that's the L2 form); got m={m[0]}, expected {expected_m}"
+
+@__test__("Multiple parameter tensors all see the same decay rate")
+def t():
+    W = np.full((2, 2), 1.0); b = np.full(2, 5.0)
+    dW = np.zeros((2, 2));    db = np.zeros(2)
+    mW = np.zeros((2, 2));    vW = np.zeros((2, 2))
+    mb = np.zeros(2);         vb = np.zeros(2)
+    adamw_step([W, b], [dW, db], [mW, mb], [vW, vb],
+               t=1, lr=0.01, beta1=0.9, beta2=0.999, eps=1e-8, weight_decay=0.1)
+    # Both should shrink: W by 0.01 * 0.1 * 1.0 = 0.001 -> W ≈ 0.999
+    # b by 0.01 * 0.1 * 5.0 = 0.005 -> b ≈ 4.995
+    assert np.allclose(W, 0.999, atol=1e-9)
+    assert np.allclose(b, 4.995, atol=1e-9)
+
+@__test__("Mutation is in place — caller sees updated values")
+def t():
+    p = np.array([0.0]); m = np.array([0.0]); v = np.array([0.0])
+    p_ref = p
+    adamw_step([p], [np.array([1.0])], [m], [v], t=1, lr=0.01,
+               beta1=0.9, beta2=0.999, eps=1e-8, weight_decay=0.1)
+    assert p_ref is p, "param reference changed — must update in place"
+`}
+  solution={`
+import numpy as np
+
+def adamw_step(params, grads, m, v, t, lr, beta1, beta2, eps, weight_decay):
+    bc1 = 1.0 - beta1 ** t
+    bc2 = 1.0 - beta2 ** t
+    for p, g, m_p, v_p in zip(params, grads, m, v):
+        # Update moments — note: weight decay is NOT added to g here.
+        m_p *= beta1; m_p += (1.0 - beta1) * g
+        v_p *= beta2; v_p += (1.0 - beta2) * g * g
+        m_hat = m_p / bc1
+        v_hat = v_p / bc2
+        # Combined update: Adam term + DECOUPLED weight decay term.
+        p -= lr * (m_hat / (np.sqrt(v_hat) + eps) + weight_decay * p)
+`}
+  hints={[
+    "AdamW = Adam with one extra subtraction. Compute m, v, m_hat, v_hat exactly as in Adam, then update with p -= lr * (m_hat / (sqrt(v_hat) + eps) + weight_decay * p).",
+    "DO NOT add weight_decay * p to the gradient before computing m and v. That's the WRONG (Adam-with-L2) form. The diagnostic test verifies m doesn't absorb the decay term.",
+    "Why decoupled? The vanilla Adam-with-L2 path scales the decay through 1/sqrt(v_hat), which makes weight decay weaker on parameters with large gradients — exactly the parameters that benefit most from regularisation. Decoupling fixes that.",
+  ]}
+>
+
+AdamW — Adam with **decoupled weight decay**. The optimiser GPT-2, GPT-3, Llama, and most modern transformer training runs use. The single-line change from Adam is what makes weight decay actually work as intended.
+
+The update:
+
+`p ← p − lr · (m̂ / (√v̂ + ε) + weight_decay · p)`
+
+The two terms in the parentheses do different things:
+- `m̂ / (√v̂ + ε)` — the standard Adam adaptive update, scaling each parameter's step by its own gradient history.
+- `weight_decay · p` — a constant L2-style shrinkage applied **outside** the adaptive scaling.
+
+The wrong way (Adam-with-L2): add `weight_decay · p` to `g` before computing `m, v`. Then the decay flows through `m̂ / √v̂` and gets *scaled* by the per-parameter gradient history. Parameters with large gradients (which need MORE regularisation) get LESS decay. Parameters with small gradients get more. That's backwards.
+
+[Loshchilov & Hutter (2017)](https://arxiv.org/abs/1711.05101) showed that decoupling decay restores the regularisation behaviour everyone expected from Adam, and it has been the default for transformer training since.
+
+The diagnostic test the harness probes: after one step, `m` should equal `(1 − β₁) · g`, NOT `(1 − β₁) · (g + wd · p)`. Get the decoupling right and that follows automatically.
+
+</PracticeProblem>

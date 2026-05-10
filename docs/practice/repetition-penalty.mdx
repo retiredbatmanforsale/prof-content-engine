@@ -1,0 +1,142 @@
+---
+title: "Repetition Penalty"
+description: Down-weight already-emitted tokens before sampling — the HuggingFace-style repetition penalty.
+sidebar_position: 9
+practice_mode: true
+hide_table_of_contents: true
+---
+
+import PracticeProblem from '@site/src/components/viz/PracticeProblemPro';
+
+<PracticeProblem
+  id="repetition-penalty"
+  title="Repetition penalty (HuggingFace-style)"
+  difficulty="Medium"
+  tags={["numpy", "decoding", "sampling"]}
+  linkedLessons={[
+    { url: '/courses/ai-for-engineering/build-and-train-your-own-gpt2-model/generation-of-next-tokens', title: 'Generation of next tokens' },
+  ]}
+  starter={`
+import numpy as np
+
+def apply_repetition_penalty(logits, prefix_ids, penalty):
+    """
+    Apply the HuggingFace-style repetition penalty in place: down-weight tokens
+    that have already appeared in the prefix.
+
+    For each token id t that appears in prefix_ids:
+        if logits[t] > 0:  logits[t] /= penalty
+        if logits[t] < 0:  logits[t] *= penalty
+        if logits[t] == 0: leave it alone
+
+    The asymmetric rule (divide vs multiply based on sign) ensures the operation
+    pushes the logit *toward zero or below*, regardless of its original sign.
+
+    Args:
+        logits:     1-D np.ndarray of length V — pre-softmax scores. MUTATED in place.
+        prefix_ids: list[int] or 1-D array of token ids that have already appeared.
+        penalty:    float >= 1.0 — strength of the penalty (1.0 = no-op).
+
+    Returns:
+        The mutated logits array (same reference).
+    """
+    # YOUR CODE HERE
+    pass
+`}
+  tests={`
+import numpy as np
+
+@__test__("Returns the same array reference (in-place mutation)")
+def t():
+    logits = np.array([1.0, 2.0, 3.0, 4.0])
+    ref = logits
+    out = apply_repetition_penalty(logits, prefix_ids=[0], penalty=2.0)
+    assert out is not None, "function returned None"
+    assert out is ref, "expected to return the same array (mutated in place)"
+
+@__test__("penalty=1.0 is a no-op")
+def t():
+    logits = np.array([1.0, -2.0, 3.0, -4.0])
+    expected = logits.copy()
+    apply_repetition_penalty(logits, prefix_ids=[0, 1, 2, 3], penalty=1.0)
+    assert np.allclose(logits, expected), f"penalty=1 should not change logits"
+
+@__test__("Diagnostic: positive logit at a seen token gets DIVIDED by penalty")
+def t():
+    logits = np.array([2.0, 0.0, -1.0, 5.0])
+    apply_repetition_penalty(logits, prefix_ids=[0], penalty=2.0)
+    # Index 0: 2.0 > 0 -> divided -> 1.0. Others untouched.
+    assert np.isclose(logits[0], 1.0), f"logits[0] = {logits[0]}, expected 1.0"
+    assert np.isclose(logits[1], 0.0)
+    assert np.isclose(logits[2], -1.0)
+    assert np.isclose(logits[3], 5.0)
+
+@__test__("Diagnostic: negative logit at a seen token gets MULTIPLIED by penalty")
+def t():
+    logits = np.array([2.0, -1.5, -3.0, 5.0])
+    apply_repetition_penalty(logits, prefix_ids=[1, 2], penalty=2.0)
+    # Index 1: -1.5 < 0 -> multiplied -> -3.0
+    # Index 2: -3.0 < 0 -> multiplied -> -6.0
+    assert np.isclose(logits[1], -3.0), f"logits[1] = {logits[1]}, expected -3.0"
+    assert np.isclose(logits[2], -6.0), f"logits[2] = {logits[2]}, expected -6.0"
+
+@__test__("Repeated token ids in prefix do not double-apply the penalty")
+def t():
+    # The penalty applies once per unique token, regardless of repetition count.
+    logits_a = np.array([4.0, 0.0])
+    logits_b = np.array([4.0, 0.0])
+    apply_repetition_penalty(logits_a, prefix_ids=[0], penalty=2.0)         # once
+    apply_repetition_penalty(logits_b, prefix_ids=[0, 0, 0, 0], penalty=2.0)  # four times
+    assert np.isclose(logits_a[0], logits_b[0]), \\
+        f"penalty applied {logits_b[0]/logits_a[0]:.1f}x — should be once per unique id"
+
+@__test__("Penalty makes seen tokens strictly less likely after softmax (vs no penalty)")
+def t():
+    logits = np.array([3.0, 2.0, 1.0])
+    no_pen = logits.copy()
+    apply_repetition_penalty(logits, prefix_ids=[0], penalty=1.5)
+    # Compare softmax probabilities at index 0.
+    p0_with = np.exp(logits[0]) / np.exp(logits).sum()
+    p0_without = np.exp(no_pen[0]) / np.exp(no_pen).sum()
+    assert p0_with < p0_without, \\
+        f"penalty should reduce probability of seen token; got {p0_with} vs {p0_without}"
+`}
+  solution={`
+import numpy as np
+
+def apply_repetition_penalty(logits, prefix_ids, penalty):
+    # Apply the asymmetric rule once per UNIQUE token id (set deduplicates).
+    for t in set(int(i) for i in prefix_ids):
+        if logits[t] > 0:
+            logits[t] /= penalty
+        elif logits[t] < 0:
+            logits[t] *= penalty
+        # logits[t] == 0: leave it.
+    return logits
+`}
+  hints={[
+    "Loop over the UNIQUE token ids in prefix_ids (use set(prefix_ids) so a token appearing 5 times still only gets penalised once). For each, branch on the sign of logits[t]: positive divides, negative multiplies, zero unchanged.",
+    "The asymmetric rule (divide if positive, multiply if negative) is what makes the penalty 'pull toward zero' regardless of the original sign. A simpler 'always divide' would AMPLIFY a negative logit — exactly the opposite of what we want.",
+    "Mutate in place with /= and *= so the returned reference is the same array. Don't rebind logits in the loop.",
+  ]}
+>
+
+The HuggingFace-style **repetition penalty** — the standard fix when an LLM is looping ("the the the the…") and you don't want to fully shut off temperature-driven sampling. Down-weight the logits of already-emitted tokens so they're less likely to be picked again.
+
+The asymmetric rule (Keskar et al. 2019, CTRL):
+
+`if logits[t] > 0:   logits[t] /= penalty`
+
+`if logits[t] < 0:   logits[t] *= penalty`
+
+Why asymmetric? Because we want the penalty to **push the logit toward zero or below**, regardless of its current sign. If you naively `divide` a negative logit, you'd make it *less negative* — i.e., more likely. The sign-aware rule fixes this; both branches push the logit downward.
+
+Three subtleties the harness checks:
+
+1. **Sign-aware update** — both directions of the asymmetric rule.
+2. **Penalty applied once per unique token** — even if the prefix contains the same id 5 times, the logit changes by one factor of `penalty`, not five.
+3. **In-place mutation** — same reference returned.
+
+Typical setting: `penalty = 1.1` to `1.3`. Higher values produce too-aggressive de-repetition; lower values barely move the distribution.
+
+</PracticeProblem>

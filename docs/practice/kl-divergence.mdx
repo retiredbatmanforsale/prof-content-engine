@@ -1,0 +1,126 @@
+---
+title: "KL Divergence"
+description: KL(p || q) for two discrete probability distributions — the asymmetric distance every information-theoretic loss is built on.
+sidebar_position: 18
+practice_mode: true
+hide_table_of_contents: true
+---
+
+import PracticeProblem from '@site/src/components/viz/PracticeProblemPro';
+
+<PracticeProblem
+  id="kl-divergence"
+  title="KL divergence (discrete)"
+  difficulty="Easy"
+  tags={["numpy", "loss", "information-theory", "fundamentals"]}
+  linkedLessons={[
+    { url: '/courses/ai-for-engineering/deep-neural-networks/loss-functions', title: 'Loss functions' },
+  ]}
+  starter={`
+import numpy as np
+
+def kl_divergence(p, q):
+    """
+    Discrete KL divergence: KL(p || q) = sum_i p_i * log(p_i / q_i).
+
+    Conventions:
+        - When p_i = 0, the i-th term is 0 (by 0*log(0) = 0 convention).
+        - q_i > 0 wherever p_i > 0 (otherwise KL is +inf, but we don't test that).
+
+    Args:
+        p: 1-D np.ndarray — probability distribution (non-negative, sums to 1).
+        q: 1-D np.ndarray — same shape, same constraints, q_i > 0 where p_i > 0.
+
+    Returns:
+        float — KL(p || q), in nats.
+    """
+    # YOUR CODE HERE
+    pass
+`}
+  tests={`
+import numpy as np
+
+@__test__("KL(p || p) = 0 for any p")
+def t():
+    rng = np.random.default_rng(0)
+    z = rng.uniform(0.1, 1.0, size=5)
+    p = z / z.sum()
+    out = kl_divergence(p, p)
+    assert out is not None, "function returned None"
+    assert abs(float(out)) < 1e-9, f"KL(p||p) should be 0, got {out}"
+
+@__test__("KL > 0 for p != q (non-negativity)")
+def t():
+    p = np.array([0.5, 0.3, 0.2])
+    q = np.array([0.3, 0.4, 0.3])
+    out = float(kl_divergence(p, q))
+    assert out > 0, f"KL should be > 0 for distinct distributions, got {out}"
+
+@__test__("Diagnostic: matches the explicit formula on a hand-checked case")
+def t():
+    p = np.array([0.5, 0.5])
+    q = np.array([0.25, 0.75])
+    # KL = 0.5 * log(0.5/0.25) + 0.5 * log(0.5/0.75)
+    #    = 0.5 * log(2) + 0.5 * log(2/3)
+    expected = 0.5 * np.log(2) + 0.5 * np.log(2/3)
+    out = float(kl_divergence(p, q))
+    assert np.isclose(out, expected, atol=1e-9), f"got {out}, expected {expected}"
+
+@__test__("Asymmetry: KL(p||q) != KL(q||p) in general")
+def t():
+    p = np.array([0.9, 0.1])
+    q = np.array([0.5, 0.5])
+    a = float(kl_divergence(p, q))
+    b = float(kl_divergence(q, p))
+    assert abs(a - b) > 0.05, f"KL is asymmetric in general; got {a} vs {b}"
+
+@__test__("Handles zero entries in p (0 * log(0) = 0 by convention)")
+def t():
+    # If p_i = 0, the i-th term contributes 0 — even though log(0) = -inf, the product is 0.
+    p = np.array([0.0, 0.5, 0.5])
+    q = np.array([0.1, 0.4, 0.5])
+    out = float(kl_divergence(p, q))
+    # Reference: only positions where p > 0 contribute.
+    expected = 0.5 * np.log(0.5 / 0.4) + 0.5 * np.log(0.5 / 0.5)
+    assert np.isclose(out, expected, atol=1e-9), \\
+        f"got {out}, expected {expected} — handle p_i=0 with 0*log(0)=0"
+
+@__test__("Returns a scalar, not an array")
+def t():
+    p = np.array([0.5, 0.5])
+    q = np.array([0.5, 0.5])
+    out = kl_divergence(p, q)
+    assert np.isscalar(out) or (hasattr(out, "shape") and out.shape == ()), \\
+        f"expected scalar, got shape {getattr(out, 'shape', '?')}"
+`}
+  solution={`
+import numpy as np
+
+def kl_divergence(p, q):
+    # Mask: only sum positions where p > 0. The 0*log(0) convention is enforced
+    # by zeroing the contribution at those positions.
+    mask = p > 0
+    return float(np.sum(p[mask] * np.log(p[mask] / q[mask])))
+`}
+  hints={[
+    "The math is one line: sum over i of p_i * log(p_i / q_i). The catch is the i where p_i = 0 — the term should be 0, but np.log(0/q) = -inf and 0 * -inf = NaN.",
+    "Filter out zero-p positions BEFORE computing log: use a mask `p > 0` to slice both arrays. Equivalently, np.where(p > 0, p * np.log(p / q), 0.0).sum() but that still computes log(0) and warns.",
+    "Don't add an epsilon inside the log — that biases the result. The 0 convention is exact; use the mask.",
+  ]}
+>
+
+KL divergence — the asymmetric "distance" between two probability distributions, in nats. Foundation of cross-entropy, ELBO, label smoothing, knowledge distillation, RLHF, and most information-theoretic objectives in modern ML.
+
+The formula:
+
+`KL(p || q) = sum_i p_i · log(p_i / q_i)`
+
+Three properties the harness checks:
+
+1. **`KL(p || p) = 0`** — zero distance from a distribution to itself.
+2. **Non-negativity** — `KL ≥ 0` for any valid `p, q` (with equality iff `p = q`). This is Gibbs' inequality.
+3. **Asymmetry** — `KL(p || q) ≠ KL(q || p)` in general. That's why it's called a *divergence*, not a distance. The first argument is the "true" distribution, the second is the "approximate" one.
+
+The single subtlety: **the `0 · log(0) = 0` convention.** Mathematically `log(0) = -∞`, but the product is the limit of `x · log(x)` as `x → 0`, which is `0`. Implementation-wise: mask out `p_i = 0` before taking the log. Don't add `eps` inside the log — it biases the answer.
+
+</PracticeProblem>

@@ -1,0 +1,118 @@
+---
+title: "Build a NN · 01 · Linear Forward"
+description: First problem in the "Build a Neural Network from scratch" series — implement a Linear (Dense / Fully-Connected) layer's forward pass.
+sidebar_position: 1
+practice_mode: true
+hide_table_of_contents: true
+---
+
+import PracticeProblem from '@site/src/components/viz/PracticeProblemPro';
+
+<PracticeProblem
+  id="build-nn-01-linear-forward"
+  title="Linear forward (Wx + b)"
+  difficulty="Easy"
+  tags={["numpy", "neural-net", "fundamentals", "build-nn"]}
+  linkedLessons={[
+    { url: '/courses/ai-for-engineering/deep-neural-networks/forward-pass', title: 'Forward pass' },
+    { url: '/courses/ai-for-engineering/deep-neural-networks/perceptron-and-neuron', title: 'Perceptron and neuron' },
+  ]}
+  starter={`
+import numpy as np
+
+def linear_forward(x, W, b):
+    """
+    Forward pass through a Linear (Dense / Fully-Connected) layer.
+
+    Computes y = x @ W + b (with broadcasting on b).
+
+    Args:
+        x: (B, in_features) — batch of input vectors.
+        W: (in_features, out_features) — weight matrix.
+        b: (out_features,) — bias vector.
+
+    Returns:
+        (B, out_features) — pre-activation output.
+    """
+    # YOUR CODE HERE
+    pass
+`}
+  tests={`
+import numpy as np
+
+@__test__("Output shape is (B, out_features)")
+def t():
+    rng = np.random.default_rng(0)
+    x = rng.standard_normal((4, 3))
+    W = rng.standard_normal((3, 5))
+    b = rng.standard_normal(5)
+    out = linear_forward(x, W, b)
+    assert out is not None, "function returned None"
+    assert out.shape == (4, 5), f"expected (4, 5), got {out.shape}"
+
+@__test__("Matches x @ W + b reference")
+def t():
+    rng = np.random.default_rng(42)
+    x = rng.standard_normal((6, 8))
+    W = rng.standard_normal((8, 4))
+    b = rng.standard_normal(4)
+    out = linear_forward(x, W, b)
+    expected = x @ W + b
+    assert np.allclose(out, expected, atol=1e-7), \\
+        f"max abs diff = {np.max(np.abs(out - expected)):.2e}"
+
+@__test__("Bias broadcasts across the batch dimension")
+def t():
+    # Constant zero input — output should be exactly the bias, repeated across the batch.
+    x = np.zeros((3, 4))
+    W = np.ones((4, 2))
+    b = np.array([7.0, -2.0])
+    out = linear_forward(x, W, b)
+    expected = np.tile(b, (3, 1))
+    assert np.allclose(out, expected), f"got {out}, expected {expected}"
+
+@__test__("Single example (B=1) works")
+def t():
+    x = np.array([[1.0, 2.0, 3.0]])
+    W = np.eye(3)
+    b = np.zeros(3)
+    out = linear_forward(x, W, b)
+    assert out.shape == (1, 3)
+    assert np.allclose(out, x), f"identity W with zero bias should return x, got {out}"
+
+@__test__("Larger batch shape is preserved")
+def t():
+    rng = np.random.default_rng(7)
+    x = rng.standard_normal((128, 32))
+    W = rng.standard_normal((32, 64))
+    b = rng.standard_normal(64)
+    out = linear_forward(x, W, b)
+    assert out.shape == (128, 64), f"expected (128, 64), got {out.shape}"
+`}
+  solution={`
+import numpy as np
+
+def linear_forward(x, W, b):
+    return x @ W + b
+`}
+  hints={[
+    "It's literally one matmul plus a broadcast add. The shapes are designed so x @ W gives (B, out_features) and b broadcasts cleanly.",
+    "Use `@` (matrix multiply), not `*` (elementwise). And don't forget the `+ b` after.",
+  ]}
+>
+
+`linear_forward` — sometimes called `dense`, `fully_connected`, or `nn.Linear` in PyTorch — is the bedrock of every feed-forward network. You'll wire it together with non-linearities and a backward pass through the rest of this series until you're training a 2-layer MLP on XOR by problem 7.
+
+Implement it. The math is one line:
+
+`y = x @ W + b`
+
+Three things the harness checks:
+
+1. **Shape:** `(B, in)` → `(B, out)`.
+2. **Correctness:** matches `x @ W + b` to numerical precision.
+3. **Bias broadcasting:** the bias `(out,)` adds correctly across the batch dimension — no reshape gymnastics needed thanks to NumPy's broadcasting.
+
+This is the simplest problem in the series. The work in `build-nn-05-linear-backward` is harder — but only after you've nailed the forward pass.
+
+</PracticeProblem>

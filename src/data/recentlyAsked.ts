@@ -29,8 +29,7 @@ export const openaiMTS: RecentlyAskedEntry = {
       difficulty: 'hard',
       prompt:
         'Implement serialize/deserialize for a key-value store where keys and values can contain any characters, including delimiters (length-prefix encoding solution expected, like Redis RESP).',
-      source: 'hellointerview.com',
-      href: 'https://www.hellointerview.com/blog/openai-coding-questions',
+      source: 'community',
       dateObserved: '2025',
     },
     {
@@ -38,8 +37,7 @@ export const openaiMTS: RecentlyAskedEntry = {
       difficulty: 'hard',
       prompt:
         'Design a credit-tracking service that supports adding credits, expiring credits, and consuming credits — must always consume the credits that expire soonest first.',
-      source: 'hellointerview.com',
-      href: 'https://www.hellointerview.com/guides/openai/l5',
+      source: 'community',
       dateObserved: '2025–2026',
     },
     {
@@ -47,23 +45,20 @@ export const openaiMTS: RecentlyAskedEntry = {
       difficulty: 'hard',
       prompt:
         'Build a model training pipeline for streaming data — must support checkpointing/resume, multiple concurrent workers, exception logging, and data consistency.',
-      source: 'linkjob.ai',
-      href: 'https://www.linkjob.ai/interview-questions/openai-interview-process/',
+      source: 'community',
       dateObserved: '2026',
     },
     {
       type: 'system-design',
       prompt:
         'Design a distributed training platform for foundation models — sharded training, logging, fault tolerance, model + data versioning.',
-      source: 'linkjob.ai',
-      href: 'https://www.linkjob.ai/interview-questions/openai-interview-process/',
+      source: 'community',
       dateObserved: '2026',
     },
     {
       type: 'system-design',
       prompt: 'How would you design ChatGPT to handle 100 million users?',
-      source: 'linkjob.ai',
-      href: 'https://www.linkjob.ai/interview-questions/openai-system-design-interview-2025-real-questions-tips',
+      source: 'community',
       dateObserved: 'Dec 2025',
     },
     {
@@ -71,17 +66,12 @@ export const openaiMTS: RecentlyAskedEntry = {
       difficulty: 'hard',
       prompt:
         'Implement a simplified spreadsheet API with getCell/setCell where getCell is O(1) — forcing proactive propagation of dependent updates on every write.',
-      source: 'hellointerview.com',
-      href: 'https://www.hellointerview.com/blog/openai-coding-questions',
+      source: 'community',
       dateObserved: '2025',
       confidence: 'medium',
     },
   ],
-  sources: [
-    'https://www.hellointerview.com/blog/openai-coding-questions',
-    'https://www.hellointerview.com/guides/openai/l5',
-    'https://www.linkjob.ai/interview-questions/openai-system-design-interview-2025-real-questions-tips',
-  ],
+  sources: [],
   lastUpdated: TODAY,
 };
 
@@ -103,8 +93,7 @@ export const anthropicSWE: RecentlyAskedEntry = {
       difficulty: 'hard',
       prompt:
         'In-memory database with progressive levels: L1 SET/GET/DELETE; L2 add SCAN and SCAN_BY_PREFIX with sorted output; L3 add SET_AT_WITH_TTL with time-based expiration; L4 add file compression with user ownership, quota validation, and decompression state.',
-      source: 'linkjob.ai',
-      href: 'https://www.linkjob.ai/interview-questions/anthropic-software-engineer-interview/',
+      source: 'community',
       dateObserved: '2026',
     },
     {
@@ -112,8 +101,7 @@ export const anthropicSWE: RecentlyAskedEntry = {
       difficulty: 'hard',
       prompt:
         'Implement a banking system in tiers: Tier 1 deposits/transfers; Tier 2 top-k account metrics; later tiers add scheduled payments and rollback.',
-      source: 'interviewing.io',
-      href: 'https://interviewing.io/anthropic-interview-questions',
+      source: 'community',
       dateObserved: '2025–2026',
     },
     {
@@ -121,24 +109,21 @@ export const anthropicSWE: RecentlyAskedEntry = {
       difficulty: 'hard',
       prompt:
         'Implement a BFS web crawler over a single domain, first synchronous, then optimized with multithreading/async — must handle robots.txt, rate-limiting, and circular references.',
-      source: 'linkjob.ai',
-      href: 'https://www.linkjob.ai/interview-questions/anthropic-coding-interview/',
+      source: 'community',
       dateObserved: '2026',
     },
     {
       type: 'system-design',
       prompt:
         'Design a distributed search system handling 1B documents and 1M QPS, while also serving LLM inference for 10K+ requests/sec.',
-      source: 'linkjob.ai',
-      href: 'https://www.linkjob.ai/interview-questions/anthropic-software-engineer-interview/',
+      source: 'community',
       dateObserved: '2026',
     },
     {
       type: 'behavioral',
       prompt:
         'Tell me about a time when you made a safety-related decision in a project. How does Anthropic\'s focus on AI safety and interpretability differ from other major AI labs?',
-      source: 'linkjob.ai',
-      href: 'https://www.linkjob.ai/interview-questions/anthropic-software-engineer-interview/',
+      source: 'community',
       dateObserved: '2026',
     },
     {
@@ -146,16 +131,11 @@ export const anthropicSWE: RecentlyAskedEntry = {
       difficulty: 'hard',
       prompt:
         'Convert sampling-profiler stack-trace data into timeline start/end events, handling recursive calls and reverse ordering ("Stack Trace" / "Profiler Trace" problem).',
-      source: 'linkjob.ai',
-      href: 'https://www.linkjob.ai/interview-questions/anthropic-coding-interview/',
+      source: 'community',
       dateObserved: '2026',
     },
   ],
-  sources: [
-    'https://www.linkjob.ai/interview-questions/anthropic-software-engineer-interview/',
-    'https://interviewing.io/anthropic-interview-questions',
-    'https://www.linkjob.ai/interview-questions/anthropic-coding-interview/',
-  ],
+  sources: [],
   lastUpdated: TODAY,
 };
 
@@ -176,8 +156,7 @@ export const deepmindRE: RecentlyAskedEntry = {
       type: 'ml-theory',
       prompt:
         'AlphaFold-like molecule modeling problem — what architecture would you choose, what normalization layers, why?',
-      source: 'interviewnode.com',
-      href: 'https://www.interviewnode.com/post/google-deepmind-ml-interview-prep-what-to-expect-and-how-to-prepare',
+      source: 'community',
       dateObserved: '2025',
       confidence: 'medium',
     },
@@ -185,8 +164,7 @@ export const deepmindRE: RecentlyAskedEntry = {
       type: 'ml-theory',
       prompt:
         'Distinguish L1 vs. L2 regularization in practice; explain overfitting mitigation; articulate RL intuitions — fast-fire breadth-quiz format.',
-      source: 'interviewnode.com',
-      href: 'https://www.interviewnode.com/post/google-deepmind-ml-interview-prep-what-to-expect-and-how-to-prepare',
+      source: 'community',
       dateObserved: '2025',
       confidence: 'medium',
     },
@@ -195,8 +173,7 @@ export const deepmindRE: RecentlyAskedEntry = {
       difficulty: 'medium',
       prompt:
         'Implement gradient descent for logistic regression from scratch (no sklearn); implement a hash map from scratch; merge overlapping intervals.',
-      source: 'interviewnode.com',
-      href: 'https://www.interviewnode.com/post/google-deepmind-ml-interview-prep-what-to-expect-and-how-to-prepare',
+      source: 'community',
       dateObserved: '2025',
       confidence: 'medium',
     },
@@ -204,15 +181,13 @@ export const deepmindRE: RecentlyAskedEntry = {
       type: 'system-design',
       prompt:
         'Design a distributed training pipeline for terabyte-scale datasets; scale a recommendation system to billions of queries.',
-      source: 'interviewnode.com',
-      href: 'https://www.interviewnode.com/post/google-deepmind-ml-interview-prep-what-to-expect-and-how-to-prepare',
+      source: 'community',
       dateObserved: '2025',
       confidence: 'medium',
     },
   ],
   sources: [
     'https://asmekal.github.io/blog/posts/interviews-2025-ml-research-engineer-uk',
-    'https://www.interviewnode.com/post/google-deepmind-ml-interview-prep-what-to-expect-and-how-to-prepare',
     'https://www.sundeepteki.org/advice/the-ultimate-ai-research-engineer-interview-guide-cracking-openai-anthropic-google-deepmind-top-ai-labs',
   ],
   lastUpdated: TODAY,
@@ -235,8 +210,7 @@ export const mistralSWE: RecentlyAskedEntry = {
       type: 'ml-theory',
       prompt:
         'Explain the difference between MHA, GQA, and MQA, and explain when KV cache applies (inference only, not training).',
-      source: 'jointaro.com',
-      href: 'https://www.jointaro.com/interviews/companies/mistral-ai/experiences/ai-engineer-paris-july-1-2025-no-offer-negative-1ac7b2a9/',
+      source: 'community',
       dateObserved: 'Jul 2025',
     },
     {
@@ -244,8 +218,7 @@ export const mistralSWE: RecentlyAskedEntry = {
       difficulty: 'hard',
       prompt:
         'Implement Multi-Head Self-Attention from scratch in PyTorch — batched, with a causal mask.',
-      source: 'jointaro.com',
-      href: 'https://www.jointaro.com/interviews/companies/mistral-ai/experiences/ai-engineer-paris-july-1-2025-no-offer-negative-1ac7b2a9/',
+      source: 'community',
       dateObserved: 'Jul 2025',
     },
     {
@@ -253,31 +226,24 @@ export const mistralSWE: RecentlyAskedEntry = {
       difficulty: 'medium',
       prompt:
         'Pair-program: debug a broken transformer block (the bug is intentionally seeded into a forward pass).',
-      source: 'jointaro.com',
-      href: 'https://www.jointaro.com/interviews/companies/mistral-ai/experiences/ai-engineer-paris-july-1-2025-no-offer-negative-1ac7b2a9/',
+      source: 'community',
       dateObserved: 'Jul 2025',
     },
     {
       type: 'system-design',
       prompt:
         'Design a PDF-to-Markdown inference API (throughput, batching, model-serving topology).',
-      source: 'prachub.com',
-      href: 'https://prachub.com/companies/mistral-ai',
+      source: 'community',
       dateObserved: 'Sep 2025',
     },
     {
       type: 'system-design',
       prompt: 'Build and design a Mistral-based RAG agent end-to-end.',
-      source: 'prachub.com',
-      href: 'https://prachub.com/companies/mistral-ai',
+      source: 'community',
       dateObserved: 'Apr 2026',
     },
   ],
-  sources: [
-    'https://www.jointaro.com/interviews/companies/mistral-ai/experiences/ai-engineer-paris-july-1-2025-no-offer-negative-1ac7b2a9/',
-    'https://prachub.com/companies/mistral-ai',
-    'https://www.glassdoor.com/Interview/Mistral-AI-Interview-Questions-E9945031.htm',
-  ],
+  sources: [],
   lastUpdated: TODAY,
 };
 
@@ -299,8 +265,7 @@ export const cohereSWE: RecentlyAskedEntry = {
       difficulty: 'medium',
       prompt:
         'Given a real-time stream of strings, remove duplicates without storing the full stream in memory.',
-      source: 'linkjob.ai',
-      href: 'https://www.linkjob.ai/interview-questions/cohere-interview-process-and-questions/',
+      source: 'community',
       dateObserved: '2026',
     },
     {
@@ -308,40 +273,32 @@ export const cohereSWE: RecentlyAskedEntry = {
       difficulty: 'medium',
       prompt:
         'Find the longest substring without repeating characters (warm-up before LLM-flavored coding).',
-      source: 'linkjob.ai',
-      href: 'https://www.linkjob.ai/interview-questions/cohere-interview-process-and-questions/',
+      source: 'community',
       dateObserved: '2026',
     },
     {
       type: 'ml-theory',
       prompt:
         'Design a mechanism that lets an LLM-based system answer questions about events that occurred after its training cutoff.',
-      source: 'linkjob.ai',
-      href: 'https://www.linkjob.ai/interview-questions/cohere-interview-process-and-questions/',
+      source: 'community',
       dateObserved: '2026',
     },
     {
       type: 'system-design',
       prompt:
         'A Cohere-based enterprise support bot with RAG over 200k internal docs gives confident wrong answers after a policy update — what do you trace, what control points (freshness filters, citation-required, abstain on low coverage) do you ship first?',
-      source: 'datainterview.com',
-      href: 'https://www.datainterview.com/blog/cohere-ai-engineer-interview',
+      source: 'community',
       dateObserved: '2026',
     },
     {
       type: 'ml-theory',
       prompt:
         'Optimize throughput of a batch inference pipeline given fixed token-budget and batch-size constraints.',
-      source: 'linkjob.ai',
-      href: 'https://www.linkjob.ai/interview-questions/cohere-interview-process-and-questions/',
+      source: 'community',
       dateObserved: '2026',
     },
   ],
-  sources: [
-    'https://www.linkjob.ai/interview-questions/cohere-interview-process-and-questions/',
-    'https://www.datainterview.com/blog/cohere-ai-engineer-interview',
-    'https://www.glassdoor.com/Interview/Cohere-Interview-Questions-E6413613.htm',
-  ],
+  sources: [],
   lastUpdated: TODAY,
 };
 
@@ -362,16 +319,14 @@ export const huggingfaceMLE: RecentlyAskedEntry = {
       type: 'behavioral',
       prompt:
         'Walk through a time you contributed to an open-source ML project — what was the PR, why did the maintainer accept or reject it, and what did you learn about the codebase?',
-      source: 'interviewquery.com',
-      href: 'https://www.interviewquery.com/interview-guides/huggingface-machine-learning-engineer',
+      source: 'community',
       dateObserved: '2025',
     },
     {
       type: 'ml-theory',
       prompt:
         'Explain how you\'d evaluate a fine-tuned model — which metrics, which holdout strategy, and how would you detect overfitting on a small dataset?',
-      source: 'interviewquery.com',
-      href: 'https://www.interviewquery.com/interview-guides/huggingface-machine-learning-engineer',
+      source: 'community',
       dateObserved: '2025',
     },
     {
@@ -384,7 +339,6 @@ export const huggingfaceMLE: RecentlyAskedEntry = {
     },
   ],
   sources: [
-    'https://www.interviewquery.com/interview-guides/huggingface-machine-learning-engineer',
     'https://www.getbridged.co/company-reviews/hugging-face',
     'https://huggingface.co/blog/lewis-tunstall-interview',
   ],
@@ -409,16 +363,14 @@ export const databricksSWE: RecentlyAskedEntry = {
       type: 'system-design',
       prompt:
         'Design an agent that answers questions, runs multi-step analysis, and writes results back to a Delta table; explain how you guarantee correctness, idempotency, and debuggability when tool calls fail or the model loops.',
-      source: 'datainterview.com',
-      href: 'https://www.datainterview.com/blog/databricks-machine-learning-engineer-interview',
+      source: 'community',
       dateObserved: '2026',
     },
     {
       type: 'system-design',
       prompt:
         'Design a real-time fraud detection system using Spark Structured Streaming consuming Kafka, with MLflow model inference and Delta Lake ACID guarantees.',
-      source: 'linkjob.ai',
-      href: 'https://www.linkjob.ai/interview-questions/databricks-system-design-interview/',
+      source: 'community',
       dateObserved: '2026',
     },
     {
@@ -426,8 +378,7 @@ export const databricksSWE: RecentlyAskedEntry = {
       difficulty: 'medium',
       prompt:
         'Implement a snapshot iterator over a set such that adding/removing elements does not affect existing iterators; optimize space across many snapshots.',
-      source: 'linkjob.ai',
-      href: 'https://www.linkjob.ai/interview-questions/databricks-software-engineer-interview',
+      source: 'community',
       dateObserved: '2026',
     },
     {
@@ -435,8 +386,7 @@ export const databricksSWE: RecentlyAskedEntry = {
       difficulty: 'hard',
       prompt:
         'Build a thread-safe LRU cache with TTL handling concurrent access; defend your locking strategy under high load.',
-      source: 'linkjob.ai',
-      href: 'https://www.linkjob.ai/interview-questions/databricks-software-engineer-interview',
+      source: 'community',
       dateObserved: '2026',
     },
     {
@@ -448,11 +398,7 @@ export const databricksSWE: RecentlyAskedEntry = {
       dateObserved: 'Late 2025',
     },
   ],
-  sources: [
-    'https://www.datainterview.com/blog/databricks-machine-learning-engineer-interview',
-    'https://www.linkjob.ai/interview-questions/databricks-system-design-interview/',
-    'https://www.tryexponent.com/blog/databricks-interview-process',
-  ],
+  sources: [],
   lastUpdated: TODAY,
 };
 
@@ -474,8 +420,7 @@ export const stripeSWE: RecentlyAskedEntry = {
       difficulty: 'hard',
       prompt:
         '"BikeMap": read three JSON files, convert to dictionaries, perform back-and-forth ETL across 5 incremental requirements (~3.9 of 5 passing was typical at round end).',
-      source: 'linkjob.ai',
-      href: 'https://www.linkjob.ai/interview-questions/stripe-integration-round/',
+      source: 'community',
       dateObserved: 'Dec 2025',
     },
     {
@@ -483,8 +428,7 @@ export const stripeSWE: RecentlyAskedEntry = {
       difficulty: 'hard',
       prompt:
         'Implement a webhook handler for Stripe events with idempotency guarantees and correct error responses on retry.',
-      source: 'prepfully.com',
-      href: 'https://prepfully.com/interview-guides/stripe-software-engineer',
+      source: 'community',
       dateObserved: 'Apr 2026',
     },
     {
@@ -492,16 +436,14 @@ export const stripeSWE: RecentlyAskedEntry = {
       difficulty: 'hard',
       prompt:
         'Build a function that onboards a merchant via Stripe Connect API, handling incomplete or failed verification scenarios.',
-      source: 'prepfully.com',
-      href: 'https://prepfully.com/interview-guides/stripe-software-engineer',
+      source: 'community',
       dateObserved: 'Apr 2026',
     },
     {
       type: 'system-design',
       prompt:
         'Design an idempotent payment system using API-layer idempotency keys and DB unique constraints on (user_id, order_id) under concurrent requests.',
-      source: 'linkjob.ai',
-      href: 'https://www.linkjob.ai/interview-questions/stripe-software-engineer-interview/',
+      source: 'community',
       dateObserved: 'Feb 2026',
     },
     {
@@ -509,8 +451,7 @@ export const stripeSWE: RecentlyAskedEntry = {
       difficulty: 'medium',
       prompt:
         'Currency conversion: model currencies as graph nodes with exchange-rate weighted edges; find a conversion path between any two currencies (BFS/DFS).',
-      source: 'linkjob.ai',
-      href: 'https://www.linkjob.ai/interview-questions/stripe-software-engineer-interview/',
+      source: 'community',
       dateObserved: 'Feb 2026',
     },
     {
@@ -524,8 +465,6 @@ export const stripeSWE: RecentlyAskedEntry = {
   ],
   sources: [
     'https://medium.com/@diyaag2020/my-stripe-interview-experience-2025-2026-a-journey-to-the-final-round-19990fa6876a',
-    'https://www.linkjob.ai/interview-questions/stripe-integration-round/',
-    'https://prepfully.com/interview-guides/stripe-software-engineer',
   ],
   lastUpdated: TODAY,
 };
@@ -548,8 +487,7 @@ export const netflixSWE: RecentlyAskedEntry = {
       difficulty: 'medium',
       prompt:
         'Implement a content manager system with CRUD operations — intentionally vague; clarifying questions are scored.',
-      source: 'jointaro.com',
-      href: 'https://www.jointaro.com/interviews/companies/netflix/experiences/senior-software-engineer-united-states-january-22-2025-no-offer-positive-b131bf1d/',
+      source: 'community',
       dateObserved: 'Jan 2025',
     },
     {
@@ -557,40 +495,32 @@ export const netflixSWE: RecentlyAskedEntry = {
       difficulty: 'hard',
       prompt:
         'Recover a Binary Search Tree where two elements have been swapped; restore in O(1) extra space.',
-      source: 'interviewing.io',
-      href: 'https://interviewing.io/guides/hiring-process/netflix',
+      source: 'community',
       dateObserved: '2025',
     },
     {
       type: 'system-design',
       prompt:
         'Design a fault-tolerant streaming service with regional failover; defend your availability target ("Netflix never wants to go down").',
-      source: 'prepfully.com',
-      href: 'https://prepfully.com/interview-guides/netflix-software-engineer',
+      source: 'community',
       dateObserved: '2025',
     },
     {
       type: 'behavioral',
       prompt:
         'Tell me about a hard decision you made without complete information — probed for judgment under ambiguity.',
-      source: 'prepfully.com',
-      href: 'https://prepfully.com/interview-guides/netflix-software-engineer',
+      source: 'community',
       dateObserved: '2025',
     },
     {
       type: 'behavioral',
       prompt:
         'What aspects of the Netflix culture memo resonated with you, and where do you disagree? Disagreement is welcomed; absence of opinion is not.',
-      source: 'interviewing.io',
-      href: 'https://interviewing.io/guides/hiring-process/netflix',
+      source: 'community',
       dateObserved: '2025',
     },
   ],
-  sources: [
-    'https://interviewing.io/guides/hiring-process/netflix',
-    'https://www.jointaro.com/interviews/companies/netflix/experiences/senior-software-engineer-united-states-january-22-2025-no-offer-positive-b131bf1d/',
-    'https://prepfully.com/interview-guides/netflix-software-engineer',
-  ],
+  sources: [],
   lastUpdated: TODAY,
 };
 
@@ -612,8 +542,7 @@ export const airbnbSWE: RecentlyAskedEntry = {
       difficulty: 'medium',
       prompt:
         'Find all combinations of numbers in an array that sum to a target value (variant of subset-sum / combination sum).',
-      source: 'interviewquery.com',
-      href: 'https://www.interviewquery.com/interview-guides/airbnb',
+      source: 'community',
       dateObserved: '2025',
     },
     {
@@ -621,16 +550,14 @@ export const airbnbSWE: RecentlyAskedEntry = {
       difficulty: 'medium',
       prompt:
         'Friendship timeline matching: given two users\' event timelines, find overlapping intervals where they were friends and active simultaneously.',
-      source: 'interviewquery.com',
-      href: 'https://www.interviewquery.com/interview-guides/airbnb',
+      source: 'community',
       dateObserved: '2025',
     },
     {
       type: 'system-design',
       prompt:
         'Design an ETL pipeline and database schema for tracking listing-state changes over time with point-in-time queries.',
-      source: 'interviewquery.com',
-      href: 'https://www.interviewquery.com/interview-guides/airbnb',
+      source: 'community',
       dateObserved: '2025',
       confidence: 'medium',
     },
@@ -638,24 +565,18 @@ export const airbnbSWE: RecentlyAskedEntry = {
       type: 'behavioral',
       prompt:
         'Tell me about a time you disagreed with a PM or designer and how you reached a decision — STAR-method response expected; mission/belonging framing scored.',
-      source: 'designgurus.io',
-      href: 'https://www.designgurus.io/answers/detail/what-is-airbnb-interview-process-reddit',
+      source: 'community',
       dateObserved: '2025',
     },
     {
       type: 'behavioral',
       prompt:
         'Why Airbnb specifically, and how does your work history reflect their mission of belonging? Vague answers fail this round even when coding is strong.',
-      source: 'tryexponent.com',
-      href: 'https://www.tryexponent.com/blog/airbnb-interview-process',
+      source: 'community',
       dateObserved: '2025',
     },
   ],
-  sources: [
-    'https://www.interviewquery.com/interview-guides/airbnb',
-    'https://www.designgurus.io/answers/detail/what-is-airbnb-interview-process-reddit',
-    'https://www.tryexponent.com/blog/airbnb-interview-process',
-  ],
+  sources: [],
   lastUpdated: TODAY,
 };
 
@@ -676,23 +597,20 @@ export const uberSWE: RecentlyAskedEntry = {
       type: 'system-design',
       prompt:
         'Design Uber\'s real-time dispatch: match riders to drivers in <1–2s, support 1M concurrent users and 500K active drivers with 4-second location heartbeats.',
-      source: 'techinterview.org',
-      href: 'https://www.techinterview.org/post/3233460273/uber-interview-guide-2026-dispatch-systems-geospatial-algorithms-and-marketplace-engineering/',
+      source: 'community',
       dateObserved: '2026',
     },
     {
       type: 'system-design',
       prompt:
         'Design surge pricing: aggregate supply/demand per geofence in real time using stream processing with sliding windows.',
-      source: 'jobright.ai',
-      href: 'https://jobright.ai/blog/uber-technical-interview-questions-complete-guide-2026/',
+      source: 'community',
       dateObserved: '2026',
     },
     {
       type: 'system-design',
       prompt: 'Build a real-time heatmap of driver locations for a ride-hailing platform.',
-      source: 'getsdeready.com',
-      href: 'https://getsdeready.com/top-uber-system-design-interview-questions-and-how-to-prepare/',
+      source: 'community',
       dateObserved: '2025',
     },
     {
@@ -700,8 +618,7 @@ export const uberSWE: RecentlyAskedEntry = {
       difficulty: 'hard',
       prompt:
         'LC 787 Cheapest Flights Within K Stops, and LC 1334 Find the City With the Smallest Number of Neighbors at a Threshold Distance — graph + shortest-path patterns mirroring Uber routing.',
-      source: 'techinterview.org',
-      href: 'https://www.techinterview.org/post/3233460273/uber-interview-guide-2026-dispatch-systems-geospatial-algorithms-and-marketplace-engineering/',
+      source: 'community',
       dateObserved: '2026',
     },
     {
@@ -714,9 +631,7 @@ export const uberSWE: RecentlyAskedEntry = {
     },
   ],
   sources: [
-    'https://www.techinterview.org/post/3233460273/uber-interview-guide-2026-dispatch-systems-geospatial-algorithms-and-marketplace-engineering/',
     'https://medium.com/@rajatgoyal715/my-interview-experience-at-uber-l5a-offer-sr-software-engineer-c8f9fc8451b7',
-    'https://www.glassdoor.com/Interview/Uber-Software-Engineer-Interview-Questions-EI_IE575263.0,4_KO5,22.htm',
   ],
   lastUpdated: TODAY,
 };
@@ -738,16 +653,14 @@ export const linkedinSWE: RecentlyAskedEntry = {
       type: 'system-design',
       prompt:
         'Design LinkedIn\'s news feed for ~1B users, including First Pass Rankers and a Second Pass Ranker (feed mixer).',
-      source: 'systemdesignhandbook.com',
-      href: 'https://www.systemdesignhandbook.com/guides/linkedin-system-design-interview/',
+      source: 'community',
       dateObserved: '2025–2026',
     },
     {
       type: 'system-design',
       prompt:
         'Design People You May Know (PYMK): multi-stage ranking, diversity/fairness re-ranking, latency budget.',
-      source: 'systemdesignhandbook.com',
-      href: 'https://www.systemdesignhandbook.com/guides/linkedin-system-design-interview/',
+      source: 'community',
       dateObserved: '2025',
     },
     {
@@ -755,8 +668,7 @@ export const linkedinSWE: RecentlyAskedEntry = {
       difficulty: 'medium',
       prompt:
         'Given an undirected graph, find the number of connected components / connected groups (LeetCode-medium variant).',
-      source: 'prepfully.com',
-      href: 'https://prepfully.com/interview-guides/linkedin-software-engineer-interview',
+      source: 'community',
       dateObserved: 'Sep 2025',
     },
     {
@@ -764,24 +676,18 @@ export const linkedinSWE: RecentlyAskedEntry = {
       difficulty: 'medium',
       prompt:
         'Max Consecutive Ones III ("flip K zeros to get the longest run of ones"), with a follow-up extending it to a circular array.',
-      source: 'linkjob.ai',
-      href: 'https://www.linkjob.ai/interview-questions/linkedin-software-engineer-interview-questions',
+      source: 'community',
       dateObserved: '2026',
     },
     {
       type: 'system-design',
       prompt:
         'Caching strategies (write-through vs. write-back vs. write-around) and threads vs. processes — asked alongside graph problems in the technical phone screen.',
-      source: 'prepfully.com',
-      href: 'https://prepfully.com/interview-guides/linkedin-software-engineer-interview',
+      source: 'community',
       dateObserved: 'Sep 2025',
     },
   ],
-  sources: [
-    'https://www.systemdesignhandbook.com/guides/linkedin-system-design-interview/',
-    'https://prepfully.com/interview-guides/linkedin-software-engineer-interview',
-    'https://www.glassdoor.com/Interview/LinkedIn-Senior-Software-Engineer-Interview-Questions-EI_IE34865.0,8_KO9,33_IP6.htm',
-  ],
+  sources: [],
   lastUpdated: TODAY,
 };
 
@@ -803,8 +709,7 @@ export const nvidiaSWE: RecentlyAskedEntry = {
       difficulty: 'hard',
       prompt:
         'Implement matrix multiplication in CUDA; discuss tiling, shared-memory usage, and memory coalescing.',
-      source: 'huru.ai',
-      href: 'https://huru.ai/nvidia-interview-questions-mastering-cuda-inference-systems/',
+      source: 'community',
       dateObserved: '2025–2026',
     },
     {
@@ -812,40 +717,32 @@ export const nvidiaSWE: RecentlyAskedEntry = {
       difficulty: 'hard',
       prompt:
         'Explain memory coalescing — why do row-major vs column-major access patterns produce drastically different throughput? Restructure a given kernel to coalesce.',
-      source: 'techinterview.org',
-      href: 'https://www.techinterview.org/companies/nvidia-interview-guide-2026/',
+      source: 'community',
       dateObserved: '2026',
     },
     {
       type: 'ml-theory',
       prompt:
         'Tensor Cores vs CUDA Cores: which ops map to each, and why does mixed-precision (FP16/BF16, and now FP8) matter for modern ML workloads?',
-      source: 'techinterview.org',
-      href: 'https://www.techinterview.org/companies/nvidia-interview-guide-2026/',
+      source: 'community',
       dateObserved: '2026',
     },
     {
       type: 'system-design',
       prompt:
         'Design a low-latency LLM inference serving stack: request batching, KV-cache management, tensor parallelism, deployment via TensorRT-LLM and Triton Inference Server.',
-      source: 'huru.ai',
-      href: 'https://huru.ai/nvidia-interview-questions-mastering-cuda-inference-systems/',
+      source: 'community',
       dateObserved: '2025–2026',
     },
     {
       type: 'ml-theory',
       prompt:
         'How would you profile a CUDA application — what tools (Nsight Systems / Nsight Compute), and what\'s your workflow when a kernel underperforms its roofline?',
-      source: 'huru.ai',
-      href: 'https://huru.ai/nvidia-interview-questions-mastering-cuda-inference-systems/',
+      source: 'community',
       dateObserved: '2025',
     },
   ],
-  sources: [
-    'https://huru.ai/nvidia-interview-questions-mastering-cuda-inference-systems/',
-    'https://www.techinterview.org/companies/nvidia-interview-guide-2026/',
-    'https://www.linkjob.ai/interview-questions/nvidia-deep-learning-interview/',
-  ],
+  sources: [],
   lastUpdated: TODAY,
 };
 
@@ -866,8 +763,7 @@ export const teslaSWE: RecentlyAskedEntry = {
       type: 'system-design',
       prompt:
         'Design a real-time perception pipeline ingesting 8 cameras at ~36 FPS, running detection + lane models, outputting to the planner within a 50 ms latency budget.',
-      source: 'lockedinai.com',
-      href: 'https://www.lockedinai.com/company-details/TSLA',
+      source: 'community',
       dateObserved: '2025–2026',
     },
     {
@@ -875,8 +771,7 @@ export const teslaSWE: RecentlyAskedEntry = {
       difficulty: 'hard',
       prompt:
         'Implement an LRU cache in C++ with O(1) get/put, then adapt it for a multithreaded real-time perception system (lock granularity, false sharing).',
-      source: 'lockedinai.com',
-      href: 'https://www.lockedinai.com/company-details/TSLA',
+      source: 'community',
       dateObserved: '2025',
     },
     {
@@ -884,32 +779,25 @@ export const teslaSWE: RecentlyAskedEntry = {
       difficulty: 'hard',
       prompt:
         'Merge K sorted streams of sensor timestamps that may arrive with bounded delay D ms; preserve correct event ordering.',
-      source: 'lockedinai.com',
-      href: 'https://www.lockedinai.com/company-details/TSLA',
+      source: 'community',
       dateObserved: '2025',
     },
     {
       type: 'ml-theory',
       prompt:
         'Design a lane detection module robust to rain and low light; discuss multi-sensor fusion vs Tesla\'s vision-only stance and the failure modes of each.',
-      source: 'designgurus.io',
-      href: 'https://www.designgurus.io/answers/detail/tesla-autopilot-software-interview-topics',
+      source: 'community',
       dateObserved: '2025–2026',
     },
     {
       type: 'system-design',
       prompt:
         'Design an OTA update rollout for FSD using shadow mode + canary deployments — how do you safely validate a new policy on the fleet?',
-      source: 'techinterview.org',
-      href: 'https://www.techinterview.org/post/3233474492/system-design-design-tesla-autopilot-autonomous-driving-sensor-fusion-perception-path-planning-real-time-ml-inference/',
+      source: 'community',
       dateObserved: '2026',
     },
   ],
-  sources: [
-    'https://www.lockedinai.com/company-details/TSLA',
-    'https://www.techinterview.org/post/3233474492/system-design-design-tesla-autopilot-autonomous-driving-sensor-fusion-perception-path-planning-real-time-ml-inference/',
-    'https://www.glassdoor.com/Interview/Tesla-Autopilot-Software-Engineer-Interview-Questions-EI_IE43129.0,5_KO6,33.htm',
-  ],
+  sources: [],
   lastUpdated: TODAY,
 };
 

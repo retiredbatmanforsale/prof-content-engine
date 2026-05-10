@@ -11,6 +11,7 @@ tutor_concepts:
   - "parallelization impossibility in RNNs"
   - "transformer motivation"
 access: public
+mvp_status: drafted
 ---
 
 <LessonHero course="Build and Train Your Own GPT-2" number="1" title="Problem with RNNs and LSTMs" subtitle="Why we're rebuilding GPT-2 as a transformer, not an RNN" />
@@ -18,6 +19,72 @@ access: public
 Before we write a single line of PyTorch, let's answer the obvious question: **why isn't GPT-2 an RNN?** Recurrent networks dominated language modelling for almost a decade — LSTMs powered Google Translate, speech recognition, and the first wave of seq2seq systems. Then, between 2017 and 2019, the entire field switched to transformers. Three concrete failures pushed it over.
 
 This course is going to **build a decoder-only transformer from scratch**. To understand why we make every architectural choice we make — embeddings, causal masking, multi-head attention, residual connections — you need to know what we're walking away from and why we couldn't just keep scaling the old approach.
+
+---
+
+## Set up the project
+
+Every lesson in this course adds one or more files to a single Python package — `nanogpt-from-scratch/`. By Lesson 10 you'll run `python train.py` and watch your own GPT-2-small train on TinyShakespeare in about 10 minutes on a Mac. **The course is the codebase.**
+
+<div className="not-prose my-8 rounded-2xl border-2 border-emerald-400 bg-gradient-to-br from-emerald-50 to-teal-50 px-5 py-4 dark:border-emerald-700 dark:from-emerald-950/40 dark:to-teal-950/40">
+  <p className="m-0 text-xs font-bold uppercase tracking-widest text-emerald-800 dark:text-emerald-200">What you're building</p>
+  <p className="mt-2 mb-1 text-base font-bold text-slate-900 dark:text-slate-100"><code>config.py</code> — GPTConfig</p>
+  <p className="mt-0 mb-0 text-sm text-slate-700 dark:text-slate-300">Input: nothing → Output: a single dataclass that every other module reads dimensions from. Change <code>n_layer = 12</code> to <code>n_layer = 4</code> and the whole model shrinks — one edit, no other files to touch.</p>
+</div>
+
+### 1. Get the scaffold
+
+The companion scaffold lives at <a href="/code/nanogpt-from-scratch/README.md"><code>/code/nanogpt-from-scratch/</code></a>. It contains stub files for every module we'll fill in across the course. Either download the files individually (each lesson tells you which file to open) or pull the whole directory:
+
+```bash
+mkdir nanogpt-from-scratch && cd nanogpt-from-scratch
+# fetch the README, pyproject.toml, and the empty .py stubs from /code/nanogpt-from-scratch/
+```
+
+### 2. Install dependencies
+
+```bash
+python -m venv .venv && source .venv/bin/activate
+pip install -e .
+```
+
+That installs three packages: `torch` (the model), `tiktoken` (GPT-2's BPE tokenizer, used in Lesson 2), and `numpy`. Tested on Python 3.10+. CPU works fine for everything up through Lesson 9; for Lesson 10's training run, an Apple-Silicon MPS device or a CUDA GPU will speed things up ~5×.
+
+### 3. Write `config.py`
+
+Open the empty `config.py` and paste this in. These defaults are exactly the **GPT-2 small** architecture from Radford et al. (2019) — 124M parameters, the smallest of the four GPT-2 models OpenAI released:
+
+```python
+# nanogpt-from-scratch/config.py
+
+from dataclasses import dataclass
+
+
+@dataclass
+class GPTConfig:
+    vocab_size: int = 50257   # GPT-2 BPE vocabulary
+    n_embd: int = 768         # embedding / hidden dimension
+    n_head: int = 12          # number of attention heads
+    n_layer: int = 12         # number of transformer blocks
+    block_size: int = 1024    # maximum context length
+    dropout: float = 0.0      # 0.0 for pretraining, ~0.1 for finetuning
+
+    @property
+    def head_size(self) -> int:
+        assert self.n_embd % self.n_head == 0, "n_embd must divide n_head"
+        return self.n_embd // self.n_head
+```
+
+Why a dataclass and not a dict or a config file? Two reasons: **autocomplete** (your editor shows every field while you type `config.`), and **single source of truth** (every other module — `attention.py`, `blocks.py`, `model.py` — takes a `GPTConfig` and reads `config.n_embd`, `config.n_head`, etc.). Change one number here, the whole model resizes. Karpathy's nanoGPT uses the same pattern, and so does the original OpenAI GPT-2 codebase.
+
+<div className="not-prose my-6 rounded-xl border-l-4 border-sky-500 bg-sky-50/70 py-3 pl-4 pr-3 dark:bg-sky-950/25">
+  <p className="m-0 text-sm font-semibold text-sky-900 dark:text-sky-200">Your task</p>
+  <p className="mt-2 mb-0 text-sm text-slate-800 dark:text-slate-200">
+    From your activated venv: <code>python -c "from config import GPTConfig; c = GPTConfig(); print(c.head_size)"</code> — should print <code>64</code> (because 768 / 12 = 64). If it errors, the dataclass is wrong.
+  </p>
+</div>
+
+That's the whole project setup. Now the rest of this lesson is **why** we're going to fill those stubs with attention layers and not LSTM cells. Three concrete failures pushed the field off RNNs.
 
 ---
 
@@ -96,6 +163,12 @@ Not everything the RNN community learned is obsolete. Two ideas in particular su
 - **Cross-entropy loss on next-token prediction** — the training objective is unchanged. The architecture changed; the *task* did not.
 
 The transformer is not a wholesale rejection of what came before. It's a targeted fix to three specific bottlenecks that made RNNs a dead end at scale.
+
+---
+
+## What's next
+
+`config.py` is in place — that's the whole shape of GPT-2 small in 12 lines of code. **Lesson 2** opens up `tokenizer.py` and `embeddings.py`: how to turn a string of English into a sequence of integers (BPE tokenization), and how to turn each integer into a 768-dimensional vector the model can actually compute on. About a third of GPT-2's 124M parameters live in the embedding table — we'll see exactly where they come from.
 
 ---
 

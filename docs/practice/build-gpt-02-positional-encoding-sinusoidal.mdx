@@ -1,0 +1,129 @@
+---
+title: "Build a GPT · 02 · Sinusoidal Positional Encoding"
+description: Build the (T, C) sinusoidal positional encoding table from "Attention Is All You Need" — fixed, parameter-free, and extrapolates to unseen lengths.
+sidebar_position: 2
+practice_mode: true
+hide_table_of_contents: true
+---
+
+import PracticeProblem from '@site/src/components/viz/PracticeProblemPro';
+
+<PracticeProblem
+  id="build-gpt-02-positional-encoding-sinusoidal"
+  title="Sinusoidal positional encoding"
+  difficulty="Easy"
+  tags={["numpy", "transformer", "positional-encoding", "build-gpt"]}
+  linkedLessons={[
+    { url: '/courses/ai-for-engineering/build-and-train-your-own-gpt2-model/positional-embeddings', title: 'Positional embeddings' },
+  ]}
+  starter={`
+import numpy as np
+
+def sinusoidal_pe(T, C):
+    """
+    Build the sinusoidal positional encoding table from "Attention Is All You Need".
+
+    For position t in [0, T) and dimension i in [0, C):
+        PE[t, 2i]     = sin(t / 10000 ** (2i / C))
+        PE[t, 2i + 1] = cos(t / 10000 ** (2i / C))
+
+    Args:
+        T: int — sequence length.
+        C: int — embedding dimension. Should be even (each pair of dims is a sin/cos).
+
+    Returns:
+        np.ndarray of shape (T, C), dtype float64.
+    """
+    # YOUR CODE HERE
+    pass
+`}
+  tests={`
+import numpy as np
+
+@__test__("Output shape is (T, C)")
+def t():
+    out = sinusoidal_pe(16, 8)
+    assert out is not None, "function returned None"
+    assert out.shape == (16, 8), f"expected (16, 8), got {out.shape}"
+
+@__test__("At position t=0, even dims are 0 (sin) and odd dims are 1 (cos)")
+def t():
+    # The diagnostic: sin(0) = 0, cos(0) = 1, regardless of dimension.
+    out = sinusoidal_pe(4, 8)
+    sins = out[0, 0::2]
+    coss = out[0, 1::2]
+    assert np.allclose(sins, 0.0, atol=1e-12), f"sin row at t=0 should be 0, got {sins}"
+    assert np.allclose(coss, 1.0, atol=1e-12), f"cos row at t=0 should be 1, got {coss}"
+
+@__test__("Matches the explicit formula at a hand-checked entry")
+def t():
+    T, C = 10, 4
+    out = sinusoidal_pe(T, C)
+    # PE[3, 0] = sin(3 / 10000 ** (0/4)) = sin(3)
+    # PE[3, 1] = cos(3 / 10000 ** (0/4)) = cos(3)
+    # PE[3, 2] = sin(3 / 10000 ** (2/4)) = sin(3 / 100)
+    # PE[3, 3] = cos(3 / 100)
+    assert np.isclose(out[3, 0], np.sin(3.0), atol=1e-9)
+    assert np.isclose(out[3, 1], np.cos(3.0), atol=1e-9)
+    assert np.isclose(out[3, 2], np.sin(3.0 / 100.0), atol=1e-9)
+    assert np.isclose(out[3, 3], np.cos(3.0 / 100.0), atol=1e-9)
+
+@__test__("All values lie in [-1, 1]")
+def t():
+    # sin and cos can never exceed 1 in absolute value.
+    out = sinusoidal_pe(64, 32)
+    assert out.min() >= -1.0 - 1e-12, f"min {out.min()} < -1"
+    assert out.max() <= 1.0 + 1e-12, f"max {out.max()} > 1"
+
+@__test__("Different positions produce different encodings (no collisions)")
+def t():
+    out = sinusoidal_pe(20, 16)
+    # Within the first sequence length and modest dim, every row should be unique.
+    for i in range(20):
+        for j in range(i + 1, 20):
+            assert not np.allclose(out[i], out[j]), \\
+                f"row {i} and row {j} are identical — encoding collides"
+
+@__test__("Larger sequence length still produces a valid table (extrapolation)")
+def t():
+    out = sinusoidal_pe(2048, 64)
+    assert out.shape == (2048, 64)
+    assert not np.any(np.isnan(out))
+    assert not np.any(np.isinf(out))
+`}
+  solution={`
+import numpy as np
+
+def sinusoidal_pe(T, C):
+    pe = np.zeros((T, C))
+    pos = np.arange(T)[:, None]                       # (T, 1)
+    i = np.arange(0, C, 2)                            # (C/2,) — even dims
+    div = 10000 ** (i / C)                            # (C/2,) — frequency divisor
+    angles = pos / div                                # (T, C/2)
+    pe[:, 0::2] = np.sin(angles)                      # even columns
+    pe[:, 1::2] = np.cos(angles)                      # odd columns
+    return pe
+`}
+  hints={[
+    "Build it column-pair by column-pair: for each pair (2i, 2i+1) all positions share the same divisor 10000^(2i/C). Vectorise across positions and dimension pairs separately, then assign to even vs odd columns.",
+    "Use np.arange(T)[:, None] for the position axis and np.arange(0, C, 2) for the even-dimension index. Their broadcast gives a (T, C/2) matrix of angles; sin and cos of that fill the even and odd columns respectively.",
+    "The division 10000 ** (i / C) creates frequencies spanning many orders of magnitude. Low dims = high frequency (changes fast with position); high dims = low frequency (changes slow). That spread is what lets attention learn relative-position offsets.",
+  ]}
+>
+
+The original Transformer paper's positional encoding — fixed, parameter-free, and extrapolates to sequence lengths longer than anything in training. GPT-2 chose learned positional embeddings instead, but sinusoidal is the encoding every interview asks about because the math is non-trivial.
+
+The formula:
+
+`PE[t, 2i]     = sin(t / 10000^(2i/C))`
+
+`PE[t, 2i+1]   = cos(t / 10000^(2i/C))`
+
+Two properties that make it work:
+
+1. **At position 0, all sin dims are 0 and all cos dims are 1** — a clean baseline. The harness checks this directly.
+2. **No collisions across positions** — different rows of the table are different vectors. Without this, attention can't tell positions apart.
+
+The deeper magic that the paper actually relied on: the encoding for position `t + k` is a linear function of the encoding for position `t`. That means attention can learn a "shift by k" operation as a fixed linear transform — the architecture's prior on relative position. We don't test that property explicitly here, but it's why this encoding was chosen over alternatives.
+
+</PracticeProblem>

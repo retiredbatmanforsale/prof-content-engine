@@ -1,0 +1,164 @@
+---
+title: "BPE Train Merges"
+description: Learn a BPE vocabulary from a corpus by iteratively merging the most frequent adjacent token pair.
+sidebar_position: 25
+practice_mode: true
+hide_table_of_contents: true
+---
+
+import PracticeProblem from '@site/src/components/viz/PracticeProblemPro';
+
+<PracticeProblem
+  id="bpe-train-merges"
+  title="Train BPE merges from a corpus"
+  difficulty="Hard"
+  tags={["python", "tokenization", "bpe"]}
+  linkedLessons={[
+    { url: '/courses/ai-for-engineering/build-and-train-your-own-gpt2-model/token-embeddings', title: 'Token embeddings' },
+  ]}
+  starter={`
+def train_bpe(corpus, num_merges):
+    """
+    Train BPE merges from a tokenized corpus.
+
+    The corpus is a list of words; each word is a list of base tokens (strings).
+    Each round:
+        1. Count every adjacent pair of tokens across the whole corpus.
+        2. Pick the MOST FREQUENT pair. If there is a tie, break it by
+           lexicographic order on the pair tuple (a, b).
+        3. In every word, merge that pair into a single combined token (a + b).
+        4. Record the pair as a learned merge.
+    Stop after num_merges rounds, or earlier if no adjacent pairs remain.
+
+    Args:
+        corpus:     list[list[str]] — list of words, each a list of base tokens.
+                    The function may MUTATE this corpus.
+        num_merges: int — maximum number of merge ops to learn.
+
+    Returns:
+        list[tuple[str, str]] — the learned merges, in the order they were chosen.
+    """
+    # YOUR CODE HERE
+    pass
+`}
+  tests={`
+@__test__("Returns a list of merges with the expected length")
+def t():
+    corpus = [["a", "b", "c", "a", "b"]]
+    out = train_bpe([list(w) for w in corpus], num_merges=3)
+    assert out is not None, "function returned None"
+    assert isinstance(out, list), f"expected list, got {type(out).__name__}"
+    assert len(out) == 3, f"expected 3 merges, got {len(out)}"
+
+@__test__("Diagnostic: simple corpus produces expected merge sequence")
+def t():
+    # corpus pairs: ('a','b')=2, ('b','c')=1, ('c','a')=1 — first merge is ('a','b').
+    # After: [['ab','c','ab']]; pairs ('ab','c')=1, ('c','ab')=1; tie -> lex order picks ('ab','c').
+    # After: [['abc','ab']]; one pair ('abc','ab')=1.
+    corpus = [["a", "b", "c", "a", "b"]]
+    merges = train_bpe([list(w) for w in corpus], num_merges=3)
+    assert merges == [("a", "b"), ("ab", "c"), ("abc", "ab")], f"got {merges}"
+
+@__test__("Stops early when no adjacent pairs remain")
+def t():
+    # Single-token words have no adjacent pairs.
+    corpus = [["x"], ["y"], ["z"]]
+    merges = train_bpe([list(w) for w in corpus], num_merges=10)
+    assert merges == [], f"expected no merges; got {merges}"
+
+@__test__("Lexicographic tie-breaking on pair tuples")
+def t():
+    # Two pairs both occur once: ('a','b') and ('a','c'). lex: ('a','b') < ('a','c').
+    corpus = [["a", "b"], ["a", "c"]]
+    merges = train_bpe([list(w) for w in corpus], num_merges=1)
+    assert merges == [("a", "b")], f"tie-break should pick ('a','b'); got {merges}"
+
+@__test__("Picks the most-frequent pair (vs a more-lexicographically-early but rarer one)")
+def t():
+    # ('a','b') appears once; ('x','y') appears 3 times. Frequency wins over lex.
+    corpus = [["a", "b"], ["x", "y", "x", "y", "x", "y"]]
+    merges = train_bpe([list(w) for w in corpus], num_merges=1)
+    assert merges == [("x", "y")], f"frequency should win; got {merges}"
+
+@__test__("Realistic corpus: 'low'/'lower'/'newer' produces sensible merges")
+def t():
+    corpus = [
+        list("low"), list("low"), list("low"),
+        list("lower"), list("lower"),
+        list("newer"), list("newer"), list("newer"),
+    ]
+    merges = train_bpe(corpus, num_merges=3)
+    # Top pair: ('e','r') appears 5 times (in lower x2 + newer x3). Wait — 'lower' has
+    # ('l','o'), ('o','w'), ('w','e'), ('e','r'); so ('e','r') x2 from lower, x3 from newer = 5.
+    # 'low' contributes ('l','o') x3, ('o','w') x3.
+    # 'lower' contributes ('l','o') x2, ('o','w') x2, ('w','e') x2, ('e','r') x2.
+    # 'newer' contributes ('n','e') x3, ('e','w') x3, ('w','e') x3, ('e','r') x3.
+    # ('e','r') = 5, ('l','o') = 5, ('o','w') = 5, ('w','e') = 5, ('n','e') = 3, ('e','w') = 3.
+    # 4-way tie at 5 — lex tie-break: ('e','r') wins (e < l < o < w in alpha).
+    assert merges[0] == ("e", "r"), f"first merge should be ('e','r'); got {merges[0]}"
+`}
+  solution={`
+from collections import Counter
+
+
+def train_bpe(corpus, num_merges):
+    merges = []
+    for _ in range(num_merges):
+        # 1. Count every adjacent pair across all words.
+        counts = Counter()
+        for word in corpus:
+            for i in range(len(word) - 1):
+                counts[(word[i], word[i + 1])] += 1
+        if not counts:
+            break
+
+        # 2. Pick the most-frequent pair, lex tie-break.
+        best = max(counts.items(), key=lambda kv: (kv[1], -1 * 0, *(kv[0])))  # placeholder
+        # The above is a hack; cleaner: sort candidates by (count, -lex-rank).
+        # We use: max count then min lex.
+        max_count = max(counts.values())
+        best_pair = min(p for p, c in counts.items() if c == max_count)
+        merges.append(best_pair)
+
+        # 3. Apply the merge to every word.
+        a, b = best_pair
+        new_corpus = []
+        for word in corpus:
+            new_word, i = [], 0
+            while i < len(word):
+                if i + 1 < len(word) and word[i] == a and word[i + 1] == b:
+                    new_word.append(a + b)
+                    i += 2
+                else:
+                    new_word.append(word[i])
+                    i += 1
+            new_corpus.append(new_word)
+        corpus = new_corpus
+
+    return merges
+`}
+  hints={[
+    "Outer loop runs at most num_merges times. Each iteration: count pairs across the whole corpus (Counter), pick the winner, apply the merge to every word.",
+    "Tie-break with `min(p for p, c in counts.items() if c == max_count)` — among the pairs tied for the most frequent, pick the lex-smallest. Don't just use Counter.most_common(1); its tie-break is insertion order, which is corpus-dependent and not deterministic across implementations.",
+    "Applying the merge in a single pass: walk the word with index i; if word[i:i+2] == (a, b), append a+b and i += 2; otherwise append word[i] and i += 1. Don't use replace() — that'd merge inside other tokens and produce wrong results.",
+  ]}
+>
+
+Train Byte-Pair Encoding from a corpus — the algorithm GPT-2 used to build its 50,257-token vocabulary, and the canonical "implement BPE training" interview question.
+
+The algorithm in plain English:
+
+1. Start with each word as a list of single base tokens (characters or bytes).
+2. Count every **adjacent pair** of tokens across the corpus.
+3. Find the **most frequent** pair. Break ties lexicographically (sort by the `(a, b)` tuple).
+4. Merge that pair everywhere — replace `[a, b]` with `[a + b]` in every word.
+5. Record the merge. Repeat for `num_merges` iterations.
+
+Two subtleties the harness probes:
+
+1. **Lex tie-breaking.** The most-frequent pair is often tied. Real BPE implementations either freeze a deterministic tie-break (lex order, what we use) or accept implementation-dependent results (which makes them un-reproducible). The harness uses lex tie-breaking and tests it explicitly.
+2. **Single-pass merge application.** Walking the word and checking `word[i:i+2] == (a, b)` is the right way. A `str.replace`-based shortcut breaks when merged tokens contain characters that re-appear elsewhere — `replace` operates at the substring level and ignores token boundaries.
+
+This is the *companion* to the existing `bpe-apply-merges` problem. Together they form a complete BPE: train on a corpus, freeze the merge list, then apply that list to encode any new text.
+
+</PracticeProblem>

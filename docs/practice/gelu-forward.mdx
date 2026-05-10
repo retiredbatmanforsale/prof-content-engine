@@ -1,0 +1,112 @@
+---
+title: "GELU Forward"
+description: GELU activation — the smooth ReLU that GPT-2, BERT, and most modern transformers use. Implement the tanh approximation.
+sidebar_position: 10
+practice_mode: true
+hide_table_of_contents: true
+---
+
+import PracticeProblem from '@site/src/components/viz/PracticeProblemPro';
+
+<PracticeProblem
+  id="gelu-forward"
+  title="GELU forward (tanh approximation)"
+  difficulty="Easy"
+  tags={["numpy", "activation", "transformer", "gelu"]}
+  linkedLessons={[
+    { url: '/courses/ai-for-engineering/build-and-train-your-own-gpt2-model/feed-forward-neural-networks', title: 'Feed-forward neural networks' },
+  ]}
+  starter={`
+import numpy as np
+
+def gelu(x):
+    """
+    Gaussian Error Linear Unit — tanh approximation (GPT-2, BERT, Llama).
+
+    GELU(x) = 0.5 * x * (1 + tanh(sqrt(2/pi) * (x + 0.044715 * x^3)))
+
+    Args:
+        x: np.ndarray of any shape.
+
+    Returns:
+        np.ndarray of the same shape.
+    """
+    # YOUR CODE HERE
+    pass
+`}
+  tests={`
+import numpy as np
+
+@__test__("Output shape matches input")
+def t():
+    rng = np.random.default_rng(0)
+    x = rng.standard_normal((3, 4, 5))
+    out = gelu(x)
+    assert out is not None, "function returned None"
+    assert out.shape == x.shape, f"shape {out.shape} != {x.shape}"
+
+@__test__("GELU(0) = 0 (identity at the origin)")
+def t():
+    out = gelu(np.array([0.0]))
+    assert np.isclose(out[0], 0.0, atol=1e-9), f"GELU(0) should be 0, got {out[0]}"
+
+@__test__("Diagnostic: matches the tanh approximation formula at hand-checked points")
+def t():
+    # Reference: explicit formula.
+    x = np.array([-2.0, -0.5, 0.0, 0.5, 2.0, 5.0])
+    expected = 0.5 * x * (1.0 + np.tanh(np.sqrt(2.0 / np.pi) * (x + 0.044715 * x ** 3)))
+    out = gelu(x)
+    assert np.allclose(out, expected, atol=1e-9), \\
+        f"max diff {np.max(np.abs(out - expected)):.2e} — wrong formula?"
+
+@__test__("Large positive x: GELU(x) ~ x")
+def t():
+    x = np.array([10.0, 100.0, 1000.0])
+    out = gelu(x)
+    # For large positive, tanh saturates to 1; result ~ 0.5 * x * 2 = x.
+    assert np.allclose(out, x, rtol=1e-4), f"large positive GELU should be ~x, got {out}"
+
+@__test__("Large negative x: GELU(x) ~ 0")
+def t():
+    x = np.array([-10.0, -100.0, -1000.0])
+    out = gelu(x)
+    # For large negative, tanh saturates to -1; result ~ 0.5 * x * 0 = 0.
+    assert np.allclose(out, 0.0, atol=1e-3), f"large negative GELU should be ~0, got {out}"
+
+@__test__("GELU lets some negative input through (vs ReLU which would zero it)")
+def t():
+    # For x in roughly [-1.5, 0], GELU produces a small negative value (where ReLU is 0).
+    x = np.array([-0.5])
+    out = gelu(x)
+    # Approximate ground truth: ~-0.154
+    assert -0.2 < out[0] < -0.1, f"GELU(-0.5) should be ~-0.154, got {out[0]}"
+`}
+  solution={`
+import numpy as np
+
+def gelu(x):
+    return 0.5 * x * (1.0 + np.tanh(np.sqrt(2.0 / np.pi) * (x + 0.044715 * x ** 3)))
+`}
+  hints={[
+    "One line. Translate the formula directly: 0.5 * x * (1 + tanh(sqrt(2/pi) * (x + 0.044715 * x^3))).",
+    "The constants: sqrt(2/pi) ≈ 0.7978, and 0.044715 is exact (from the original Hendrycks & Gimpel 2016 paper). Don't re-derive them — they're not analytically clean.",
+    "Two checks for correctness: GELU(0) = 0 exactly (the tanh argument is 0), and for x >> 0 it tends to x (tanh saturates to 1, so result -> 0.5 * x * 2 = x).",
+  ]}
+>
+
+GELU — Gaussian Error Linear Unit. The smooth, probabilistic cousin of ReLU that GPT-2, BERT, and most transformer-era architectures adopted.
+
+The exact GELU is `x · Φ(x)` (where Φ is the standard normal CDF). The exact form is slow to compute, so OpenAI introduced the **tanh approximation** in the GPT-2 codebase:
+
+`GELU(x) ≈ 0.5 · x · (1 + tanh(sqrt(2/π) · (x + 0.044715 · x³)))`
+
+Within `1e-4` of the exact form across the relevant input range, ~3× faster to compute. PyTorch's `nn.GELU(approximate="tanh")` uses this exact formula, as do nanoGPT and the original OpenAI GPT-2 codebase.
+
+Why GPT-2 prefers GELU over ReLU:
+
+1. **Smooth at zero.** ReLU's gradient jumps from 0 to 1 at the kink; GELU's gradient is continuous. Better-behaved with adaptive optimisers like Adam.
+2. **Some negative input gets through.** ReLU zeros all `x ≤ 0`; GELU lets a small fraction of moderately-negative values through, avoiding the "dying ReLU" problem.
+
+Modern alternatives (SwiGLU, GeGLU) further refine this — but GELU is still the default in ~70% of public 2024-era transformers.
+
+</PracticeProblem>

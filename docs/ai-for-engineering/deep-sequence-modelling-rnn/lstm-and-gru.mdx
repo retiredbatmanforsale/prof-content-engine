@@ -1,0 +1,310 @@
+---
+hide_title: true
+sidebar_label: '4 · LSTM & GRU'
+title: 'Lesson 4 — LSTM and GRU: Gating the Vanishing Gradient'
+description: >-
+  Why vanilla RNNs forget past ~10 timesteps, the LSTM cell with forget/input/output gates,
+  GRU as the simpler reset/update-gate variant, and when to pick which (or skip both for a transformer).
+tutor_topic: "LSTM and GRU"
+tutor_concepts:
+  - "vanishing gradient in vanilla RNNs"
+  - "LSTM forget input output gates"
+  - "LSTM cell state and constant error carousel"
+  - "GRU reset and update gates"
+  - "LSTM vs GRU parameter count and tradeoffs"
+  - "when to use LSTM GRU or transformer"
+---
+
+<LessonHero course="Deep Sequence Modelling (RNN)" number="4" title="LSTM & GRU" subtitle="Gates that let recurrent networks remember longer than ten timesteps" />
+
+In <strong>Lesson 3</strong> we wrote the vanilla RNN recurrence:
+
+$$
+\mathbf{h}_t = \tanh\!\left( \mathbf{W}_{xh}\mathbf{x}_t + \mathbf{W}_{hh}\mathbf{h}_{t-1} + \mathbf{b}_h \right)
+$$
+
+The same matrix <strong>W<sub>hh</sub></strong> gets applied at every step. That single design choice is what gives the RNN its memory — and what destroys it. By the end of this lesson you will know <em>exactly</em> why a vanilla RNN forgets past ~10 timesteps, how the <strong>LSTM</strong> cell engineers a workaround, and how the <strong>GRU</strong> arrives at a simpler version of the same idea.
+
+---
+
+## Why a vanilla RNN can't remember
+
+To compute the gradient of the loss at step <strong>T</strong> with respect to the hidden state at an earlier step <strong>k</strong>, we apply the chain rule across every intervening step:
+
+$$
+\frac{\partial \mathcal{L}_T}{\partial \mathbf{h}_k} \;=\; \frac{\partial \mathcal{L}_T}{\partial \mathbf{h}_T} \;\prod_{t=k+1}^{T} \frac{\partial \mathbf{h}_t}{\partial \mathbf{h}_{t-1}}
+$$
+
+Each Jacobian inside the product expands to:
+
+$$
+\frac{\partial \mathbf{h}_t}{\partial \mathbf{h}_{t-1}} \;=\; \mathbf{W}_{hh}^\top \cdot \mathrm{diag}\!\left(\tanh'(\mathbf{z}_t)\right)
+$$
+
+Two terms multiply <strong>(T − k)</strong> times, and both are problems:
+
+<div className="not-prose my-6 grid gap-3 sm:grid-cols-2">
+  <div className="rounded-lg border border-rose-300 bg-rose-50/80 p-4 text-sm text-slate-800 dark:border-rose-800 dark:bg-rose-950/25 dark:text-slate-200">
+    <p className="m-0 font-bold text-rose-900 dark:text-rose-200">tanh′(z) ∈ (0, 1]</p>
+    <p className="mt-2 mb-0">For any pre-activation away from zero, the derivative is &lt; 1. Repeatedly multiplying values less than 1 drives the product toward <strong>zero exponentially</strong>.</p>
+  </div>
+  <div className="rounded-lg border border-amber-300 bg-amber-50/80 p-4 text-sm text-slate-800 dark:border-amber-800 dark:bg-amber-950/25 dark:text-slate-200">
+    <p className="m-0 font-bold text-amber-900 dark:text-amber-200">W<sub>hh</sub> raised to a power</p>
+    <p className="mt-2 mb-0">If the largest singular value of W<sub>hh</sub> is &lt; 1, gradients <strong>vanish</strong>. If it's &gt; 1, they <strong>explode</strong>. Hitting exactly 1 is unstable.</p>
+  </div>
+</div>
+
+Empirically, this means a vanilla RNN can carry information across roughly <strong>5–10 timesteps</strong> before the signal dies. That kills any task with longer-range dependencies — language modelling, music, long time series. We need an architecture whose recurrence Jacobian is <em>not</em> a repeated matrix multiplication.
+
+---
+
+## The LSTM cell
+
+The <strong>Long Short-Term Memory</strong> cell — Hochreiter &amp; Schmidhuber, [1997](https://www.bioinf.jku.at/publications/older/2604.pdf) — adds a second hidden quantity called the <strong>cell state c<sub>t</sub></strong> that flows through time on its own track. Three learnable <em>gates</em> control what gets written, kept, and read:
+
+<div className="not-prose my-6 overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-700">
+  <table className="w-full min-w-[min(100%,720px)] border-collapse text-left text-sm">
+    <thead>
+      <tr className="border-b border-slate-200 bg-indigo-600 text-white dark:border-slate-600 dark:bg-indigo-800">
+        <th className="p-3 font-semibold">Gate</th>
+        <th className="p-3 font-semibold">Equation</th>
+        <th className="p-3 font-semibold">What it controls</th>
+      </tr>
+    </thead>
+    <tbody className="text-slate-700 dark:text-slate-300">
+      <tr className="border-b border-slate-100 bg-rose-50/40 dark:border-slate-800 dark:bg-rose-950/15">
+        <td className="p-3 font-bold text-rose-900 dark:text-rose-200">Forget</td>
+        <td className="p-3 font-mono text-xs">f<sub>t</sub> = σ(W<sub>f</sub>[h<sub>t−1</sub>, x<sub>t</sub>] + b<sub>f</sub>)</td>
+        <td className="p-3">What of the prior cell state to <strong>erase</strong></td>
+      </tr>
+      <tr className="border-b border-slate-100 bg-emerald-50/40 dark:border-slate-800 dark:bg-emerald-950/15">
+        <td className="p-3 font-bold text-emerald-900 dark:text-emerald-200">Input</td>
+        <td className="p-3 font-mono text-xs">i<sub>t</sub> = σ(W<sub>i</sub>[h<sub>t−1</sub>, x<sub>t</sub>] + b<sub>i</sub>)</td>
+        <td className="p-3">How much of the new candidate to <strong>write</strong></td>
+      </tr>
+      <tr className="border-b border-slate-100 bg-violet-50/40 dark:border-slate-800 dark:bg-violet-950/15">
+        <td className="p-3 font-bold text-violet-900 dark:text-violet-200">Candidate</td>
+        <td className="p-3 font-mono text-xs">g<sub>t</sub> = tanh(W<sub>g</sub>[h<sub>t−1</sub>, x<sub>t</sub>] + b<sub>g</sub>)</td>
+        <td className="p-3">The <strong>new content</strong> being proposed</td>
+      </tr>
+      <tr className="bg-sky-50/40 dark:bg-sky-950/15">
+        <td className="p-3 font-bold text-sky-900 dark:text-sky-200">Output</td>
+        <td className="p-3 font-mono text-xs">o<sub>t</sub> = σ(W<sub>o</sub>[h<sub>t−1</sub>, x<sub>t</sub>] + b<sub>o</sub>)</td>
+        <td className="p-3">What of the cell state to <strong>expose</strong> as h<sub>t</sub></td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+Here <strong>σ</strong> is the sigmoid (squashes to [0, 1] — gate values), <strong>tanh</strong> squashes to [−1, 1] (signed content), and <strong>[h<sub>t−1</sub>, x<sub>t</sub>]</strong> denotes concatenation of the previous hidden state and the current input.
+
+The state update combines the gates element-wise (denoted by ⊙):
+
+$$
+\mathbf{c}_t = \mathbf{f}_t \odot \mathbf{c}_{t-1} \;+\; \mathbf{i}_t \odot \mathbf{g}_t
+$$
+
+$$
+\mathbf{h}_t = \mathbf{o}_t \odot \tanh(\mathbf{c}_t)
+$$
+
+<div className="not-prose my-6 rounded-xl border-2 border-emerald-300 bg-gradient-to-br from-emerald-50 to-teal-50/40 p-5 dark:border-emerald-800 dark:from-emerald-950/30 dark:to-teal-950/20">
+  <p className="m-0 text-xs font-bold uppercase tracking-widest text-emerald-800 dark:text-emerald-200">Why this fixes vanishing gradients</p>
+  <p className="mt-2 mb-2 text-sm text-slate-800 dark:text-slate-200">
+    Differentiate the cell-state update through time:
+  </p>
+  $$
+  \frac{\partial \mathbf{c}_t}{\partial \mathbf{c}_{t-1}} \;=\; \mathbf{f}_t
+  $$
+  <p className="mt-2 mb-0 text-sm text-slate-800 dark:text-slate-200">
+    The recurrence Jacobian is an <strong>elementwise product by the forget gate</strong> — not a repeated matrix multiplication. When <strong>f<sub>t</sub> ≈ 1</strong> the gradient flows across the cell-state highway nearly unchanged. Hochreiter called this the <strong>constant error carousel</strong>: a path where signal can travel for hundreds of timesteps without decay.
+  </p>
+</div>
+
+A practical consequence: initialising the forget-gate bias to <strong>1 or 2</strong> (Jozefowicz et al., 2015) biases the network toward remembering at the start of training. Most modern implementations do this by default.
+
+---
+
+## The GRU cell
+
+The <strong>Gated Recurrent Unit</strong> — Cho et al., [2014](https://arxiv.org/abs/1406.1078) — asks: do we really need a separate cell state, an output gate, and a separate input gate? Their answer is no. GRU collapses the LSTM into two gates and fuses the cell state back into the hidden state:
+
+<div className="not-prose my-6 overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-700">
+  <table className="w-full min-w-[min(100%,720px)] border-collapse text-left text-sm">
+    <thead>
+      <tr className="border-b border-slate-200 bg-violet-600 text-white dark:border-slate-600 dark:bg-violet-800">
+        <th className="p-3 font-semibold">Gate</th>
+        <th className="p-3 font-semibold">Equation</th>
+        <th className="p-3 font-semibold">What it controls</th>
+      </tr>
+    </thead>
+    <tbody className="text-slate-700 dark:text-slate-300">
+      <tr className="border-b border-slate-100 bg-amber-50/40 dark:border-slate-800 dark:bg-amber-950/15">
+        <td className="p-3 font-bold text-amber-900 dark:text-amber-200">Reset</td>
+        <td className="p-3 font-mono text-xs">r<sub>t</sub> = σ(W<sub>r</sub>[h<sub>t−1</sub>, x<sub>t</sub>] + b<sub>r</sub>)</td>
+        <td className="p-3">How much prior state contributes to the <strong>candidate</strong></td>
+      </tr>
+      <tr className="bg-teal-50/40 dark:bg-teal-950/15">
+        <td className="p-3 font-bold text-teal-900 dark:text-teal-200">Update</td>
+        <td className="p-3 font-mono text-xs">z<sub>t</sub> = σ(W<sub>z</sub>[h<sub>t−1</sub>, x<sub>t</sub>] + b<sub>z</sub>)</td>
+        <td className="p-3">Interpolation weight between <strong>old h</strong> and <strong>new h</strong></td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+The candidate hidden state and the final state are:
+
+$$
+\tilde{\mathbf{h}}_t = \tanh\!\left( \mathbf{W}\bigl[\mathbf{r}_t \odot \mathbf{h}_{t-1},\ \mathbf{x}_t\bigr] + \mathbf{b} \right)
+$$
+
+$$
+\mathbf{h}_t = (1 - \mathbf{z}_t) \odot \mathbf{h}_{t-1} \;+\; \mathbf{z}_t \odot \tilde{\mathbf{h}}_t
+$$
+
+The update gate <strong>z<sub>t</sub></strong> plays the same dual role that <strong>f<sub>t</sub></strong> and <strong>i<sub>t</sub></strong> played in the LSTM: when z<sub>t</sub> ≈ 0, h<sub>t</sub> ≈ h<sub>t−1</sub> (carry forward); when z<sub>t</sub> ≈ 1, h<sub>t</sub> ≈ <em>h̃<sub>t</sub></em> (overwrite). The same gradient-highway property holds — the recurrence Jacobian becomes an elementwise interpolation, not a repeated W<sup>T</sup> product.
+
+<div className="not-prose my-6 rounded-xl border-2 border-violet-300 bg-violet-50/60 p-5 dark:border-violet-800 dark:bg-violet-950/25">
+  <p className="m-0 text-xs font-bold uppercase tracking-widest text-violet-800 dark:text-violet-200">Parameter count: GRU vs LSTM</p>
+  <p className="mt-2 mb-0 text-sm text-slate-800 dark:text-slate-200">
+    Per recurrent layer with hidden size <strong>H</strong> and input size <strong>I</strong>:
+  </p>
+  <ul className="mt-2 mb-0 text-sm text-slate-800 dark:text-slate-200 space-y-1">
+    <li><strong>LSTM</strong>: 4 gate matrices → <strong>4 · ((I + H) · H + H)</strong> parameters</li>
+    <li><strong>GRU</strong>: 3 gate matrices → <strong>3 · ((I + H) · H + H)</strong> parameters</li>
+  </ul>
+  <p className="mt-2 mb-0 text-sm text-slate-800 dark:text-slate-200">
+    GRU has <strong>~25% fewer parameters</strong> and one fewer matmul per step. On smaller datasets that translates directly to faster convergence and less overfitting.
+  </p>
+</div>
+
+---
+
+## Empirical comparison
+
+[Chung et al. (2014)](https://arxiv.org/abs/1412.3555) and the systematic search in [Jozefowicz et al. (2015)](https://proceedings.mlr.press/v37/jozefowicz15.pdf) ran LSTM vs GRU vs vanilla RNN across language modelling, speech, and music. Two robust findings:
+
+<div className="not-prose my-6 space-y-3">
+  <div className="flex flex-col gap-2 rounded-xl border-l-4 border-emerald-500 bg-emerald-50/70 py-3 pl-4 pr-3 dark:bg-emerald-950/20">
+    <p className="m-0 text-sm font-bold text-emerald-900 dark:text-emerald-200">LSTM and GRU both crush vanilla RNN</p>
+    <p className="m-0 text-sm text-slate-800 dark:text-slate-200">On <em>any</em> task with dependencies beyond ~10 steps, gating wins by a wide margin. This is no longer a research question.</p>
+  </div>
+  <div className="flex flex-col gap-2 rounded-xl border-l-4 border-amber-500 bg-amber-50/70 py-3 pl-4 pr-3 dark:bg-amber-950/20">
+    <p className="m-0 text-sm font-bold text-amber-900 dark:text-amber-200">LSTM vs GRU is task-dependent</p>
+    <p className="m-0 text-sm text-slate-800 dark:text-slate-200">No clean winner. LSTM tends to edge ahead on tasks demanding fine-grained memory control (music, long-context language modelling); GRU often matches or beats it on smaller datasets and shorter sequences with fewer parameters.</p>
+  </div>
+</div>
+
+---
+
+## When to use which
+
+<div className="not-prose my-6 grid gap-3 md:grid-cols-3">
+  <div className="rounded-xl border-2 border-emerald-300 bg-emerald-50/80 p-4 dark:border-emerald-800 dark:bg-emerald-950/25">
+    <p className="m-0 text-sm font-bold text-emerald-900 dark:text-emerald-200">GRU</p>
+    <p className="mt-2 mb-0 text-sm text-slate-800 dark:text-slate-200">Default for <strong>prototyping</strong>, <strong>small-data</strong> regimes, and <strong>time-series</strong>. Fewer params, fewer hyperparameters, often comparable accuracy.</p>
+  </div>
+  <div className="rounded-xl border-2 border-sky-300 bg-sky-50/80 p-4 dark:border-sky-800 dark:bg-sky-950/25">
+    <p className="m-0 text-sm font-bold text-sky-900 dark:text-sky-200">LSTM</p>
+    <p className="mt-2 mb-0 text-sm text-slate-800 dark:text-slate-200">Pick when you have <strong>data + compute</strong> and the task needs long-range memory: speech, music, long-context language. The extra gate and cell state earn their keep.</p>
+  </div>
+  <div className="rounded-xl border-2 border-violet-300 bg-violet-50/80 p-4 dark:border-violet-800 dark:bg-violet-950/25">
+    <p className="m-0 text-sm font-bold text-violet-900 dark:text-violet-200">Transformer</p>
+    <p className="mt-2 mb-0 text-sm text-slate-800 dark:text-slate-200">Pick when you can afford it. Attention is the parallelisable, longer-context replacement for both — covered in the AIAYN and GPT-2 courses.</p>
+  </div>
+</div>
+
+The arc of the field: vanilla RNNs (1986) → LSTM (1997) → GRU (2014) → Transformer (2017). Each step traded away one constraint of the previous. LSTMs are no longer SOTA in 2026, but they are still everywhere in production for sequence problems where attention is overkill: streaming inference with bounded state, on-device models, modest-data time series, and as the recurrent component inside hybrid models.
+
+---
+
+## A reference PyTorch snippet
+
+Both cells are one line in PyTorch — but knowing what's underneath is what differentiates a candidate who has used `nn.LSTM` from one who can debug it.
+
+```python
+import torch
+import torch.nn as nn
+
+# LSTM: 4 gates per step, returns (output, (h_n, c_n))
+lstm = nn.LSTM(input_size=64, hidden_size=128, num_layers=2, batch_first=True)
+x = torch.randn(8, 50, 64)        # (batch, time, features)
+out, (h_n, c_n) = lstm(x)
+# out:  (8, 50, 128)  — hidden state at every timestep
+# h_n:  (2, 8, 128)   — final hidden state per layer
+# c_n:  (2, 8, 128)   — final cell state per layer
+
+# GRU: 3 gates per step, returns (output, h_n) — no cell state
+gru = nn.GRU(input_size=64, hidden_size=128, num_layers=2, batch_first=True)
+out, h_n = gru(x)
+# out:  (8, 50, 128)
+# h_n:  (2, 8, 128)
+```
+
+A few things worth knowing:
+
+- <strong>`batch_first=True`</strong> swaps the default `(time, batch, features)` to `(batch, time, features)`. The default is a footgun.
+- For variable-length sequences inside a batch, wrap inputs in <strong>`nn.utils.rnn.pack_padded_sequence`</strong> so padded steps don't pollute the hidden state.
+- Both modules accept an initial state. Defaulting to zeros is fine; for stateful inference (streaming) you carry `(h_n, c_n)` from the previous chunk.
+
+---
+
+## What you can now do
+
+- **Diagnose** when a sequence model is failing because of vanishing gradients vs an architectural mismatch.
+- **Read** the LSTM and GRU equations and explain each gate's role.
+- **Pick** between LSTM and GRU based on dataset size, sequence length, and compute budget.
+- **Recognise** the constant error carousel — the structural reason gated cells learn longer dependencies than vanilla RNNs.
+
+---
+
+<Quiz
+  lessonId="ai-for-engineering/deep-sequence-modelling-rnn/lstm-and-gru"
+  questions={[
+    {
+      id: "lstm-q1",
+      prompt: "Mathematically, why does a vanilla RNN's gradient vanish over long sequences?",
+      options: [
+        "Because tanh saturates and the bias term grows unbounded",
+        "Because the recurrence Jacobian is W_hh^T · diag(tanh'(z)) applied (T−k) times — a repeated matrix product whose magnitude shrinks (or explodes) exponentially",
+        "Because the loss function has no closed-form derivative for sequences longer than 10 steps",
+        "Because softmax outputs become uniform",
+      ],
+      correctIndex: 1,
+    },
+    {
+      id: "lstm-q2",
+      prompt: "What is the role of the cell state c_t in an LSTM, and why is it the key to learning long dependencies?",
+      options: [
+        "It stores the output of every previous step verbatim, like a buffer",
+        "It is an extra hidden track whose recurrence Jacobian ∂c_t/∂c_{t-1} = f_t — an elementwise product, not a repeated matrix multiplication — so gradients can flow nearly unchanged when the forget gate is open",
+        "It is identical to h_t but normalised to unit length",
+        "It replaces the loss function with a stable surrogate",
+      ],
+      correctIndex: 1,
+    },
+    {
+      id: "lstm-q3",
+      prompt: "Compared to LSTM, what specifically does GRU remove?",
+      options: [
+        "It removes the tanh activation and uses ReLU instead",
+        "It merges forget and input gates into a single update gate, drops the output gate, and fuses the cell state back into h_t — leaving 2 gates instead of 3 (and ~25% fewer parameters)",
+        "It removes the recurrence entirely and uses convolutions",
+        "It removes weight sharing across timesteps",
+      ],
+      correctIndex: 1,
+    },
+    {
+      id: "lstm-q4",
+      prompt: "You are prototyping a sequence model on a small (~50K-example) time-series dataset with sequences of length ~30 and limited compute. Which is the best default?",
+      options: [
+        "Vanilla RNN — the dataset is small enough that vanishing gradients won't matter",
+        "GRU — fewer parameters and one fewer matmul per step than LSTM, comparable or better accuracy on small/short-sequence regimes",
+        "LSTM — always strictly better than GRU when accuracy matters",
+        "A 12-layer Transformer — attention always wins",
+      ],
+      correctIndex: 1,
+    },
+  ]}
+/>

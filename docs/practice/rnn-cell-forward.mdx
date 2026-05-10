@@ -1,0 +1,137 @@
+---
+title: "Vanilla RNN Cell Forward"
+description: One step of a vanilla RNN — h_t = tanh(W_x · x + W_h · h_{t-1} + b). The unit that LSTM and GRU were designed to fix.
+sidebar_position: 29
+practice_mode: true
+hide_table_of_contents: true
+---
+
+import PracticeProblem from '@site/src/components/viz/PracticeProblemPro';
+
+<PracticeProblem
+  id="rnn-cell-forward"
+  title="Vanilla RNN cell forward"
+  difficulty="Medium"
+  tags={["numpy", "rnn", "sequence-models"]}
+  linkedLessons={[
+    { url: '/courses/ai-for-engineering/build-and-train-your-own-gpt2-model/problem-with-rnns-lstms', title: 'Problem with RNNs and LSTMs' },
+  ]}
+  starter={`
+import numpy as np
+
+def rnn_cell_forward(x, h_prev, W_x, W_h, b):
+    """
+    One step of a vanilla RNN cell.
+
+        h_t = tanh(x @ W_x + h_prev @ W_h + b)
+
+    Args:
+        x:      (B, input_size)  — input at this time step.
+        h_prev: (B, hidden_size) — hidden state from the previous step.
+        W_x:    (input_size,  hidden_size) — input-to-hidden weights.
+        W_h:    (hidden_size, hidden_size) — hidden-to-hidden weights.
+        b:      (hidden_size,)             — bias.
+
+    Returns:
+        h_next: (B, hidden_size) — the new hidden state.
+    """
+    # YOUR CODE HERE
+    pass
+`}
+  tests={`
+import numpy as np
+
+@__test__("Output shape is (B, hidden_size)")
+def t():
+    rng = np.random.default_rng(0)
+    B, I, H = 4, 3, 5
+    x = rng.standard_normal((B, I))
+    h_prev = rng.standard_normal((B, H))
+    W_x = rng.standard_normal((I, H))
+    W_h = rng.standard_normal((H, H))
+    b = rng.standard_normal(H)
+    out = rnn_cell_forward(x, h_prev, W_x, W_h, b)
+    assert out is not None, "function returned None"
+    assert out.shape == (B, H), f"expected ({B},{H}), got {out.shape}"
+
+@__test__("Diagnostic: matches the explicit formula")
+def t():
+    rng = np.random.default_rng(7)
+    x = rng.standard_normal((2, 4))
+    h_prev = rng.standard_normal((2, 6))
+    W_x = rng.standard_normal((4, 6))
+    W_h = rng.standard_normal((6, 6))
+    b = rng.standard_normal(6)
+    expected = np.tanh(x @ W_x + h_prev @ W_h + b)
+    out = rnn_cell_forward(x, h_prev, W_x, W_h, b)
+    assert np.allclose(out, expected, atol=1e-9), \\
+        f"max diff {np.max(np.abs(out - expected)):.2e}"
+
+@__test__("Output values are bounded in (-1, 1) — tanh saturation")
+def t():
+    rng = np.random.default_rng(2)
+    # Large weights drive the pre-activation to large magnitudes; tanh clips to (-1, 1).
+    x = rng.standard_normal((3, 4)) * 100
+    h_prev = rng.standard_normal((3, 5)) * 100
+    W_x = rng.standard_normal((4, 5)) * 10
+    W_h = rng.standard_normal((5, 5)) * 10
+    b = rng.standard_normal(5)
+    out = rnn_cell_forward(x, h_prev, W_x, W_h, b)
+    assert np.all(np.abs(out) <= 1.0), f"tanh output should be in (-1, 1), got max abs {np.max(np.abs(out))}"
+
+@__test__("Bias broadcasts correctly across the batch dimension")
+def t():
+    # Zero input and zero hidden state: output should be tanh(b), repeated across B.
+    B, I, H = 5, 3, 4
+    x = np.zeros((B, I))
+    h_prev = np.zeros((B, H))
+    W_x = np.zeros((I, H))
+    W_h = np.zeros((H, H))
+    b = np.array([1.0, -1.0, 0.5, -0.5])
+    out = rnn_cell_forward(x, h_prev, W_x, W_h, b)
+    expected_row = np.tanh(b)
+    assert np.allclose(out, np.tile(expected_row, (B, 1))), f"got {out}"
+
+@__test__("Identity-recurrence behaviour: with W_x=0, W_h=I, b=0, h doesn't change much through small h_prev")
+def t():
+    # Pre-activation = h_prev (since x contributes 0 and W_h is identity, b is 0).
+    # Then h_next = tanh(h_prev). For small h_prev, tanh(h) ~ h.
+    B, I, H = 1, 2, 3
+    x = np.zeros((B, I))
+    W_x = np.zeros((I, H))
+    W_h = np.eye(H)
+    b = np.zeros(H)
+    h_prev = np.array([[0.01, -0.02, 0.005]])
+    out = rnn_cell_forward(x, h_prev, W_x, W_h, b)
+    # tanh(small) ~ small; relative diff should be tiny.
+    assert np.allclose(out, np.tanh(h_prev), atol=1e-9)
+    assert np.allclose(out, h_prev, atol=1e-3)
+`}
+  solution={`
+import numpy as np
+
+def rnn_cell_forward(x, h_prev, W_x, W_h, b):
+    return np.tanh(x @ W_x + h_prev @ W_h + b)
+`}
+  hints={[
+    "One line: tanh(x @ W_x + h_prev @ W_h + b). Two matmuls plus a bias plus a tanh.",
+    "Shape check: x is (B, I), W_x is (I, H), so x @ W_x is (B, H). Same for h_prev @ W_h. They add elementwise; the bias broadcasts across the batch.",
+    "Why tanh and not ReLU? RNNs were originally trained with sigmoid or tanh because the hidden state benefits from being bounded (it gets multiplied by W_h and re-fed as input). Unbounded ReLU activations would explode through repeated W_h multiplications. Tanh's (-1, 1) range is the standard choice.",
+  ]}
+>
+
+The vanilla RNN cell — one timestep of the recurrent computation. By itself, simple. Composed across hundreds of timesteps, it produces the vanishing-gradient pathology that LSTMs and GRUs were built to fix, and that transformers sidestepped entirely with attention.
+
+The math:
+
+`h_t = tanh(x_t · W_x + h_{t-1} · W_h + b)`
+
+Three things the harness checks:
+
+1. **Shape and broadcasting.** Bias `(H,)` must broadcast across the `(B, H)` batch.
+2. **Tanh saturation.** Values are bounded in `(-1, 1)` regardless of input magnitude. This is what keeps the hidden state from blowing up across timesteps — but also what makes gradient ≈ `1 - tanh²(z)` saturate to ~0 for large `|z|`, killing learning at depth.
+3. **Identity recurrence.** With `W_x=0, W_h=I, b=0` and small `h_prev`, the cell approximates the identity (`tanh(small)` ≈ `small`). A useful sanity check that you didn't drop a term.
+
+Production sequence models stopped using vanilla RNNs around 2014 (LSTMs took over) and stopped using LSTMs around 2018 (transformers took over). But the cell remains a core ML interview question — and a reference point for understanding what attention solved.
+
+</PracticeProblem>

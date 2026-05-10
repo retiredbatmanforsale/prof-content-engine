@@ -11,6 +11,7 @@ tutor_concepts:
   - "vocabulary index lookup"
   - "continuous vs discrete representations"
 access: free
+mvp_status: drafted
 ---
 
 import TokenizerPlayground from '@site/src/components/viz/TokenizerPlayground';
@@ -45,3 +46,280 @@ The colors are stable: the same token ID always gets the same color, so when the
 
 <TokenizerPlayground />
 
+---
+
+## Where we are in the build
+
+Lesson 1 left you with `config.py` — a single dataclass that says "GPT-2 small is 12 layers, 12 heads, 768-dim embeddings, vocab of 50257." Today we fill in the very first thing the model touches: the path from a string of English to a tensor of floats.
+
+This lesson adds **two files** to your scaffold:
+
+1. `tokenizer.py` — turn a string into a list of integer token ids in `[0, 50257)`.
+2. `embeddings.py` — turn each integer token id into a 768-dimensional learnable vector.
+
+After this lesson, you can call `encode("Hello world")` and get back `[15496, 995]`, then feed those integers into a `TokenEmbedding(config)` and get back a `(1, 2, 768)` tensor. That tensor is the input to the very first transformer block — everything else in the model operates on these vectors.
+
+<div className="not-prose my-8 rounded-2xl border-2 border-emerald-400 bg-gradient-to-br from-emerald-50 to-teal-50 px-5 py-4 dark:border-emerald-700 dark:from-emerald-950/40 dark:to-teal-950/40">
+  <p className="m-0 text-xs font-bold uppercase tracking-widest text-emerald-800 dark:text-emerald-200">What you're building</p>
+  <p className="mt-2 mb-1 text-base font-bold text-slate-900 dark:text-slate-100"><code>tokenizer.py</code> + <code>embeddings.py</code> — text in, vectors out</p>
+  <p className="mt-0 mb-0 text-sm text-slate-700 dark:text-slate-300">Input: <code>"Hello world"</code> → Output: a <code>(B, T, 768)</code> float tensor. About a third of GPT-2's 124M parameters live in this single embedding table.</p>
+</div>
+
+---
+
+## The naive solution — one-hot vectors
+
+Before we use a learned embedding table, let's do the dumbest possible thing and see why it can't work. Each token id $i \in [0, 50257)$ becomes a vector with a single 1 at position $i$ and zeros everywhere else:
+
+```python
+import numpy as np
+
+vocab_size = 50257
+token_id = 15496  # "Hello"
+
+one_hot = np.zeros(vocab_size, dtype=np.float32)
+one_hot[token_id] = 1.0
+print(one_hot.shape, one_hot.sum())   # (50257,) 1.0
+```
+
+Now imagine a batch of 32 sequences of 1024 tokens each. The input tensor is `(32, 1024, 50257)` of `float32`:
+
+$$
+32 \times 1024 \times 50257 \times 4 \text{ bytes} \approx 6.6 \text{ GB}
+$$
+
+**Per batch.** Just to represent the input. Before we've done a single matrix multiply.
+
+That's just the memory problem. The deeper problem is that one-hot vectors carry **no information about token similarity**. The vector for "cat" is exactly as far from "dog" as it is from "subpoena" — they're all orthogonal unit vectors, distance $\sqrt{2}$ from each other. The model can't generalise from "the cat sat" to "the dog sat" without learning *every* word independently. We've thrown away every shred of structure that would help the model learn.
+
+---
+
+## The motivated solution — learned dense embeddings
+
+The fix is to replace the 50257-dimensional sparse vector with a dense vector of 768 floats — and to **learn** those 768 floats by gradient descent, alongside the rest of the model. Tokens that play similar roles (synonyms, conjugations, related concepts) end up with similar vectors. The model picks the geometry that helps it predict the next token.
+
+Mechanically, an embedding layer is a single matrix $E \in \mathbb{R}^{V \times C}$ where $V = 50257$ and $C = 768$. To look up token $i$, you take row $i$ of $E$. That's it — no matrix multiply, just an indexing operation that PyTorch implements as `nn.Embedding`.
+
+The parameter count works out to:
+
+$$
+V \times C = 50257 \times 768 \approx 38.6 \text{M parameters}
+$$
+
+For GPT-2 small (124M total), **about 31% of the entire model lives in this one table**. Embeddings are not a side-show — they are the foundation, and a substantial fraction of the optimiser's job is learning them.
+
+### Tokenizer code
+
+```python
+# nanogpt-from-scratch/tokenizer.py
+
+import tiktoken
+
+_enc = tiktoken.get_encoding("gpt2")
+
+
+def encode(text: str) -> list[int]:
+    """Map a string to a list of token ids in [0, 50257)."""
+    return _enc.encode(text)
+
+
+def decode(ids: list[int]) -> str:
+    """Map token ids back to a string."""
+    return _enc.decode(ids)
+
+
+def vocab_size() -> int:
+    return _enc.n_vocab   # 50257
+```
+
+We do not reimplement BPE — that would be a course of its own. `tiktoken` is OpenAI's official library and gives us the exact same vocabulary and merges as GPT-2. The point of this file is to have a single import path (`from tokenizer import encode, decode`) that the rest of the project uses.
+
+### Embedding code
+
+```python
+# nanogpt-from-scratch/embeddings.py
+
+import torch
+import torch.nn as nn
+
+from config import GPTConfig
+
+
+class TokenEmbedding(nn.Module):
+    """Map token ids -> dense vectors. (B, T) -> (B, T, n_embd)."""
+
+    def __init__(self, config: GPTConfig):
+        super().__init__()
+        self.weight = nn.Embedding(config.vocab_size, config.n_embd)
+
+    def forward(self, idx: torch.Tensor) -> torch.Tensor:
+        # idx: (B, T) int64 token ids
+        # returns: (B, T, n_embd) float32
+        return self.weight(idx)
+```
+
+A few things to notice:
+
+- **No bias.** Embeddings don't get added — they get *looked up*. There is no `+ b` step.
+- **Initialisation matters.** PyTorch initialises `nn.Embedding` with $\mathcal{N}(0, 1)$. nanoGPT and the GPT-2 paper use $\mathcal{N}(0, 0.02)$ — closer to the small variance the rest of the model expects. We'll set this in Lesson 10 when we assemble the full model.
+- **The same matrix shows up at the output.** When the model finishes producing a `(B, T, 768)` hidden state, it has to project back to `(B, T, 50257)` to score every token. GPT-2 **ties** the output projection to this same embedding matrix — one set of 38.6M weights, used twice. Halves the embedding parameter cost and tends to give slightly better perplexity. We'll wire this in Lesson 10.
+
+<AnimationPlaceholder
+  name="embedding-space-projection"
+  description="2D projection of GPT-2's learned embedding space — hover any token to see its nearest neighbours by cosine similarity. Synonyms cluster, capitalised forms split, numbers form a stripe."
+/>
+
+---
+
+## Math by typing it
+
+The embedding lookup is one matrix and one indexing operation:
+
+$$
+E \in \mathbb{R}^{V \times C}, \qquad
+\text{TokenEmbedding}(i) = E_{i, :}
+$$
+
+Looked up over a batch of token ids $\text{idx} \in \mathbb{Z}^{B \times T}$:
+
+$$
+y_{b, t, c} = E_{\text{idx}_{b,t},\; c}
+\qquad y \in \mathbb{R}^{B \times T \times C}
+$$
+
+Equivalent — and how some pedagogy presents it — is to one-hot $\text{idx}$ to a `(B, T, V)` tensor and matmul by $E$. The result is identical, but `nn.Embedding` does the indexing form so you skip allocating the giant sparse tensor.
+
+Memory accounting for GPT-2 small:
+
+| Quantity                     | Value                                  |
+|------------------------------|----------------------------------------|
+| Embedding matrix $E$       | $50257 \times 768 = 38{,}597{,}376$ params |
+| Bytes (fp32)                 | ~155 MB                                |
+| Bytes (bf16, training-time)  | ~77 MB                                 |
+| Fraction of GPT-2 small      | ~31% of 124M total                     |
+
+---
+
+## Run it on your laptop
+
+<div className="not-prose my-6 rounded-xl border-l-4 border-sky-500 bg-sky-50/70 py-3 pl-4 pr-3 dark:bg-sky-950/25">
+  <p className="m-0 text-sm font-semibold text-sky-900 dark:text-sky-200">Your task</p>
+  <p className="mt-2 mb-0 text-sm text-slate-800 dark:text-slate-200">
+    Open <code>tokenizer.py</code> and <code>embeddings.py</code> in your scaffold, paste the code above, then run the smoke test below. It should print two token ids and a tensor of shape <code>(1, 2, 768)</code>.
+  </p>
+</div>
+
+```python
+# smoke_test.py — at the project root, run with `python smoke_test.py`
+
+import torch
+
+from config import GPTConfig
+from tokenizer import encode, decode, vocab_size
+from embeddings import TokenEmbedding
+
+# Tokenize.
+ids = encode("Hello world")
+print("token ids:", ids)               # [15496, 995]
+print("round-trip:", decode(ids))      # "Hello world"
+print("vocab size:", vocab_size())     # 50257
+
+# Embed.
+config = GPTConfig()
+embed = TokenEmbedding(config)
+idx = torch.tensor([ids])              # shape (1, 2)
+out = embed(idx)
+print("embedding shape:", out.shape)   # torch.Size([1, 2, 768])
+print("dtype:", out.dtype)             # torch.float32
+
+# Sanity: same id always yields the same vector.
+assert torch.allclose(embed(torch.tensor([[15496]])),
+                      embed(torch.tensor([[15496]])))
+
+# Sanity: the embedding has the parameter count we expect.
+n_params = sum(p.numel() for p in embed.parameters())
+print(f"embedding params: {n_params:,}")   # 38,597,376
+```
+
+If the parameter count prints `38,597,376`, you've matched GPT-2 small's embedding table exactly.
+
+<PlaygroundPlaceholder
+  name="token-embedding-explorer"
+  description="In-browser Pyodide cell: type a string, see its tiktoken ids, watch the (B, T, 768) tensor materialise. A second tab plots the cosine similarity between any two tokens of your choice."
+/>
+
+---
+
+## What you can now do
+
+- Encode arbitrary English text to a sequence of integer token ids using GPT-2's exact vocabulary.
+- Convert any sequence of token ids into a `(B, T, n_embd)` tensor of learnable vectors, ready for the rest of the model.
+- Reason about the parameter cost of the embedding table — and why it's the single largest weight matrix in the model until Lesson 8 introduces the FFN.
+- Recognise the **weight tying** trick that GPT-2, GPT-3, and most subsequent LLMs use to avoid paying for the embedding twice.
+
+---
+
+## Quiz
+
+<Quiz
+  lessonId="ai-for-engineering/build-and-train-your-own-gpt2-model/token-embeddings"
+  questions={[
+    {
+      id: "gpt2-l2-q1",
+      prompt: "GPT-2 small uses vocab_size=50257 and n_embd=768. How many parameters live in the token embedding table?",
+      options: [
+        "About 768 (one bias per dimension)",
+        "About 50,257 (one weight per token)",
+        "About 38.6M (50257 × 768) — roughly 31% of GPT-2 small's 124M total parameters",
+        "About 124M (the whole model)",
+      ],
+      correctIndex: 2,
+    },
+    {
+      id: "gpt2-l2-q2",
+      prompt: "Why are one-hot vectors a poor input representation for a transformer language model?",
+      options: [
+        "They're too small to fit in GPU memory",
+        "Two failures: (1) every pair of tokens is equidistant, so the model gets no semantic structure for free; (2) the input tensor (B, T, V) is enormous — ~6.6 GB for B=32, T=1024, V=50257 in fp32 — before any compute starts",
+        "PyTorch doesn't support one-hot encoding",
+        "One-hot vectors require labeled data to train",
+      ],
+      correctIndex: 1,
+    },
+    {
+      id: "gpt2-l2-q3",
+      prompt: "GPT-2 ties the input embedding matrix and the output projection (the matrix that maps the final (B, T, n_embd) hidden state back to (B, T, vocab_size) logits). Why?",
+      options: [
+        "PyTorch requires it",
+        "Two reasons: it cuts the model's parameter count by ~38M (no separate output projection), and empirically it gives slightly better validation perplexity — both the 'meaning of token i' and 'how strongly to predict token i' should live in the same vector",
+        "Tying speeds up the forward pass on GPUs",
+        "It prevents the model from overfitting to the training data",
+      ],
+      correctIndex: 1,
+    },
+    {
+      id: "gpt2-l2-q4",
+      prompt: "You write `embed = TokenEmbedding(config); embed(torch.tensor([[15496, 995]]))` and the call returns shape (1, 2, 768). You then do the same call again and the values are different. What's the most likely bug?",
+      options: [
+        "tiktoken returned different ids the second time",
+        "You instantiated a new TokenEmbedding between the two calls — every fresh instance gets a freshly-randomised weight matrix. The same instance must be reused (or its weights saved) for outputs to be deterministic",
+        "PyTorch's RNG seed wasn't set",
+        "n_embd was changed between calls",
+      ],
+      correctIndex: 1,
+    },
+  ]}
+/>
+
+---
+
+## What's next
+
+You can turn text into vectors. But there's a problem the playground above hints at: token ids are **just integers**. The vector for the first "the" in a sentence is identical to the vector for the second "the" — the model has no idea which token came first. **Lesson 3** fixes that by extending `embeddings.py` with a `PositionalEmbedding` layer that adds an order signal to every token's vector before the first transformer block sees it.
+
+---
+
+<div className="not-prose mt-10 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-6 dark:border-slate-700">
+  <a href="./problem-with-rnns-lstms" className="text-sm font-medium text-slate-600 no-underline hover:text-emerald-700 hover:underline dark:text-slate-400 dark:hover:text-emerald-400">← Lesson 1 · Why not RNNs</a>
+  <a href="./positional-embeddings" className="text-sm font-semibold text-emerald-700 no-underline hover:underline dark:text-emerald-400">Lesson 3 · Positional embeddings →</a>
+</div>

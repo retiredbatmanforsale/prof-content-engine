@@ -104,3 +104,22 @@ flowchart LR
 "I did not just learn model theory; I built and reasoned about production constraints, tradeoffs, and failure modes."  
 This framing consistently performs well in MLE interviews.
 :::
+
+## 7) ML System Design course — your prep path for the most-weighted round
+
+The [ML System Design course](/courses/ai-for-engineering/ml-system-design/) is the canonical preparation path for the round that most often decides senior-level outcomes. It walks the **6-step framework (PDATDM — Problem → Data → Architecture → Training → Deployment → Monitoring)** end-to-end across two reverse-engineered production systems and four transfer case studies.
+
+| Course module | What you reverse-engineer | When to prioritise |
+|---|---|---|
+| [**Lesson 0 — The 6-step framework**](/courses/ai-for-engineering/ml-system-design/the-ml-sd-interview) | The interview itself: how the round runs, what L4 vs L5 candidates do | Read first, regardless of target role |
+| [**Lessons 1–7 — YouTube recsys**](/courses/ai-for-engineering/ml-system-design/recsys-define-the-problem) | Two-tower retrieval, deep ranker, calibration, A/B testing, monitoring | Recsys / ranking / feed / ads roles |
+| [**Lessons 8–11 — Production RAG**](/courses/ai-for-engineering/ml-system-design/rag-define-the-problem) | Chunking, hybrid retrieval, LLM serving, faithfulness eval | Search / assistant / Copilot / Bing / Gemini-class roles |
+| [**Lesson 12 — Ad CTR case study**](/courses/ai-for-engineering/ml-system-design/case-ad-ctr-prediction) | GSP auction mechanics, calibration as revenue gate | Ads / monetisation roles |
+| [**Lesson 13 — Real-time fraud**](/courses/ai-for-engineering/ml-system-design/case-real-time-fraud-detection) | Class imbalance, adversarial drift, asymmetric cost-curve threshold | Fraud / risk / safety roles |
+| [**Lesson 14 — ETA prediction**](/courses/ai-for-engineering/ml-system-design/case-eta-prediction) | Spatial-temporal features, pinball loss, P50 / P90 quantile outputs | Maps / logistics / ride-hailing / delivery roles |
+| [**Lesson 15 — Multimodal search**](/courses/ai-for-engineering/ml-system-design/case-multimodal-search) | CLIP-style InfoNCE contrastive joint training, cross-modal recall | Image search / visual products / multimodal AI roles |
+| [**Interview readiness**](/courses/ai-for-engineering/ml-system-design/interview-readiness) | Two fully narrated 45-minute mock rounds (recsys + RAG), L4/L5 signals consolidated, day-of playbook | Read the day before any senior loop |
+
+:::tip[How to use this in your 8-week roadmap]
+The "MLSD" line in the Week 5–6 prep table above is the entire ML System Design course. Open the framework primer in Week 5; pick one flagship reverse-engineering plus one or two case studies most aligned to your target role; finish with the Interview Readiness mock-round walkthroughs in Week 6.
+:::

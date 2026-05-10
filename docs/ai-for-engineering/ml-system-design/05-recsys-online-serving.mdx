@@ -1,0 +1,320 @@
+---
+hide_title: true
+sidebar_label: '5 · Online serving'
+title: 'Lesson 5 — Online serving'
+description: >-
+  At request time you have 200ms p99. Feature fetch, ANN query, ranker forward
+  pass, post-processing, network — they all share that budget. Feature stores,
+  caching strategies, hot keys, sharding, and graceful degradation.
+mvp_status: drafted
+tutor_topic: "Online serving infrastructure for production recsys"
+tutor_concepts: []
+---
+
+<LessonHero
+  number="5"
+  title="Online serving"
+  subtitle="The model is 5% of the system. The other 95% is feature stores, caches, latency budgets, sharding, and the failure modes that ship every recsys to production sideways."
+  course="ML System Design"
+/>
+
+<InterviewerSignal
+  level="L4"
+  message="Designs serving without naming a latency budget. Forgets the feature store. Assumes one homogeneous fleet handles all traffic. Doesn't mention what happens when the ranker times out."
+/>
+<InterviewerSignal
+  level="L5"
+  message="Decomposes the 200ms budget into named components in the first three minutes. Names the feature store as the cure for training-serving skew. Calls out hot keys (Justin Bieber problem) and proposes graceful degradation to a cached fallback. Reasons through capacity with Little's Law."
+/>
+
+---
+
+## 1. Where we are in the framework
+
+This is **Step 4 of the 6-step framework** — deploy and serve. Time-budget: **~8 minutes**.
+
+By the end of this step you should have:
+
+- A **decomposed latency budget** showing how the 200ms is split across components
+- A **feature store** drawn into the architecture, with online and offline reads of the same schema
+- A **caching strategy** named (per-user, per-item, per-query)
+- A **hot-key mitigation** plan
+- A **graceful degradation** path for when the ranker or feature fetch times out
+- A **capacity calculation** using Little's Law or equivalent
+
+This is the lesson where ML system design separates from generic ML — interview-grade serving is the most-overlooked surface and the fastest place to set or break the L5 promote signal.
+
+---
+
+## 2. The problem at this layer
+
+A user opens the YouTube home feed. The client makes a request to the recommendation service. The service has, in total, **roughly 200ms of p99 latency** before the user perceives lag. In that window the system has to:
+
+- Resolve the user's identity and recent history
+- Fetch user-side features
+- Run the user tower from Lesson 3 to produce a query embedding
+- Query the ANN index for ~hundreds of candidate videos
+- Fetch item-side features and context features for those candidates
+- Run the ranker from Lesson 4 over the candidates
+- Apply re-ranking rules (diversity, freshness, business constraints)
+- Serialise the response and return it
+
+Every microsecond is contested. The ranker's 80ms forward pass is **not** the only thing happening. If feature fetch takes 200ms because of a tail, the model is irrelevant — the request already failed.
+
+The job at Step 4 is to make all of this fit in the budget, every time, even when components fail.
+
+---
+
+<SplitCompare>
+<SplitLeft title="Naive">
+
+- Flask app, fetch features from PostgreSQL
+- Same database online and offline (training-serving skew)
+- No caching strategy
+- No fallback when components fail
+- No capacity calculation
+
+</SplitLeft>
+<SplitRight title="Motivated">
+
+- **200ms p99 budget decomposed** across 9 named components
+- **Online feature store** (Redis) + offline historical snapshots, same schema
+- **Three-level caching**: per-item (hot), per-user (session), per-query (refresh)
+- **Hot-key strategy**: per-key in-process cache + request coalescing + CDN-served precomputed lists
+- **Graceful degradation**: ranker timeout → retrieval results; full failure → popularity baseline
+- Capacity via **Little's Law** ($L = \lambda W$): real numbers in 30 seconds
+
+</SplitRight>
+</SplitCompare>
+
+## 3. The naive solution — and why it breaks
+
+The naive answer:
+
+> "We deploy the model behind a Flask service. The service fetches features from a database, runs the model, and returns the top-K results."
+
+Five failures in one sentence.
+
+### 3.1 No latency budget
+
+Without a budget, every component is allowed to be slow. Slow databases get slow. The 80ms ranker shares the request budget with a database call that takes 300ms p99. The system works at 50ms p50 and dies at 500ms p99. Production teams measure tail latency, not means.
+
+### 3.2 Same database online and offline
+
+Reading features from a generic transactional database online means **the same columns are not the same values offline**. The training pipeline reads the database via batch ETL with different consistency semantics, late-arriving event handling, and snapshot timing. This is the **training-serving skew** from Lesson 2 reappearing as a serving problem.
+
+### 3.3 No caching
+
+Every request hits the database for every feature. With 100K QPS and 50 features per user, you are doing $5 \times 10^6$ feature reads per second from the same backend. The backend collapses.
+
+### 3.4 No hot-key strategy
+
+When a celebrity uploads a video that goes viral, **every request in the system reads the same item-side features** for that video. The single shard holding that item gets 100% of the QPS. Other shards idle. This is the canonical **hot key** failure.
+
+### 3.5 No degradation path
+
+When the ranker times out, the request fails. The user sees a blank feed. Production systems must **always return something**, even if it is a cached fallback or a popularity baseline.
+
+---
+
+## 4. The motivated solution
+
+### 4.1 Decompose the latency budget
+
+The first thing on the whiteboard is the **latency stack**:
+
+| Component | p99 budget |
+|---|---|
+| Network in (client → service) | ~10ms |
+| Auth + session lookup | ~5ms |
+| User-side feature fetch | ~15ms |
+| User tower forward pass | ~5ms |
+| ANN query (Lesson 3) | ~10ms |
+| Item-side feature fetch (for ~100 candidates) | ~25ms |
+| Ranker forward pass (Lesson 4) | ~80ms |
+| Re-rank + post-processing | ~15ms |
+| Network out + serialisation | ~25ms |
+| **Total** | **~190ms** (with 10ms slack) |
+
+The two largest components — **ranker** and **item-side feature fetch** — are the ones to attack first when budget tightens. Ranker shrinks via distillation or two-stage ranking; feature fetch shrinks via aggressive caching.
+
+### 4.2 The feature store as a first-class system component
+
+Every feature is defined **once** and read from the **same store** online and offline:
+
+- **Online path** — Redis or an in-house key-value store with sub-millisecond p99 reads, sharded by user ID and item ID. Holds the **current value** of every feature.
+- **Offline path** — historical snapshots of the same store, in Parquet or Iceberg format on a data lake. Holds the **time-travelable value** of every feature for training point-in-time joins.
+- **Schema** — both paths share the same logical schema. A new feature is added by writing a single feature definition; both online and offline pipelines materialise it.
+
+<FeatureStoreSchema />
+
+This is the structural cure for training-serving skew: feature values cannot drift between train and serve because they come from the **same logical source of truth**.
+
+### 4.3 Caching strategy
+
+Caches at three levels:
+
+- **Per-item cache** (hottest) — videos with high traffic get their feature row cached in-process at the serving node, with TTL of seconds. Justin Bieber's video features are read 1000× per second; you read the row once and reuse.
+- **Per-user cache** (warm) — the user's feature row, fetched at session start and reused across feed pulls within the session.
+- **Per-query cache** (coldest, most variable) — full recommendation results cached for users who refresh the feed within a short window. Returns the same slate, perhaps reshuffled.
+
+A 90% cache hit rate is a typical target. The math:
+
+$$
+\text{p99 effective latency} = (1 - h) \cdot \text{p99}_{\text{miss}} + h \cdot \text{p99}_{\text{hit}}
+$$
+
+With $h = 0.9$, $\text{p99}_{\text{miss}} = 50\text{ms}$, $\text{p99}_{\text{hit}} = 1\text{ms}$, the effective p99 is roughly $5\text{ms}$ — a 10× improvement over uncached.
+
+But: **caches lie about p99 distribution**. The 10% miss rate concentrates the slowness on a few queries that have to do everything from scratch. The actual p99.9 is dominated by misses; only the p50 looks great. This is why production teams measure cache hit rate **per percentile**, not as a single number.
+
+### 4.4 Hot keys — the Justin Bieber problem
+
+When a single item or user receives a disproportionate share of traffic:
+
+- **Per-key in-process cache** — the hot row is held in serving-node memory; QPS to the underlying store is bounded by the number of nodes, not requests
+- **Request coalescing** — multiple concurrent requests for the same key share a single backend fetch
+- **Pre-computed top-K** — for celebrity videos, the recommendation list itself can be precomputed and served from a CDN-like layer
+
+The L5 answer names this as a class of problem ("hot keys") rather than treating it as a one-off optimisation.
+
+### 4.5 Graceful degradation
+
+When a component fails or times out, the system **must still return a reasonable response**:
+
+| Failure | Fallback |
+|---|---|
+| Ranker times out | Return retrieval results in retrieval order (no ranking) |
+| Retrieval times out | Return cached recs from the user's last session |
+| Feature store unavailable | Use a stale cached feature snapshot (TTL up to several minutes) |
+| All of the above | Return a popularity-based baseline list (today's top 10) |
+
+This is implemented with **circuit breakers** that trigger fallbacks when component p99 exceeds a budget threshold. The user always sees a feed; they just see a worse one during incidents.
+
+---
+
+## 5. Back-of-envelope math
+
+### 5.1 Capacity planning with Little's Law
+
+Little's Law: $L = \lambda W$, where $L$ is the number of requests in flight, $\lambda$ is the arrival rate (QPS), and $W$ is the average request duration.
+
+At 100K QPS with $W = 0.1\text{s}$ average request time:
+
+$$
+L = 100{,}000 \times 0.1 = 10{,}000 \text{ concurrent requests}
+$$
+
+If each serving node can handle 100 concurrent requests, you need **at least 100 nodes**. With p99 spikes and headroom, double that — call it **200 nodes** as a starting point.
+
+<Stat
+  value="~200 serving nodes"
+  caption="Approximate fleet size at 100K QPS with 100ms average request duration, applying Little's Law (L = λW = 10K concurrent), per-node concurrency of 100, doubled for headroom and tail spikes. The kind of number a senior candidate produces in 30 seconds when asked 'how many machines do you need?'"
+  source="L = λW = 100K × 0.1s = 10K → 100 × 2"
+/>
+
+This is the kind of number an L5 candidate produces in 30 seconds when the interviewer asks "how many machines do you need?" It is wrong — capacity planning is much more nuanced — but it is **the correct order of magnitude**, computed live.
+
+### 5.2 Cache hit rate breakdown by percentile
+
+Suppose the per-item cache is keyed by video ID and has 90% hit rate overall. If the request needs features for 100 candidates, the probability that *all* 100 hit the cache is:
+
+$$
+P(\text{all hit}) = 0.9^{100} \approx 2.6 \times 10^{-5}
+$$
+
+In other words, roughly **every request has at least one cache miss**. The per-request p99 is dominated by the slowest miss, not the average. This is why **batched fetches with parallelism** matter: 100 candidate features fetched in parallel with bounded fan-out beats 100 sequential fetches dominated by tail.
+
+### 5.3 Sharding the ANN index
+
+For a 1B-item embedding store sharded into $S = 100$ shards, each shard holds roughly $10^7$ items. A query fans out to all $S$ shards; each shard returns its local top-K; results are merged.
+
+Total p99 query latency is **bounded by the slowest shard**, not the average. Tail amplification under fan-out is a known failure mode — Jeffrey Dean's "tail at scale" paper formalises this. Mitigations: hedged requests (re-issue to a backup replica if the first shard is slow); per-shard request budgets that fail fast.
+
+<LatencySimulator />
+
+---
+
+## 6. What the interviewer is actually grading
+
+By minute 40 — the rough end of Step 4 — the interviewer is checking whether you understand that **production ML is mostly not the model**.
+
+- **Did you decompose the latency budget?** Naming "200ms" without breaking it down is L4 ceiling.
+- **Did you draw a feature store?** Skipping it is the most-cited reason for "model worked offline, broke in production" stories.
+- **Did you mention caching?** Three levels (item, user, query) is the L5 answer.
+- **Did you flag hot keys?** Even one sentence — "we'd need a hot-key strategy for celebrity videos" — is enough to clear the bar.
+- **Did you propose graceful degradation?** "When the ranker fails, return retrieval results" is a one-line L5 promote signal.
+- **Did you compute capacity?** Little's Law in 30 seconds is the L5 closing move.
+
+Failure modes to avoid:
+
+- **Forgetting that feature fetch is bigger than the model.** A 25ms fetch over 100 candidates is realistic; the model's 80ms is in line. Both must be budgeted.
+- **Treating the database as the feature store.** A regular OLTP database does not have the same time-travel semantics as a feature store; using it online while training reads from a snapshot creates skew.
+- **No tail-latency thinking.** Designing for p50 means designing for the wrong thing. p99 dominates user perception.
+- **Single-shard architecture.** Anything sharded by user ID needs a separate strategy for items (often sharded by item-bucket), and queries must fan out and merge.
+
+---
+
+## 7. Quiz
+
+<Quiz
+  lessonId="ai-for-engineering/ml-system-design/recsys-online-serving"
+  questions={[
+    {
+      id: "serving-q1",
+      prompt: "A team's recommendation service has p50 = 80ms and p99 = 350ms against a 200ms p99 budget. The ranker is 80ms p99. The biggest improvement opportunity, based on the latency stack:",
+      options: [
+        "Make the ranker smaller.",
+        "Add caching for item-side features and bound parallelism on the per-candidate feature fetch — the tail is dominated by feature fetch over 100 candidates, not the model. Caches and bounded fan-out shrink the tail without touching the ranker.",
+        "Switch to a different model architecture.",
+        "Add more network bandwidth.",
+      ],
+      correctIndex: 1,
+    },
+    {
+      id: "serving-q2",
+      prompt: "An interviewer asks: 'A celebrity uploads a video and 100K requests per second start asking for its features. What happens, and how do you fix it?'",
+      options: [
+        "Nothing — the database scales horizontally.",
+        "The single shard holding that item receives all the QPS while other shards idle — the canonical hot-key failure. Fixes: per-key in-process cache at serving nodes, request coalescing for concurrent fetches, and precomputed recommendation lists for hot items served from a CDN-like layer.",
+        "Add more replicas.",
+        "Disable feature fetching.",
+      ],
+      correctIndex: 1,
+    },
+    {
+      id: "serving-q3",
+      prompt: "Why is a feature store treated as a first-class component instead of just reading features from the application database online?",
+      options: [
+        "Feature stores are faster.",
+        "A feature store enforces a single feature definition shared between online (low-latency current-value reads) and offline (point-in-time historical reads for training). This eliminates training-serving skew by construction. A regular database used online while training reads from batch snapshots gives the same column name but subtly different values, causing model degradation that is hard to debug.",
+        "Application databases cannot store floats.",
+        "Feature stores are open-source.",
+      ],
+      correctIndex: 1,
+    },
+    {
+      id: "serving-q4",
+      prompt: "At 100K QPS with an average request duration of 100ms, what is the approximate steady-state number of concurrent requests in flight, and what is the L5-grade move to do with this number?",
+      options: [
+        "1,000 — irrelevant to capacity.",
+        "10,000 (Little's Law: L = λW) — divide by per-node concurrency to estimate machine count, then double for headroom and tail spikes. Naming Little's Law and computing it live is the L5 closing move on capacity questions.",
+        "100,000 — same as QPS.",
+        "100 — the number of candidates per request.",
+      ],
+      correctIndex: 1,
+    },
+  ]}
+/>
+
+---
+
+## 8. What's next
+
+In **Lesson 6 — Evaluation and A/B testing** you walk through Step 4 of the framework with focus on **online** evaluation. Offline metrics — AUC, NDCG, log loss — are necessary but not sufficient. The model that wins on offline metrics may lose on watch time. The model that wins on day-1 watch time may be a novelty effect that decays. We cover statistical power, novelty effects, counterfactual logging, CUPED variance reduction, and guardrail metrics — the apparatus that turns a candidate model into a shipped one.
+
+<div className="not-prose mt-8 flex justify-end">
+  <a href="./recsys-evaluation-and-ab-testing" className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white no-underline hover:bg-emerald-500">
+    Lesson 6 — Evaluation and A/B testing →
+  </a>
+</div>

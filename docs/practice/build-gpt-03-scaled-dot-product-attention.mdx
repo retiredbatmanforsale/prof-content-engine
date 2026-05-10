@@ -1,0 +1,160 @@
+---
+title: "Build a GPT · 03 · Scaled Dot-Product Attention"
+description: Single-head scaled dot-product self-attention — Q, K, V all from the same input. The mechanism every transformer head bottoms out in.
+sidebar_position: 3
+practice_mode: true
+hide_table_of_contents: true
+---
+
+import PracticeProblem from '@site/src/components/viz/PracticeProblemPro';
+
+<PracticeProblem
+  id="build-gpt-03-scaled-dot-product-attention"
+  title="Scaled dot-product self-attention"
+  difficulty="Medium"
+  tags={["numpy", "transformer", "attention", "build-gpt"]}
+  linkedLessons={[
+    { url: '/courses/ai-for-engineering/build-and-train-your-own-gpt2-model/attention-multi-head-attention', title: 'Attention + multi-head attention' },
+  ]}
+  starter={`
+import numpy as np
+
+def attention(Q, K, V, mask=None):
+    """
+    Single-head scaled dot-product self-attention.
+
+    Computes softmax(Q @ K.T / sqrt(d_k)) @ V, with an optional additive mask.
+
+    Args:
+        Q: (T, D) — queries.
+        K: (T, D) — keys (same D as queries).
+        V: (T, D) — values.
+        mask: optional (T, T) bool array. True = attend; False = block.
+
+    Returns:
+        (T, D) — attention output.
+    """
+    # YOUR CODE HERE
+    pass
+`}
+  tests={`
+import numpy as np
+
+def _ref(Q, K, V, mask=None):
+    d = Q.shape[-1]
+    s = Q @ K.T / np.sqrt(d)
+    if mask is not None:
+        s = np.where(mask, s, -1e9)
+    s = s - s.max(axis=-1, keepdims=True)
+    e = np.exp(s)
+    w = e / e.sum(axis=-1, keepdims=True)
+    return w @ V
+
+@__test__("Output shape is (T, D)")
+def t():
+    rng = np.random.default_rng(0)
+    Q = rng.standard_normal((4, 8))
+    K = rng.standard_normal((4, 8))
+    V = rng.standard_normal((4, 8))
+    out = attention(Q, K, V)
+    assert out is not None, "function returned None"
+    assert out.shape == (4, 8), f"expected (4, 8), got {out.shape}"
+
+@__test__("Matches numpy reference (no mask)")
+def t():
+    rng = np.random.default_rng(42)
+    Q = rng.standard_normal((6, 16))
+    K = rng.standard_normal((6, 16))
+    V = rng.standard_normal((6, 16))
+    out = attention(Q, K, V)
+    expected = _ref(Q, K, V)
+    assert np.allclose(out, expected, atol=1e-6), \\
+        f"max diff {np.max(np.abs(out - expected)):.2e}"
+
+@__test__("Includes the sqrt(d_k) scaling — diagnostic at d=64")
+def t():
+    # Without scaling, d=64 dot products have std ~8, softmax saturates.
+    # The reference (which scales) gives nontrivial probabilities.
+    Q = np.array([[5.0, 0.0, 0.0]])
+    K = np.array([[5.0, 0.0, 0.0],
+                  [0.0, 5.0, 0.0]])
+    V = np.array([[1.0, 0.0],
+                  [0.0, 1.0]])
+    out = attention(Q, K, V)
+    expected = _ref(Q, K, V)
+    assert np.allclose(out, expected, atol=1e-5), \\
+        f"forgot the sqrt(d_k) scale? got {out}, expected {expected}"
+
+@__test__("Honours a causal mask")
+def t():
+    rng = np.random.default_rng(7)
+    T = 5
+    Q = rng.standard_normal((T, 4))
+    K = rng.standard_normal((T, 4))
+    V = rng.standard_normal((T, 4))
+    causal = np.tril(np.ones((T, T), dtype=bool))
+    out = attention(Q, K, V, mask=causal)
+    expected = _ref(Q, K, V, mask=causal)
+    assert np.allclose(out, expected, atol=1e-5), "mask not applied correctly"
+
+@__test__("Output rows sum the V rows under a probability distribution")
+def t():
+    # Each output row is a convex combination of V rows. Each weight is in [0, 1]
+    # and the weights sum to 1, so each output coord is bounded by V coord min/max.
+    rng = np.random.default_rng(11)
+    Q = rng.standard_normal((3, 8))
+    K = rng.standard_normal((3, 8))
+    V = rng.standard_normal((3, 8))
+    out = attention(Q, K, V)
+    for row in range(3):
+        for col in range(V.shape[1]):
+            assert V[:, col].min() - 1e-6 <= out[row, col] <= V[:, col].max() + 1e-6, \\
+                f"out of range at ({row},{col})"
+
+@__test__("Mask of all-True equals no mask")
+def t():
+    rng = np.random.default_rng(13)
+    Q = rng.standard_normal((4, 6))
+    K = rng.standard_normal((4, 6))
+    V = rng.standard_normal((4, 6))
+    full = np.ones((4, 4), dtype=bool)
+    a = attention(Q, K, V, mask=full)
+    b = attention(Q, K, V)
+    assert np.allclose(a, b, atol=1e-6)
+`}
+  solution={`
+import numpy as np
+
+def attention(Q, K, V, mask=None):
+    d = Q.shape[-1]
+    scores = Q @ K.T / np.sqrt(d)
+    if mask is not None:
+        scores = np.where(mask, scores, -1e9)
+    # numerically-stable softmax along the last axis
+    scores = scores - scores.max(axis=-1, keepdims=True)
+    weights = np.exp(scores)
+    weights = weights / weights.sum(axis=-1, keepdims=True)
+    return weights @ V
+`}
+  hints={[
+    "Four lines: scores = Q @ K.T / sqrt(d); apply mask (set blocked positions to a large negative number BEFORE softmax); softmax along the last axis with the max-shift stability trick; weighted sum weights @ V.",
+    "Mask convention: True means 'attend to this position', False means 'block it'. Block by setting the score to -1e9 (or float -inf) — softmax sends those to ~0 probability.",
+    "The sqrt(d_k) scale is THE diagnostic this problem teaches. Without it, d_k=64 head sizes saturate softmax to one-hot and gradients die during training — the original Transformer paper introduced the scaling specifically to fix this.",
+  ]}
+>
+
+The single most-asked operation in modern deep learning. Every attention head — self, cross, multi-head, grouped-query — bottoms out in this function. Implement the single-head, self-attention version.
+
+The formula:
+
+`Attention(Q, K, V) = softmax(Q @ K^T / sqrt(d_k)) @ V`
+
+Three subtleties the harness probes for:
+
+1. **The sqrt(d_k) scale.** Without it, dot-product magnitudes grow with the embedding dimension. At `d_k = 64` (GPT-2's per-head size), softmax saturates to a one-hot and gradients vanish.
+2. **Mask placement.** The mask is applied to **scores**, not weights — set blocked positions to a large negative number *before* softmax so they go to ~0 probability *after*. Zeroing weights post-softmax leaves the surviving weights summing to less than 1.
+3. **Numerical-stable softmax.** Same `scores - scores.max(axis=-1)` trick as the standalone softmax problem.
+
+This is a series problem — your function name `attention(Q, K, V, mask=None)` is the contract that `build-gpt-06-multi-head-attention` will call later.
+
+</PracticeProblem>

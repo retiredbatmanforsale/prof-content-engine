@@ -1,0 +1,306 @@
+---
+hide_title: true
+sidebar_label: '3 · Retrieval (two-tower)'
+title: 'Lesson 3 — Retrieval (two-tower)'
+description: >-
+  Take 1B candidate videos and return the best ~100 in under 10 milliseconds.
+  Why two-tower decouples request-time and offline compute, how the ANN index
+  fits in, and the embedding store sizing math that anchors the design.
+mvp_status: drafted
+tutor_topic: "Two-tower retrieval and ANN indices for large-scale recsys"
+tutor_concepts: []
+---
+
+<LessonHero
+  number="3"
+  title="Retrieval (two-tower)"
+  subtitle="The first stage of the funnel narrows 1B videos to ~100. The architecture is forced by the latency budget — and once you see it, you cannot un-see it."
+  course="ML System Design"
+/>
+
+<InterviewerSignal
+  level="L4"
+  message="Says 'use a big neural network to score all the videos.' Treats retrieval the same as ranking. Doesn't mention an ANN index. Confuses recall and precision objectives."
+/>
+<InterviewerSignal
+  level="L5"
+  message="Volunteers two-tower architecture and ANN immediately. Explains why retrieval optimises recall, not precision. Reasons through the embedding store sizing. Names cold start as a separate problem and proposes a fallback."
+/>
+
+---
+
+## 1. Where we are in the framework
+
+This is **Step 3 of the 6-step framework** — model architecture — applied to the **retrieval** layer of the funnel from Lesson 1. Time-budget: **~8 minutes** (this is a chunky stage; budget carefully).
+
+By the end you should have:
+
+- A **two-tower architecture** drawn on the whiteboard with user tower, item tower, and a dot-product score
+- A clear separation of **what runs at request time** (user tower, ANN lookup) versus **offline** (item embeddings, index build)
+- An **ANN index** named (HNSW or ScaNN are the canonical interview answers)
+- The **embedding store sizing math** computed in real numbers
+- An **explicit cold-start strategy**
+
+Lesson 4 will handle ranking. Retrieval and ranking are deliberately different shapes of model — confusing them is the canonical L4 mistake.
+
+---
+
+## 2. The problem at this layer
+
+The input to retrieval is the **entire catalogue** — roughly 1 billion videos for a YouTube-scale system. The output is **a few hundred candidates** that then flow into the ranker.
+
+The constraint is the **latency budget** from Lesson 5 (covered in detail there): retrieval gets roughly **10ms p99** out of the total 200ms request budget. The rest of the budget belongs to feature fetch, ranking, post-processing, and network.
+
+The metric is **recall@K**: of the top-K items the *perfect* ranker would have surfaced, how many did retrieval keep in its candidate set? Recall@100 of 0.95 means retrieval kept 95 of the 100 best items in its 100-item output. **Precision is not the goal here** — that is the ranker's job. Retrieval is graded on whether it **forwards the right candidates**, not on how it orders them.
+
+This is the deepest conceptual point in this lesson. **Recall vs precision is an architectural decision, not just a metric.**
+
+---
+
+<SplitCompare>
+<SplitLeft title="Naive">
+
+- Score every (user, item) pair with a deep model at request time
+- O(N) compute per request — physically impossible at 1B candidates
+- One unified model trying to do retrieval and ranking together
+
+</SplitLeft>
+<SplitRight title="Motivated">
+
+- **Two-tower decoupling**: user tower at request time, item tower precomputed offline
+- Dot-product score lets an ANN index (HNSW / ScaNN) do the heavy lifting at p99 ~10ms
+- Sampled softmax with logQ correction handles 1B-scale negatives in training
+- Cold-start fallback: content-only embedding + exploration boost for fresh items
+
+</SplitRight>
+</SplitCompare>
+
+## 3. The naive solution — and why it breaks
+
+The naive answer:
+
+> "Train a deep model that takes the user and the video and outputs a relevance score. At request time, score the user against every video and return the top 100."
+
+For 1B candidates, this is roughly $10^9$ forward passes per request. Even at 1 microsecond per forward pass — physically impossible for a deep model — you would need 1000 seconds per request. The actual numbers are off by another four orders of magnitude.
+
+You cannot brute-force over a billion items. The architecture has to **avoid scoring most of them at request time**.
+
+The retrieval layer's existence is a direct consequence of this constraint. Once you accept that you cannot score all candidates online, you arrive at the question: **how can a model decide which candidates are worth looking at, without looking at any of them?** That is the question the two-tower architecture answers.
+
+---
+
+## 4. The motivated solution
+
+### 4.1 The two-tower decoupling insight
+
+The key move: **separate the user-side computation from the item-side computation entirely**, then pre-compute the item side offline.
+
+A two-tower model has:
+
+- A **user tower** $f_u(x_u) \rightarrow \mathbf{u} \in \mathbb{R}^d$ that takes user features $x_u$ and produces a user embedding
+- An **item tower** $f_v(x_v) \rightarrow \mathbf{v} \in \mathbb{R}^d$ that takes item features $x_v$ and produces an item embedding
+- A **scoring function**, typically a dot product:
+
+$$
+\text{score}(u, v) = \mathbf{u}^\top \mathbf{v}
+$$
+
+The towers are trained **jointly** (one loss, gradients flow through both). At inference time they run **independently**:
+
+| What runs where | When |
+|---|---|
+| Item tower → 1B item embeddings | **Offline**, nightly |
+| Item embeddings → ANN index | **Offline**, after embeddings are produced |
+| User tower → 1 user embedding | **Online**, request time |
+| ANN lookup of user embedding | **Online**, request time |
+
+This is the structural insight. You compute the item side once a day, store the embeddings, build a nearest-neighbour index over them, and at request time you only compute **one forward pass** (the user tower) plus **one ANN query**.
+
+### 4.2 Why the dot product, and not a deep cross
+
+A deep model that takes $(u, v)$ as joint input — say, a wide-and-deep or DLRM ranker — can learn arbitrary interactions between user and item features. A two-tower model **cannot**: it can only learn what is expressible as a dot product of two embeddings.
+
+This is a **feature, not a bug**, for retrieval. The dot product is what makes the offline-online decoupling possible. A deep cross between user and item features at scoring time would force you to compute the score per (user, video) pair online — back to the naive solution.
+
+You give up some modelling capacity in retrieval. You buy back the ability to serve at 1B scale. The ranker (Lesson 4) gets to do the deep crossing later, on the much smaller candidate set.
+
+### 4.3 Training: in-batch negatives and sampled softmax
+
+Training the two-tower model is non-trivial. The natural objective is
+
+$$
+P(v \mid u) = \frac{\exp(\mathbf{u}^\top \mathbf{v})}{\sum_{v' \in V} \exp(\mathbf{u}^\top \mathbf{v}')}
+$$
+
+with the sum over the entire catalogue $V$. That denominator has 1B terms. You cannot compute it.
+
+Two standard tricks:
+
+- **In-batch negatives.** For a training batch of 8192 (user, item) pairs, treat the other 8191 items in the batch as negatives for each user. The denominator is now over 8192 items, not 1B.
+- **Sampled softmax with logQ correction.** When in-batch negatives over-sample popular items (because popular items appear in batches more often), correct each negative's logit by subtracting $\log Q(v)$ where $Q(v)$ is the empirical sampling probability. This is the correction from Yi et al., 2019, "Sampling-Bias-Corrected Neural Modeling for Large Corpus Item Recommendations."
+
+Without the logQ correction, retrieval models learn a strong popularity bias (everyone gets recommended Justin Bieber). The correction is an L5 detail but a real one — production teams mention it unprompted.
+
+### 4.4 The ANN index
+
+Once you have 1B item embeddings, naive nearest-neighbour search is still $O(N)$. You replace it with an **approximate nearest neighbour (ANN) index**.
+
+| Index family | Strength | Weakness |
+|---|---|---|
+| **HNSW** (graph-based) | Best recall/latency tradeoff at small-to-medium N; sub-millisecond queries | High memory overhead; index build is slow |
+| **IVF** (inverted file) | Memory-efficient; good for cluster-then-search workflows | Lower recall than HNSW at the same latency |
+| **ScaNN** (Google) | Best raw performance at very large N; combines quantisation with anisotropic optimisation | More complex to operate |
+| **Brute-force** | Perfect recall | Useless above ~100K items |
+
+The honest interview answer is "HNSW or ScaNN, depending on scale and ops." Naming any one specifically is L5; "ANN index" alone is L4 ceiling.
+
+<TwoTowerArchitecture />
+
+<EmbeddingStoreSizer />
+
+### 4.5 Cold start
+
+A new video uploaded 60 seconds ago has **no engagement signal**. The item tower trained on engagement features would output a meaningless embedding. Two standard mitigations:
+
+- **Content-only embedding fallback.** Compute the new video's embedding from content features alone (title, description, thumbnail visual features, transcript) using a separate content-tower head. Use this as the embedding until enough engagement accumulates.
+- **Exploration boost.** Inject fresh items into the candidate set with a small probability bonus, even if the score does not justify it. This is a Bandits-style move — pay short-term recommendation cost to get long-term data.
+
+Skipping cold start in the answer is fine at L4. Naming both fallbacks unprompted is an L5 promote signal — it says you have run a recsys in production and seen the "where does fresh content go" question land on your desk.
+
+---
+
+## 5. Back-of-envelope math
+
+This is the lesson where the numbers matter most. Compute them out loud in the interview.
+
+### 5.1 Embedding store size
+
+For 1B items, embedding dimension $d = 128$, float32 (4 bytes per dimension):
+
+$$
+1 \times 10^9 \text{ items} \times 128 \text{ dims} \times 4 \text{ bytes} = 512 \text{ GB}
+$$
+
+<Stat
+  value="512 GB"
+  caption="Total embedding store size for 1B items at 128 dimensions, float32. Does not fit on a single machine's RAM — the index must be sharded across hundreds of nodes. Quantising to int8 brings it to 128 GB and back to single-machine territory."
+  source="1B × 128 dims × 4 bytes"
+/>
+
+This does **not fit on a single machine's RAM**. Consequences:
+
+- The ANN index must be **sharded** across many machines — typically a few hundred shards
+- Each query fans out to all shards, top-K results are merged
+- Quantisation (float16, int8, or 4-bit) buys you 2× / 4× / 8× compression with a small recall hit
+
+If you switch to int8 quantisation:
+
+$$
+1 \times 10^9 \times 128 \times 1 \text{ byte} = 128 \text{ GB}
+$$
+
+That fits on a single beefy machine. For most interview problems this is the right tradeoff; some recall is given up, but the operational simplicity is worth it.
+
+### 5.2 Latency budget for retrieval
+
+Retrieval gets roughly **10ms p99** out of the 200ms total. That decomposes as:
+
+| Component | p99 budget |
+|---|---|
+| User tower forward pass | ~3ms |
+| ANN query (HNSW / ScaNN) | ~5ms |
+| Result deserialization + filtering | ~2ms |
+
+The user tower has to be **shallow and small**. A 4-layer MLP with $d = 128$ output is the canonical shape. A 12-layer transformer for the user tower is **not** retrieval-shaped; if you propose one, the interviewer will ask why and you should have an answer.
+
+### 5.3 Recall@K vs ANN approximation
+
+A perfectly accurate ANN would give $\text{recall@100} = 1.0$ relative to brute-force. In practice HNSW with reasonable parameters gives ~0.95 — meaning 95 of the 100 brute-force top items survive. Whether this 5-point loss matters depends on how downstream the ranker is. If the ranker only needs the *general* shape of the top-100 (ranking does the precision work), losing 5% is fine. If retrieval is the only stage, 95% recall is too low.
+
+<TwoTowerMini />
+
+---
+
+## 6. What the interviewer is actually grading
+
+By minute 24 — the rough end of Step 3 — the interviewer is checking whether you can think architecturally, not just modelling.
+
+- **Did you propose two-tower without prompting?** "I'd train a model" without specifying the shape is L3-flavoured. "Two-tower with offline item embeddings" is the canonical L4-and-above answer.
+- **Did you separate retrieval (recall) from ranking (precision)?** Confusing the two is the most common L4 ceiling on this round.
+- **Did you name an ANN family?** HNSW or ScaNN, with a one-line tradeoff, is enough.
+- **Did you compute the embedding store size?** Reaching 512 GB or quantising to 128 GB is an L5 signal — it shows you reason in real numbers.
+- **Did you mention cold start?** Optional at L4, expected at L5+.
+- **Did you address training negatives?** "In-batch negatives" or "sampled softmax with logQ correction" is L5 territory.
+
+Failure modes to avoid:
+
+- **Treating retrieval as small ranking.** They are different shapes of model with different objectives. A wide-and-deep ranker as "the retrieval model" is wrong.
+- **Forgetting the offline / online split.** If your design implies you compute item embeddings at request time, you have failed Step 3.
+- **Skipping the index.** "Then we find the nearest items" without naming an ANN structure is L4 ceiling.
+- **Using cosine vs dot product without thinking.** If your towers are L2-normalised, cosine and dot product are equivalent. If not, they are not. Be deliberate.
+
+---
+
+## 7. Quiz
+
+<Quiz
+  lessonId="ai-for-engineering/ml-system-design/recsys-retrieval-two-tower"
+  questions={[
+    {
+      id: "retrieval-q1",
+      prompt: "You have 1B items, embedding dimension 128, stored as float32. What is the total embedding store size, and what is the most-cited operational consequence?",
+      options: [
+        "128 GB; fits on one machine.",
+        "512 GB; the index must be sharded across multiple machines, with queries fanning out and top-K merged. Quantisation to int8 brings it to 128 GB at a small recall cost.",
+        "64 MB; fits in CPU cache.",
+        "5 TB; requires a custom storage system.",
+      ],
+      correctIndex: 1,
+    },
+    {
+      id: "retrieval-q2",
+      prompt: "Why is a dot-product two-tower architecture used for retrieval rather than a deep cross-feature model like wide-and-deep?",
+      options: [
+        "Two-tower is more accurate.",
+        "Two-tower decouples user-side and item-side computation, so item embeddings can be precomputed offline and indexed in an ANN structure — making 1B-scale retrieval feasible. A deep cross would force per-(user, item) scoring at request time, which does not fit the latency budget.",
+        "Wide-and-deep does not work on text features.",
+        "Two-tower trains faster.",
+      ],
+      correctIndex: 1,
+    },
+    {
+      id: "retrieval-q3",
+      prompt: "A team trains a two-tower model with naive softmax sampling and observes that the system over-recommends popular items even to users with niche interests. What is the canonical fix?",
+      options: [
+        "Increase the embedding dimension.",
+        "Use sampled softmax with a logQ correction (subtract log Q(v) from each negative's logit, where Q(v) is the empirical sampling probability) — this de-biases the loss against popular items that appear more often in in-batch negatives.",
+        "Switch to cosine similarity.",
+        "Train on more data.",
+      ],
+      correctIndex: 1,
+    },
+    {
+      id: "retrieval-q4",
+      prompt: "An interviewer asks: 'A new video was uploaded 30 seconds ago. How does it appear in retrieval, given the item tower needs engagement signals?' Best answer:",
+      options: [
+        "Retrain the item tower every 30 seconds.",
+        "A content-only embedding fallback: compute the new item's embedding from content features (title, thumbnail, transcript) using a separate content head, until engagement accumulates. Optionally add an exploration boost to inject fresh items into the candidate set despite the score uncertainty.",
+        "Wait until tomorrow's batch run.",
+        "Disable retrieval for new content.",
+      ],
+      correctIndex: 1,
+    },
+  ]}
+/>
+
+---
+
+## 8. What's next
+
+In **Lesson 4 — Ranking** you walk through Step 3 of the framework applied to the **ranking** layer. Retrieval handed you ~100 candidates that are roughly relevant. The ranker's job is to pick the **best 10** with full deep cross-feature modelling, multi-task heads (CTR, watch time, like rate), and — the part most candidates forget — **calibration**.
+
+<div className="not-prose mt-8 flex justify-end">
+  <a href="./recsys-ranking" className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white no-underline hover:bg-emerald-500">
+    Lesson 4 — Ranking →
+  </a>
+</div>

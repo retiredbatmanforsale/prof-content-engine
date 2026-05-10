@@ -10,22 +10,330 @@ tutor_concepts:
   - "preventing future token attention"
   - "masked self-attention mechanism"
   - "training versus inference masking"
+mvp_status: drafted
 ---
 
 import CausalMask from '@site/src/components/viz/CausalMask';
 
-<LessonHero course="Build and Train Your Own GPT-2" number="5" title="Causal masking" subtitle="Masking future tokens so the model only uses past context" />
+<LessonHero course="Build and Train Your Own GPT-2" number="5" title="Causal masking" subtitle="Masking future tokens so position t only sees positions ≤ t" />
 
-<LessonVideo
-  src="https://player.vimeo.com/video/1184761004?h=422bd9470f&badge=0&autopause=0&player_id=0&app_id=58479"
-  title="Causal Masking"
-  aspectRatio={54.37}
-/>
+:::note
+This lesson is text + animation only — the GPT-2-specific video walkthrough is being re-recorded.
+:::
 
+---
+
+## Where we are in the build
+
+Lesson 4 left you with a `MultiHeadAttention` module that lets every position attend to every other position. That's exactly what an *encoder* needs. But we're building GPT-2, which is **decoder-only** — and a decoder is trained on a much stricter rule:
+
+> Position $t$'s output may only depend on positions $0, 1, \ldots, t$. Never $t+1, t+2, \ldots$.
+
+This is **causal** (or "autoregressive") attention. It is the difference between BERT (encoder, sees all of `[A B C]`) and GPT-2 (decoder, must predict `B` from just `[A]`, predict `C` from just `[A B]`, etc., all in parallel during training).
+
+Today's lesson adds a single line to `attention.py` — a triangular mask added to the attention scores before softmax — and turns the module from a bidirectional encoder into the autoregressive decoder GPT-2 needs.
+
+<div className="not-prose my-8 rounded-2xl border-2 border-emerald-400 bg-gradient-to-br from-emerald-50 to-teal-50 px-5 py-4 dark:border-emerald-700 dark:from-emerald-950/40 dark:to-teal-950/40">
+  <p className="m-0 text-xs font-bold uppercase tracking-widest text-emerald-800 dark:text-emerald-200">What you're building</p>
+  <p className="mt-2 mb-1 text-base font-bold text-slate-900 dark:text-slate-100"><code>attention.py</code> — causal mask added</p>
+  <p className="mt-0 mb-0 text-sm text-slate-700 dark:text-slate-300">Same input/output shape as Lesson 4. The change: a lower-triangular mask of size (block_size, block_size) added to the attention scores so position t cannot see positions &gt; t.</p>
+</div>
 
 <CausalMask />
 
-## Overview
+---
 
-This lesson explains causal masking and how it enforces autoregressive generation in decoder-only transformers.
+## The naive solution — train without a mask
 
+Skip the mask. Train a transformer language model with full bidirectional attention. What goes wrong?
+
+Recall the training setup. We feed the model a sequence of $T$ tokens $x_0, x_1, \ldots, x_{T-1}$ and ask it to predict the next-token sequence $x_1, x_2, \ldots, x_T$ — every position predicts the token that follows it. This is computed *in parallel*: one forward pass produces all $T$ predictions at once.
+
+Without a causal mask, the attention layer at position $t$ sees the full sequence — including position $t+1$, which is the very token it's supposed to predict. The model learns the trivial identity: **copy the next-position embedding from the input.** Loss collapses to ~0 in a few hundred steps. The model has learned nothing about language; it has learned to look at the answer.
+
+```python
+# Demonstration. Don't worry that we're using random data — this is about the bug,
+# not the model.
+import torch
+import torch.nn.functional as F
+
+from config import GPTConfig
+from embeddings import Embeddings
+from attention import MultiHeadAttention   # WITHOUT the mask, hypothetically
+
+config = GPTConfig(n_layer=1, vocab_size=100, n_embd=64, n_head=4, block_size=16)
+
+embeds = Embeddings(config)
+attn = MultiHeadAttention(config)
+unembed = torch.nn.Linear(config.n_embd, config.vocab_size, bias=False)
+
+opt = torch.optim.Adam(list(embeds.parameters())
+                       + list(attn.parameters())
+                       + list(unembed.parameters()), lr=1e-2)
+
+idx = torch.randint(0, 100, (8, 16))     # (B=8, T=16) random tokens
+
+for step in range(300):
+    x = embeds(idx)                       # (B, T, n_embd)
+    h = attn(x)                           # (B, T, n_embd) — WITHOUT mask
+    logits = unembed(h)                   # (B, T, vocab_size)
+    targets = idx[:, 1:].contiguous()     # next-token labels: shift by 1
+    logits = logits[:, :-1].contiguous()  # drop the last position (no target)
+    loss = F.cross_entropy(logits.reshape(-1, 100), targets.reshape(-1))
+    opt.zero_grad(); loss.backward(); opt.step()
+    if step % 50 == 0:
+        print(f"step {step}: loss = {loss.item():.4f}")
+```
+
+If you run this with our Lesson 5 attention (with the mask), the loss starts around $\log 100 \approx 4.6$ and slowly trends down — the model is genuinely learning the (random) sequence. If you removed the mask, the loss would crash to ~0 in a few hundred steps regardless of what's in the data, because the model just has to learn "look one position to the right." [Karpathy's nanoGPT lecture](https://www.youtube.com/watch?v=kCc8FmEb1nY) demos this exact failure mode if you want to see it live.
+
+---
+
+## The motivated solution — a triangular mask
+
+The fix is small enough that it's almost suspicious. We add a matrix $M$ to the attention scores **before** softmax, where:
+
+$$
+M_{ij} = \begin{cases}
+0 & \text{if } j \leq i \\
+-\infty & \text{if } j > i
+\end{cases}
+$$
+
+So $M$ is lower-triangular zeros / upper-triangular $-\infty$. After softmax:
+
+- $\text{softmax}(\text{score} + 0) = \text{softmax}(\text{score})$ — past positions unchanged.
+- $\text{softmax}(\text{score} + (-\infty)) = 0$ — future positions exactly zero.
+
+The attention layer at position $i$ effectively attends only to positions $0, 1, \ldots, i$. Position $i+1$ contributes literally zero weight, so its value vector $v_{i+1}$ contributes literally zero to position $i$'s output. The information flow is one-directional, training-time and inference-time.
+
+### Why $-\infty$ and not $0$?
+
+A natural-looking alternative is to multiply attention weights by a 0/1 mask **after** softmax. Don't. There are two problems:
+
+1. **Softmax already normalised.** If you compute $\text{softmax}(\text{score})$ and then zero out the upper triangle, the rows no longer sum to 1 — you get a partially-normalised distribution. The value vectors get under-weighted in proportion to how much "future mass" you erased.
+2. **You'd have to renormalise**, which means a second division. The cleaner, GPU-friendly fix is to mask *inside* the exponent so softmax handles the renormalisation for free.
+
+Adding $-\infty$ before softmax is mathematically equivalent to "don't let these positions exist at all" — the rows still sum to 1, the gradient still flows through the unmasked positions, and the implementation is one `masked_fill` call.
+
+### Code: extend `attention.py`
+
+The whole change from Lesson 4 is two lines: a `register_buffer` in `__init__` and a `masked_fill` in `forward`. Everything else is identical.
+
+```python
+# nanogpt-from-scratch/attention.py  (Lesson 5 — causal mask added)
+
+import math
+
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+
+from config import GPTConfig
+
+
+class MultiHeadAttention(nn.Module):
+    def __init__(self, config: GPTConfig):
+        super().__init__()
+        assert config.n_embd % config.n_head == 0
+        self.n_head = config.n_head
+        self.n_embd = config.n_embd
+        self.head_size = config.head_size
+
+        self.qkv = nn.Linear(config.n_embd, 3 * config.n_embd, bias=False)
+        self.proj = nn.Linear(config.n_embd, config.n_embd, bias=False)
+        self.attn_dropout = nn.Dropout(config.dropout)
+        self.resid_dropout = nn.Dropout(config.dropout)
+
+        # Lower-triangular (block_size, block_size), shaped to broadcast over
+        # (B, H, T, T). register_buffer means it moves with .to(device) but is
+        # NOT a learned parameter (zero gradient, never updated).
+        mask = torch.tril(torch.ones(config.block_size, config.block_size))
+        self.register_buffer(
+            "mask",
+            mask.view(1, 1, config.block_size, config.block_size),
+        )
+
+    def forward(self, x):
+        B, T, C = x.shape
+        H, D = self.n_head, self.head_size
+
+        q, k, v = self.qkv(x).split(self.n_embd, dim=-1)
+        q = q.view(B, T, H, D).transpose(1, 2)
+        k = k.view(B, T, H, D).transpose(1, 2)
+        v = v.view(B, T, H, D).transpose(1, 2)
+
+        att = (q @ k.transpose(-2, -1)) / math.sqrt(D)
+        att = att.masked_fill(self.mask[:, :, :T, :T] == 0, float("-inf"))   # NEW
+        att = F.softmax(att, dim=-1)
+        att = self.attn_dropout(att)
+
+        y = att @ v
+        y = y.transpose(1, 2).contiguous().view(B, T, C)
+        return self.resid_dropout(self.proj(y))
+```
+
+Three implementation details:
+
+- **`register_buffer`, not `nn.Parameter`.** The mask is fixed; we don't learn it. Buffers move with `.to("cuda")` but get zero gradient and zero optimiser state.
+- **The mask is sized for the maximum context (`block_size`)**, but we slice `[:T, :T]` in `forward`. That means a forward pass on a length-12 sequence uses a 12×12 mask, not a 1024×1024 one — important when generating one token at a time.
+- **`-inf` not `float('-inf')` would be fine in NumPy, but PyTorch's `masked_fill` needs `float("-inf")` or `float("-1e9")`.** A very large negative number like $-10^9$ also works in practice and is safer in fp16 where `-inf` can produce NaN gradients.
+
+<AnimationPlaceholder
+  name="causal-mask-grid"
+  description="An 8x8 grid showing the lower-triangular mask. Hover any query row to highlight which keys it can attend to. A second tab toggles between 'no mask' (full square, attention bleeds future) and 'causal mask' (lower triangle, autoregressive)."
+/>
+
+---
+
+## Math by typing it
+
+The mask matrix:
+
+$$
+M_{ij} = \begin{cases}
+0 & \text{if } j \leq i \\
+-\infty & \text{if } j > i
+\end{cases}
+$$
+
+Masked attention scores:
+
+$$
+\text{score}_{ij} \;=\; \frac{q_i \cdot k_j}{\sqrt{d_k}} \;+\; M_{ij}
+$$
+
+Softmax with $-\infty$ inputs:
+
+$$
+\text{softmax}(\text{score})_{ij} \;=\; \frac{\exp(\text{score}_{ij})}{\sum_{j'} \exp(\text{score}_{ij'})}
+\;=\; 0 \quad \text{whenever } M_{ij} = -\infty
+$$
+
+The "exact zero" property is what we want: position $i$'s output is a true convex combination of values at positions $0, \ldots, i$, with absolutely no leakage from the future.
+
+The mask costs zero parameters — it's a fixed buffer of size `block_size × block_size` (1MB at fp32 for `block_size=1024`). At inference, when generating one token at a time with a KV cache, you don't even need the full mask — only the new query attends to all past keys.
+
+---
+
+## Run it on your laptop
+
+<div className="not-prose my-6 rounded-xl border-l-4 border-sky-500 bg-sky-50/70 py-3 pl-4 pr-3 dark:bg-sky-950/25">
+  <p className="m-0 text-sm font-semibold text-sky-900 dark:text-sky-200">Your task</p>
+  <p className="mt-2 mb-0 text-sm text-slate-800 dark:text-slate-200">
+    Update <code>attention.py</code> to add the causal mask. Then run the smoke test below — it should confirm that perturbing position 0 changes position 5, but perturbing position 7 does <em>not</em> change position 5. That's the asymmetry the mask creates.
+  </p>
+</div>
+
+```python
+import torch
+
+from config import GPTConfig
+from attention import MultiHeadAttention
+
+config = GPTConfig(block_size=8)
+attn = MultiHeadAttention(config)
+attn.eval()
+
+B, T, C = 1, 8, config.n_embd
+x = torch.randn(B, T, C)
+y = attn(x)
+
+# Perturb position 0 — should change every output position 0..7.
+x_a = x.clone(); x_a[:, 0, :] += 1.0
+y_a = attn(x_a)
+print("pos 5 changed when pos 0 perturbed?",
+      not torch.allclose(y[:, 5, :], y_a[:, 5, :]))    # True (past affects future)
+
+# Perturb position 7 — should NOT change positions 0..6.
+x_b = x.clone(); x_b[:, 7, :] += 1.0
+y_b = attn(x_b)
+print("pos 5 changed when pos 7 perturbed?",
+      not torch.allclose(y[:, 5, :], y_b[:, 5, :]))    # False (future cannot leak)
+
+print("pos 7 changed when pos 7 perturbed?",
+      not torch.allclose(y[:, 7, :], y_b[:, 7, :]))    # True (own position fine)
+```
+
+If both `False` lines print `False` and the `True` lines print `True`, your causal mask is wired correctly and information only flows forward in time.
+
+<PlaygroundPlaceholder
+  name="causal-mask-explorer"
+  description="In-browser cell: type a sentence, see the (T, T) attention matrix with the lower triangle filled in and the upper triangle greyed out as -∞. A toggle removes the mask so you can see attention bleed across the diagonal."
+/>
+
+---
+
+## What you can now do
+
+- Build a multi-head **causal** self-attention block — the exact block GPT-2 stacks 12 times.
+- Explain why training without the mask collapses to a trivial copy-the-next-token solution.
+- Justify why we add $-\infty$ before softmax instead of zeroing weights afterward (renormalisation, cleaner gradients).
+- Reason about mask shape and slicing — the buffer is `block_size × block_size`, but every `forward` slices it to the current sequence length.
+
+---
+
+## Quiz
+
+<Quiz
+  lessonId="ai-for-engineering/build-and-train-your-own-gpt2-model/causal-masking"
+  questions={[
+    {
+      id: "gpt2-l5-q1",
+      prompt: "What goes wrong if you train a language model on next-token prediction without a causal mask?",
+      options: [
+        "Training is slower because attention is more expensive without a mask",
+        "The model learns the trivial identity 'copy position t+1 to position t' — the attention layer can read the future answer directly from its input. Loss drops to near-zero in a few hundred steps regardless of the data, and the model has learned nothing about language",
+        "The model overfits because it sees too much data",
+        "Gradients vanish because softmax saturates",
+      ],
+      correctIndex: 1,
+    },
+    {
+      id: "gpt2-l5-q2",
+      prompt: "Why do we add the mask before softmax (with -inf for masked positions) rather than zeroing attention weights after softmax?",
+      options: [
+        "Adding before softmax is faster on a GPU",
+        "Two reasons: (1) softmax(score + (-inf)) = 0 exactly, while zeroing after softmax leaves the surviving weights summing to less than 1 — values get under-weighted; (2) masking before softmax means we don't need a second renormalisation step. The resulting per-position output is a true convex combination of past values",
+        "PyTorch doesn't support post-softmax masking",
+        "Pre-softmax masking changes the parameter count",
+      ],
+      correctIndex: 1,
+    },
+    {
+      id: "gpt2-l5-q3",
+      prompt: "The causal mask in nanoGPT is registered with `register_buffer(...)`, not `nn.Parameter(...)`. What does that change?",
+      options: [
+        "Buffers are slower to access than parameters",
+        "Buffers move with the module on .to(device) just like parameters, but they have no gradient, no optimiser state, and never get updated by the optimiser. The mask is fixed — we don't want gradient descent rewriting it",
+        "Buffers cannot be saved with the model",
+        "It's a stylistic preference; functionally identical",
+      ],
+      correctIndex: 1,
+    },
+    {
+      id: "gpt2-l5-q4",
+      prompt: "You're training a model with `block_size=1024` and feed it a batch of length 16 sequences. Which mask shape gets used in the masked_fill call?",
+      options: [
+        "The full (1024, 1024) buffer — PyTorch broadcasts the extra positions away",
+        "(16, 16) — the buffer is sliced as `mask[:, :, :T, :T]` where T=16. The model never materialises the unused 1024×1024 elements; this matters at inference when you might have T=1 and want to use a 1×1 mask",
+        "(1, 16) — only the new token's row",
+        "It depends on whether you're training or generating",
+      ],
+      correctIndex: 1,
+    },
+  ]}
+/>
+
+---
+
+## What's next
+
+You have a real autoregressive multi-head attention block. But stacking 12 of them naively will not train — gradients vanish, activations explode. **Lesson 6** opens up `blocks.py` and adds the first piece of plumbing that makes a 12-layer transformer actually trainable: **residual connections**, the gradient highway that He et al. invented for ResNet and that every deep transformer borrows.
+
+---
+
+<div className="not-prose mt-10 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-6 dark:border-slate-700">
+  <a href="./attention-multi-head-attention" className="text-sm font-medium text-slate-600 no-underline hover:text-emerald-700 hover:underline dark:text-slate-400 dark:hover:text-emerald-400">← Lesson 4 · Attention</a>
+  <a href="./residual-connections" className="text-sm font-semibold text-emerald-700 no-underline hover:underline dark:text-emerald-400">Lesson 6 · Residual connections →</a>
+</div>

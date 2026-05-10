@@ -1,0 +1,118 @@
+---
+title: "Byte-Level Tokenize"
+description: UTF-8 byte tokenizer — encode and decode any string with a 256-token vocabulary.
+sidebar_position: 24
+practice_mode: true
+hide_table_of_contents: true
+---
+
+import PracticeProblem from '@site/src/components/viz/PracticeProblemPro';
+
+<PracticeProblem
+  id="byte-level-tokenize"
+  title="Byte-level UTF-8 tokenizer"
+  difficulty="Medium"
+  tags={["python", "tokenization", "unicode"]}
+  linkedLessons={[
+    { url: '/courses/ai-for-engineering/build-and-train-your-own-gpt2-model/token-embeddings', title: 'Token embeddings' },
+  ]}
+  starter={`
+def byte_encode(text):
+    """
+    UTF-8 byte-level encode: every byte of the UTF-8 encoding becomes one token id.
+
+    Args:
+        text: str — arbitrary unicode (English, emoji, CJK, anything).
+
+    Returns:
+        list[int] — each entry in [0, 256).
+    """
+    # YOUR CODE HERE
+    pass
+
+
+def byte_decode(ids):
+    """
+    Inverse of byte_encode. Given a list of byte ids, reconstruct the text.
+
+    Args:
+        ids: list[int] — each in [0, 256).
+
+    Returns:
+        str — the original text (or as close as the byte sequence allows).
+    """
+    # YOUR CODE HERE
+    pass
+`}
+  tests={`
+@__test__("ASCII roundtrips: encode then decode returns the original string")
+def t():
+    s = "Hello, world!"
+    ids = byte_encode(s)
+    assert ids is not None, "byte_encode returned None"
+    assert byte_decode(ids) == s, f"roundtrip broken for ASCII: {byte_decode(ids)!r} vs {s!r}"
+
+@__test__("ASCII byte ids equal Python's ord() values")
+def t():
+    ids = byte_encode("Hi")
+    assert ids == [ord("H"), ord("i")], f"expected [72, 105], got {ids}"
+
+@__test__("All byte ids are in [0, 256)")
+def t():
+    s = "test 12345 !@#$%"
+    ids = byte_encode(s)
+    assert all(0 <= b < 256 for b in ids), f"some byte out of range: {ids}"
+
+@__test__("Diagnostic: emoji uses 4 bytes (UTF-8 surrogate pair encoding)")
+def t():
+    # The grinning face emoji is U+1F600. In UTF-8 that's 4 bytes: F0 9F 98 80.
+    s = "\\U0001F600"
+    ids = byte_encode(s)
+    assert ids == [0xF0, 0x9F, 0x98, 0x80], f"emoji should encode to 4 bytes, got {ids}"
+    assert byte_decode(ids) == s, "emoji roundtrip broken"
+
+@__test__("Multi-byte CJK characters: roundtrip works")
+def t():
+    s = "\\u4e2d\\u6587"   # "中文" — Chinese characters, 3 bytes each in UTF-8.
+    ids = byte_encode(s)
+    assert len(ids) == 6, f"each CJK char takes 3 UTF-8 bytes, expected 6 total, got {len(ids)}"
+    assert byte_decode(ids) == s
+
+@__test__("Empty string: encodes to empty list, decodes back to empty string")
+def t():
+    assert byte_encode("") == []
+    assert byte_decode([]) == ""
+`}
+  solution={`
+def byte_encode(text):
+    return list(text.encode("utf-8"))
+
+
+def byte_decode(ids):
+    return bytes(ids).decode("utf-8", errors="replace")
+`}
+  hints={[
+    "byte_encode is one line: list(text.encode('utf-8')). Python's str.encode produces a bytes object; wrapping in list() gives the integer values.",
+    "byte_decode is the inverse: bytes(ids).decode('utf-8'). Pass errors='replace' so partial byte sequences fall back to the replacement char rather than raising.",
+    "Why 256? UTF-8 is byte-based — every byte is in [0, 256). For English text it's basically ASCII (1 byte/char). For emoji and CJK it's 3-4 bytes per visible character. The tokenizer's vocab size is exactly 256.",
+  ]}
+>
+
+The simplest tokenizer that works for any unicode text: encode the string as UTF-8, then treat each byte as its own token. Vocab size is exactly 256.
+
+This is the foundation of GPT-2's byte-level BPE — the BPE step is *built on top of* this byte tokenizer, so even tokens that don't appear in the BPE vocabulary still survive the encode/decode round-trip via their raw bytes.
+
+Two operations:
+
+1. **`byte_encode(text)`** — UTF-8 encode the string, take the resulting bytes as a list of ints.
+2. **`byte_decode(ids)`** — inverse: bytes back to a UTF-8 string.
+
+Three things the harness checks:
+
+1. **Round-trip on ASCII** — the easy case. `"Hi" → [72, 105] → "Hi"`.
+2. **Round-trip on emoji and CJK** — the hard case. A single grinning face emoji (`U+1F600`) takes **four bytes** in UTF-8: `[0xF0, 0x9F, 0x98, 0x80]`. The encoder must produce those four bytes, and the decoder must reassemble them correctly.
+3. **Decode robustness** — pass `errors='replace'` so a truncated byte sequence (which can happen with sliding-window LM inference) doesn't raise.
+
+The trade-off vs subword BPE: byte-level tokens are universal but verbose — every character costs 1-4 tokens. BPE compresses common byte sequences into single tokens (GPT-2's vocab compresses ~50K English byte-pairs into ~50K vocab entries, so English text averages ~3.5 chars/token).
+
+</PracticeProblem>

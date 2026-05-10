@@ -1,0 +1,304 @@
+---
+hide_title: true
+sidebar_label: '7 · Monitoring and retraining'
+title: 'Lesson 7 — Monitoring and retraining'
+description: >-
+  The model decays the moment it ships. Feature drift, label drift, concept
+  drift, and the recsys-specific feedback loop. Multi-tier retraining
+  cadences, drift detectors with PSI / KL math, shadow and canary
+  deployment, and the rollback path.
+mvp_status: drafted
+tutor_topic: "Production monitoring, drift detection, retraining cadences for recsys"
+tutor_concepts: []
+---
+
+<LessonHero
+  number="7"
+  title="Monitoring and retraining"
+  subtitle="The model is only as good as the moment it shipped. Drift is constant, feedback loops are inevitable, and the team that does not own its rollback path will eventually regret it."
+  course="ML System Design"
+/>
+
+<InterviewerSignal
+  level="L4"
+  message="Says 'retrain weekly.' Doesn't mention drift detection. Doesn't acknowledge feedback loops. Skips the deployment safety net entirely."
+/>
+<InterviewerSignal
+  level="L5"
+  message="Names three kinds of drift (feature, label, concept). Volunteers the recsys feedback loop unprompted. Proposes multi-tier retraining (real-time / daily / weekly), drift detectors with auto-trigger, shadow + canary deployment, and an explicit auto-rollback rule on guardrail violations — as one connected system."
+/>
+
+---
+
+## 1. Where we are in the framework
+
+This is **Step 5 of the 6-step framework** — monitor and maintain — and the **wrap** of Step 6. Time-budget in a real interview: **~5 minutes** at the end.
+
+By the end of this step you should have:
+
+- A statement that **models decay** and a one-line story of **why** (drift, feedback loops)
+- A **multi-tier retraining cadence** — real-time, daily, weekly — with reasoning for each tier
+- **Drift detectors** named (PSI, KL divergence) with auto-trigger rules
+- A **shadow + canary deployment strategy**
+- An **automatic rollback path** tied to guardrail metrics from Lesson 6
+
+This is also the final lesson of Flagship 1. By the end of it, the entire YouTube-style recommender system is on the page, every layer defended, every number computed, every operational risk accounted for.
+
+---
+
+## 2. The problem at this layer
+
+A model deployed today is wrong by next month. Three independent forces drive the decay.
+
+### 2.1 Three kinds of drift
+
+- **Feature drift** — input distributions change. Users move countries, devices change, traffic mix shifts. The features the model trained on no longer have the same distribution at serving time.
+- **Label drift** — the marginal distribution of the target changes. Click rates rise during the holidays; watch time falls during exam season; new content categories take off and old ones decline.
+- **Concept drift** — the relationship $P(y \mid x)$ between features and labels changes. The same user with the same features clicks on different things this year. This is the hardest drift because it can hide behind stable feature distributions.
+
+A model can have **stable features and stable labels and still decay** because of concept drift. A monitoring system that only watches input distributions misses this.
+
+### 2.2 The recsys feedback loop
+
+Recsys is **uniquely afflicted** by a feedback loop that other ML systems don't have:
+
+- The model recommends items
+- Users watch the recommended items (and not the items the model didn't surface)
+- Engagement on recommended items becomes the **next training set's labels**
+- The next model is trained on data that is biased by the **previous** model's choices
+
+This means the system **converges to its own assumptions**. Items the previous model down-ranked never get a chance to show they were good — their training-data signal stays low. Popular items get more popular. Niche content collapses. The catalogue effectively shrinks.
+
+Naming this — and proposing **exploration mechanisms** to break it — is the single fastest L5 promote signal in this round.
+
+### 2.3 Ground-truth latency
+
+You don't know if a recommendation was good for **days or weeks**. Day-7 retention is exactly what it says — measured 7 days later. By the time the metric arrives, the model has been training on it for 7 days against the wrong signal. This is structurally unavoidable; it shapes everything about the monitoring stack.
+
+---
+
+<SplitCompare>
+<SplitLeft title="Naive">
+
+- Retrain weekly on the calendar
+- No drift detection
+- No deployment safety net (push to 100% and hope)
+- No mention of feedback loops
+
+</SplitLeft>
+<SplitRight title="Motivated">
+
+- **Three drift types named**: feature, label, concept (each detected differently)
+- **Multi-tier retraining cadence**: real-time embeddings, daily ranker, weekly full pipeline
+- **PSI per feature** with auto-trigger threshold (0.25); event-driven retraining
+- **Shadow + canary + auto-rollback** on guardrail violations (rollback in minutes)
+- **Recsys feedback loop** named; mitigated via exploration injection + off-policy correction (IPW at training)
+
+</SplitRight>
+</SplitCompare>
+
+## 3. The naive solution — and why it breaks
+
+The naive answer:
+
+> "We retrain the model weekly on the latest data."
+
+Three failures.
+
+### 3.1 One-tier retraining is wrong for every tier
+
+Different parts of the system decay at different speeds. **Item embeddings** for fresh content need to update within minutes — yesterday's upload is invisible without it. **Ranker weights** can be retrained daily, balancing freshness against compute cost. The **two-tower retrieval model** can be retrained weekly because user-side feature distributions move slowly. A single weekly cadence is too slow for embeddings and too fast (read: expensive) for retrieval. **A multi-tier cadence is required.**
+
+### 3.2 No drift detection
+
+"Retrain weekly" assumes the calendar is the right trigger. Sometimes the calendar is — sometimes it isn't. A sudden shift (a viral trend, a regional event, a creator policy change) requires retraining **now**, not next Tuesday. Drift detectors automate this.
+
+### 3.3 No deployment safety net
+
+Pushing a freshly trained model to 100% of traffic with no validation is the canonical "shipped on Friday, paged on Saturday" story. Production needs **shadow** (model runs in parallel, predictions logged but not served) and **canary** (gradual ramp with auto-rollback) layers between training and full deployment.
+
+---
+
+## 4. The motivated solution
+
+### 4.1 Multi-tier retraining cadence
+
+| Tier | Cadence | What retrains | Why this cadence |
+|---|---|---|---|
+| **Real-time** | minutes | Item embeddings (cold-start for new uploads); incremental embedding updates | Fresh content has zero engagement signal until it surfaces; latency-of-discovery is a product metric |
+| **Daily** | overnight | Ranker model (Lesson 4) | Engagement signals shift daily; calibration must be re-fit per Lesson 4 |
+| **Weekly** | full rebuild | Two-tower retrieval model + full feature pipeline + calibration recalibration | Catalogue shifts and user-side distribution changes; expensive but rare |
+
+Each tier costs a different amount and buys different freshness. The L5 candidate names all three with reasoning, not just one.
+
+### 4.2 Drift detectors with the Population Stability Index
+
+The standard drift metric is **PSI** — a symmetric divergence between the training distribution $p$ and the serving distribution $q$, computed per feature:
+
+$$
+\text{PSI} = \sum_i (q_i - p_i) \ln \frac{q_i}{p_i}
+$$
+
+Rules of thumb:
+
+| PSI | Interpretation |
+|---|---|
+| $< 0.1$ | No meaningful drift |
+| $0.1 - 0.25$ | Moderate drift; investigate |
+| $> 0.25$ | Significant drift; retrain |
+
+PSI is computed per feature, daily, against the training distribution. When any critical feature crosses 0.25, an **auto-retrain trigger** fires. This means retraining is **event-driven**, not just calendar-driven.
+
+For the **label distribution**, the equivalent check is on $P(y)$ over recent days vs the training-set $P(y)$. For **concept drift**, you need a held-out scoring set that you re-score periodically and compare to logged outcomes.
+
+<ModelDecayCurve />
+
+### 4.3 Shadow + canary + auto-rollback
+
+The deployment pipeline:
+
+1. **Shadow** — the new model receives every request the production model receives, but its predictions are **logged, not served**. This validates online performance without exposing users. A shadow run typically lasts 1-3 days.
+2. **Canary** — predictions are served to a small fraction of users (1%), with the **same A/B testing apparatus** from Lesson 6 watching primary and guardrail metrics in real time.
+3. **Ramp** — if guardrails hold, ramp to 10% → 50% → 100% over days.
+4. **Auto-rollback** — at any stage, if a guardrail metric (retention, latency, error rate) drops below a pre-set threshold, **traffic is automatically reverted** to the previous production model within minutes.
+
+The auto-rollback is the most important sentence on the whiteboard. Without it, the team is the rollback path — and the team takes hours, not minutes.
+
+### 4.4 Breaking the feedback loop
+
+Two production-grade mitigations beyond just monitoring:
+
+- **Exploration injection** — randomly insert a small fraction of items the model would not have ranked high, to gather counterfactual signal. Costs short-term metrics; pays back in long-term diversity and freshness.
+- **Off-policy correction** — when training, use IPW (Lesson 2) and counterfactual logging (Lesson 6) to weight examples by the inverse of their selection probability under the previous policy. The model trains as if it had seen a more diverse data distribution than it actually did.
+
+These are L5+ moves. Naming the feedback loop is the gate; proposing one of these mitigations is the promote signal.
+
+---
+
+## 5. Back-of-envelope math
+
+### 5.1 PSI worked example
+
+A categorical feature `device_type` has training distribution: mobile 70%, desktop 25%, TV 5%. Serving today: mobile 60%, desktop 25%, TV 15%. Compute PSI:
+
+$$
+\text{PSI} = (0.6 - 0.7) \ln \tfrac{0.6}{0.7} + (0.25 - 0.25) \ln \tfrac{0.25}{0.25} + (0.15 - 0.05) \ln \tfrac{0.15}{0.05}
+$$
+
+$$
+= (-0.1)(-0.154) + 0 + (0.1)(1.099) = 0.0154 + 0 + 0.1099 \approx 0.125
+$$
+
+This is in the moderate-drift band — investigate but don't auto-retrain yet. If TV grows further (say to 25%), PSI would jump past 0.25 and the auto-trigger fires.
+
+### 5.2 Expected lifetime of a stale model
+
+If model NDCG decays at roughly **0.2% relative per day** (a typical rate for a busy recsys), then after 30 days the model is **6% worse** than at deployment. After 90 days, ~15% worse. The break-even retraining cadence — where the cost of retraining equals the cost of decay — is typically **between 1 and 7 days** for the ranker, which is why daily retraining is the production default.
+
+### 5.3 Canary detection power
+
+A canary at 1% traffic over 1 day might collect ~10K samples per arm. The MDE (per Lesson 6's power formula) is roughly:
+
+$$
+\delta = \sqrt{\frac{16 \sigma^2}{n}} = \sqrt{\frac{16 \times 60^2}{10{,}000}} \approx 2.4 \text{ minutes}
+$$
+
+A 6% regression on watch time (~2.4 minutes from a 40-minute baseline) is detectable in a day at 1% canary. Smaller regressions need either longer canary or a larger fraction. This is why the ramp is gradual: small regressions need more samples to detect.
+
+<DriftSimulator />
+
+---
+
+## 6. What the interviewer is actually grading
+
+By minute 53 — Step 5 wrapping and Step 6 (the brief 5-minute summary) starting — the interviewer is closing the round. They are checking whether you can land the system into production responsibly.
+
+- **Did you name three kinds of drift?** Feature, label, concept — naming all three is L5.
+- **Did you mention the feedback loop?** This is recsys-specific; flagging it unprompted is the single fastest L5 signal in this round.
+- **Did you propose multi-tier retraining?** Real-time / daily / weekly with reasoning beats one-line "weekly."
+- **Did you name PSI or KL?** Drift detection without a metric is L4 ceiling.
+- **Did you describe shadow + canary + auto-rollback?** "Shipping safely" is what L5 candidates own; L4 candidates assume someone else owns it.
+- **Did you tie back to A/B test guardrails?** Auto-rollback uses Lesson 6's guardrails as its trigger — the system is one connected story.
+
+Failure modes to avoid:
+
+- **One-line "we'll retrain it."** Multi-tier or nothing.
+- **Forgetting the feedback loop.** Recsys monitoring without it is incomplete.
+- **No deployment safety net.** "Push to 100% and hope" is the L3 answer; you should be past it.
+- **No ground-truth latency awareness.** Day-7 retention is measured 7 days late — the monitoring stack has to operate with that lag.
+
+---
+
+## 7. Quiz
+
+<Quiz
+  lessonId="ai-for-engineering/ml-system-design/recsys-monitoring-and-retraining"
+  questions={[
+    {
+      id: "monitoring-q1",
+      prompt: "A recsys has been in production for 60 days without retraining. Feature distributions look stable on dashboards. The label distribution looks stable. NDCG on logged data is unchanged. Yet user-reported satisfaction has dropped. What kind of drift is most consistent with this pattern?",
+      options: [
+        "Feature drift.",
+        "Concept drift — the relationship P(y|x) between features and labels has shifted, while the marginals P(x) and P(y) remain stable. Detection requires a held-out scoring set re-scored periodically and compared to fresh logged outcomes; pure input-distribution monitors miss it.",
+        "Label drift.",
+        "No drift; the model is fine.",
+      ],
+      correctIndex: 1,
+    },
+    {
+      id: "monitoring-q2",
+      prompt: "An interviewer asks: 'You retrain weekly on the past 30 days of data. After six months, the catalogue has visibly collapsed toward a small set of popular items. Why?'",
+      options: [
+        "Insufficient retraining frequency.",
+        "The recsys feedback loop: the model recommends items, users engage primarily with what is recommended, those engagements form the next training set's labels, and the next model further reinforces the same items. Naming this loop and proposing exploration injection (random exposure of un-ranked items) or off-policy correction (IPW reweighting at training time) is the L5-grade answer.",
+        "Catalogue ingestion broke.",
+        "Users got bored.",
+      ],
+      correctIndex: 1,
+    },
+    {
+      id: "monitoring-q3",
+      prompt: "For the device-type feature: training distribution mobile 70% / desktop 25% / TV 5%; serving today mobile 60% / desktop 25% / TV 15%. PSI computed and falls in 0.10-0.25 band. What is the production-grade response?",
+      options: [
+        "Retrain immediately.",
+        "Investigate but do not auto-trigger retraining yet — PSI in the 0.10-0.25 band signals moderate drift that warrants investigation (often one feature shifting while others remain stable). If the trend continues and PSI crosses 0.25, the retraining auto-trigger fires; meanwhile, the team checks whether this drift is transient or persistent.",
+        "Ignore it.",
+        "Switch to a different model architecture.",
+      ],
+      correctIndex: 1,
+    },
+    {
+      id: "monitoring-q4",
+      prompt: "Why is shadow + canary + auto-rollback deployment treated as one connected system, rather than three independent steps?",
+      options: [
+        "They share infrastructure.",
+        "Shadow validates predictions offline (no user impact); canary serves to a small slice with the same A/B apparatus as Lesson 6 watching guardrail metrics; auto-rollback triggers when a guardrail crosses its threshold, reverting to the previous model in minutes. Together they form the deployment safety net — without auto-rollback the team is the rollback path, which takes hours, not minutes; without canary, regressions hit 100% before detection; without shadow, the new model serves before its online performance is even validated.",
+        "They use the same code.",
+        "Auto-rollback alone is sufficient.",
+      ],
+      correctIndex: 1,
+    },
+  ]}
+/>
+
+---
+
+## 8. What's next — and what you've built
+
+You have just walked through every layer of a YouTube-style recommender system at production scale. Reading the table aloud:
+
+| Lesson | What you defended on the whiteboard |
+|---|---|
+| 1 | Layered metric tree (business → product → ML), unit of recommendation, candidate-generation funnel |
+| 2 | Watch-time labels, implicit negatives, IPW for position de-biasing, feature store, temporal split |
+| 3 | Two-tower retrieval, in-batch negatives with logQ correction, ANN index (HNSW / ScaNN), 512 GB embedding store math, cold-start fallback |
+| 4 | Wide-and-deep ranker with multi-task heads, calibration via Platt / isotonic, pointwise + pairwise loss design |
+| 5 | 200ms latency budget decomposed, feature store online/offline duality, three-level caching, hot keys, Little's Law capacity, graceful degradation |
+| 6 | Offline-as-gate vs online-as-decision, sample size formula, 2-week novelty buffer, CUPED variance reduction, SUTVA violations, counterfactual logging |
+| 7 | Three drift types, recsys feedback loop, multi-tier retraining, PSI auto-triggers, shadow + canary + auto-rollback |
+
+This is what an L5 ML system design answer looks like for "design YouTube recommendations." When the interviewer hands you a different prompt — "design a search ranker," "design a fraud detector" — the layers are the same. You change the model and the metric tree; the funnel, the data discipline, the serving stack, the experimentation rigour, and the monitoring system are **transferable across problems**. That is what the framework buys you.
+
+In **Flagship 2** the next course module covers a **production RAG search system** — the modern interview surface — applying the same framework to a different problem class. After that, the case studies (ad CTR, fraud, ETA, multimodal search) demonstrate the framework's reach.
+
+For now: **Flagship 1 is complete**. You have one canonical reverse-engineered system on the page. Read these seven lessons end-to-end, draw the diagrams from memory, and walk into the next interview round having rehearsed exactly this framework against exactly this canonical system.

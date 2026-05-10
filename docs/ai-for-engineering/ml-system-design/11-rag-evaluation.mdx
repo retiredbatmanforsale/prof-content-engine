@@ -1,0 +1,315 @@
+---
+hide_title: true
+sidebar_label: '11 · RAG evaluation'
+title: 'Lesson 11 — RAG evaluation'
+description: >-
+  RAG eval is harder than recsys eval — no click signal, faithfulness has to
+  be measured per claim, and end-to-end answer quality requires LLM-as-judge
+  calibrated to human ratings. Component-wise eval, hallucination detection,
+  and the apparatus to ship RAG to production responsibly.
+mvp_status: drafted
+tutor_topic: "Production evaluation for RAG systems"
+tutor_concepts: []
+---
+
+<LessonHero
+  number="11"
+  title="RAG evaluation"
+  subtitle="There is no click signal. Faithfulness has to be measured per claim. The LLM-judge has to be calibrated. This is the lesson where the system meets its honest report card."
+  course="ML System Design"
+/>
+
+<InterviewerSignal
+  level="L4"
+  message="Says 'we use a benchmark' or 'we sample some queries and check.' Doesn't decompose into retrieval / faithfulness / answer-quality. Doesn't calibrate LLM-as-judge against human ratings. No hallucination detection beyond eyeballing."
+/>
+<InterviewerSignal
+  level="L5"
+  message="Decomposes eval into retrieval recall, generation faithfulness, and end-to-end answer quality — measured separately. Names Ragas / TruLens. Calibrates LLM-as-judge against a ~500-sample human-rated gold set. Adds hallucination detection via passage-attribution scoring on every shipped answer. Quantifies the human-eval sample size needed for online decision-making."
+/>
+
+---
+
+## 1. Where we are in the framework
+
+Still inside **Step 4 of the 6-step framework** — evaluate — applied to RAG. Time-budget: **~8 minutes**. This is also the practical end of Step 5 / Step 6 for the RAG flagship: monitoring is largely a continuous extension of the eval apparatus, and Step 6 (wrap) is just summarising what you have.
+
+By the end of this step you should have:
+
+- A **decomposed eval framework** (retrieval recall + generation faithfulness + end-to-end answer quality)
+- A **passage-level faithfulness metric** named (entailment-based, citation accuracy)
+- An **LLM-as-judge** for answer quality, calibrated against human ratings
+- A **hallucination detection** path running on every shipped response
+- A **human-eval cadence** for online decision-making, with sample-size math
+- A clear story of where **benchmarks** help and where they mislead
+
+The goal is to make the system measurable enough that you can ship it without praying.
+
+---
+
+## 2. The problem at this layer
+
+Recsys eval (Lesson 6) had a clean signal: clicks, watch time, retention. Users tell you, in real time, whether the recommendation worked.
+
+RAG eval has none of that. The user reads an answer; either they like it or they don't, and even if they like it the answer might still be wrong. There is no objective "click" that maps to correctness. The system has to **measure its own quality** through proxies — and the proxies have to be trusted.
+
+Three failure modes the eval system has to detect:
+
+- **Retrieval miss** — the relevant passages weren't in the top-K, so generation has nothing to ground in
+- **Faithfulness failure** — passages were retrieved but the model still hallucinated or cited incorrectly
+- **Answer-quality failure** — the answer is faithful and grounded but doesn't actually address the user's question
+
+A system that only measures end-to-end "answer quality" cannot distinguish these — and therefore cannot debug them. Component-wise eval is the unlock.
+
+---
+
+<SplitCompare>
+<SplitLeft title="Naive">
+
+- Use a public benchmark (MMLU / MS MARCO / BEIR) and report the score
+- LLM-as-judge with no calibration to humans
+- End-to-end answer-quality score only — can't localise failures
+- "We checked some examples and they looked good"
+
+</SplitLeft>
+<SplitRight title="Motivated">
+
+- **Component-wise eval**: retrieval recall + faithfulness + answer quality, measured separately
+- **Faithfulness via per-claim entailment** (Ragas / TruLens-style); citation accuracy as a separate guardrail
+- **LLM-as-judge calibrated** against ~500-sample human gold set; Spearman ρ > 0.8 target
+- **Hallucination detection on every shipped answer** (passage-attribution scoring at request time)
+- **Sampled human eval at scale** (~100 queries/week) — sample size from $n = 16\sigma^2 / \delta^2$
+
+</SplitRight>
+</SplitCompare>
+
+## 3. The naive solution — and why it breaks
+
+The naive answer:
+
+> "We run our RAG on a benchmark like MS MARCO or BEIR and report the score."
+
+Four failures.
+
+### 3.1 Benchmarks measure narrow proxies on public data
+
+MS MARCO, BEIR, MMLU and similar benchmarks have known queries, known passages, known answers. They are useful for **comparing model architectures** and for **regression-testing during model upgrades**. They are **not useful for telling you if your RAG works on your corpus for your users.** A model that wins MS MARCO can lose on enterprise wiki search because the query distribution and passage style differ.
+
+### 3.2 End-to-end metrics conflate failure modes
+
+Asking "is this answer good?" gives one number. That number cannot tell you whether the system is failing because retrieval missed (a Lesson 9 problem), generation hallucinated (a Lesson 10 problem), or answer quality is just shallow (a Lesson 8 metric-tree problem). You cannot fix what you cannot localise.
+
+### 3.3 LLM-as-judge isn't trusted out of the box
+
+A common shortcut is "use GPT-4 to grade the answers." This works **after calibration** to human ratings — and is wildly unreliable before. Different judge models grade the same answer 1-2 points apart on a 5-point scale; they have systematic biases (preferring longer answers, preferring confident-sounding answers, preferring answers that mention their own provider's products). The judge has to be **anchored to a human gold set** and the calibration has to be measured.
+
+### 3.4 Sampling without statistical structure
+
+"We checked some examples and they look good" is not an eval. Production teams need a **standing held-out set** for offline regression-testing, a **rotating sampled human-eval set** for online decisions, and a **continuous ship-time eval** that scores every response as it goes out.
+
+---
+
+## 4. The motivated solution
+
+### 4.1 Component-wise eval
+
+Every shipped answer gets scored on three axes, independently:
+
+- **Retrieval recall** — was the right passage in the top-K? Measured against a labelled set of (query, gold-passage) pairs from in-domain queries. Recall@5, recall@10. This isolates Lesson 9's failures.
+- **Generation faithfulness** — given the retrieved passages, did the answer ground every claim? Measured by passage-level entailment (does the passage entail each claim in the answer?) plus citation accuracy (does the cited passage actually support the cited claim?). This isolates Lesson 10's failures.
+- **End-to-end answer quality** — does the answer address the user's question, with appropriate scope, tone, and completeness? Measured via LLM-as-judge calibrated to humans. This isolates Lesson 8's metric-tree failures.
+
+Tools that bundle these: **Ragas** (faithfulness + answer relevancy + context precision/recall), **TruLens** (similar primitives), **DeepEval**. The L5 candidate names at least one and reasons about its primitives, not just "we use Ragas."
+
+<RAGEvalDecomposition />
+
+### 4.2 Faithfulness via per-claim entailment
+
+The faithfulness metric is computed in three steps:
+
+1. **Decompose the answer into claims** — split into atomic factual statements (typically via an LLM "claim extractor" or via citation tags themselves)
+2. **For each claim, score entailment** against the cited passage(s) — does the passage support the claim? Returns a probability in $[0, 1]$ from a small NLI model or a structured LLM judge
+3. **Aggregate** — mean entailment across claims, with strict-mode (any claim below threshold = fail) for high-stakes domains
+
+The metric:
+
+$$
+\text{faithfulness} = \frac{1}{N} \sum_{i=1}^N \text{entailment}(\text{claim}_i, \text{passages}_{\text{cited}_i})
+$$
+
+A faithfulness of 1.0 means every claim is fully entailed. Production targets are typically 0.9+ for general search and 0.99+ for high-stakes domains (medical, legal, financial). The gap between 0.9 and 0.99 is **two orders of magnitude of work**, but it is what the high-stakes products require.
+
+### 4.3 Citation accuracy as a separate measurable
+
+Citation accuracy answers a different question from faithfulness: when the answer says "[doc-3] supports this claim," does it? Two failure modes:
+
+- **Wrong citation** — the cited passage doesn't actually support the claim
+- **Missing citation** — a factual claim has no citation tag at all
+
+Both are detectable post-generation with a fast NLI step. Production teams treat citation accuracy as a **guardrail**: any response below threshold is logged, sometimes withheld and replaced with a refusal.
+
+### 4.4 LLM-as-judge with human calibration
+
+End-to-end answer quality is graded by an LLM-judge prompted with the query, the answer, and (optionally) the retrieved passages. Naively running this gives unreliable scores. The discipline that makes it reliable:
+
+1. **Build a human gold set** — ~300-500 examples rated by humans on a 5-point scale, with at least 2 raters per example to measure inter-rater reliability
+2. **Run the LLM-judge** on the same gold set
+3. **Compute calibration** — Spearman rank correlation $\rho$ between LLM scores and human-mean scores, plus mean absolute error
+4. **Iterate the judge prompt** until calibration meets a threshold ($\rho > 0.8$ is typical for production-grade)
+5. **Use the calibrated judge** at scale, with periodic re-calibration (the judge drifts as the underlying model is updated, and the corpus drifts over time)
+
+The L5 candidate names $\rho$ as the calibration target. The L4 candidate uses LLM-as-judge with no calibration and trusts the output.
+
+### 4.5 Hallucination detection on every shipped answer
+
+Beyond batch eval, every response shipped to a user passes through a **passage-attribution scorer** in real time:
+
+- Decompose the response into claims (same step as faithfulness)
+- For each claim, run a fast entailment check against the retrieved passages
+- If any claim falls below a confidence threshold, **either** withhold the response and replace with a refusal, **or** annotate the unsupported claims with a warning badge
+
+This adds ~50-100ms to the response path (a small NLI model per claim) but catches the residual hallucinations that the prompt-level grounding from Lesson 10 missed. It is the last line of defence between the model and the user.
+
+### 4.6 Online human eval at scale
+
+For online decision-making (shipping a new model, comparing prompts), automated metrics are necessary but not sufficient. A standing **rotating human-eval set** of ~100 representative queries per week, rated by humans on the 5-point scale, gives the team statistical confidence to ship.
+
+The math: with $\sigma \approx 1.0$ on a 5-point scale, detecting a 0.2-point lift at 80% power requires roughly:
+
+$$
+n = \frac{16 \sigma^2}{\delta^2} = \frac{16 \times 1}{0.04} = 400 \text{ samples per arm}
+$$
+
+<Stat
+  value="400 samples / arm"
+  caption="Human-eval sample size needed to detect a 0.2-point lift on a 5-point answer-quality scale at 80% power. Two weeks of 100-query weekly eval gets you ~200 — not enough. RAG eval is a real ongoing operating cost; pretending it isn't is the canonical L4 ceiling."
+  source="n = 16σ²/δ² with σ ≈ 1.0, δ = 0.2"
+/>
+
+Two weeks of weekly 100-query human eval gives ~200 samples per arm — enough for ~0.3-point detection. For tighter MDE, run longer or scale the human eval team. Naming this number live is L5+.
+
+<RAGEvalHarness />
+
+---
+
+## 5. Back-of-envelope math
+
+### 5.1 Faithfulness measured at scale
+
+For a system shipping 1M responses/day at a target faithfulness of 0.95, you expect ~50K responses/day with at least one unsupported claim. If you run claim-level entailment at 50ms per claim and an average of 5 claims per response:
+
+$$
+1 \times 10^6 \text{ responses} \times 5 \text{ claims} \times 50\text{ms} = 2.5 \times 10^5 \text{ s of compute / day}
+$$
+
+That is roughly **3 GPU-days per day** of NLI compute — non-trivial but tractable. For high-stakes domains where you can't afford a 5% unsupported-claim rate, this cost is the price of trust.
+
+### 5.2 LLM-judge calibration cost
+
+Building a 500-example human gold set at ~$3/example (15 min of an annotator's time at $12/hr) is $1,500 — a one-time cost. Running the judge against the gold set during prompt iteration (~10 prompt iterations, ~500 LLM-judge calls each, ~2K tokens per call):
+
+$$
+10 \times 500 \times 2000 \times \frac{\$1.5}{10^6} = \$15
+$$
+
+Calibration is **cheap**. Skipping it because "the LLM-judge is good enough" is one of the most common L4 mistakes.
+
+### 5.3 Holdout for regression testing
+
+A standing held-out set of 1,000 queries with gold answers is the regression test that runs on every model or prompt change. Each run costs ~1,000 × $0.002 = $2 in inference (per Lesson 10's cost) plus ~$10 in faithfulness scoring. Running it on every PR is essentially free relative to the team-time it saves.
+
+---
+
+## 6. What the interviewer is actually grading
+
+By minute 40 of the round (Step 4 wrapping for RAG) the interviewer is checking whether you can defend the system's quality with measurement, not vibes.
+
+- **Did you decompose eval?** Retrieval recall, faithfulness, answer quality — three components, three metrics.
+- **Did you propose passage-level entailment for faithfulness?** Or did you reduce faithfulness to "answer quality"?
+- **Did you mention citation accuracy as separate?** Even one sentence is L5.
+- **Did you calibrate the LLM-judge?** Naming Spearman correlation against a human gold set is the L5 closing move on this round.
+- **Did you propose hallucination detection on every shipped answer?** This separates demos from production.
+- **Did you compute human-eval sample size?** 400-per-arm for 0.2-pt MDE is a memorable number.
+- **Did you flag where benchmarks help and where they mislead?** Shows production maturity.
+
+Failure modes to avoid:
+
+- **Single number eval.** Component-wise or nothing.
+- **Trusting LLM-judge without calibration.** Calibrate first, then trust.
+- **No hallucination detection.** "We trust the model" is L3.
+- **Treating benchmarks as proof.** They benchmark; they don't prove.
+
+---
+
+## 7. Quiz
+
+<Quiz
+  lessonId="ai-for-engineering/ml-system-design/rag-evaluation"
+  questions={[
+    {
+      id: "rag-eval-q1",
+      prompt: "A team's RAG system shows declining end-to-end answer quality scores week-over-week, but they can't tell why. What's the L5-grade diagnostic move?",
+      options: [
+        "Retrain the embedding model.",
+        "Decompose eval into retrieval recall, generation faithfulness, and end-to-end answer quality — measured separately. A drop in retrieval recall localises the failure to Lesson 9 (chunking, hybrid retrieval, reranker). A drop in faithfulness with stable retrieval localises it to Lesson 10 (prompt design, model behaviour). Stable faithfulness + recall but dropping answer quality localises it to Lesson 8 (metric-tree mismatch with what users actually need).",
+        "Switch LLM providers.",
+        "Increase top-K.",
+      ],
+      correctIndex: 1,
+    },
+    {
+      id: "rag-eval-q2",
+      prompt: "An engineer says 'we use GPT-4 as a judge to grade our answers, so we trust the score.' What is the L5 objection?",
+      options: [
+        "GPT-4 is biased.",
+        "LLM-as-judge is unreliable without calibration. Different judge prompts and judge models grade the same answer 1-2 points apart on a 5-point scale; judges have systematic biases (preferring longer or more confident answers). The discipline: build a human-rated gold set of ~300-500 examples, run the judge against it, compute Spearman rank correlation ρ between LLM scores and human-mean scores, iterate the judge prompt until ρ > 0.8 (typical production threshold), and re-calibrate periodically as the judge model and corpus drift.",
+        "GPT-4 is too expensive.",
+        "Use a smaller judge model.",
+      ],
+      correctIndex: 1,
+    },
+    {
+      id: "rag-eval-q3",
+      prompt: "The team needs to detect a 0.2-point lift on a 5-point answer-quality scale (σ ≈ 1.0) at 80% power, two-sided. Approximate human-eval samples per arm needed:",
+      options: [
+        "20 samples.",
+        "Roughly 16σ²/δ² = 16 × 1 / 0.04 = 400 samples per arm. Two weeks of weekly 100-query human eval gets to ~200 per arm — enough for ~0.3-point detection but not 0.2. Tighter MDE requires longer runtime or larger weekly eval batches; this is why human eval is a real ongoing operating cost for production RAG.",
+        "10,000 samples.",
+        "100 samples.",
+      ],
+      correctIndex: 1,
+    },
+    {
+      id: "rag-eval-q4",
+      prompt: "Why is faithfulness measured per-claim with passage-level entailment, instead of as a single end-to-end 'is this grounded?' score?",
+      options: [
+        "Per-claim is faster to compute.",
+        "Per-claim entailment localises hallucination to the specific unsupported sentence — letting the system either withhold the response, annotate the unsupported claim, or trigger a refusal. An end-to-end score 'is this grounded?' returns a single number that conflates many failure modes; you cannot debug or remediate a number, only a localised claim. Aggregating per-claim entailment also enables strict-mode targets (any claim below threshold = fail) for high-stakes domains where 0.95 mean faithfulness is not enough.",
+        "Single scores are biased.",
+        "End-to-end requires more compute.",
+      ],
+      correctIndex: 1,
+    },
+  ]}
+/>
+
+---
+
+## 8. What's next — and what you've built
+
+You have just walked through every layer of a production RAG system at interview-grade depth. Reading the table aloud:
+
+| Lesson | What you defended on the whiteboard |
+|---|---|
+| 8 | Faithfulness as primary metric, cited-answer unit, three-stage RAG funnel |
+| 9 | Recursive chunking with overlap, hybrid (BM25 + dense + RRF) retrieval, cross-encoder reranking, embedding store sizing |
+| 10 | Structured prompt design with citation enforcement, vLLM-class serving (KV cache + continuous batching + speculative decoding), streaming, $730K/year cost math, fallback under load |
+| 11 | Component-wise eval (recall + faithfulness + answer quality), per-claim entailment, calibrated LLM-as-judge, hallucination detection on every shipped answer |
+
+This is what a defensible answer looks like for "design a search system that answers natural-language queries with citations" in a 2026 interview round.
+
+Combined with **Flagship 1 (YouTube recsys)** the course now covers both the classical and modern interview surfaces of ML system design. When the interviewer hands you a different prompt — a copilot, a customer-support assistant, a legal-research tool — you don't need to have memorised the answer. You apply the framework. The funnel changes shape, the metric tree shifts, but the discipline is the same: clarify, layer the metrics, propose a funnel, defend the data, defend the model, defend the serving, defend the eval, defend the monitoring.
+
+**Flagship 2 is complete.** The course's two reverse-engineered systems are now both on the page. The next thread — Part 3, four transfer case studies (ad CTR, fraud detection, ETA prediction, multimodal search) — applies the framework to a new problem in each lesson, demonstrating that the framework generalises beyond the two flagships. After that, the closing `interview-readiness.mdx` consolidates the framework into a 45-minute mock-round walkthrough.
+
+For now: read these four lessons end-to-end, draw the three-stage funnel from memory, and walk into the next round having rehearsed exactly this framework against exactly this canonical system.

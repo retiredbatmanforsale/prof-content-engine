@@ -1,0 +1,228 @@
+---
+hide_title: true
+sidebar_label: '12 · Case — Ad CTR prediction'
+title: 'Lesson 12 — Case study: ad CTR prediction (Google-style)'
+description: "Apply the framework to a Google-style ad ranking system — wrinkles include auction mechanics, mandatory calibration, and counterfactual logging."
+mvp_status: drafted
+tutor_topic: "Ad CTR prediction system design — Google-style ad ranking"
+tutor_concepts: []
+---
+
+<LessonHero
+  number="12"
+  title="Case — Ad CTR prediction"
+  subtitle="The framework transfers, but ads have three wrinkles that distinguish them from organic ranking. Auction mechanics, mandatory calibration, and counterfactual logging are the L4 traps you walk past in this lesson."
+  course="ML System Design"
+/>
+
+<InterviewerSignal
+  level="L4"
+  message="Treats ad ranking as recsys with a different label. Ranks by pCTR alone. No calibration. No auction. No counterfactual logging — just 'predict click probability.'"
+/>
+<InterviewerSignal
+  level="L5"
+  message="Opens with 'score = pCTR × bid' and a generalised second-price (GSP) auction. Names calibration as essential to the auction working. Volunteers ad quality guardrails. Addresses counterfactual logging for off-policy revenue estimation."
+/>
+
+---
+
+## 1. The prompt
+
+> **"Design Google's ad ranking system."**
+
+Same shape of prompt as Flagship 1's "Design YouTube recommendations" — but the answer differs in three structural ways. The interviewer is testing whether you spot them.
+
+---
+
+## 2. The wrinkles — what's different from Flagship 1
+
+### 2.1 Auction mechanics
+
+Ad ranking is not pure machine learning ranking. The serving system runs a **second-price auction** at request time. The ranking score is **not** just predicted relevance — it is
+
+$$
+\text{score} = \text{pCTR} \times \text{bid} \times \text{quality\_factor}
+$$
+
+The winner pays the **second-highest score**'s price (adjusted by ratios) — a generalised second-price (GSP) auction or its modern descendants (VCG, position-based). This means the ranking decision is downstream of an economic mechanism, not just a model output.
+
+### 2.2 Calibration is mandatory, not optional
+
+In Lesson 4, we said calibration matters for organic ranking; uncalibrated probabilities break A/B-test interpretation. **For ads, miscalibration directly destroys revenue.** If your model says `pCTR = 0.10` and the true rate is `0.05`, you have over-bid by 2× — winning auctions you would have lost at the right price, paying more than the impression is worth, and burning advertiser trust. The L4 ceiling on this round is reached the moment a candidate forgets calibration.
+
+### 2.3 Counterfactual logging is forced
+
+The recsys feedback loop (Lesson 7) is uncomfortable; the ads feedback loop is operationally lethal. The auction outcome depends on **which ads were shown** — and which ads were shown depends on the ranker. To estimate revenue under a new ranker without shipping it, you need **propensity logs**: for every shown impression, log the probability that the impression would have been served under the current policy. With propensities you can run inverse-propensity-weighted off-policy evaluation. Without them, your A/B test is the only signal — and at the cost-per-impression of ads, that is too slow and too expensive to be the only tool.
+
+---
+
+## 3. Walking the framework
+
+### 3.1 Define the problem
+
+The metric tree shifts toward economic outcomes:
+
+- **Business goal** — revenue per query, advertiser satisfaction (renewal rate, CPL ceiling), user satisfaction (low ad-load tolerance, organic content preserved)
+- **Product metric** — RPM (revenue per mille impressions), CTR, post-click conversion rate, ad-quality scores from user surveys, advertiser quality score
+- **ML objective stack** — calibrated **pCTR** as primary; calibrated **pConversion** as secondary; ad-quality scoring (relevance + landing page experience) as a guardrail
+
+The unit is **a slot of N ad impressions** (typically 1–4) embedded in the search results page. The funnel mirrors Lesson 1's recsys funnel — corpus of eligible ads, retrieval, ranking, auction — but with the **auction at the bottom** as the slot-allocation step.
+
+### 3.2 Data pipeline
+
+Inherits the data pipeline from Lesson 2 (clicks are biased, position bias, training-serving skew, feature store, temporal split). The ad-specific additions:
+
+- **Conversion labels lag** — clicks are observed in seconds, conversions in hours-to-days. Multi-task heads training on clicks and conversions need different label horizons.
+- **Advertiser-side features** — bid, budget remaining, frequency capping state, advertiser historical quality. These are first-class features, not optional.
+- **Counterfactual propensity** — at serving time, log not just the chosen ad but the propensity (or sampling probability) under the current policy.
+
+### 3.3 Model architecture
+
+Inherits the wide-and-deep / DLRM ranker pattern from Lesson 4. Ad-specific additions:
+
+- **Multi-task heads** for pCTR, pConversion, ad-quality classification, and (for some networks) post-click revenue regression
+- **Calibration head** explicitly tuned on a held-out auction trace, not just a held-out prediction set, because the auction shifts the natural class distribution
+- For retrieval (the pre-auction shortlist of eligible ads), the same two-tower / ANN architecture from Lesson 3 applies — gated by advertiser eligibility (budget, geography, device, daypart)
+
+### 3.4 Train and evaluate
+
+Loss design and calibration follow Lesson 4. The ad-specific evaluations:
+
+- **Offline: counterfactual revenue estimator.** Using propensity logs, estimate the revenue of a candidate ranker under the current traffic distribution via IPW. This is the gate before any online experiment.
+- **Online: revenue + quality guardrails.** A/B test with primary metric **RPM** and guardrail metrics **CTR**, **conversion rate**, **ad quality score**, **organic engagement** (does showing more ads tank organic clicks?). Violation of any guardrail blocks the launch.
+
+The novelty effect (Lesson 6) applies here too — users adapt to ad placement over weeks.
+
+### 3.5 Deploy and serve
+
+Latency budget mirrors Lesson 5 (200ms p99 typical). Ad-specific additions:
+
+- **Auction at the very end** of the request path, after ranking, with a sub-millisecond compute cost
+- **Budget pacing** — the system must enforce daily budgets per advertiser, throttling impressions for high-spend campaigns to prevent same-day budget exhaustion
+- **Frequency capping** — a single user must not see the same ad more than N times per day; this is a request-time filter on retrieved candidates
+
+### 3.6 Monitor and maintain
+
+Inherits Lesson 7 (drift detection, multi-tier retraining, shadow + canary, auto-rollback). Ad-specific:
+
+- **Calibration drift** is monitored as a first-class metric — if the calibration error grows past a threshold, the calibrator is re-fit immediately, not waiting for the next full retrain
+- **Auction-revenue drift** monitored continuously; sudden RPM drops trigger investigation
+- **Advertiser feedback** as a signal — too many "where did my ad go?" tickets indicates a model or auction regression
+
+---
+
+## 4. Back-of-envelope math
+
+### 4.1 The cost of miscalibration
+
+Suppose true pCTR is 0.05 and the model predicts 0.10. With a $1.00 bid, the model treats the impression as worth `0.10 × $1.00 = $0.10`. The advertiser is willing to pay up to that. But the impression is actually worth `0.05 × $1.00 = $0.05`. Every winning auction at this miscalibration is **2× over-priced**.
+
+If 30% of auctions are won at this miscalibration over a quarter, advertiser ROI collapses, advertisers reduce budgets, and quarterly revenue can drop by mid-single-digit percent. **Calibration is a billion-dollar concern at scale.**
+
+### 4.2 GSP price math
+
+In a GSP auction with positions ranked by `score = pCTR × bid`, the price the winner pays per click is:
+
+$$
+\text{price}_{\text{winner}} = \frac{\text{score}_{\text{next}}}{\text{pCTR}_{\text{winner}}}
+$$
+
+So the winner pays just enough to outbid the next ad — adjusted by their pCTR. If the next ad's score is 0.08 and the winner's pCTR is 0.10, the price per click is `$0.80`. This is the central economic identity of ad ranking.
+
+### 4.3 Counterfactual revenue estimator
+
+For a new ranker, IPW-estimated revenue over logged impressions:
+
+$$
+\hat{R}_{\text{new}} = \frac{1}{N} \sum_{i=1}^N \frac{\mathbb{1}[\text{new policy chose ad}_i]}{\pi_{\text{old}}(\text{ad}_i \mid \text{request}_i)} \cdot r_i
+$$
+
+where $\pi_{\text{old}}$ is the logged propensity and $r_i$ is the observed revenue. This estimator is unbiased only when the new policy's support is contained in the old (every ad the new policy picks must have been pickable under the old policy). Mature ad teams maintain this estimator as a release gate.
+
+<AdAuctionFlow />
+
+<AdAuctionSimulator />
+
+---
+
+## 5. What the interviewer is actually grading (case-specific)
+
+- **Did you open with `pCTR × bid` scoring, not just pCTR?** Pure pCTR is the L4 ceiling.
+- **Did you name calibration as essential to the auction?** Generic "yes calibration matters" is L4; tying it to revenue is L5.
+- **Did you describe the auction (GSP / VCG)?** Skipping the auction is treating ads as plain ranking.
+- **Did you mention counterfactual logging and IPW off-policy evaluation?** L5+ signal.
+- **Did you propose ad-quality and user-satisfaction guardrails?** Revenue-only optimisation is the canonical ad-system failure mode.
+- **Did you mention budget pacing and frequency capping?** Operational maturity signals.
+
+Failure modes to avoid:
+
+- **Pure pCTR ranking.** No auction, no bid weighting — economically wrong.
+- **No calibration.** Auction prices are nonsense without it.
+- **Treating ads as recsys.** The unit is the slot, but the slot allocation is an auction, not a sort.
+- **No quality guardrails.** Revenue maximisation without quality is the textbook failure mode of ad systems.
+
+---
+
+## 6. Quiz
+
+<Quiz
+  lessonId="ai-for-engineering/ml-system-design/case-ad-ctr-prediction"
+  questions={[
+    {
+      id: "ad-ctr-q1",
+      prompt: "A candidate proposes 'I'll train a model to predict click probability and rank ads by predicted pCTR.' What is the strongest L4-ceiling objection?",
+      options: [
+        "pCTR is hard to predict.",
+        "Ranking by pCTR alone ignores the bid — ads are an auction, and the canonical scoring is roughly pCTR × bid × quality, with the slot allocated by a generalised second-price (GSP) or similar mechanism. Pure pCTR ranking is economically wrong: it shows the most-likely-to-be-clicked ad regardless of how much it is worth, leaving revenue on the table and breaking advertiser auctions.",
+        "pCTR models are too slow.",
+        "pCTR is a biased label.",
+      ],
+      correctIndex: 1,
+    },
+    {
+      id: "ad-ctr-q2",
+      prompt: "An interviewer asks: 'Why is calibration of pCTR more important for ads than for organic ranking?'",
+      options: [
+        "Calibration is required by law.",
+        "In organic ranking, miscalibrated pCTR still produces correct relative orderings, so AUC-driven decisions mostly work. In an ad auction, the absolute pCTR value enters the price calculation directly — miscalibrated pCTR mis-prices auctions, causing the system to over-bid (paying more than the impression is worth) or under-bid (losing winnable auctions). Miscalibration translates directly to revenue loss and advertiser ROI collapse.",
+        "Calibration is a vanity metric.",
+        "Organic ranking doesn't use pCTR.",
+      ],
+      correctIndex: 1,
+    },
+    {
+      id: "ad-ctr-q3",
+      prompt: "Why do production ad teams log propensities (the probability the current policy would have served each shown impression)?",
+      options: [
+        "Compliance.",
+        "Counterfactual / off-policy evaluation. With propensity logs, the team can use inverse-propensity weighting to estimate the revenue of a candidate ranker over historical traffic — a release gate before paying for an online A/B test. At ad cost-per-impression scale, treating online A/B tests as the only signal is too slow and too expensive; counterfactual estimators are the offline filter.",
+        "Debugging.",
+        "Real-time monitoring.",
+      ],
+      correctIndex: 1,
+    },
+    {
+      id: "ad-ctr-q4",
+      prompt: "In a GSP auction, ad A has pCTR 0.10 and bid $1.00 (score 0.10); ad B has pCTR 0.08 and bid $1.20 (score 0.096). Ad A wins the top slot. What price per click does A pay?",
+      options: [
+        "$1.00 — A's bid.",
+        "$0.96 — B's score divided by A's pCTR (0.096 / 0.10) — A pays just enough to outbid B, normalised by A's pCTR. This is the central GSP identity: the winner pays a price that reflects what the next-place advertiser would have been willing to pay for the same expected click rate.",
+        "$1.20 — B's bid.",
+        "$0.80 — half of A's bid.",
+      ],
+      correctIndex: 1,
+    },
+  ]}
+/>
+
+---
+
+## 7. What's next
+
+In **Lesson 13 — Real-time fraud detection** the framework transfers to a different problem class. Fraud is a binary classification problem with class imbalance (~0.1% positives), adversarial drift (fraudsters adapt), label latency (chargebacks arrive 30-90 days late), and asymmetric costs (false negatives lose money, false positives lose customer trust). Streaming features and cost-curve threshold optimisation take centre stage.
+
+<div className="not-prose mt-8 flex justify-end">
+  <a href="./case-real-time-fraud-detection" className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white no-underline hover:bg-emerald-500">
+    Lesson 13 — Real-time fraud detection →
+  </a>
+</div>

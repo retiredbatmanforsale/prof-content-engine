@@ -15,9 +15,6 @@ tutor_concepts:
   - "hidden state as sequence memory"
 ---
 
-import rnnArchLesson3 from './RNN-arch-lesson3.png';
-import rnnStateUpdateOutputLesson3 from './RNN-stateupdate-and-output-lesson3.png';
-
 <LessonHero course="Deep Sequence Modelling (RNN)" number="3" title="RNN internal mechanics" subtitle="The hidden state, recurrence equations, and formal structure" />
 
 Now that we have an <strong>intuitive foundation</strong> for recurrent neural networks (RNNs), let us <strong>formalize</strong> their internal structure and operational semantics. This section builds upon our understanding of the <strong>perceptron</strong>, the idea of <strong>recurrence</strong>, and the motivation behind modeling sequences through <em>memory-aware</em> architectures.
@@ -32,7 +29,7 @@ At the heart of an RNN lies the <strong>internal state</strong> <strong>h<sub>t<
   <p className="mb-2 text-center text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">RNN cell &amp; recurrence relation</p>
   <div className="overflow-hidden rounded-xl border-2 border-emerald-200 bg-white shadow-md dark:border-emerald-800 dark:bg-slate-900/60">
     <img
-      src={rnnArchLesson3}
+      src="/img/rnn/RNN-arch-lesson3.png"
       alt="RNN diagram with input x sub t, output y-hat sub t, hidden state loop h sub t, and recurrence h sub t equals f_W of x sub t and h sub t minus 1; same weights each step"
       className="mx-auto block h-auto max-w-full object-contain"
       loading="lazy"
@@ -55,7 +52,7 @@ $$
   <p className="mb-2 text-center text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">RNN state update and output</p>
   <div className="overflow-hidden rounded-xl border-2 border-indigo-200 bg-white shadow-md dark:border-indigo-800 dark:bg-slate-900/60">
     <img
-      src={rnnStateUpdateOutputLesson3}
+      src="/img/rnn/RNN-stateupdate-and-output-lesson3.png"
       alt="Diagram: RNN block with x sub t input, y-hat sub t output, h sub t feedback; equations for y-hat sub t and tanh of weighted h sub t minus 1 and x sub t"
       className="mx-auto block h-auto max-w-full object-contain"
       loading="lazy"

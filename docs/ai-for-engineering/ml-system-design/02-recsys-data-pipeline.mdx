@@ -1,0 +1,286 @@
+---
+hide_title: true
+sidebar_label: '2 · Data pipeline'
+title: 'Lesson 2 — Data pipeline'
+description: >-
+  Click logs lie. Position bias, missing negatives, training-serving skew,
+  feature staleness, and temporal leakage are the silent killers of every
+  first-attempt recsys. The data pipeline is half the system.
+mvp_status: drafted
+tutor_topic: "Data pipeline design for a production recommender system"
+tutor_concepts: []
+---
+
+<LessonHero
+  number="2"
+  title="Data pipeline"
+  subtitle="The model is the easy part. The labels lie, the features drift, and the splits leak. Most production recsys failures are pipeline failures, not model failures."
+  course="ML System Design"
+/>
+
+<InterviewerSignal
+  level="L4"
+  message="Says 'use user clicks as positive labels and random samples as negatives.' Doesn't flag position bias. Doesn't mention training-serving skew. Splits the data randomly."
+/>
+<InterviewerSignal
+  level="L5"
+  message="Volunteers position bias, implicit negatives, training-serving skew, and a feature store — all before being asked. Picks a temporal split, names IPW or a calibration approach, and treats labels as a continuous watch-time signal rather than a binary click."
+/>
+
+---
+
+## 1. Where we are in the framework
+
+This is **Step 2 of the 6-step framework**: data. Time-budget in a real interview: **~8 minutes**. By the end of this step you should have written:
+
+- A **label definition** that matches the metric tree from Lesson 1 (watch time as primary, calibrated CTR / completion / like as secondary)
+- A **negative sampling strategy** that survives interrogation (not "random")
+- A **feature pipeline** that respects training-serving consistency
+- A **temporal split** that does not leak the future into the past
+- An explicit **position-bias correction** approach
+
+Lesson 1 told you what to optimise. Lesson 2 tells you what to feed the model. If this step is wrong, the model is solving a different problem from the one you defined.
+
+---
+
+## 2. The problem at this layer
+
+You have **logs**. Every time a user opens the home feed, the system records:
+
+- Which slate of N items was served (with rank position)
+- Which items the user impressed (saw above the fold)
+- Which items the user clicked
+- For clicked items: how long they watched (the dwell signal)
+- Context: time of day, device, country, recent watch history
+
+These logs feel like training data. They are not. They are **the output of the previous policy**, observed under conditions that do not match the conditions your new model will face. Treating them as ground truth is the canonical L4 mistake.
+
+The job at Step 2 is to turn logs into a defensible training set.
+
+---
+
+<SplitCompare>
+<SplitLeft title="Naive">
+
+- Clicks as positives, random catalogue items as negatives
+- Single binary click label (ignores watch time)
+- Same database online and offline; no skew correction
+- No position-bias correction
+- Random train / test split (leaks future)
+
+</SplitLeft>
+<SplitRight title="Motivated">
+
+- Watch-time as continuous label; click as a calibration head
+- Implicit negatives — impressed-but-not-clicked is a strong signal
+- Inverse propensity weighting (IPW) with clipped weights for position bias
+- Feature store enforcing a single feature definition online + offline
+- Time-aware split (train weeks 1–N, validate week N+1)
+
+</SplitRight>
+</SplitCompare>
+
+## 3. The naive solution — and why it breaks
+
+The naive answer is one sentence:
+
+> "I'll label each impression as positive if the user clicked, negative if they didn't, and train a binary classifier."
+
+This is wrong in **five distinct ways**, and a strong interviewer will probe at least three of them.
+
+### 3.1 Clicks are biased by position
+
+The probability of a click is **dominated by where the item appeared on the page**, not by how good it was. Roughly:
+
+| Slot | Empirical click probability (relative) |
+|---|---|
+| 1 | 1.0 |
+| 2 | 0.55 |
+| 3 | 0.36 |
+| 5 | 0.20 |
+| 10 | 0.10 |
+
+A model trained on raw clicks learns "items at slot 1 are good." Which is **mostly false** — items appear at slot 1 because the **previous** ranker thought they were good. The model regurgitates the previous policy.
+
+### 3.2 Random negatives are too easy
+
+Sampling negatives from the entire 1B-video catalogue gives you, for the most part, videos the user **never could have clicked** because they were never shown. The model learns "this user likes Hindi music; random video about Norwegian forestry is negative" — a trivial discrimination. The decision boundary it needs at serving time is **between the items the retrieval layer surfaces**, not between liked content and random noise.
+
+### 3.3 Clicks ignore watch time
+
+A click on a clickbait thumbnail followed by a 5-second watch is a **negative experience** that the binary-click label will record as a positive. The metric tree from Lesson 1 was built around **watch time**. The label has to reflect that.
+
+### 3.4 Training-serving skew
+
+The "user's average watch time over the last 7 days" feature, computed in **batch** for training, will **not** be computed identically online. The batch job runs at midnight; the online feature is computed in a streaming aggregator. Window boundaries, missing-value handling, late-arriving events — the two pipelines drift apart silently. The model trained on the offline version performs **measurably worse** in production for reasons no one can debug.
+
+### 3.5 Random temporal splits leak the future
+
+The naive `train_test_split(shuffle=True)` puts examples from August in the training set and examples from June in validation. Features like "trending right now" depend on time. The validation AUC looks great. Production AUC is much worse. You shipped a model that **cheated on its homework**.
+
+---
+
+## 4. The motivated solution
+
+The production answer attacks each failure mode directly.
+
+### 4.1 Watch time as the primary label, not click
+
+The label is not binary. Per the multi-task tree from Lesson 1, the labels are:
+
+- **`watch_time_seconds`** — continuous regression target, log-transformed to handle the heavy tail
+- **`clicked`** — binary, used as a calibration head
+- **`completed`** — binary (watched ≥ 80%), used as a quality calibration head
+- **`liked`** — binary, sparse, used for explicit-feedback calibration
+
+A click without dwell is not a positive on the primary head. It is a negative on `watch_time_seconds` (~5 seconds) and a positive on `clicked`. The combined ranking score in Lesson 4 will weight these so that **a clicked but unwatched video scores below an unclicked but-likely-to-be-watched video** in expectation.
+
+### 4.2 Implicit negatives — sampled from impressions
+
+The negative pool is **impressions, not the catalogue**. An impression that did not result in a click is a **strong negative**: the system showed it, the user saw it, the user passed.
+
+Even within impressions, you sub-sample to balance. A common ratio is 1 positive (clicked) to 4 negatives (impressed-not-clicked), with negatives weighted by inverse propensity to correct for position bias.
+
+For very-cold queries with no impressions, you fall back to **random** negatives — but tagged as such, with lower weight in the loss.
+
+### 4.3 Position-bias correction (inverse propensity weighting)
+
+The de-biasing trick: weight each example by the inverse of its position propensity. If the click-through-rate at slot $k$ is $p_k$ on average, you weight that example by:
+
+$$
+w_k = \frac{1}{p_k}
+$$
+
+A click at slot 10 (where $p_{10} \approx 0.10$) is worth $w_{10} = 10$. A click at slot 1 (where $p_1 \approx 1.0$) is worth $w_1 = 1$.
+
+The estimated training objective becomes the **counterfactual** — what would the click rate be if the user saw this item at slot 1 — instead of the **observed** click rate. This is the textbook IPW estimator from causal inference, applied to ranking.
+
+### 4.4 The feature store and training-serving consistency
+
+Every feature is defined **once**, with a single computation, and read from the same store online and offline:
+
+- **Online path:** request comes in → fetch features from Redis-backed online store → score → return
+- **Offline path:** training job reads from the same feature store's **historical snapshots** → produces training examples
+
+This eliminates skew by construction. The contract is **"the feature value at time T is whatever the store said it was at time T,"** not "whatever the batch job computed retrospectively." Feature stores like Feast, Tecton, or in-house equivalents at FAANG-scale companies all enforce this.
+
+<DataPipelineFlow />
+
+### 4.5 Temporal splitting
+
+The split is **time-aware**:
+
+- Train on weeks 1 through $N$
+- Validate on week $N + 1$
+- Test on week $N + 2$ (held out for final evaluation only)
+
+A feature like "trending video over the last hour" is now computed at training time using only **information that would have been available at that moment**. No future leakage.
+
+For deeper rigour, large-scale teams use **point-in-time joins**: every feature value is the value as-of the impression timestamp, not the value at the time of the training job.
+
+---
+
+## 5. Back-of-envelope math
+
+**Negative sampling ratio.** If 1% of impressions get clicks and you have 100M impressions per day, you get $10^6$ clicks per day. At a 1:4 positive-to-negative ratio, you sample $4 \times 10^6$ negatives, for $5 \times 10^6$ training examples per day, or $\sim 1.5 \times 10^9$ over a 300-day training window. That fits comfortably in the multi-billion-example regime where deep ranking models start to be worth their cost.
+
+**IPW variance.** The IPW estimator has variance that grows like $1/p_k$. For slot-10 examples ($p_{10} \approx 0.1$), the variance is 10× higher than slot-1 examples. Practitioners cap weights — typically at $w_{\max} = 5$ — to prevent any single training example from dominating the gradient. This is **clipped IPW**.
+
+**Pipeline latency.** A click event takes time to flow through the system:
+
+| Stage | Typical latency |
+|---|---|
+| Browser → server | ~50ms |
+| Server → Kafka | ~10ms |
+| Kafka → streaming feature update | seconds |
+| Kafka → batch ETL → training data | hours to a day |
+
+That hours-to-day batch lag is why your "freshness" features have to be computed in the streaming path, not the batch path. It is also why the **online** feature store must be the source of truth (Section 4.4), with batch acting as a backfill, not the inverse.
+
+<NegativeSampler />
+
+---
+
+## 6. What the interviewer is actually grading
+
+By minute 16 — when Steps 1 and 2 should be wrapping up — the interviewer has formed a hard prior on whether you are L4 or L5. Step 2 specifically tests whether you understand that **the data pipeline is the system**.
+
+- **Did you flag position bias unprompted?** If not, you are missing the single most-asked follow-up question.
+- **Did you reject random negatives?** Implicit negatives (impressed-not-clicked) is the one-line answer that signals you have built this before.
+- **Did you treat the label as continuous (watch time), not binary (click)?** If you did not, you are still optimising the wrong thing despite Lesson 1.
+- **Did you mention training-serving skew?** "We use a feature store to ensure features are computed identically online and offline" is a sentence L5 candidates produce; L4 candidates do not.
+- **Did you use a temporal split?** "Random shuffle" is a one-word L4 ceiling.
+- **Did you mention IPW or position de-biasing?** Optional at L4, expected at L5+ for senior roles.
+
+Failure modes to avoid:
+
+- **Treating logs as ground truth.** They are the output of the previous policy, not the truth.
+- **Hand-waving features.** "I'll engineer some features" is not an answer. Name the categories: user features, item features, context features, cross features, sequence features.
+- **Skipping the feature store entirely.** This is the single most-cited reason for "model worked offline, broke in production" stories.
+- **Forgetting time.** Every part of this pipeline is time-aware. The split, the feature definition, the label window — all temporal.
+
+---
+
+## 7. Quiz
+
+<Quiz
+  lessonId="ai-for-engineering/ml-system-design/recsys-data-pipeline"
+  questions={[
+    {
+      id: "data-q1",
+      prompt: "A candidate proposes 'I will sample negatives uniformly at random from the catalogue and label clicks as positives.' What is the strongest single objection?",
+      options: [
+        "Random sampling is computationally expensive at scale.",
+        "Random negatives produce a trivial decision boundary that does not match the production task — the model needs to discriminate within retrieved candidates, not against unrelated catalogue items.",
+        "The catalogue changes too often.",
+        "Random negatives have too many duplicates.",
+      ],
+      correctIndex: 1,
+    },
+    {
+      id: "data-q2",
+      prompt: "An offline feature, 'avg watch time last 7 days,' is computed in a nightly batch job for training. Online, the same-named feature is read from a streaming aggregator. Both look correct in isolation. Production AUC is 5 points worse than offline. What's the most likely diagnosis?",
+      options: [
+        "The model is overfit.",
+        "Training-serving skew: the batch and streaming computations differ subtly (window boundaries, late events, missing-value handling), so the model sees a different feature distribution at serving time than it trained on.",
+        "Insufficient training data.",
+        "The model needs more parameters.",
+      ],
+      correctIndex: 1,
+    },
+    {
+      id: "data-q3",
+      prompt: "You apply inverse propensity weighting (IPW) to correct for position bias. A click at position 10 has empirical click-through rate p₁₀ ≈ 0.1, while position 1 has p₁ ≈ 1.0. What happens to the training weight for a click at position 10?",
+      options: [
+        "Down-weighted by 10× because position-10 clicks are unreliable.",
+        "Up-weighted by 10× — the weight is 1/p₁₀ ≈ 10 — so the model treats a click at slot 10 as roughly 10× as informative as a click at slot 1, recovering the counterfactual click rate.",
+        "Discarded entirely.",
+        "Treated identically to a slot-1 click.",
+      ],
+      correctIndex: 1,
+    },
+    {
+      id: "data-q4",
+      prompt: "A team uses random train/validation splits on click logs from the past year. Offline AUC is excellent. Online A/B test shows no lift. What is the most likely reason this happened?",
+      options: [
+        "The test was underpowered.",
+        "The random split leaked future information into the training set — features like 'trending right now' are time-dependent, so a model that trains on August data and validates on June data is allowed to use the future to predict the past, inflating offline AUC.",
+        "Click logs are noisy.",
+        "The validation set was too small.",
+      ],
+      correctIndex: 1,
+    },
+  ]}
+/>
+
+---
+
+## 8. What's next
+
+In **Lesson 3 — Retrieval (two-tower)** you walk through Step 3 of the framework, applied to the **retrieval** layer of the funnel. The job: take 1B candidate videos and return the ~100 best in under 10ms. We will derive why a two-tower architecture is the canonical answer, build a tiny one in the playground, and compute the embedding store sizing math that anchors the design.
+
+<div className="not-prose mt-8 flex justify-end">
+  <a href="./recsys-retrieval-two-tower" className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white no-underline hover:bg-emerald-500">
+    Lesson 3 — Retrieval (two-tower) →
+  </a>
+</div>

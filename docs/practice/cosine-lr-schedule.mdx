@@ -1,0 +1,126 @@
+---
+title: "Cosine LR Schedule"
+description: Warmup + cosine decay learning-rate schedule — the standard schedule for transformer training.
+sidebar_position: 13
+practice_mode: true
+hide_table_of_contents: true
+---
+
+import PracticeProblem from '@site/src/components/viz/PracticeProblemPro';
+
+<PracticeProblem
+  id="cosine-lr-schedule"
+  title="Warmup + cosine decay LR schedule"
+  difficulty="Easy"
+  tags={["numpy", "training", "lr-schedule", "optimization"]}
+  linkedLessons={[
+    { url: '/courses/ai-for-engineering/build-and-train-your-own-gpt2-model/decoder-only-transformer', title: 'Decoder-only transformer' },
+  ]}
+  starter={`
+import math
+
+def lr_at(step, lr_max, lr_min, warmup_iters, max_iters):
+    """
+    Learning rate at a given step under linear warmup + cosine decay.
+
+    Three regimes:
+        step < warmup_iters:           linear warmup from 0 to lr_max
+        warmup_iters <= step < max_iters: cosine decay from lr_max to lr_min
+        step >= max_iters:             flat at lr_min
+
+    Args:
+        step:         int >= 0 — current training step.
+        lr_max:       peak learning rate (reached at step == warmup_iters).
+        lr_min:       floor learning rate (reached at step == max_iters).
+        warmup_iters: int >= 0 — duration of linear warmup.
+        max_iters:    int — total training duration. After this, returns lr_min.
+
+    Returns:
+        float — the learning rate to use at this step.
+    """
+    # YOUR CODE HERE
+    pass
+`}
+  tests={`
+import math
+
+@__test__("Step 0 (start of warmup): lr is exactly 0")
+def t():
+    out = lr_at(0, lr_max=3e-4, lr_min=3e-5, warmup_iters=100, max_iters=1000)
+    assert out is not None, "function returned None"
+    assert math.isclose(out, 0.0, abs_tol=1e-12), f"lr at step 0 should be 0, got {out}"
+
+@__test__("End of warmup: lr is exactly lr_max")
+def t():
+    out = lr_at(100, lr_max=3e-4, lr_min=3e-5, warmup_iters=100, max_iters=1000)
+    assert math.isclose(out, 3e-4, rel_tol=1e-9), f"end of warmup should be lr_max, got {out}"
+
+@__test__("End of training: lr is exactly lr_min")
+def t():
+    out = lr_at(1000, lr_max=3e-4, lr_min=3e-5, warmup_iters=100, max_iters=1000)
+    assert math.isclose(out, 3e-5, rel_tol=1e-9), f"step==max_iters should be lr_min, got {out}"
+
+@__test__("Past max_iters: lr stays at lr_min (flat tail)")
+def t():
+    for s in [1500, 5000, 10000]:
+        out = lr_at(s, lr_max=3e-4, lr_min=3e-5, warmup_iters=100, max_iters=1000)
+        assert math.isclose(out, 3e-5, rel_tol=1e-9), \\
+            f"past max_iters should be lr_min, step {s} got {out}"
+
+@__test__("Diagnostic: midway through cosine decay, lr is at the half-amplitude point")
+def t():
+    # At step warmup + (max - warmup)/2, the cosine arg is pi/2, so cos(pi/2) = 0,
+    # giving lr = lr_min + 0.5 * (lr_max - lr_min) * (1 + 0) = (lr_max + lr_min) / 2.
+    lr_max, lr_min = 3e-4, 3e-5
+    warmup, max_it = 100, 1000
+    midpoint = warmup + (max_it - warmup) // 2   # 550
+    out = lr_at(midpoint, lr_max, lr_min, warmup, max_it)
+    expected = (lr_max + lr_min) / 2
+    assert math.isclose(out, expected, rel_tol=5e-3), \\
+        f"midpoint of cosine decay should be ~{expected}, got {out}"
+
+@__test__("Linear warmup is, well, linear")
+def t():
+    lr_max = 1.0
+    # Step warmup/2 should give lr_max/2 exactly.
+    out = lr_at(50, lr_max=lr_max, lr_min=0.1, warmup_iters=100, max_iters=1000)
+    assert math.isclose(out, 0.5, rel_tol=1e-9), \\
+        f"linear warmup at step 50/100 should give 0.5, got {out}"
+`}
+  solution={`
+import math
+
+def lr_at(step, lr_max, lr_min, warmup_iters, max_iters):
+    if step < warmup_iters:
+        return lr_max * step / warmup_iters
+    if step >= max_iters:
+        return lr_min
+    progress = (step - warmup_iters) / (max_iters - warmup_iters)
+    return lr_min + 0.5 * (lr_max - lr_min) * (1.0 + math.cos(math.pi * progress))
+`}
+  hints={[
+    "Three branches in the if/elif/else: warmup (linear), cosine decay, flat tail. The function should be a pure function — no state, no side effects.",
+    "Cosine decay formula: lr_min + 0.5 * (lr_max - lr_min) * (1 + cos(pi * progress)) where progress = (step - warmup) / (max - warmup). At progress=0 you get lr_max; at progress=1 you get lr_min.",
+    "Boundary conditions: at step=warmup_iters the schedule transitions from linear to cosine; both expressions equal lr_max there. At step=max_iters, cos(pi*1) = -1 and the formula gives lr_min exactly.",
+  ]}
+>
+
+The standard learning-rate schedule for modern transformer training: a linear warmup over the first few hundred steps, followed by a smooth cosine decay to a floor. Used by GPT-2, GPT-3, Llama, and most public LLM training runs.
+
+The math:
+
+`step < warmup:    lr(step) = lr_max · step / warmup`
+
+`warmup ≤ step < max:`
+&nbsp;&nbsp;&nbsp;&nbsp;`progress = (step - warmup) / (max - warmup)`
+&nbsp;&nbsp;&nbsp;&nbsp;`lr(step) = lr_min + 0.5 · (lr_max - lr_min) · (1 + cos(π · progress))`
+
+`step ≥ max:      lr(step) = lr_min`
+
+Three reasons this schedule is the default:
+
+1. **Warmup gives the optimiser room to settle.** Adam's running second moment (`v_t`) is noisy in the first few hundred steps. Hitting fragile-init parameters with `lr_max` blows up training. Warmup ramps to full LR while the optimiser stabilises.
+2. **Cosine is differentiable at both endpoints.** No restart-shock from `step==warmup` to `step==warmup+1`, no abrupt drop-off at the end. The path is smooth all the way through.
+3. **The flat tail past `max_iters`** lets you train a bit longer than originally planned without an LR cliff.
+
+</PracticeProblem>

@@ -31,6 +31,42 @@ import InterviewGuide, {
   RecentlyAsked,
   MarkAsRead,
 } from '@site/src/components/InterviewGuide';
+import AnimationPlaceholder from '@site/src/components/MLSDPlaceholders/AnimationPlaceholder';
+import PlaygroundPlaceholder from '@site/src/components/MLSDPlaceholders/PlaygroundPlaceholder';
+import InterviewerSignal from '@site/src/components/MLSDPlaceholders/InterviewerSignal';
+import CompanyLogos from '@site/src/components/MLSDPlaceholders/CompanyLogos';
+import Stat from '@site/src/components/MLSDPlaceholders/Stat';
+import Stepper from '@site/src/components/MLSDPlaceholders/Stepper';
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+import SplitCompare, {SplitLeft, SplitRight} from '@site/src/components/MLSDPlaceholders/SplitCompare';
+import EmbeddingStoreSizer from '@site/src/components/MLSDPlaygrounds/EmbeddingStoreSizer';
+import ABTestPower from '@site/src/components/MLSDPlaygrounds/ABTestPower';
+import LatencySimulator from '@site/src/components/MLSDPlaygrounds/LatencySimulator';
+import FraudThresholdOptimizer from '@site/src/components/MLSDPlaygrounds/FraudThresholdOptimizer';
+import MetricTreeBuilder from '@site/src/components/MLSDPlaygrounds/MetricTreeBuilder';
+import DriftSimulator from '@site/src/components/MLSDPlaygrounds/DriftSimulator';
+import TwoTowerMini from '@site/src/components/MLSDPlaygrounds/TwoTowerMini';
+import HybridRetrievalDemo from '@site/src/components/MLSDPlaygrounds/HybridRetrievalDemo';
+import PinballLossDemo from '@site/src/components/MLSDPlaygrounds/PinballLossDemo';
+import RankerMini from '@site/src/components/MLSDPlaygrounds/RankerMini';
+import NegativeSampler from '@site/src/components/MLSDPlaygrounds/NegativeSampler';
+import RAGPromptStudio from '@site/src/components/MLSDPlaygrounds/RAGPromptStudio';
+import RAGEvalHarness from '@site/src/components/MLSDPlaygrounds/RAGEvalHarness';
+import AdAuctionSimulator from '@site/src/components/MLSDPlaygrounds/AdAuctionSimulator';
+import CLIPMini from '@site/src/components/MLSDPlaygrounds/CLIPMini';
+import RecsysFunnel from '@site/src/components/MLSDDiagrams/RecsysFunnel';
+import RAGFunnel from '@site/src/components/MLSDDiagrams/RAGFunnel';
+import TwoTowerArchitecture from '@site/src/components/MLSDDiagrams/TwoTowerArchitecture';
+import RankerArchitecture from '@site/src/components/MLSDDiagrams/RankerArchitecture';
+import HybridRetrievalFlow from '@site/src/components/MLSDDiagrams/HybridRetrievalFlow';
+import DataPipelineFlow from '@site/src/components/MLSDDiagrams/DataPipelineFlow';
+import RAGLatencyBudget from '@site/src/components/MLSDDiagrams/RAGLatencyBudget';
+import RAGEvalDecomposition from '@site/src/components/MLSDDiagrams/RAGEvalDecomposition';
+import FeatureStoreSchema from '@site/src/components/MLSDDiagrams/FeatureStoreSchema';
+import AdAuctionFlow from '@site/src/components/MLSDDiagrams/AdAuctionFlow';
+import NoveltyEffect from '@site/src/components/MLSDDiagrams/NoveltyEffect';
+import ModelDecayCurve from '@site/src/components/MLSDDiagrams/ModelDecayCurve';
 
 export default {
   ...MDXComponents,
@@ -64,4 +100,42 @@ export default {
   CommonQuestions,
   RecentlyAsked,
   MarkAsRead,
+  AnimationPlaceholder,
+  PlaygroundPlaceholder,
+  InterviewerSignal,
+  CompanyLogos,
+  Stat,
+  Stepper,
+  Tabs,
+  TabItem,
+  SplitCompare,
+  SplitLeft,
+  SplitRight,
+  EmbeddingStoreSizer,
+  ABTestPower,
+  LatencySimulator,
+  FraudThresholdOptimizer,
+  MetricTreeBuilder,
+  DriftSimulator,
+  TwoTowerMini,
+  HybridRetrievalDemo,
+  PinballLossDemo,
+  RankerMini,
+  NegativeSampler,
+  RAGPromptStudio,
+  RAGEvalHarness,
+  AdAuctionSimulator,
+  CLIPMini,
+  RecsysFunnel,
+  RAGFunnel,
+  TwoTowerArchitecture,
+  RankerArchitecture,
+  HybridRetrievalFlow,
+  DataPipelineFlow,
+  RAGLatencyBudget,
+  RAGEvalDecomposition,
+  FeatureStoreSchema,
+  AdAuctionFlow,
+  NoveltyEffect,
+  ModelDecayCurve,
 };

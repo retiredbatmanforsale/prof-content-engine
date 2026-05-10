@@ -1,0 +1,148 @@
+---
+title: "Top-k Sampling"
+description: Truncate the probability distribution to the k most likely tokens, then sample. The fixed-cardinality cousin of top-p.
+sidebar_position: 7
+practice_mode: true
+hide_table_of_contents: true
+---
+
+import PracticeProblem from '@site/src/components/viz/PracticeProblemPro';
+
+<PracticeProblem
+  id="top-k-sampling"
+  title="Top-k sampling"
+  difficulty="Easy"
+  tags={["numpy", "decoding", "sampling"]}
+  linkedLessons={[
+    { url: '/courses/ai-for-engineering/build-and-train-your-own-gpt2-model/generation-of-next-tokens', title: 'Generation of next tokens' },
+  ]}
+  starter={`
+import numpy as np
+
+def top_k_sample(probs, k, rng):
+    """
+    Sample one token id under top-k decoding.
+
+    Algorithm:
+        1. Find the k indices with the highest probability (any tie-breaking).
+        2. Renormalise their probabilities to sum to 1.
+        3. Sample one index from that renormalised distribution using rng.
+        4. Return the original-vocabulary index.
+
+    Args:
+        probs: 1-D np.ndarray of length V; assume already a valid probability
+               distribution (non-negative, sums to 1).
+        k:     int >= 1 — how many tokens to keep. If k >= V, no truncation.
+        rng:   np.random.Generator — use ONLY this for randomness.
+
+    Returns:
+        int (the sampled vocabulary index).
+    """
+    # YOUR CODE HERE
+    pass
+`}
+  tests={`
+import numpy as np
+
+@__test__("Returns an int in [0, V)")
+def t():
+    rng = np.random.default_rng(0)
+    probs = np.array([0.1, 0.2, 0.3, 0.4])
+    out = top_k_sample(probs, k=3, rng=rng)
+    assert out is not None, "function returned None"
+    out = int(out)
+    assert 0 <= out < 4, f"out={out} out of range"
+
+@__test__("k=1 picks the argmax deterministically")
+def t():
+    rng = np.random.default_rng(0)
+    probs = np.array([0.1, 0.05, 0.7, 0.15])
+    for _ in range(50):
+        out = int(top_k_sample(probs, k=1, rng=rng))
+        assert out == 2, f"k=1 should always pick argmax index 2, got {out}"
+
+@__test__("k >= V samples from the full distribution")
+def t():
+    rng = np.random.default_rng(123)
+    probs = np.array([0.25, 0.25, 0.25, 0.25])
+    counts = np.zeros(4, dtype=int)
+    for _ in range(2000):
+        counts[int(top_k_sample(probs, k=10, rng=rng))] += 1
+    assert np.all(counts > 350), f"k>V uniform sample broken: {counts}"
+
+@__test__("Diagnostic: k=2 cuts the long tail entirely")
+def t():
+    rng = np.random.default_rng(3)
+    # Top 2 are indices 0 and 1; the rest get probability ~0 after truncation.
+    probs = np.array([0.5, 0.4, 0.05, 0.04, 0.01])
+    counts = np.zeros(5, dtype=int)
+    for _ in range(2000):
+        counts[int(top_k_sample(probs, k=2, rng=rng))] += 1
+    assert counts[0] > 0 and counts[1] > 0
+    assert counts[2] == 0, f"index 2 outside top-2 but sampled {counts[2]} times"
+    assert counts[3] == 0, f"index 3 outside top-2 but sampled {counts[3]} times"
+    assert counts[4] == 0, f"index 4 outside top-2 but sampled {counts[4]} times"
+
+@__test__("Determinism: same rng + inputs -> same output")
+def t():
+    probs = np.array([0.1, 0.2, 0.3, 0.25, 0.15])
+    rng_a = np.random.default_rng(2025)
+    rng_b = np.random.default_rng(2025)
+    seq_a = [int(top_k_sample(probs, 3, rng_a)) for _ in range(10)]
+    seq_b = [int(top_k_sample(probs, 3, rng_b)) for _ in range(10)]
+    assert seq_a == seq_b, f"non-deterministic: {seq_a} vs {seq_b}"
+
+@__test__("Approximate empirical proportions within the kept set")
+def t():
+    rng = np.random.default_rng(2026)
+    # After truncating to top 2 (indices 0 and 1) and renormalising:
+    # original 0.6 and 0.3 become 2/3 and 1/3.
+    probs = np.array([0.6, 0.3, 0.05, 0.03, 0.02])
+    counts = np.zeros(5, dtype=int)
+    N = 4000
+    for _ in range(N):
+        counts[int(top_k_sample(probs, k=2, rng=rng))] += 1
+    p0 = counts[0] / N
+    p1 = counts[1] / N
+    assert abs(p0 - 2/3) < 0.05, f"index 0 proportion {p0:.3f} far from 2/3"
+    assert abs(p1 - 1/3) < 0.05, f"index 1 proportion {p1:.3f} far from 1/3"
+`}
+  solution={`
+import numpy as np
+
+def top_k_sample(probs, k, rng):
+    V = len(probs)
+    k = min(k, V)
+    # Indices of the top-k probs (any order is fine; argpartition is fastest).
+    top_idx = np.argpartition(probs, -k)[-k:]
+    kept = probs[top_idx]
+    kept = kept / kept.sum()
+    pick = rng.choice(k, p=kept)
+    return int(top_idx[pick])
+`}
+  hints={[
+    "np.argpartition(probs, -k)[-k:] gives the indices of the k largest probs in O(V) time. (np.argsort(probs)[::-1][:k] also works but is O(V log V).)",
+    "Pull out the kept probabilities, renormalise so they sum to 1, then rng.choice(k, p=kept) returns a position 0..k-1. Map that back to the original vocabulary via top_idx.",
+    "The rng argument is the ONLY source of randomness — never use np.random.choice without specifying a generator. The determinism test catches that.",
+  ]}
+>
+
+Top-k sampling — pick the `k` highest-probability tokens, renormalise their probabilities, sample one. The fixed-cardinality alternative to top-p (nucleus) sampling.
+
+The algorithm:
+
+1. Find the indices of the `k` largest entries in `probs`.
+2. Renormalise those `k` probabilities to sum to 1.
+3. Sample one position from the renormalised distribution.
+4. Return the corresponding original-vocabulary index.
+
+Trade-offs vs top-p:
+
+- **Top-k** is simpler to reason about — you always sample from exactly `k` candidates, regardless of model confidence. Fixed compute, fixed cardinality.
+- **Top-p** adapts to confidence — when the model is sure, the nucleus is 1-2 tokens; when uncertain, 50+. Often better on LM benchmarks but harder to debug.
+
+GPT-2's typical inference setting was `top_k = 40`. Most production LLMs now default to `top_p ≈ 0.9` instead, but `top_k` survives as a fallback knob and in inference engines that prefer fixed-cardinality sampling for batching reasons.
+
+The harness uses fixed RNG seeds — your function must use **only** the `rng` argument for randomness, never `np.random` global state.
+
+</PracticeProblem>

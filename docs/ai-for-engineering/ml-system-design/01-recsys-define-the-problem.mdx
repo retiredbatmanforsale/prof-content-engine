@@ -1,0 +1,269 @@
+---
+hide_title: true
+sidebar_label: '1 · Define the problem'
+title: 'Lesson 1 — Define the problem'
+description: >-
+  Translate "design YouTube recommendations" into a layered metric stack
+  (business → product → ML), define the unit of recommendation, and propose
+  the candidate-generation funnel that makes 1B-scale serving possible.
+access: free
+mvp_status: drafted
+tutor_topic: "Defining the problem in an ML system design interview"
+tutor_concepts: []
+---
+
+<LessonHero
+  number="1"
+  title="Define the problem"
+  subtitle="Before you pick a model, you need a metric tree, a unit, and a funnel. Skip this and the rest of the answer is unanchored."
+  course="ML System Design"
+/>
+
+<InterviewerSignal
+  level="L4"
+  message="Doesn't ask 'what business metric?' before proposing a model. Picks one metric without reasoning about its tree. Hand-waves what 'a recommendation' even is."
+/>
+<InterviewerSignal
+  level="L5"
+  message="Volunteers the business → product → ML metric stack in the first three minutes. Defines the unit of recommendation crisply. Proposes a candidate-generation funnel by minute six, unprompted."
+/>
+
+---
+
+## 1. Where we are in the framework
+
+This is **Step 1 of the 6-step framework**: define the problem. Time-budget in a real interview: **~8 minutes**. By the end of this step you should have written on the whiteboard:
+
+- A **layered metric stack** — business KPI → product metric → ML objective
+- A **unit of recommendation** — what does a single output of the system look like?
+- A **candidate-generation funnel** — the high-level architecture diagram showing how 1B candidates become an ordered list
+
+If you walk into Step 2 (Data) without these three things, you are in trouble. The data pipeline you design depends entirely on what you defined as the label, which depends on what you defined as the metric.
+
+---
+
+## 2. The problem at this layer
+
+The interviewer hands you a one-line prompt. Today's prompt is:
+
+> **"Design YouTube's recommendation system."**
+
+This is **deliberately vague**. The first thing the interviewer is grading is whether you ask the right questions before answering.
+
+You should ask, out loud, in roughly this order:
+
+- **Surface:** Which surface? Home feed? Watch-next? Search results? Shorts? Each is a different system.
+- **Goal:** What is the business goal? Watch time? Sessions? Subscriptions? Revenue?
+- **Scale:** How many users, how many items in the catalogue, how many requests per second? (You can guess: 2B users, 1B videos, ~100K QPS at peak.)
+- **Latency:** What's the p99 budget? (Assume 200ms for a feed; 50ms for autocomplete.)
+- **Constraint:** Any product constraints? Must surface fresh content within N minutes? Diversity floor? Creator-side fairness?
+
+Pick the **home feed** for the rest of the lesson. It is the most general and the most-asked variant.
+
+---
+
+<SplitCompare>
+<SplitLeft title="Naive">
+
+- **Wrong metric**: predict click probability — ignores watch time, produces clickbait
+- **Wrong unit**: top-K independent items — no diversity, no slate-level objectives
+- **Wrong scale**: score every (user, video) pair — physically impossible at 1B candidates
+
+</SplitLeft>
+<SplitRight title="Motivated">
+
+- **Layered metric tree**: business → product → calibrated multi-task ML objective with watch time primary
+- **The slate as the unit**: set-level diversity / freshness applied at re-rank
+- **Funnel architecture**: 1B → ~hundreds (retrieval) → tens (ranking) → ordered slate
+
+</SplitRight>
+</SplitCompare>
+
+## 3. The naive solution — and why it breaks
+
+The naive answer to "design YouTube recs" is:
+
+> "I'll train a model to predict whether the user will click on each video, and I'll show them the top-K by predicted click probability."
+
+This sounds reasonable. It is **structurally wrong** in three ways.
+
+### 3.1 The wrong metric
+
+YouTube does not optimise for clicks. Clicks are a **noisy proxy** for the actual goal — long-term user retention, which is best approximated short-term by **watch time**. Optimising for clicks alone produces clickbait: thumbnails that bait the click but produce a 10-second watch and a frustrated user.
+
+If your one-sentence answer is "predict clicks," the interviewer is already silently writing **L4 ceiling** on their notes.
+
+### 3.2 The wrong unit
+
+"Top-K by predicted click probability" treats the recommendation as **N independent items**. But a feed is a **set**. A feed of ten near-identical clickbait videos is worse than a feed of eight good videos plus two diverse exploration items. The naive answer has no concept of **set-level objectives** — diversity, freshness, creator fairness.
+
+### 3.3 The wrong scale
+
+"Train a model to score each video" implies you **score every (user, video) pair at request time**. With 1B videos and a 200ms budget, that is roughly $5 \times 10^{12}$ pair-scoring operations per request — physically impossible even with a small model. The naive answer has not considered that the system has to **fit in the latency budget**.
+
+The fix to all three is the same: **define the problem before defining the model.** That is what Step 1 is for.
+
+---
+
+## 4. The motivated solution
+
+The production answer has three components: a metric tree, a unit definition, and a funnel.
+
+### 4.1 The layered metric tree
+
+You build the metric stack top-down — from what the business cares about to what the model can compute.
+
+- **Business KPI (what the company reports):** watch time, sessions per active user, day-N retention. These are months-long signals.
+- **Product metric (what an A/B test moves):** total watch minutes per user per day, completion rate, like-rate, day-7 retention. These move in two-week windows.
+- **ML objective (what the model is trained on):** a calibrated multi-task head — primary task is **predicted watch time** (regression or quantile), secondary tasks are **CTR**, **like rate**, **completion rate**. The combined ranking score is a weighted sum, with weights tuned by online experiments.
+
+Notice that **clicks are still in there** — but as a secondary calibrated signal, not the primary objective. Notice that the **ML objective is a tree**, not a single number.
+
+The right way to say this in the interview, out loud:
+
+> *"YouTube's business goal is long-term retention; the closest two-week proxy is total watch time per user per day; the closest model objective is a calibrated multi-task head with watch time as the primary regression target and CTR / completion / like rate as secondary calibration tasks."*
+
+That sentence alone moves you from L4 to L5 in the interviewer's mental model.
+
+### 4.2 The unit of recommendation
+
+A single API response from the home feed is not "one video." It is **an ordered list of N videos**, where N is roughly 10 above-the-fold and 100s as the user scrolls. The unit is the **slate**, not the item.
+
+Why this matters:
+
+- **Diversity** is a slate-level constraint, not an item-level one
+- **Position** matters — slot 1 has 10× the click probability of slot 10
+- **Calibration** has to account for set effects (one good video next to nine bad ones still loses)
+
+The naive "top-K by score" answer cannot express any of this. The motivated answer treats the slate as the unit and applies **set-level re-ranking** at the end of the pipeline (Lesson 4 covers this in detail).
+
+### 4.3 The candidate-generation funnel
+
+You cannot score 1B videos at request time. You also cannot pretend the catalogue is small. The canonical resolution is a **funnel**:
+
+<RecsysFunnel />
+
+The four layers, top to bottom:
+
+| Layer | Input | Output | What runs here |
+|---|---|---|---|
+| **Catalogue** | All videos | All videos | The corpus you index over |
+| **Retrieval** | All videos (~1B) | Hundreds (~100–1000) | Two-tower model + ANN index (Lesson 3) |
+| **Ranking** | Hundreds | Tens (~10–50) | Deep multi-task ranker (Lesson 4) |
+| **Re-ranking** | Tens | Final ordered slate | Diversity / freshness / business rules |
+
+Each layer **trades recall for precision**. Retrieval is recall-oriented (cheap, must not drop the right answer). Ranking is precision-oriented (expensive, picks the best from what retrieval surfaced). Re-ranking is set-aware (applies the slate-level objectives we just defined).
+
+This funnel is the **single most important diagram in any recsys interview**. If you do not draw it in the first six minutes, you have failed Step 1.
+
+---
+
+## 5. Back-of-envelope numbers (quick discipline check)
+
+A quick numeric sanity check to show the interviewer you reason in real numbers, not hand-waves.
+
+Assume YouTube has **2 billion daily active users** averaging **40 minutes of watch time per day**. That is:
+
+$$
+2 \times 10^9 \text{ users} \times 40 \text{ min/user} = 8 \times 10^{10} \text{ minutes/day}
+$$
+
+A **1% relative lift** in watch time is **800 million minutes per day** — roughly **1500 person-years of attention every single day**. This is why YouTube spends nine-figure budgets on a 1% recsys win.
+
+<Stat
+  value="800M minutes / day"
+  caption="What a 1% lift on YouTube's daily watch time looks like — roughly 1,500 person-years of attention every 24 hours. The reason a 1% recsys win is worth nine-figure investment."
+  source="2B DAU × 40 min/day × 1%"
+/>
+
+A second quick number: at **100K QPS peak** with a **200ms p99 budget**, the system does roughly $20K \times 200\text{ms} = 4{,}000$ second-equivalents of compute per second of wall time, distributed across the fleet. That sets a hard ceiling on how expensive the ranker can be — covered in Lesson 5.
+
+You do not have to recite these numbers in the interview. You do have to **be able to reach for one when challenged.** Saying "I would compute…" without ever computing is L4. Saying "the 1% lift is roughly 800M minutes per day, which is why this is worth doing properly" is L5.
+
+<MetricTreeBuilder />
+
+---
+
+## 6. What the interviewer is actually grading
+
+By minute 8 — when Step 1 should be wrapping up — the interviewer has formed a strong prior on your level. Here is exactly what they are looking for:
+
+- **Did you ask clarification questions before designing?** If you launched into a model in the first 60 seconds, that is the single fastest way to fail this round.
+- **Did you produce a layered metric tree?** Or did you pick one metric and run with it?
+- **Did you define the unit of recommendation?** Or did you implicitly assume "one video at a time"?
+- **Did you draw a funnel?** Or did you imply that one model handles everything?
+- **Did you mention business numbers at least once?** "1% lift = 800M minutes" is the kind of throwaway sentence that separates L5 from L4.
+- **Did you flag any constraints unprompted?** Diversity, freshness, creator-side fairness — these are L5 promote signals.
+
+Failure modes to avoid:
+
+- **Jumping to model architecture.** Lesson 0 covered this — it is the single most common L4 ceiling.
+- **Optimising for a single metric.** "I'll predict clicks" is the canonical mistake.
+- **Treating recommendations as item-level.** This makes the rest of your design unable to reason about diversity.
+- **Pretending the catalogue is small.** Forgetting the funnel makes Lesson 3 (retrieval) impossible to design coherently.
+
+---
+
+## 7. Quiz
+
+<Quiz
+  lessonId="ai-for-engineering/ml-system-design/recsys-define-the-problem"
+  questions={[
+    {
+      id: "define-q1",
+      prompt: "A PM asks you to 'increase watch time' on the YouTube home feed. Which ML objective is most aligned, given the discussion of layered metrics?",
+      options: [
+        "A binary classifier for click vs no-click on each video.",
+        "A regression head predicting expected watch time per impression, calibrated against logged watch durations.",
+        "A multi-armed bandit over thumbnails to maximise click-through.",
+        "A pairwise ranker trained only on like / dislike feedback.",
+      ],
+      correctIndex: 1,
+    },
+    {
+      id: "define-q2",
+      prompt: "An interviewer asks 'what is the unit of recommendation?' for a feed product. Which answer is the strongest L5 signal?",
+      options: [
+        "'A single video — top-K by score.'",
+        "'A slate of N items, with set-level objectives like diversity and freshness applied at re-rank.'",
+        "'Whatever the model outputs.'",
+        "'A user-level embedding.'",
+      ],
+      correctIndex: 1,
+    },
+    {
+      id: "define-q3",
+      prompt: "Which of the following is the strongest reason a candidate-generation funnel (retrieval → ranking → re-rank) is necessary, rather than a single end-to-end model?",
+      options: [
+        "Funnels are easier to debug.",
+        "Funnels let each stage trade off recall vs precision under a strict latency budget — scoring 1B candidates in one pass at request time is physically impossible.",
+        "Funnels let the team split work across more engineers.",
+        "Funnels reduce the size of the training set.",
+      ],
+      correctIndex: 1,
+    },
+    {
+      id: "define-q4",
+      prompt: "A candidate proposes 'I will predict click probability and show top-K by score.' What is the L4-ceiling reason this fails?",
+      options: [
+        "Click probability is too hard to predict.",
+        "It optimises a noisy proxy (clicks), treats recommendations as item-level (no slate objectives), and ignores latency at scale (no funnel).",
+        "Top-K is computationally expensive.",
+        "Click models cannot be deployed at scale.",
+      ],
+      correctIndex: 1,
+    },
+  ]}
+/>
+
+---
+
+## 8. What's next
+
+In **Lesson 2 — Data pipeline** you walk through Step 2 of the framework. We open with a uncomfortable truth: the click logs you would naively use to train this system are **lying to you**. Position bias, missing negatives, and training-serving skew are the silent killers of every first-attempt recsys. By the end of Lesson 2 you have a defensible data pipeline that survives interrogation.
+
+<div className="not-prose mt-8 flex justify-end">
+  <a href="./recsys-data-pipeline" className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white no-underline hover:bg-emerald-500">
+    Lesson 2 — Data pipeline →
+  </a>
+</div>

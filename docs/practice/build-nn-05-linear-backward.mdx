@@ -1,0 +1,172 @@
+---
+title: "Build a NN · 05 · Linear Backward"
+description: Backward pass through a Linear layer — derive and implement dx, dW, and db using the chain rule.
+sidebar_position: 5
+practice_mode: true
+hide_table_of_contents: true
+---
+
+import PracticeProblem from '@site/src/components/viz/PracticeProblemPro';
+
+<PracticeProblem
+  id="build-nn-05-linear-backward"
+  title="Linear backward (chain rule)"
+  difficulty="Medium"
+  tags={["numpy", "neural-net", "backprop", "calculus", "build-nn"]}
+  linkedLessons={[
+    { url: '/courses/ai-for-engineering/deep-neural-networks/backward-pass', title: 'Backward pass' },
+    { url: '/courses/ai-for-engineering/deep-neural-networks/forward-pass', title: 'Forward pass' },
+  ]}
+  starter={`
+import numpy as np
+
+def linear_backward(grad_out, x, W):
+    """
+    Backward pass through Linear: y = x @ W + b.
+
+    Given the gradient of the loss w.r.t. y, compute:
+      - dx: gradient w.r.t. the input
+      - dW: gradient w.r.t. the weight
+      - db: gradient w.r.t. the bias
+
+    Args:
+        grad_out: (B, out_features) — d_loss / d_y.
+        x:        (B, in_features) — the input passed to the forward pass.
+        W:        (in_features, out_features) — the weight matrix from forward.
+
+    Returns:
+        (dx, dW, db) where:
+          dx: (B, in_features)
+          dW: (in_features, out_features)
+          db: (out_features,)
+    """
+    # YOUR CODE HERE
+    pass
+`}
+  tests={`
+import numpy as np
+
+def _forward(x, W, b):
+    return x @ W + b
+
+
+def _loss(x, W, b):
+    # Sum-of-elements loss makes d_loss/d_y = ones — handy for grad checks.
+    return _forward(x, W, b).sum()
+
+
+def _numerical_grad_w(x, W, b, eps=1e-5):
+    g = np.zeros_like(W)
+    it = np.nditer(W, flags=['multi_index'], op_flags=['readwrite'])
+    while not it.finished:
+        i, j = it.multi_index
+        W[i, j] += eps; lp = _loss(x, W, b)
+        W[i, j] -= 2 * eps; lm = _loss(x, W, b)
+        W[i, j] += eps  # restore
+        g[i, j] = (lp - lm) / (2 * eps)
+        it.iternext()
+    return g
+
+
+@__test__("Returns three arrays with correct shapes")
+def t():
+    rng = np.random.default_rng(0)
+    B, I, O = 4, 3, 5
+    x = rng.standard_normal((B, I))
+    W = rng.standard_normal((I, O))
+    grad_out = rng.standard_normal((B, O))
+    out = linear_backward(grad_out, x, W)
+    assert out is not None and len(out) == 3, "expected (dx, dW, db) tuple"
+    dx, dW, db = out
+    assert dx.shape == (B, I), f"dx shape {dx.shape} != ({B}, {I})"
+    assert dW.shape == (I, O), f"dW shape {dW.shape} != ({I}, {O})"
+    assert db.shape == (O,), f"db shape {db.shape} != ({O},)"
+
+@__test__("dx matches grad_out @ W.T")
+def t():
+    rng = np.random.default_rng(1)
+    x = rng.standard_normal((6, 4))
+    W = rng.standard_normal((4, 3))
+    grad_out = rng.standard_normal((6, 3))
+    dx, _, _ = linear_backward(grad_out, x, W)
+    expected = grad_out @ W.T
+    assert np.allclose(dx, expected, atol=1e-9), \\
+        f"max diff {np.max(np.abs(dx - expected)):.2e}"
+
+@__test__("dW matches x.T @ grad_out")
+def t():
+    rng = np.random.default_rng(2)
+    x = rng.standard_normal((5, 7))
+    W = rng.standard_normal((7, 2))
+    grad_out = rng.standard_normal((5, 2))
+    _, dW, _ = linear_backward(grad_out, x, W)
+    expected = x.T @ grad_out
+    assert np.allclose(dW, expected, atol=1e-9), \\
+        f"max diff {np.max(np.abs(dW - expected)):.2e}"
+
+@__test__("db sums grad_out over the batch dimension")
+def t():
+    rng = np.random.default_rng(3)
+    grad_out = rng.standard_normal((8, 4))
+    x = rng.standard_normal((8, 6))
+    W = rng.standard_normal((6, 4))
+    _, _, db = linear_backward(grad_out, x, W)
+    expected = grad_out.sum(axis=0)
+    assert np.allclose(db, expected, atol=1e-9), \\
+        f"max diff {np.max(np.abs(db - expected)):.2e}"
+
+@__test__("dW matches finite-difference numerical gradient")
+def t():
+    rng = np.random.default_rng(4)
+    x = rng.standard_normal((3, 4))
+    W = rng.standard_normal((4, 2))
+    b = rng.standard_normal(2)
+    # For loss = sum(y), d_loss/d_y = ones, so grad_out is a (B, O) tensor of ones.
+    grad_out = np.ones((3, 2))
+    _, dW_analytic, _ = linear_backward(grad_out, x, W)
+    dW_numeric = _numerical_grad_w(x, W, b)
+    assert np.allclose(dW_analytic, dW_numeric, atol=1e-3), \\
+        f"max diff {np.max(np.abs(dW_analytic - dW_numeric)):.2e}"
+
+@__test__("Larger batch shape: gradients still correct")
+def t():
+    rng = np.random.default_rng(5)
+    x = rng.standard_normal((64, 16))
+    W = rng.standard_normal((16, 32))
+    grad_out = rng.standard_normal((64, 32))
+    dx, dW, db = linear_backward(grad_out, x, W)
+    assert np.allclose(dx, grad_out @ W.T, atol=1e-9)
+    assert np.allclose(dW, x.T @ grad_out, atol=1e-9)
+    assert np.allclose(db, grad_out.sum(axis=0), atol=1e-9)
+`}
+  solution={`
+import numpy as np
+
+def linear_backward(grad_out, x, W):
+    dx = grad_out @ W.T          # (B, out) @ (out, in) -> (B, in)
+    dW = x.T @ grad_out          # (in, B) @ (B, out)   -> (in, out)
+    db = grad_out.sum(axis=0)    # sum across the batch dimension
+    return dx, dW, db
+`}
+  hints={[
+    "Three derivatives, three lines. dx = grad_out @ W.T; dW = x.T @ grad_out; db = grad_out.sum(axis=0).",
+    "Why those shapes? Forward is y = x @ W + b. By the chain rule: dx = (d y / d x) @ grad_out, and the Jacobian d y / d x is W (transposed for the matmul to align). Same logic for dW. The bias adds to every batch row, so its gradient sums across the batch.",
+    "Sanity check by shape alone: grad_out is (B, out), W is (in, out). Only `grad_out @ W.T` produces (B, in). The shapes force the right answer.",
+  ]}
+>
+
+Backward through Linear is the most-asked backprop derivation in interviews — and the one most candidates fumble. The math falls out of the chain rule on the matmul. Three gradients, three lines.
+
+Forward (problem 01): `y = x @ W + b` where `x: (B, in)`, `W: (in, out)`, `b: (out,)`.
+
+Backward (this problem): given `grad_out = ∂L / ∂y` of shape `(B, out)`, compute:
+
+`dx = grad_out @ W.T              # (B, in)`
+
+`dW = x.T @ grad_out              # (in, out)`
+
+`db = grad_out.sum(axis=0)         # (out,) — sum across batch`
+
+The harness checks each gradient independently and finishes with a finite-difference cross-check on `dW` (the trickiest of the three). Get the shapes right and the algebra is forced — there's exactly one way to multiply these matrices that matches the dimensions.
+
+</PracticeProblem>

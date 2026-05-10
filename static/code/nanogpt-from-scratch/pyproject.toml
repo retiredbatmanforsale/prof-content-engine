@@ -1,0 +1,26 @@
+[project]
+name = "nanogpt-from-scratch"
+version = "0.1.0"
+description = "Companion project for Prof's Build and Train Your Own GPT-2 course"
+requires-python = ">=3.10"
+dependencies = [
+    "torch>=2.0",
+    "tiktoken>=0.5",
+    "numpy>=1.24",
+]
+
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+py-modules = [
+    "config",
+    "tokenizer",
+    "embeddings",
+    "attention",
+    "blocks",
+    "model",
+    "generate",
+    "train",
+]

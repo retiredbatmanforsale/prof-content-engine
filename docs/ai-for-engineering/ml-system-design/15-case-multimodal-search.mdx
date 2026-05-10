@@ -1,0 +1,241 @@
+---
+hide_title: true
+sidebar_label: '15 · Case — Multimodal search'
+title: 'Lesson 15 — Case study: multimodal search (CLIP-style)'
+description: "Apply the framework to multimodal search — wrinkles include contrastive joint training (InfoNCE), cross-modal eval, cold start across modalities, and temperature calibration."
+mvp_status: drafted
+tutor_topic: "Multimodal search system design — CLIP-style joint embedding"
+tutor_concepts: []
+---
+
+<LessonHero
+  number="15"
+  title="Case — Multimodal search"
+  subtitle="Two-tower retrieval, but the towers see different modalities. The wrinkle: aligning them in a shared embedding space via contrastive joint training. CLIP is the canonical reference architecture."
+  course="ML System Design"
+/>
+
+<InterviewerSignal
+  level="L4"
+  message="Trains a separate text encoder and image encoder, indexes both, and treats text→image and image→text as two independent retrieval problems. No joint training. Doesn't mention contrastive loss or cross-modal alignment."
+/>
+<InterviewerSignal
+  level="L5"
+  message="Volunteers contrastive joint training with InfoNCE loss across paired (image, text) data. Names cross-modal recall (text→image and image→text) as separate eval metrics. Calls out per-modality temperature calibration. Names the modality dominance failure mode and proposes a mitigation."
+/>
+
+---
+
+## 1. The prompt
+
+> **"Design a multimodal search system — a user can type a natural-language query and retrieve relevant images, or upload an image and retrieve similar images / linked items."**
+
+This case is closer to the recsys flagship than the others — it is fundamentally a retrieval problem. The two-tower architecture from Lesson 3 carries over verbatim. The wrinkle is that the two towers see **different modalities**, and aligning them in a shared embedding space requires a specific joint-training approach.
+
+---
+
+## 2. The wrinkles — what's different from the flagships
+
+### 2.1 Joint embedding training across modalities
+
+Two independently trained encoders — one for text, one for images — produce embeddings that **do not live in the same vector space**. A text query embedding and an image embedding may both be 1024-dim vectors, but their cosine similarity is meaningless: there is no signal that "this text describes this image" was ever in the loss. The fix is **CLIP-style contrastive training** (Radford et al., 2021): train both encoders jointly on paired (image, caption) data with a contrastive loss that pulls matched pairs together and pushes mismatched pairs apart.
+
+### 2.2 Cross-modal eval is two-directional
+
+Recsys retrieval has one direction: query → items. Multimodal retrieval has **two**: text → image (find images matching a description) and image → text (find captions describing an image). The two directions can have **different recall numbers** for the same model — and the eval has to track both. A model with strong text→image recall but weak image→text often indicates **modality dominance** (text encoder dominates the joint space).
+
+### 2.3 Cold start across modalities
+
+A new image uploaded today has no associated text descriptions yet; a new text query may reference visual concepts the model has not seen aligned to text. The standard mitigation is **modality-specific fallbacks** — pure image-to-image retrieval over visual features (without text alignment) for new images; lexical / metadata search for text queries that don't ground.
+
+### 2.4 Per-modality temperature calibration
+
+CLIP's InfoNCE loss has a single learned temperature $\tau$ that scales the cosine similarities before the softmax. In practice, similarities **within text-text pairs** vs **within image-image pairs** vs **across text-image pairs** have different empirical distributions. Production teams tune **per-modality temperatures** (or use a calibrated scoring step on top) so cross-modal similarities mean comparable things across directions. This is an L5 production detail.
+
+---
+
+## 3. Walking the framework
+
+### 3.1 Define the problem
+
+Metric tree:
+
+- **Business goal** — users find what they want via natural-language or image queries (search engagement, time-to-first-click, query reformulation rate)
+- **Product metric** — click-through rate on returned items, time-to-resolution, query reformulation rate (lower is better)
+- **ML objective stack** — text→image recall@K as primary; image→text recall@K as secondary; text-text and image-image as auxiliary heads if the product also serves same-modality retrieval; per-modality calibration as guardrail
+
+The unit is **a single search response** — either a list of retrieved images for a text query, or a list of similar images for an image query. No funnel beyond retrieval; reranking is optional and depends on the product.
+
+### 3.2 Data pipeline
+
+The data shape is **paired (image, text) examples**:
+
+- **Open-web scraping** — image-caption pairs from ALT text, surrounding HTML context, social-media hashtags (the original CLIP dataset shape, ~400M pairs)
+- **In-product engagement signals** — for an in-house product, click-through pairs on text queries to clicked images form a high-quality engagement-grounded paired set
+- **Curated labels** — small high-quality set used for eval and calibration, not training
+
+Negative pair sampling: in-batch negatives are the canonical CLIP approach — every other item in the same batch is a negative. With batch sizes of ~16K-32K (the CLIP standard), each example has thousands of effective negatives per training step, which is what the contrastive loss needs to be informative.
+
+### 3.3 Model architecture
+
+Two encoders sharing nothing structurally but trained jointly:
+
+- **Text encoder** — typically a transformer (BERT-like, GPT-like), output projected to the shared embedding dimension (e.g. 768 or 1024)
+- **Image encoder** — typically a Vision Transformer (ViT) or a CNN backbone (ResNet), output projected to the same shared dimension
+- **Shared embedding dimension** — both projections must match; the dot product is computed in this space
+
+At serving time the towers run independently — same offline / online split as Lesson 3. Image embeddings are precomputed offline and indexed in an ANN structure (HNSW, IVF, ScaNN). Text query embeddings are computed at request time (~5ms with a small transformer).
+
+### 3.4 Train and evaluate
+
+- **Loss design — InfoNCE (symmetric)**:
+
+  $$
+  \mathcal{L} = -\frac{1}{2N} \sum_{i=1}^N \left[ \log \frac{\exp(\text{sim}(t_i, v_i) / \tau)}{\sum_j \exp(\text{sim}(t_i, v_j) / \tau)} + \log \frac{\exp(\text{sim}(v_i, t_i) / \tau)}{\sum_j \exp(\text{sim}(v_i, t_j) / \tau)} \right]
+  $$
+
+  where $t_i$ is the text embedding, $v_i$ is the image embedding, $\text{sim}$ is cosine similarity, and $\tau$ is a learned (or fixed) temperature. The two terms make the loss **symmetric**: the model is pulled to align both directions (text→image and image→text).
+
+- **Eval — cross-modal recall**:
+  - Text→image recall@K — for each query in the test set, is the gold image in the top-K returned?
+  - Image→text recall@K — for each image, is the gold caption in the top-K returned?
+  - Asymmetry check — if the two directions have very different recall, modality dominance is suspected (one tower's space dominates the joint geometry); fix by adjusting batch construction or temperature
+
+- **Calibration**: similarity scores from the trained model can be calibrated to probabilities via a learned temperature on a held-out set. Per-modality temperatures (text→image vs image→text) often differ.
+
+### 3.5 Deploy and serve
+
+Inherits the latency budget and serving architecture from Lesson 5. Multimodal-specific:
+
+- **Sub-100ms p99** for the request path (text encoder forward + ANN query + result assembly)
+- **Image embeddings precomputed offline** at ingest time, indexed in ANN (Lesson 3 patterns apply)
+- **Modality-specific cold-start fallbacks** — pure image-similarity retrieval over visual features for new images that lack text alignment
+- **Hybrid with sparse retrieval** for text queries — analogous to Lesson 9's hybrid (BM25 + dense), here BM25 over text metadata + dense (text→image) retrieval, fused via RRF
+
+### 3.6 Monitor and maintain
+
+Inherits Lesson 7. Multimodal-specific:
+
+- **Cross-modal calibration drift** — monitor the asymmetry between text→image and image→text recall over time; widening asymmetry is the early signal of modality dominance returning
+- **Modality coverage drift** — monitor the distribution of query modalities (text vs image) and item modalities (text-rich vs text-sparse images); if the corpus shifts toward text-sparse content, retraining priorities shift
+- **New modality additions** — adding video or audio later requires a new tower joined into the same loss; the existing alignment must be preserved, often with a frozen-encoder warm start
+
+---
+
+## 4. Back-of-envelope math
+
+### 4.1 InfoNCE worked example
+
+For a tiny batch of 4 paired (text, image) examples with cosine similarities at temperature $\tau = 0.1$:
+
+| Direction | Pair similarity | Same-batch competitor sims |
+|---|---|---|
+| Text-1 vs all images | 0.7 (correct), 0.4, 0.5, 0.3 | gold is 0.7, second-best is 0.5 |
+
+Scaled by $1/\tau = 10$: logits become 7, 4, 5, 3. Softmax: $e^7 / (e^7 + e^5 + e^4 + e^3)$. The dominant term is $e^7$, so the gold image gets $\sim e^7 / (e^7 + e^5 + \ldots) \approx 0.85$ probability. Loss for this example $= -\log(0.85) \approx 0.16$. With smaller temperature ($\tau = 0.01$, logits become 70, 40, etc.), the softmax saturates and the gold gets near-1.0 probability. **Temperature trades off contrast sharpness for gradient flow** — too low a temperature yields no learning signal because the loss saturates.
+
+### 4.2 Embedding store sizing
+
+For 100M images at 768-dim embeddings as float32 (4 bytes per dimension):
+
+$$
+10^8 \times 768 \times 4 = 307 \text{ GB}
+$$
+
+Same sharding / quantisation discussion as Lessons 3 and 9. Quantisation to int8 brings 307 GB → 77 GB at modest recall cost.
+
+### 4.3 Batch size matters
+
+The number of in-batch negatives is `batch_size − 1`. With batch size 32K (CLIP default), each positive sees ~32K negatives — orders of magnitude more contrast than a typical recsys sampler can offer. **Large batch sizes are essential** to InfoNCE; running with batch 256 gives a much weaker contrastive signal. This is why CLIP-class training requires significant accelerator memory and clever data-parallel strategies.
+
+<CLIPMini />
+
+---
+
+## 5. What the interviewer is actually grading (case-specific)
+
+- **Did you propose joint contrastive training unprompted?** Two independently trained encoders is the canonical L4 ceiling.
+- **Did you name InfoNCE / contrastive loss?** Concrete loss naming makes the answer specific.
+- **Did you mention symmetric loss / both directions?** Symmetric InfoNCE is the L5 default.
+- **Did you propose cross-modal recall as separate metrics?** Single end-to-end metric is L4.
+- **Did you flag modality dominance?** This is a recsys-specific failure mode; naming it unprompted is L5.
+- **Did you mention temperature?** Calling out calibration is L5.
+
+Failure modes to avoid:
+
+- **Two independent encoders.** No alignment, no shared space, no cross-modal retrieval.
+- **Single recall metric.** Hides modality asymmetry.
+- **Tiny batches.** InfoNCE needs many in-batch negatives; small batches collapse.
+- **No temperature discussion.** Low-temperature loss saturates; high-temperature doesn't separate.
+- **No cold-start fallback.** New images without text alignment have no retrievable embedding without one.
+
+---
+
+## 6. Quiz
+
+<Quiz
+  lessonId="ai-for-engineering/ml-system-design/case-multimodal-search"
+  questions={[
+    {
+      id: "multimodal-q1",
+      prompt: "A team builds multimodal search by training a BERT text encoder on text data and a Vision Transformer image encoder on image data, both independently, then computing cosine similarity at request time. Cross-modal retrieval quality is poor. What is the structural cause and the fix?",
+      options: [
+        "The encoders are not big enough.",
+        "Two encoders trained independently produce embeddings that do not live in the same vector space — there is no signal in either training run that 'this text describes this image,' so cosine similarity across modalities is meaningless. The fix is contrastive joint training (CLIP-style InfoNCE) on paired (image, caption) data: matched pairs are pulled together in a shared embedding space while in-batch mismatched pairs are pushed apart, producing a space where cross-modal cosine similarity carries semantic meaning.",
+        "Use a different similarity function.",
+        "Increase embedding dimension.",
+      ],
+      correctIndex: 1,
+    },
+    {
+      id: "multimodal-q2",
+      prompt: "A CLIP-style model is trained with InfoNCE loss. Text→image recall@5 is 0.85. Image→text recall@5 is 0.62. Asymmetry of this magnitude indicates what, and what's the L5 fix?",
+      options: [
+        "The metrics are computed differently.",
+        "Modality dominance — the text encoder's space is dominating the joint geometry, so text queries find their matched images more reliably than the reverse direction. Fixes: ensure the loss is symmetric (both terms in InfoNCE); rebalance batch construction so neither modality dominates the negatives; tune per-modality temperatures separately; if data is imbalanced (more text-rich than image-rich), augment the under-represented modality.",
+        "Image retrieval is harder.",
+        "The dataset is too small.",
+      ],
+      correctIndex: 1,
+    },
+    {
+      id: "multimodal-q3",
+      prompt: "Why does InfoNCE training require large batch sizes (typically 16K-32K), and what happens with small batches?",
+      options: [
+        "Large batches train faster.",
+        "InfoNCE uses in-batch negatives — every other item in the batch acts as a negative for each positive pair. The contrastive signal scales with the number of negatives. With batch size 32K, each positive sees ~32K negatives per step; with batch size 256, only 255. Small-batch InfoNCE produces a much weaker contrastive signal, longer training time, and worse final alignment. CLIP-class training is constrained by accelerator memory for this reason.",
+        "Large batches are easier to parallelise.",
+        "Small batches overfit.",
+      ],
+      correctIndex: 1,
+    },
+    {
+      id: "multimodal-q4",
+      prompt: "An interviewer asks: 'How does the temperature τ in InfoNCE affect training, and what happens at extremes?'",
+      options: [
+        "Temperature has no effect.",
+        "Temperature scales the cosine similarities before the softmax in the contrastive loss. Low τ (e.g. 0.01) sharpens the softmax — the gold pair gets near-100% probability, the loss saturates to ~0, and gradients vanish (no learning signal). High τ (e.g. 1.0) flattens the softmax — gold and competitors get similar probabilities, the loss is large but the gradient pulls weakly toward alignment. CLIP's default τ = 0.07 is tuned for the sweet spot. Temperature is often learned end-to-end with the encoders.",
+        "Temperature controls model size.",
+        "Temperature is randomly initialised and never adjusted.",
+      ],
+      correctIndex: 1,
+    },
+  ]}
+/>
+
+---
+
+## 7. What's next — and what you've built
+
+You have just walked the framework against four distinct interview prompts:
+
+| Lesson | Case | Wrinkles you defended |
+|---|---|---|
+| 12 | Ad CTR (Google) | Auction mechanics, calibration as revenue gate, counterfactual logging |
+| 13 | Fraud (Stripe) | Class imbalance + focal loss, adversarial drift, asymmetric cost-curve threshold |
+| 14 | ETA (Uber) | Spatial-temporal features, pinball loss, P50/P90 quantile outputs, spatial cross-validation |
+| 15 | Multimodal (CLIP) | Contrastive joint training (InfoNCE), cross-modal recall, modality dominance, temperature calibration |
+
+Combined with the two flagships (YouTube recsys, production RAG), the course now contains **six reverse-engineered or case-studied systems**, each defended end-to-end with the same 6-step framework. When the interviewer hands you a prompt you have never seen — "design a copilot," "design product search," "design content moderation" — you do not memorise the answer. You apply the framework, identify the wrinkles, and walk through the steps. The wrinkles for any new case usually overlap with at least one of the cases you have already studied here.
+
+**Part 3 is complete.** The closing thread is the **`interview-readiness.mdx`** lesson — a 45-minute mock-round walkthrough that consolidates the framework into the interview-time muscle memory you actually need on the day. Run as a one-shot, not as another loop.

@@ -1,0 +1,169 @@
+---
+title: "Adam Step"
+description: One full Adam optimiser step with bias correction — moments, hat-corrected estimates, parameter update.
+sidebar_position: 14
+practice_mode: true
+hide_table_of_contents: true
+---
+
+import PracticeProblem from '@site/src/components/viz/PracticeProblemPro';
+
+<PracticeProblem
+  id="adam-step"
+  title="Adam optimiser step"
+  difficulty="Medium"
+  tags={["numpy", "optimization", "adam"]}
+  linkedLessons={[
+    { url: '/courses/ai-for-engineering/build-and-train-your-own-gpt2-model/decoder-only-transformer', title: 'Decoder-only transformer' },
+  ]}
+  starter={`
+import numpy as np
+
+def adam_step(params, grads, m, v, t, lr, beta1, beta2, eps):
+    """
+    One step of Adam (Kingma & Ba 2014). Mutates params, m, v in place.
+
+    For each (p, g, m_p, v_p):
+        m_p   = beta1 * m_p + (1 - beta1) * g
+        v_p   = beta2 * v_p + (1 - beta2) * g * g
+        m_hat = m_p / (1 - beta1**t)
+        v_hat = v_p / (1 - beta2**t)
+        p    -= lr * m_hat / (sqrt(v_hat) + eps)
+
+    Args:
+        params: list[np.ndarray] — model parameters (mutated).
+        grads:  list[np.ndarray] — gradients, same shapes.
+        m:      list[np.ndarray] — first-moment buffers (mutated).
+        v:      list[np.ndarray] — second-moment buffers (mutated).
+        t:      int >= 1 — the CURRENT step (1-indexed). Used in bias correction.
+        lr, beta1, beta2, eps: scalars.
+
+    Returns:
+        None.
+    """
+    # YOUR CODE HERE
+    pass
+`}
+  tests={`
+import numpy as np
+
+@__test__("First step from zero state matches the bias-corrected formula")
+def t():
+    p = np.array([1.0])
+    g = np.array([0.1])
+    m = np.array([0.0])
+    v = np.array([0.0])
+    adam_step([p], [g], [m], [v], t=1, lr=0.001, beta1=0.9, beta2=0.999, eps=1e-8)
+    # m_new = 0.1 * 0.1 = 0.01;  m_hat = 0.01 / (1 - 0.9) = 0.1
+    # v_new = 0.001 * 0.01 = 1e-5; v_hat = 1e-5 / (1 - 0.999) = 0.01
+    # p -= 0.001 * 0.1 / (sqrt(0.01) + 1e-8) ~= 0.001 * 0.1 / 0.1 = 0.001
+    assert np.isclose(float(m[0]), 0.01, atol=1e-9)
+    assert np.isclose(float(v[0]), 1e-5, atol=1e-12)
+    assert np.isclose(float(p[0]), 1.0 - 0.001, atol=1e-6), f"got p={p[0]}"
+
+@__test__("Diagnostic: at step 1, m_hat = g and v_hat = g^2 (bias correction effect)")
+def t():
+    # At t=1, the (1 - beta^t) division exactly cancels the (1 - beta) multiplication.
+    # m = 0.1 * g, divided by (1 - 0.9) = 0.1 -> m_hat = g.
+    p = np.array([10.0])
+    g = np.array([2.0])
+    m = np.array([0.0])
+    v = np.array([0.0])
+    adam_step([p], [g], [m], [v], t=1, lr=1.0, beta1=0.9, beta2=0.999, eps=1e-12)
+    # m_hat = 2.0; v_hat = 4.0; p -= 1.0 * 2.0 / (2.0 + eps) ≈ 1.0
+    assert np.isclose(float(p[0]), 9.0, atol=1e-6), \\
+        f"step 1 update should be ~lr * sign(g) = -1, got p={p[0]}"
+
+@__test__("Constant gradient over many steps: parameter drifts steadily")
+def t():
+    p = np.array([0.0])
+    g = np.array([1.0])
+    m = np.array([0.0])
+    v = np.array([0.0])
+    for step in range(1, 101):
+        adam_step([p], [g], [m], [v], t=step, lr=0.01, beta1=0.9, beta2=0.999, eps=1e-8)
+    # With constant positive gradient, p should have monotonically decreased.
+    # After ~100 steps with lr=0.01 and adam at "speed ~1", p ≈ -1.0.
+    assert p[0] < -0.5, f"p should drift down with constant grad, got {p[0]}"
+    assert p[0] > -1.5
+
+@__test__("Multiple parameter tensors all update in their own m and v buffers")
+def t():
+    W = np.full((2, 2), 1.0)
+    b = np.full(2, 5.0)
+    dW = np.full((2, 2), 0.5)
+    db = np.full(2, 0.5)
+    mW = np.zeros((2, 2)); vW = np.zeros((2, 2))
+    mb = np.zeros(2);      vb = np.zeros(2)
+    adam_step([W, b], [dW, db], [mW, mb], [vW, vb],
+              t=1, lr=0.01, beta1=0.9, beta2=0.999, eps=1e-8)
+    # Both should have moved. Specifically m's and v's should be nonzero.
+    assert not np.allclose(mW, 0)
+    assert not np.allclose(vb, 0)
+    assert not np.allclose(W, 1.0)
+    assert not np.allclose(b, 5.0)
+
+@__test__("Mutation is in place — caller's references see the new values")
+def t():
+    p = np.array([0.0]); m = np.array([0.0]); v = np.array([0.0])
+    p_ref = p; m_ref = m; v_ref = v
+    adam_step([p], [np.array([1.0])], [m], [v], t=1, lr=0.01,
+              beta1=0.9, beta2=0.999, eps=1e-8)
+    assert p_ref is p, "param reference changed — must update in place"
+    assert m_ref is m, "m reference changed — must update in place"
+    assert v_ref is v, "v reference changed — must update in place"
+
+@__test__("eps prevents division-by-zero when v_hat is exactly 0")
+def t():
+    # If g = 0 forever, v stays 0 and the divisor is sqrt(0) + eps = eps.
+    # The update should be 0 (since m is 0 too) and not produce NaN.
+    p = np.array([1.0])
+    g = np.array([0.0])
+    m = np.array([0.0])
+    v = np.array([0.0])
+    adam_step([p], [g], [m], [v], t=1, lr=0.01, beta1=0.9, beta2=0.999, eps=1e-8)
+    assert np.isfinite(p[0]), f"p should be finite, got {p[0]}"
+    assert np.isclose(float(p[0]), 1.0)
+`}
+  solution={`
+import numpy as np
+
+def adam_step(params, grads, m, v, t, lr, beta1, beta2, eps):
+    bc1 = 1.0 - beta1 ** t        # bias-correction denominators
+    bc2 = 1.0 - beta2 ** t
+    for p, g, m_p, v_p in zip(params, grads, m, v):
+        m_p *= beta1; m_p += (1.0 - beta1) * g
+        v_p *= beta2; v_p += (1.0 - beta2) * g * g
+        m_hat = m_p / bc1
+        v_hat = v_p / bc2
+        p -= lr * m_hat / (np.sqrt(v_hat) + eps)
+`}
+  hints={[
+    "Five lines per parameter: update m (EMA of g), update v (EMA of g^2), bias-correct both with the (1 - beta^t) denominators, then take the update step.",
+    "Bias correction is what 'fixes' Adam at step 1. Without it, m starts at zero and m_new = (1-beta1)*g would be very small — the parameter barely moves at first. Dividing by (1 - beta1^t) compensates exactly: at t=1, m_hat = g; at t=infty, m_hat -> m (no correction needed).",
+    "Use *= and += so m and v update in place. The optimiser STATE persists across steps; rebinding would lose it.",
+  ]}
+>
+
+Adam — the Adaptive Moment Estimation optimiser. The default for transformer training before AdamW (which differs by one weight-decay term). Knowing it cold is table-stakes for any ML interview.
+
+The update rule, applied per parameter:
+
+`m ← β₁ m + (1 − β₁) g            (first-moment EMA)`
+
+`v ← β₂ v + (1 − β₂) g²           (second-moment EMA)`
+
+`m̂ = m / (1 − β₁ᵗ)               (bias-corrected first moment)`
+
+`v̂ = v / (1 − β₂ᵗ)               (bias-corrected second moment)`
+
+`p ← p − lr · m̂ / (√v̂ + ε)`
+
+Defaults from the original paper: `lr=0.001, β₁=0.9, β₂=0.999, ε=1e-8`.
+
+Two subtleties the harness probes:
+
+1. **Bias correction.** `(1 − β^t)` denominators compensate for `m, v` being initialised to zero. At `t=1`, `m_hat = g` exactly (the `(1-β)*g` numerator and `(1-β)` denominator cancel) — so the very first step is roughly `lr · sign(g)`, regardless of `β`. This is what lets Adam not stall at step 1.
+2. **In-place update of three buffers.** `m` and `v` persist across steps as optimiser state; if you rebind them inside the loop, the optimiser silently resets every step.
+
+</PracticeProblem>

@@ -1,0 +1,213 @@
+---
+hide_title: true
+sidebar_label: '0 · The framework'
+title: 'Lesson 0 — The ML system design interview'
+description: >-
+  How a 45-minute ML system design round actually runs, the 6-step framework
+  that structures your answer, and what L4 vs L5 candidates do differently.
+access: public
+tutor_topic: "ML system design interview — the framework"
+tutor_concepts:
+  - "the 6-step ML SD framework"
+  - "time budgeting in a 45-minute interview"
+  - "L4 ceiling signals"
+  - "L5 promote signals"
+  - "the difference between ML SD and SWE system design"
+---
+
+<LessonHero
+  number="0"
+  title="The ML system design interview"
+  subtitle="Before you design any system, you need to know how the round runs and what the interviewer is grading. Then the rest of the course is muscle memory."
+  course="ML System Design"
+/>
+
+<CompanyLogos
+  intro="This is the canonical ML system design round at"
+  companies={['google', 'amazon', 'microsoft']}
+/>
+
+<InterviewerSignal
+  level="L4"
+  message="These are the three habits that cap most candidates at the mid-senior bar — and the three this lesson teaches you to avoid. (1) Starting to design a model before defining what success even means. (2) Sketching a single-model system that would never survive at real scale. (3) Treating 'how does this run in production' as someone else's problem."
+/>
+<InterviewerSignal
+  level="L5"
+  message="The senior bar is set by what you volunteer without being asked — and these are the three things this lesson teaches you to volunteer. (1) A layered success metric (the business goal, then a shorter-term product metric, then the trained-model objective that flows from it). (2) A multi-stage architecture that fits the scale, sketched before the interviewer probes for one. (3) A concrete latency target — actual milliseconds — stated as a constraint, not as an afterthought."
+/>
+
+---
+
+## 1. What this round actually is
+
+A senior engineer hands you a one-line prompt. **"Design the recommendation system for YouTube."** Or **"Design real-time fraud detection for Stripe."** Or **"Design a search system that answers natural-language queries with citations."**
+
+You have **45 minutes**. There is a whiteboard, a video call, or a shared doc. There is no IDE, no compiler, no internet search. You are expected to:
+
+- **Clarify** the ambiguous prompt into a concrete problem.
+- **Design** a system that could plausibly run at the scale implied (millions to billions of users).
+- **Defend** every choice — why this model, why this index, why this serving topology, why this metric.
+- **Answer** follow-ups when the interviewer pushes on a weak point.
+
+The interviewer is **not grading the diagram**. The interviewer is grading **how you think about ML systems** — whether you reason about scale, whether you separate retrieval from ranking, whether you distinguish offline from online metrics, whether you flag training-serving skew, whether you understand that your model decays the moment it is deployed.
+
+---
+
+## 2. The 6-step framework
+
+Six steps. Each one is a dimension the interviewer probes; walking through all six is what **"satisfies the round"** means. The mnemonic — keep it on the tip of your tongue — is **PDATDM**:
+
+<Stepper
+  steps={[
+    { keyword: 'PROBLEM',      time: '8 min', subtitle: 'Define it' },
+    { keyword: 'DATA',         time: '8 min', subtitle: 'Pipeline' },
+    { keyword: 'ARCHITECTURE', time: '8 min', subtitle: 'Model design' },
+    { keyword: 'TRAINING',     time: '8 min', subtitle: 'And evaluation' },
+    { keyword: 'DEPLOYMENT',   time: '8 min', subtitle: 'And serving' },
+    { keyword: 'MONITORING',   time: '5 min', subtitle: 'And maintenance' },
+  ]}
+/>
+
+Time-budgeted to the 45 minutes — what you produce at each step:
+
+| # | Step | Time | What you produce |
+|---|---|---|---|
+| 1 | **PROBLEM** — define it | 8 min | Layered metric stack (business → product → ML), unit of recommendation, candidate-generation funnel |
+| 2 | **DATA** — pipeline | 8 min | Where labels come from, how features flow, training-serving consistency, leakage discussion |
+| 3 | **ARCHITECTURE** — model design | 8 min | Retrieval model + ranking model (or single-stage if appropriate), with reasoning |
+| 4 | **TRAINING** — and evaluation | 8 min | Loss design, offline metrics, and an A/B test plan with guardrails |
+| 5 | **DEPLOYMENT** — and serving | 8 min | Latency budget, feature store, caching, capacity, graceful degradation |
+| 6 | **MONITORING** — and maintenance | 5 min | Drift detection, retraining cadence, feedback loops, rollback path |
+
+**The framework is the spine of every answer.** You are not following it linearly under pressure — you are using it as a checklist so that when the interviewer asks "and how do you handle X?" the answer is somewhere in your structure. PDATDM is the order; the round is the dance you do over it.
+
+---
+
+## 3. What each step is really asking
+
+### Step 1 — PROBLEM (define it)
+
+The interviewer is asking: **"Do you know that the metric is the model?"**
+
+The wrong answer: "I'll predict whether the user will click." Too narrow.
+
+The right answer is a layered chain — business goal first, product metric next, ML objective last:
+
+<figure className="m-0 my-6 flex flex-col items-center justify-center">
+  <img
+    src="/diagrams/business-product-ml.svg"
+    alt="Three-stage flow: business goal (retention, watch time, revenue) translates to product metric (CTR, completion rate, session length), which the model is then trained for as an ML objective (binary classification calibrated to CTR, or multi-task ranking with watch time as the primary signal)."
+    className="block h-auto w-full max-w-4xl"
+  />
+</figure>
+
+Then: define the unit. Is "a recommendation" a single video, a feed of N items, or an ordered list? Then: propose the funnel — 1B candidates → 100s (retrieval) → 10s (ranking) → final ordering.
+
+If you don't do this in the first 8 minutes, the rest of your answer is unanchored.
+
+### Step 2 — DATA (pipeline)
+
+The interviewer is asking: **"Do you know that the data is harder than the model?"**
+
+The wrong answer: "I'll use clicks as positive labels and random samples as negatives."
+
+The right answer: clicks are biased (position bias — top results clicked more), implicit negatives matter (impressed-but-not-clicked is a stronger negative than random), labels need de-biasing (inverse propensity weighting or calibration), training-serving skew is the silent killer (the same feature must compute identically online and offline — a feature store solves this), and you split temporally to avoid future leakage.
+
+### Step 3 — ARCHITECTURE (model design)
+
+The interviewer is asking: **"Can you make the system fit in the latency budget?"**
+
+For most large-scale problems, you cannot score every candidate with a deep model at request time. A two-stage funnel — **retrieval** (cheap, recall-oriented, 1B → 100) followed by **ranking** (expensive, precision-oriented, 100 → 10) — is the canonical answer. The retrieval model is usually a two-tower architecture with an ANN index. The ranking model is a deep network with multi-task heads.
+
+If you propose "one big model that scores everything," you are L3.
+
+### Step 4 — TRAINING (and evaluation)
+
+The interviewer is asking: **"Do you know that offline metrics lie?"**
+
+AUC went up. NDCG went up. You shipped it. CTR went down. Why?
+
+Because offline metrics are computed on logged data, which was logged under the old policy, which biases everything. Because the new model recommends novel items the old logs never saw. Because users react differently to recommendations than to the things they organically clicked.
+
+The right answer: offline metrics for sanity, online A/B test for decision, with adequate statistical power, run for at least two weeks to capture novelty wear-off, with guardrail metrics (don't tank retention to win on CTR), with proper position de-biasing in evaluation, with counterfactual logging for off-policy estimation.
+
+### Step 5 — DEPLOYMENT (and serving)
+
+The interviewer is asking: **"Do you understand that the model is 5% of the system?"**
+
+You have a 200ms request budget. The model forward pass is 80ms. Where does the rest go? Feature fetch, ANN query, post-processing, network. How do you keep features consistent online and offline? A feature store. What happens when the ranker times out? Graceful degradation to cached recs. What happens to a hot key (Justin Bieber)? Per-key caching with TTL.
+
+If you don't name a latency budget, you are capped at L4.
+
+### Step 6 — MONITORING (and maintenance)
+
+The interviewer is asking: **"Do you know that ML systems decay?"**
+
+A model deployed today is wrong by next month. The world changes (concept drift). Users change (label drift). Features change (input drift). And — uniquely to ML — your own recommendations change user behavior, which changes the data you train on, which changes your recommendations: a feedback loop.
+
+The right answer: multi-tier retraining (real-time embedding refresh, daily ranker, weekly full pipeline), drift detectors (PSI, KL divergence) that auto-trigger retraining, shadow + canary deployment, automatic rollback on guardrail violations.
+
+---
+
+## 4. What mid-senior (L4) candidates do — and why they cap
+
+A mid-senior candidate at Meta (called L4 in their internal levelling) or a comparable level at any FAANG-class company will:
+
+- Spend too long on the model architecture, not enough on data and serving
+- Pick a single metric without reasoning about its tree
+- Forget to mention calibration
+- Skip the feature store entirely
+- Treat A/B testing as "compare two numbers"
+- Not mention monitoring at all, or mention it as a one-line afterthought
+
+The interviewer marks them as **technically capable but not production-aware**. This is the L4 ceiling. The L4 candidate could implement the model. The L4 candidate cannot ship it.
+
+## 5. What senior (L5) candidates do — and why they promote
+
+A senior candidate at Meta (called L5 internally; equivalent levels at Google L5, Amazon SDE-III, Apple ICT4 — see the rubrics in the MLE Interview track for the cross-walk) will:
+
+- Open with the layered metric tree, unprompted
+- Propose a funnel architecture in the first six minutes
+- Volunteer training-serving skew before the interviewer asks
+- Name a latency budget with concrete numbers
+- Distinguish recall (retrieval) from precision (ranking)
+- Mention calibration, multi-task losses, and online/offline metric divergence
+- Volunteer the existence of feedback loops
+- Name shadow + canary deployment as one connected story
+
+Notice the pattern: **senior candidates volunteer the next layer before being asked.** They are not waiting for the interviewer to drag them through the framework; they are walking through it themselves. The interviewer's job becomes "stress-test the design," not "extract a design."
+
+---
+
+## 6. The single most common failure mode
+
+**Jumping to the model.**
+
+The interviewer says "design YouTube recs." The candidate's first sentence is "I would use a transformer-based ranker with…" — and the round is already in trouble. They have skipped the metric, the unit, the funnel, the data, and gone straight to architecture. Everything they say after this is unanchored.
+
+The fix is muscle memory: when the prompt arrives, your first 90 seconds is **clarification questions**. What is the business goal? What is the product surface? What latency budget? What scale? Only after these answers does the framework start.
+
+---
+
+## 7. How this course rehearses you
+
+The remaining lessons walk through the framework against two real production systems and four case studies. By the time you finish the course you have:
+
+- Reverse-engineered YouTube's recommender system, layer by layer, with the math
+- Reverse-engineered a production RAG system, layer by layer, with the math
+- Applied the framework to ad CTR, fraud detection, ETA prediction, and multimodal search
+- Worked the math for embedding store sizing, latency budgets, A/B test power, and drift detection
+
+When the interviewer hands you a prompt you have never seen — say, "design Spotify's playlist generation" — you do not need to have memorised it. You apply the framework. Step 1 → Step 2 → Step 6. You walk through it the way you walked through the YouTube recsys in this course. That is what muscle memory means.
+
+---
+
+## 8. What's next
+
+In **Lesson 1** you start the YouTube reverse-engineering. We open with Step 1 of the framework — defining the problem — and produce a layered metric tree and a candidate-generation funnel. By the end of Lesson 7, the entire YouTube system is on the page, every layer defended, every number computed.
+
+<div className="not-prose mt-8 flex justify-end">
+  <a href="./01-recsys-define-the-problem" className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white no-underline hover:bg-emerald-500">
+    Lesson 1 — Define the problem →
+  </a>
+</div>

@@ -8,6 +8,7 @@ import type { Props } from '@theme/DocItem/Layout';
 type FrontMatterWithTutor = {
   tutor_topic?: string;
   tutor_concepts?: string[];
+  practice_mode?: boolean;
   [key: string]: unknown;
 };
 
@@ -48,6 +49,20 @@ export default function DocItemLayout({ children }: Props): ReactNode {
   const fm = frontMatter as FrontMatterWithTutor;
   const tutorTopic = fm.tutor_topic;
   const tutorConcepts = fm.tutor_concepts;
+  const practiceMode = !!fm.practice_mode;
+
+  // Toggle a body class so global CSS can strip the doc chrome on practice pages.
+  useEffect(() => {
+    if (!practiceMode) return;
+    document.body.classList.add('practice-mode');
+    return () => { document.body.classList.remove('practice-mode'); };
+  }, [practiceMode]);
+
+  // Practice pages: bypass everything (no tutor, no scroll sentinel, no original wrapper).
+  // The MDX content itself (which is the PracticeProblemPro) handles all rendering.
+  if (practiceMode) {
+    return <div className="practice-page-content">{children}</div>;
+  }
 
   return (
     <OriginalDocItemLayout>

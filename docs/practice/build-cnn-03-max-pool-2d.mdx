@@ -1,0 +1,131 @@
+---
+title: "Build a CNN · 03 · Max Pool 2D"
+description: 2D max pooling forward — downsample by taking the maximum value within each spatial window.
+sidebar_position: 3
+practice_mode: true
+hide_table_of_contents: true
+---
+
+import PracticeProblem from '@site/src/components/viz/PracticeProblemPro';
+
+<PracticeProblem
+  id="build-cnn-03-max-pool-2d"
+  title="Max pooling 2D forward"
+  difficulty="Easy"
+  tags={["numpy", "cnn", "pooling", "build-cnn"]}
+  linkedLessons={[
+    { url: '/courses/ai-for-engineering/computer-vision/intro', title: 'Computer vision intro' },
+  ]}
+  starter={`
+import numpy as np
+
+def max_pool_2d(x, kernel_size, stride):
+    """
+    2D max pooling — applied independently per channel.
+
+    Args:
+        x:           (C, H, W) — input feature map.
+        kernel_size: int — the spatial size of the pooling window.
+        stride:      int — step size between windows.
+
+    Returns:
+        (C, out_H, out_W) where:
+            out_H = (H - kernel_size) // stride + 1
+            out_W = (W - kernel_size) // stride + 1
+    """
+    # YOUR CODE HERE
+    pass
+`}
+  tests={`
+import numpy as np
+
+@__test__("Output shape: (C, out_H, out_W) per the standard formula")
+def t():
+    rng = np.random.default_rng(0)
+    x = rng.standard_normal((3, 8, 8))
+    out = max_pool_2d(x, kernel_size=2, stride=2)
+    assert out is not None, "function returned None"
+    assert out.shape == (3, 4, 4), f"expected (3, 4, 4), got {out.shape}"
+
+@__test__("Diagnostic: 4x4 input with k=2 stride=2 produces correct 2x2 maxes")
+def t():
+    x = np.array([[[1, 2,  3, 4],
+                   [5, 6,  7, 8],
+                   [9, 10, 11, 12],
+                   [13, 14, 15, 16]]], dtype=float)
+    out = max_pool_2d(x, kernel_size=2, stride=2)
+    expected = np.array([[[6, 8], [14, 16]]], dtype=float)
+    assert out.shape == expected.shape
+    assert np.allclose(out, expected), f"got {out}, expected {expected}"
+
+@__test__("Pooling is per-channel — no mixing across the C axis")
+def t():
+    # Two channels with very different values; pooling each independently.
+    x = np.zeros((2, 4, 4))
+    x[0] = np.arange(16).reshape(4, 4)        # 0..15
+    x[1] = -np.arange(16).reshape(4, 4)       # 0..-15 (decreasing)
+    out = max_pool_2d(x, kernel_size=2, stride=2)
+    # Channel 0: max of each 2x2 block = [[5, 7], [13, 15]]
+    assert np.allclose(out[0], [[5, 7], [13, 15]]), f"ch0 wrong: {out[0]}"
+    # Channel 1: top-left max is 0 (the largest of 0,-1,-4,-5).
+    assert out[1, 0, 0] == 0.0, f"ch1[0,0] should be 0, got {out[1, 0, 0]}"
+
+@__test__("Stride > kernel_size: non-overlapping windows skip data correctly")
+def t():
+    # 5x5 input, kernel=2, stride=3 -> only a single 2x2 window starting at (0,0).
+    x = np.arange(25, dtype=float).reshape(1, 5, 5)
+    out = max_pool_2d(x, kernel_size=2, stride=3)
+    # (5 - 2) // 3 + 1 = 2  -> output is (1, 2, 2)
+    assert out.shape == (1, 2, 2), f"shape {out.shape}"
+    # Top-left window: rows 0-1, cols 0-1 -> max(0,1,5,6) = 6.
+    assert out[0, 0, 0] == 6.0, f"expected 6, got {out[0, 0, 0]}"
+    # Bottom-right window: rows 3-4, cols 3-4 -> max(18,19,23,24) = 24.
+    assert out[0, 1, 1] == 24.0, f"expected 24, got {out[0, 1, 1]}"
+
+@__test__("Constant input: output is the same constant everywhere")
+def t():
+    x = np.full((4, 6, 6), 7.5)
+    out = max_pool_2d(x, kernel_size=3, stride=1)
+    assert np.allclose(out, 7.5), f"constant input -> constant output; got {out}"
+
+@__test__("kernel=stride=1 is the identity")
+def t():
+    rng = np.random.default_rng(2)
+    x = rng.standard_normal((2, 5, 5))
+    out = max_pool_2d(x, kernel_size=1, stride=1)
+    assert np.allclose(out, x, atol=1e-12), "k=s=1 should return x unchanged"
+`}
+  solution={`
+import numpy as np
+
+def max_pool_2d(x, kernel_size, stride):
+    C, H, W = x.shape
+    k, s = kernel_size, stride
+    out_H = (H - k) // s + 1
+    out_W = (W - k) // s + 1
+    out = np.zeros((C, out_H, out_W))
+    for c in range(C):
+        for i in range(out_H):
+            for j in range(out_W):
+                out[c, i, j] = x[c, i*s:i*s+k, j*s:j*s+k].max()
+    return out
+`}
+  hints={[
+    "Three nested loops over (C, out_H, out_W). Slice a (k, k) window from x at (i*stride, j*stride) and take its .max().",
+    "Per-channel: max within the spatial window only — no mixing across the channel axis. The pooling output has the same C, just smaller H and W.",
+    "Output shape: (H - kernel_size) // stride + 1. Same formula as conv2d (no padding, no dilation). Build the empty output array, then fill it in.",
+  ]}
+>
+
+Max pooling — the simplest downsampling op in a CNN. For each channel, slide a `k × k` window with step `stride` and take the maximum within. The output is `(C, (H-k)//s + 1, (W-k)//s + 1)`.
+
+Why max specifically? Two reasons it survived the deep-learning era:
+
+1. **Translation invariance.** A small shift in the input that keeps the maximum activation in the same window produces the same output. Useful for "is there a vertical edge anywhere in this region?"-style features.
+2. **Sparse gradients.** During backward, only the position that had the max gets a non-zero gradient. The rest get zero — pooling acts as a routing operation, not a smoothing one.
+
+The classic config is `k = 2, stride = 2` — halves H and W, keeps the strongest activation in each `2 × 2` block. That's what the diagnostic test checks.
+
+`build-cnn-04` will pair this with average pooling. Both are still useful in 2026 CNNs, even after global pooling and learned downsampling have replaced them in most ImageNet-scale architectures.
+
+</PracticeProblem>

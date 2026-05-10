@@ -1,0 +1,326 @@
+---
+hide_title: true
+sidebar_label: '10 · Generation and LLM serving'
+title: 'Lesson 10 — Generation and LLM serving (RAG)'
+description: >-
+  Prompt design as system design. KV cache, continuous batching, paged
+  attention, speculative decoding. Streaming response. Cost math that
+  dominates the operational budget. Fallback strategy under load.
+mvp_status: drafted
+tutor_topic: "LLM serving infrastructure and prompt design for production RAG"
+tutor_concepts: []
+---
+
+<LessonHero
+  number="10"
+  title="Generation and LLM serving (RAG)"
+  subtitle="The retrieved passages are useless without grounded generation. The model is the easy part — the prompt design, the serving stack, the streaming, and the cost are what separate a real RAG system from a demo."
+  course="ML System Design"
+/>
+
+<InterviewerSignal
+  level="L4"
+  message="Says 'use OpenAI's API.' No prompt design beyond 'please answer.' No mention of streaming. No batching. No cost analysis. Treats the LLM as a black box."
+/>
+<InterviewerSignal
+  level="L5"
+  message="Volunteers prompt design as system design — system prompt with grounding instructions, citation tags, refusal patterns. Names KV cache, continuous batching, speculative decoding. Adds streaming for perceived latency. Computes per-request cost live and proposes a fallback strategy under load."
+/>
+
+---
+
+## 1. Where we are in the framework
+
+This is **Step 4 of the 6-step framework** — deploy and serve — applied to the **LLM generation** stage of the RAG funnel. Time-budget: **~8 minutes**.
+
+By the end you should have:
+
+- A **structured system prompt** with grounding instructions, citation tags, and refusal patterns
+- A **decomposed end-to-end latency budget** (retrieval + rerank + prefill + generation + network)
+- A named **serving engine** (vLLM, TGI, Triton, or in-house) with the throughput primitives (KV cache, continuous batching, paged attention, speculative decoding)
+- A **streaming response** plan to mask perceived latency
+- A **per-request cost** computed in real numbers
+- A **fallback strategy** for traffic spikes or quality regressions
+
+This is the lesson where RAG diverges most from recsys. Recsys ranker cost was effectively zero; RAG generation cost is the dominant operational story.
+
+---
+
+## 2. The problem at this layer
+
+Input to this stage: ~5 reranked passages (top-K from Lesson 9) plus the user query plus context (user, session, optional conversation history). Output: a streamed natural-language answer with inline citations into the passage set.
+
+The constraints:
+
+- **End-to-end latency**: 1–3 seconds typical, with **time-to-first-token** as the user-facing metric (not total time)
+- **Faithfulness**: the answer must ground every claim in the passages — see Lesson 8's metric tree
+- **Cost**: ~$0.002 per request, dominated by LLM tokens
+- **Throughput**: at 100K daily active users running ~10 queries/day = ~1M requests/day = ~12 QPS sustained, ~50 QPS peak
+- **Quality under load**: fallback path when the primary model is saturated
+
+The shape of the system is forced by these constraints.
+
+---
+
+<SplitCompare>
+<SplitLeft title="Naive">
+
+- Send passages and query to GPT-4 with a "please answer" prompt
+- No prompt structure, no citation enforcement, no refusal pattern
+- No streaming; user stares at blank screen for 10 seconds
+- No batching; GPU utilisation collapses
+- No fallback path under load
+
+</SplitLeft>
+<SplitRight title="Motivated">
+
+- **Structured prompt**: grounding directive + `[doc-N]` citation tags + refusal pattern
+- **vLLM-class serving**: KV cache + paged attention + continuous batching + speculative decoding
+- **Streaming response** — time-to-first-token is the user-facing latency, not total time
+- **Per-claim citation validator** runs post-generation; failed citations trigger withhold or refusal
+- **Fallback under load**: route cheap queries to a smaller model, cache repeated FAQ-style answers
+
+</SplitRight>
+</SplitCompare>
+
+## 3. The naive solution — and why it breaks
+
+The naive answer:
+
+> "We send the passages and the user query to GPT-4 with a prompt like 'Please answer the user's question using the passages below.' We return whatever it generates."
+
+Five distinct failures.
+
+### 3.1 Underspecified prompt → ungrounded generation
+
+A weak prompt allows the model to **drift away from the passages** and synthesise plausible-sounding content from its parametric memory. Without explicit grounding instructions, citation tags, and a refusal directive, the model treats the passages as **suggestions, not as the source of truth**. Result: fluent answers that are partially or wholly hallucinated, with no way for the user to detect the failure.
+
+### 3.2 No citation enforcement
+
+Asking "please cite your sources" is not enough. The model will produce citation-shaped strings that don't actually map to the passages, or will claim citations for unsourced sentences. Citations have to be **structurally enforced** by the prompt format and validated post-generation.
+
+### 3.3 No streaming → tanked perceived latency
+
+A 500-token answer at 50 tokens/sec takes 10 seconds. Without streaming, the user stares at a blank screen for the full duration. With streaming, they see the first token in ~200ms and the last by ~10s — same total time, dramatically better experience. **Time-to-first-token is the metric users actually feel**, not total latency.
+
+### 3.4 No batching → wasted accelerator capacity
+
+Serving each request independently on a GPU leaves the accelerator idle for most of every forward pass. **Continuous batching** — packing multiple in-flight requests into a single forward pass — improves throughput per GPU by 5–10×. Without it, the cost curve makes RAG uneconomic.
+
+### 3.5 No fallback → cascading failure under load
+
+When the primary model is saturated, requests queue and time out. Production needs a degraded path: smaller model, fewer passages, a cached answer, or an explicit "service degraded" response. Otherwise a single traffic spike takes the system offline.
+
+---
+
+## 4. The motivated solution
+
+### 4.1 The structured system prompt
+
+Prompt design is system design. The production prompt has four sections:
+
+1. **System role and constraints** — "You are a search assistant. Answer using only the passages provided. If they don't support a confident answer, say so explicitly."
+2. **Citation format directive** — "Cite every factual claim with `[doc-N]` referring to the passage labels. Do not include claims that lack a citation."
+3. **The retrieved passages** — formatted with explicit labels: `[doc-1] <passage 1 content> [doc-2] <passage 2 content> ...`
+4. **The user query** — final, after the passages, so the model's last attended tokens are the question
+
+The two non-obvious details:
+
+- **Refusal pattern** — explicitly instructing "if the passages don't support an answer, say so" buys roughly 2x reduction in hallucination rate at the cost of ~5% increase in false refusals on edge queries. Net positive for trust.
+- **Output format** — for structured outputs (JSON-style answers, structured citations), constrain via the model's structured output mode (OpenAI tool-calling, JSON schema, or a local equivalent). This prevents free-form parsing failures.
+
+The L5 candidate names this prompt structure unprompted. The L4 candidate says "good prompt engineering."
+
+### 4.2 LLM serving infrastructure
+
+For self-hosted serving in production, the canonical engines are **vLLM**, **TGI** (HuggingFace Text Generation Inference), or **NVIDIA Triton**. The throughput primitives:
+
+| Primitive | What it does | Effect |
+|---|---|---|
+| **KV cache** | Stores key/value tensors for previously processed tokens so subsequent generation steps don't re-attend to the prompt from scratch | ~10× speedup on the generation stage |
+| **Paged attention** | Manages KV cache in fixed-size blocks like virtual memory pages | Eliminates GPU memory fragmentation; lets continuous batching pack more requests |
+| **Continuous batching** | New requests join the batch on every forward pass, not at request start | ~5–10× throughput gain per GPU |
+| **Speculative decoding** | A small draft model predicts N tokens; the large model verifies in one pass | ~2–3× speedup on generation latency |
+| **Prefill / decode separation** | Prefill (processing input) is compute-bound; decode (generating output) is memory-bound | Separating them across hardware lets each run optimally |
+
+The L5 candidate names at least three of these. The L4 candidate mentions "GPUs."
+
+### 4.3 Streaming response
+
+Streaming the response token-by-token to the user does two things:
+
+- **Cuts perceived latency** — the user sees output starting at ~200ms (the time-to-first-token) instead of waiting for the full ~10s response
+- **Enables progressive validation** — citation tags appear as they are generated, so the UI can render real-time clickable links
+
+Implementation is straightforward (server-sent events or a streaming HTTP body) but the system has to be built around it from the start. Trying to retrofit streaming into a request-response system is much more painful than building it in from day one.
+
+### 4.4 Cost math and the fallback strategy
+
+A typical request uses ~3,000 input tokens (5 passages × 512 + system prompt + query) and ~500 output tokens. At a representative 2026 price of $0.50 per 1M input tokens and $1.50 per 1M output tokens (open-weight model on H100):
+
+$$
+\text{cost} = \frac{3000 \times 0.5}{10^6} + \frac{500 \times 1.5}{10^6} \approx \$0.002 \text{ per request}
+$$
+
+At 1M requests/day (Section 2's volume) that is $2,000/day or $730K/year. **A real budget item.** Compare to recsys ranker cost — fractions of a millisecond per request, effectively zero marginal dollars — and the gap is roughly 100×.
+
+The cost gap forces architectural decisions:
+
+- **Cache common queries** at the response level — repeated FAQ-style queries get the same answer, served from cache
+- **Smaller model for cheap queries** — route obvious queries to a 7B model and complex queries to a 70B model
+- **Prefix caching for repeated system prompts** — KV cache for the system prompt reused across requests, paying the prefill cost once
+
+The fallback under load is the same set of moves used as a controlled degradation: when the primary model's queue depth crosses a threshold, route to the smaller model (with a guardrail metric watching quality drop) or return a cached answer with a "served from cache" badge.
+
+<RAGLatencyBudget />
+
+### 4.5 Putting prompt enforcement and serving together
+
+The full request path:
+
+1. Request arrives with user query + retrieved passages from Lesson 9
+2. System prompt is rendered with passages inserted in `[doc-N]` format
+3. Request joins the continuous-batching engine
+4. Prefix KV cache (if hit) skips the system-prompt portion of prefill
+5. Generation streams tokens to the client through SSE
+6. Post-generation: citation validator checks every `[doc-N]` reference is real and points to a passage
+7. If citation validation fails or refusal pattern triggers: return refusal + log for review
+8. Response cached for repeated-query short-window TTL
+
+<RAGPromptStudio />
+
+---
+
+## 5. Back-of-envelope math
+
+### 5.1 Throughput per GPU with vLLM
+
+Modern open-weight 70B models on a single H100 with vLLM continuous batching produce roughly:
+
+- **Prefill: ~12,000 tokens/sec** (compute-bound on input)
+- **Generation: ~300 tokens/sec per request** (memory-bound), aggregating to ~5,000 tokens/sec across batched requests
+
+For a 3,000-token input + 500-token output request:
+
+$$
+\text{prefill time} \approx \frac{3000}{12{,}000} = 0.25 \text{ s} \quad ; \quad \text{generation time} \approx \frac{500}{300} \approx 1.67 \text{ s}
+$$
+
+That is **1.92 seconds per request** at the model layer. With concurrent requests in the batch, throughput per GPU is ~2-5 concurrent requests for similar request shapes, giving an effective throughput of ~5,000 generation tokens/sec total per GPU.
+
+At 50 QPS peak with 500 output tokens each = 25,000 generation tokens/sec demanded — needs ~5 H100s of generation capacity. Add prefill capacity (less concurrent because prefill is fast) and you are at ~6-8 H100s for the peak. Add fault-tolerance redundancy: ~12 H100s of fleet capacity. This is a real number to put on the whiteboard.
+
+### 5.2 KV cache size per request
+
+For a 70B model with 80 layers, 64 heads of dim 128, fp16 (2 bytes), the KV cache size for one request with 3,500 tokens is:
+
+$$
+\text{layers} \times \text{heads} \times \text{head\_dim} \times \text{tokens} \times 2 \text{ (K+V)} \times 2 \text{ bytes}
+$$
+
+$$
+= 80 \times 64 \times 128 \times 3500 \times 2 \times 2 = 9.2 \text{ GB per request}
+$$
+
+<Stat
+  value="9.2 GB / request"
+  caption="KV cache footprint for a single 70B-class request with 3,500 tokens. At batch size 8 that is ~73 GB — close to a single H100's full memory budget. This is why paged attention is non-negotiable in production LLM serving."
+  source="layers × heads × head_dim × tokens × 2(K+V) × 2 bytes"
+/>
+
+For batch size 8 that is **~73 GB of KV cache** alone. An H100 has 80 GB; the model weights themselves are roughly 140 GB at fp16 (so a 70B requires multi-GPU). The KV cache dominates the GPU memory budget at scale, which is why **paged attention** (efficient memory management) is non-negotiable in production.
+
+### 5.3 Prefix caching gain
+
+If the system prompt is 500 tokens and is identical across all requests, prefix caching reuses the KV cache for those 500 tokens at the start of each request. Savings:
+
+- Prefill cost saved per request: 500 / 12,000 ≈ 42 ms
+- At 1M requests/day, that is ~12 hours of GPU time saved per day
+
+This is a cheap implementation win that any production team should ship in week 1.
+
+---
+
+## 6. What the interviewer is actually grading
+
+By minute 32 of the round (rough end of Step 4 for RAG) the interviewer is checking whether you treat LLM serving as real engineering, not "call OpenAI."
+
+- **Did you describe the system prompt structure?** Citation tags, refusal pattern, passage formatting — name all three.
+- **Did you propose self-hosted serving with vLLM-class infra?** "Use OpenAI's API" is a perfectly valid early-stage choice, but the interview is testing whether you understand the production path.
+- **Did you name KV cache, continuous batching, and at least one of speculative decoding / paged attention?** Three is L5; one is L4.
+- **Did you name streaming as separate from total latency?** Time-to-first-token is the user metric.
+- **Did you compute per-request cost?** $0.002 per request → $730K/year is a memorable number; reaching it live signals practitioner maturity.
+- **Did you propose a fallback under load?** Smaller model, cached answers, response-cache TTL.
+
+Failure modes to avoid:
+
+- **Treating the LLM as a black box.** The model is the easy part; the serving stack is most of the work.
+- **No citation enforcement.** "We trust the model" is not a system; post-generation citation validation is required.
+- **Skipping streaming.** Users perceive a 10s response without streaming as broken; with streaming, as fast.
+- **No cost discussion.** The cost gap vs recsys is the most important architectural fact about RAG.
+
+---
+
+## 7. Quiz
+
+<Quiz
+  lessonId="ai-for-engineering/ml-system-design/rag-generation-and-serving"
+  questions={[
+    {
+      id: "rag-gen-q1",
+      prompt: "A team's RAG system has good retrieval quality but the LLM frequently produces fluent answers that are not supported by the retrieved passages — sometimes inventing facts entirely. Which prompt-level intervention is the strongest single fix?",
+      options: [
+        "Use a larger model.",
+        "Restructure the system prompt to (1) explicitly instruct the model to ground every claim in the passages, (2) require [doc-N] citation tags on every factual claim, and (3) include a refusal directive ('if the passages don't support a confident answer, say so'). Then post-generation, validate that every cited [doc-N] reference points to a real passage. This combination cuts hallucination rate roughly 2× at the cost of a small false-refusal rate.",
+        "Lower the temperature to zero.",
+        "Increase chunk size.",
+      ],
+      correctIndex: 1,
+    },
+    {
+      id: "rag-gen-q2",
+      prompt: "A production RAG service uses an LLM API per request without batching. The team is paying 5× more than a comparable competitor for similar volume. What is the canonical fix?",
+      options: [
+        "Switch to a smaller model.",
+        "Self-host with a vLLM-class engine and turn on continuous batching — by packing multiple in-flight requests into each forward pass, GPU utilisation rises dramatically (~5–10× throughput per accelerator). Add paged attention to manage KV cache memory efficiently and prefix caching for the shared system prompt. The combination typically closes the cost gap without changing the model.",
+        "Cache all responses.",
+        "Reduce input tokens.",
+      ],
+      correctIndex: 1,
+    },
+    {
+      id: "rag-gen-q3",
+      prompt: "Total RAG response time is ~2 seconds and users complain it feels slow. The team can't easily reduce total latency. What's the highest-leverage UX move?",
+      options: [
+        "Show a loading spinner.",
+        "Stream the response token-by-token via server-sent events. This reduces time-to-first-token to ~200-450ms (the prefill + first decode step) instead of waiting for the full response. Total time is unchanged but perceived latency drops dramatically because users see output beginning immediately and can read along as it generates.",
+        "Pre-render likely answers.",
+        "Increase the cross-encoder budget.",
+      ],
+      correctIndex: 1,
+    },
+    {
+      id: "rag-gen-q4",
+      prompt: "A request uses 3,000 input tokens and produces 500 output tokens. At $0.50 per 1M input tokens and $1.50 per 1M output tokens, what is the per-request cost, and what is the consequence at 1M requests/day?",
+      options: [
+        "$0.10 per request, $100K/year.",
+        "$0.002 per request (3000 × 0.5 + 500 × 1.5, all per million). At 1M requests/day that is $2,000/day ≈ $730K/year — a real budget line. The cost is roughly 100× higher than the recsys ranker for a similar volume, which forces architectural decisions like response caching, model routing (small vs large model), and prefix caching for shared system prompts.",
+        "$0.20 per request.",
+        "Negligible.",
+      ],
+      correctIndex: 1,
+    },
+  ]}
+/>
+
+---
+
+## 8. What's next
+
+In **Lesson 11 — RAG evaluation** the focus shifts to how you measure whether this whole system is working. RAG eval is harder than recsys eval — there is no "click" signal, faithfulness has to be measured via passage-level entailment, citation accuracy is its own measurable, and end-to-end answer quality requires LLM-as-judge calibrated to human ratings. We cover component-wise eval, hallucination detection via passage-attribution scoring, and the apparatus needed to actually ship RAG to production responsibly.
+
+<div className="not-prose mt-8 flex justify-end">
+  <a href="./rag-evaluation" className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white no-underline hover:bg-emerald-500">
+    Lesson 11 — RAG evaluation →
+  </a>
+</div>

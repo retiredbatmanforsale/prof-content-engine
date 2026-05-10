@@ -1,0 +1,130 @@
+---
+title: "Greedy Decode"
+description: Autoregressive argmax-loop generation — the simplest decoding strategy and the baseline every other strategy is benchmarked against.
+sidebar_position: 8
+practice_mode: true
+hide_table_of_contents: true
+---
+
+import PracticeProblem from '@site/src/components/viz/PracticeProblemPro';
+
+<PracticeProblem
+  id="greedy-decode"
+  title="Greedy decoding loop"
+  difficulty="Easy"
+  tags={["numpy", "decoding", "autoregressive"]}
+  linkedLessons={[
+    { url: '/courses/ai-for-engineering/build-and-train-your-own-gpt2-model/generation-of-next-tokens', title: 'Generation of next tokens' },
+  ]}
+  starter={`
+import numpy as np
+
+def greedy_decode(predict_fn, prefix, max_new_tokens):
+    """
+    Greedy autoregressive decoding.
+
+    At each step:
+        1. Call predict_fn(current_ids) -> 1-D logits vector of length V.
+        2. Pick the argmax — that's the next token.
+        3. Append it to current_ids.
+        4. Repeat for max_new_tokens steps.
+
+    Args:
+        predict_fn:     callable. predict_fn(ids: list[int]) -> np.ndarray of shape (V,).
+        prefix:         list[int] — the starting token ids (the prompt).
+        max_new_tokens: int — how many new tokens to generate.
+
+    Returns:
+        list[int] — prefix + generated tokens (length len(prefix) + max_new_tokens).
+    """
+    # YOUR CODE HERE
+    pass
+`}
+  tests={`
+import numpy as np
+
+@__test__("Returns prefix + max_new_tokens tokens")
+def t():
+    def predict(ids):
+        return np.array([0.1, 0.5, 0.2, 0.2])
+    out = greedy_decode(predict, prefix=[0, 1], max_new_tokens=3)
+    assert out is not None, "function returned None"
+    assert len(out) == 5, f"expected length 5, got {len(out)}"
+    assert out[:2] == [0, 1], f"prefix not preserved: {out[:2]}"
+
+@__test__("Picks the argmax at each step (constant logits -> repeated token)")
+def t():
+    def predict(ids):
+        # Argmax is always index 2.
+        return np.array([1.0, 2.0, 5.0, 3.0])
+    out = greedy_decode(predict, prefix=[0], max_new_tokens=4)
+    assert out == [0, 2, 2, 2, 2], f"got {out}"
+
+@__test__("predict_fn sees the growing prefix at each call (length increases by 1 per step)")
+def t():
+    seen_lengths = []
+    def predict(ids):
+        seen_lengths.append(len(ids))
+        # Always pick token 0.
+        return np.array([10.0, 1.0, 1.0])
+    greedy_decode(predict, prefix=[5], max_new_tokens=3)
+    # Lengths should be 1, 2, 3 — the prefix grows by one each call.
+    assert seen_lengths == [1, 2, 3], f"prefix lengths seen: {seen_lengths}"
+
+@__test__("Diagnostic: decoder follows a transition table deterministically")
+def t():
+    # Hand-crafted predict_fn: previous token determines next token greedily.
+    # 0 -> 1, 1 -> 2, 2 -> 3, 3 -> 0  (a cycle).
+    def predict(ids):
+        last = ids[-1]
+        next_id = (last + 1) % 4
+        logits = np.zeros(4)
+        logits[next_id] = 10.0
+        return logits
+    out = greedy_decode(predict, prefix=[0], max_new_tokens=6)
+    assert out == [0, 1, 2, 3, 0, 1, 2], f"cycle not followed: {out}"
+
+@__test__("Empty max_new_tokens=0 returns the prefix unchanged")
+def t():
+    def predict(ids):
+        return np.array([1.0, 2.0])
+    out = greedy_decode(predict, prefix=[0, 1, 0], max_new_tokens=0)
+    assert out == [0, 1, 0], f"expected unchanged prefix, got {out}"
+`}
+  solution={`
+import numpy as np
+
+def greedy_decode(predict_fn, prefix, max_new_tokens):
+    ids = list(prefix)  # copy so we don't mutate the caller's list
+    for _ in range(max_new_tokens):
+        logits = predict_fn(ids)
+        next_id = int(np.argmax(logits))
+        ids.append(next_id)
+    return ids
+`}
+  hints={[
+    "Three lines inside a loop: call predict_fn(ids), take np.argmax of the returned logits, append to ids. Repeat max_new_tokens times.",
+    "Copy the prefix (list(prefix)) before appending — otherwise you mutate the caller's list, which is a real-world bug. The 'empty max_new_tokens' test passes either way; the 'predict_fn sees growing prefix' test catches mutation issues indirectly.",
+    "np.argmax returns a numpy int. Cast to python int (int(np.argmax(logits))) before appending so the returned list is plain ints — easier to compare with == in tests.",
+  ]}
+>
+
+Greedy decoding is the simplest autoregressive generation strategy and the baseline every other decoding rule is measured against. Implement the loop.
+
+The pattern is universal across every autoregressive language model:
+
+`while not done:`
+&nbsp;&nbsp;&nbsp;&nbsp;`logits = model(current_ids)`
+&nbsp;&nbsp;&nbsp;&nbsp;`next_id = argmax(logits)`
+&nbsp;&nbsp;&nbsp;&nbsp;`current_ids.append(next_id)`
+
+The pathologies of greedy decoding — repetition cycles, no diversity, dead air on creative tasks — are exactly why temperature, top-k, and top-p exist. But greedy is the right *default* when you want determinism: classifier outputs, code completion, structured-output extraction.
+
+Two subtleties the harness probes for:
+
+1. **The prefix is preserved unchanged in the output.** `out[:len(prefix)] == list(prefix)`. If you mutate the input list, you've broken the contract.
+2. **`predict_fn` is called exactly `max_new_tokens` times**, with the prefix growing by one each call. The "transition table" diagnostic test wires `predict_fn` to follow a 4-cycle, and the output should follow that cycle deterministically.
+
+Cast the argmax to a python `int` before appending — numpy ints can confuse downstream code that expects pure-python types.
+
+</PracticeProblem>
