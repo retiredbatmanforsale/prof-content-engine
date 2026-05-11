@@ -549,7 +549,11 @@ table th, table td {
 
 table th {
   background-color: var(--ifm-color-emphasis-100);
-  font-weight: 600;
+  color: #000;
+  font-weight: 700;
+}
+[data-theme='dark'] table th {
+  color: #fff;
 }
 
 /* Make code blocks scroll horizontally on small screens */
@@ -726,7 +730,9 @@ pre {
   color: #e5e5e5;
 }
 
-/* WRITING & TALKS — flat section separator at bottom of sidebar */
+/* Section header in sidebar — flat divider with uppercase label.
+   Class name is legacy (originally introduced for Writing & Talks); now reused
+   by the Practice section header. Don't remove without checking sidebars.ts. */
 .sidebar-writing-header {
   display: block;
   font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
@@ -747,7 +753,7 @@ pre {
   border-top-color: #262626;
 }
 
-/* Flat article links under Writing & Talks */
+/* Top-level (level-1) sidebar items — applies to any flat doc entries */
 .theme-doc-sidebar-item-link-level-1 > .menu__link {
   font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
   font-size: 0.8rem;
@@ -911,39 +917,31 @@ pre {
 
 /* ───────────────────────── Practice mode ─────────────────────────────────
    Set on <body> when a doc page has `practice_mode: true` in frontmatter.
-   Strips the doc chrome (sidebar, breadcrumbs, TOC, max-width, padding) so
-   the practice IDE component can render edge-to-edge. Light surface to
-   blend with the rest of the site. The navbar stays — same as LeetCode's pattern. */
+
+   Architecture:
+   - DocRoot/Layout (sidebar + main area): kept intact via OriginalDocRootLayout
+     → sidebar shows in its natural Docusaurus position; user navigates between
+        problems with it like any other doc page
+   - DocItem/Layout (article + TOC + breadcrumbs): BYPASSED for practice pages
+     so the workbench renders directly inside DocRoot's main area, edge-to-edge
+   - Footer + pagination + leftover doc chrome below the workbench: hidden */
 
 body.practice-mode {
   background: #ffffff;
 }
 
-body.practice-mode .theme-doc-sidebar-container,
-body.practice-mode .theme-doc-breadcrumbs,
-body.practice-mode .theme-doc-toc-desktop,
-body.practice-mode .theme-doc-toc-mobile,
-body.practice-mode .theme-doc-footer,
-body.practice-mode .pagination-nav,
-body.practice-mode footer.footer {
-  display: none !important;
-}
-
-/* Let the article go edge-to-edge */
-body.practice-mode .container,
-body.practice-mode .row,
-body.practice-mode .col {
-  max-width: none !important;
+/* DocRoot's main area: full-bleed for the workbench (no Docusaurus padding/margin) */
+body.practice-mode main {
   padding: 0 !important;
   margin: 0 !important;
-}
-
-body.practice-mode main,
-body.practice-mode article {
   max-width: none !important;
-  padding: 0 !important;
-  margin: 0 !important;
   width: 100% !important;
+}
+
+/* Hide footer + pagination chrome that would otherwise sit below the workbench */
+body.practice-mode footer.footer,
+body.practice-mode .pagination-nav {
+  display: none !important;
 }
 
 /* The wrapper our DocItem swizzle adds for practice pages */
@@ -952,4 +950,8 @@ body.practice-mode .practice-page-content {
   height: calc(100vh - var(--ifm-navbar-height, 60px));
   overflow: hidden;
   background: #ffffff;
+}
+
+[data-theme='dark'] body.practice-mode .practice-page-content {
+  background: #0f172a;
 }

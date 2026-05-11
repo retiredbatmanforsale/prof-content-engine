@@ -123,6 +123,10 @@ $$
 
 A practical consequence: initialising the forget-gate bias to <strong>1 or 2</strong> (Jozefowicz et al., 2015) biases the network toward remembering at the start of training. Most modern implementations do this by default.
 
+**Try it yourself.** Three preset scenarios change only the forget-gate bias. A strong signal at t=1 followed by silence — watch whether the cell-state highway keeps the memory alive or wipes it:
+
+<LSTMCell />
+
 ---
 
 ## The GRU cell

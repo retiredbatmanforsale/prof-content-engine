@@ -239,6 +239,10 @@ A <strong>feedforward neural network</strong> as discussed in the previous lectu
 
 To handle this, we need architectures that are <strong>designed to process sequences</strong>, capable of learning representations where <strong>current predictions</strong> are functions of both <em>present</em> and <em>past</em> information.
 
+**See the difference live.** A ball moves around a circle. A feedforward predictor that sees only the current point can't tell which way it's headed; a time-aware predictor with hidden state tracks the trajectory:
+
+<TimeAwarePredictor />
+
 This sets the stage for understanding <strong>Recurrent Neural Networks (RNNs)</strong>, <strong>Long Short-Term Memory (LSTM)</strong> networks, and eventually, <strong>Transformers</strong>.
 
 ---

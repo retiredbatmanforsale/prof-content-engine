@@ -1,7 +1,7 @@
 ---
 hide_title: true
-sidebar_label: '7 · Filters & feature maps'
-title: 'Lesson 7 — Filters, Features, and the Power of Convolutions'
+sidebar_label: '6 · Filters & feature maps'
+title: 'Lesson 6 — Filters, Features, and the Power of Convolutions'
 description: >-
   How filters detect edges and shapes, the math of convolution, classic Sobel
   kernels, and what CNNs learn instead of hand-coded matrices.
@@ -17,7 +17,7 @@ tutor_concepts:
 
 import imageXConvolutionLesson7 from './image-x-convolution-lesson7.png';
 
-<LessonHero course="Deep Computer Vision (CNN)" number="7" title="Filters, features, and convolutions" subtitle="The sliding-window operation at the core of every CNN" />
+<LessonHero course="Deep Computer Vision (CNN)" number="6" title="Filters, features, and convolutions" subtitle="The sliding-window operation at the core of every CNN" />
 
 ## The Feature Detection Power of Convolutions
 
@@ -139,10 +139,6 @@ Let:
 
 Then the **convolution** operation at location **(i, j)** is defined as:
 
-$$
-O(i,j) = \sum_{m=0}^{k-1} \sum_{n=0}^{k-1} I(i+m,\, j+n)\, F(m,n)
-$$
-
 <div className="not-prose my-6 flex flex-col items-center gap-4 rounded-xl border-2 border-dashed border-violet-300 bg-violet-50/40 p-5 dark:border-violet-800 dark:bg-violet-950/20">
   <p className="m-0 text-center text-xs font-semibold uppercase tracking-wide text-violet-800 dark:text-violet-300">One output pixel</p>
   <div className="flex flex-wrap items-center justify-center gap-3 text-sm text-slate-700 dark:text-slate-300">
@@ -199,9 +195,6 @@ Let&apos;s examine a few examples:
       )),
     )}
   </div>
-  $$
-  F_{\text{h-Sobel}} = \begin{bmatrix} -1 & -2 & -1 \\ 0 & 0 & 0 \\ 1 & 2 & 1 \end{bmatrix}
-  $$
 </div>
 
 **Vertical edge filter (Sobel):**
@@ -229,9 +222,6 @@ Let&apos;s examine a few examples:
       )),
     )}
   </div>
-  $$
-  F_{\text{v-Sobel}} = \begin{bmatrix} -1 & 0 & 1 \\ -2 & 0 & 2 \\ -1 & 0 & 1 \end{bmatrix}
-  $$
 </div>
 
 These filters **approximate derivatives** — they highlight where **pixel intensity** changes **rapidly**. They are **high-pass filters**, designed to detect **edges**.
@@ -263,14 +253,151 @@ These filters **approximate derivatives** — they highlight where **pixel inten
       )),
     )}
   </div>
-  $$
-  F_{\text{sharpen}} = \begin{bmatrix} 0 & -1 & 0 \\ -1 & 5 & -1 \\ 0 & -1 & 0 \end{bmatrix}
-  $$
 </div>
 
 These **emphasize central pixels** and **subtract neighbors** — enhancing **contrast** and **details**.
 
 These filters are **interpretable** — you can understand their behavior **just by inspecting the matrix**.
+
+---
+
+## Non-linearity: ReLU
+
+After the convolution (and an optional bias), we apply a **non-linearity** — most commonly **ReLU** (Rectified Linear Unit): `ReLU(x) = max(0, x)`.
+
+It's stupidly simple — **negative values get clipped to zero**, positive values pass through unchanged:
+
+<div className="not-prose my-6 flex flex-wrap items-center justify-center gap-4 rounded-xl border-2 border-dashed border-sky-300 bg-sky-50/40 p-5 dark:border-sky-800 dark:bg-sky-950/20">
+  <div className="flex flex-col items-center gap-2">
+    <p className="m-0 text-[11px] font-bold uppercase tracking-wide text-sky-800 dark:text-sky-300">
+      Feature map (raw)
+    </p>
+    <div className="inline-grid grid-cols-4 gap-1 rounded-lg border-2 border-slate-300 bg-white p-2 dark:border-slate-600 dark:bg-slate-800">
+      {[
+        [-2, 3, -1, 0],
+        [4, -3, 2, 1],
+        [-1, 5, -4, 2],
+        [0, -2, 3, -1],
+      ].map((row, ri) =>
+        row.map((v, ci) => (
+          <span
+            key={`relu-pre-${ri}-${ci}`}
+            className={`flex h-9 w-9 items-center justify-center rounded-md font-mono text-xs font-bold ${
+              v < 0
+                ? 'bg-rose-200 text-rose-950 dark:bg-rose-900/60 dark:text-rose-100'
+                : v > 0
+                  ? 'bg-emerald-200 text-emerald-950 dark:bg-emerald-900/60 dark:text-emerald-100'
+                  : 'bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-200'
+            }`}
+          >
+            {v > 0 ? `+${v}` : v}
+          </span>
+        )),
+      )}
+    </div>
+  </div>
+  <span className="text-sm font-bold text-sky-700 dark:text-sky-400">→ ReLU →</span>
+  <div className="flex flex-col items-center gap-2">
+    <p className="m-0 text-[11px] font-bold uppercase tracking-wide text-sky-800 dark:text-sky-300">
+      After ReLU
+    </p>
+    <div className="inline-grid grid-cols-4 gap-1 rounded-lg border-2 border-slate-300 bg-white p-2 dark:border-slate-600 dark:bg-slate-800">
+      {[
+        [0, 3, 0, 0],
+        [4, 0, 2, 1],
+        [0, 5, 0, 2],
+        [0, 0, 3, 0],
+      ].map((row, ri) =>
+        row.map((v, ci) => (
+          <span
+            key={`relu-post-${ri}-${ci}`}
+            className={`flex h-9 w-9 items-center justify-center rounded-md font-mono text-xs font-bold ${
+              v > 0
+                ? 'bg-emerald-200 text-emerald-950 dark:bg-emerald-900/60 dark:text-emerald-100'
+                : 'bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-200'
+            }`}
+          >
+            {v > 0 ? `+${v}` : v}
+          </span>
+        )),
+      )}
+    </div>
+  </div>
+</div>
+
+Why bother? Without a non-linearity, **stacking conv layers would collapse into a single linear transformation** — depth would buy nothing. ReLU also has a clean interpretation: a vertical-edge filter produces **positive** activations where its pattern is present and **negative** activations on the inverse pattern; ReLU keeps the "pattern detected" signal and discards the inverse.
+
+---
+
+## Pooling
+
+A **pooling** layer summarizes a local neighborhood into a single value, **shrinking** the feature map. Two common variants:
+
+- **Max pooling** — take the **maximum** of each window. Preserves the strongest activation.
+- **Average pooling** — take the **mean**. Smooths the response.
+
+The classic choice is **2×2 max pooling with stride 2** — non-overlapping 2×2 windows, **halving both H and W**:
+
+<div className="not-prose my-6 flex flex-wrap items-center justify-center gap-4 rounded-xl border-2 border-dashed border-amber-300 bg-amber-50/40 p-5 dark:border-amber-800 dark:bg-amber-950/20">
+  <div className="flex flex-col items-center gap-2">
+    <p className="m-0 text-[11px] font-bold uppercase tracking-wide text-amber-800 dark:text-amber-300">
+      Feature map (4×4)
+    </p>
+    <div className="inline-grid grid-cols-2 gap-2 rounded-lg border-2 border-slate-300 bg-white p-2 dark:border-slate-600 dark:bg-slate-800">
+      {[
+        {data: [[1, 3], [2, 5]], maxR: 1, maxC: 1},
+        {data: [[2, 1], [0, 1]], maxR: 0, maxC: 0},
+        {data: [[0, 1], [1, 4]], maxR: 1, maxC: 1},
+        {data: [[6, 2], [3, 4]], maxR: 0, maxC: 0},
+      ].map((win, wi) => (
+        <div
+          key={`pool-win-${wi}`}
+          className="inline-grid grid-cols-2 gap-0.5 rounded border-2 border-amber-400 bg-amber-50 p-1 dark:border-amber-600 dark:bg-amber-950/30"
+        >
+          {win.data.map((row, ri) =>
+            row.map((v, ci) => {
+              const isMax = ri === win.maxR && ci === win.maxC;
+              return (
+                <span
+                  key={`pool-win-${wi}-${ri}-${ci}`}
+                  className={`flex h-8 w-8 items-center justify-center rounded font-mono text-xs font-bold ${
+                    isMax
+                      ? 'bg-amber-400 text-amber-950 ring-1 ring-amber-700 dark:bg-amber-600 dark:text-amber-50'
+                      : 'bg-white text-slate-600 dark:bg-slate-800 dark:text-slate-300'
+                  }`}
+                >
+                  {v}
+                </span>
+              );
+            }),
+          )}
+        </div>
+      ))}
+    </div>
+  </div>
+  <span className="text-sm font-bold text-amber-700 dark:text-amber-400">→ 2×2 max pool →</span>
+  <div className="flex flex-col items-center gap-2">
+    <p className="m-0 text-[11px] font-bold uppercase tracking-wide text-amber-800 dark:text-amber-300">
+      Pooled (2×2)
+    </p>
+    <div className="inline-grid grid-cols-2 gap-1 rounded-lg border-2 border-slate-300 bg-white p-2 dark:border-slate-600 dark:bg-slate-800">
+      {[5, 2, 4, 6].map((v, i) => (
+        <span
+          key={`pool-out-${i}`}
+          className="flex h-9 w-9 items-center justify-center rounded-md bg-amber-400 font-mono text-xs font-bold text-amber-950 ring-1 ring-amber-700 dark:bg-amber-600 dark:text-amber-50"
+        >
+          {v}
+        </span>
+      ))}
+    </div>
+  </div>
+</div>
+
+Why pooling helps:
+
+- **Translation tolerance** — a small shift in the input doesn't change the output as long as the strongest activation stays inside the same window.
+- **Cheaper downstream compute** — fewer cells for later layers to process.
+- **Wider effective receptive fields** — neurons deep in the network end up "seeing" larger regions of the original input image.
 
 ---
 
@@ -316,9 +443,9 @@ Let&apos;s consolidate what we&apos;ve covered:
 <div className="not-prose mt-4 overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-700">
   <table className="w-full min-w-[min(100%,640px)] border-collapse text-left text-sm">
     <thead>
-      <tr className="border-b border-slate-200 bg-teal-600 text-white dark:border-slate-600 dark:bg-teal-800">
-        <th className="p-3 font-semibold">Concept</th>
-        <th className="p-3 font-semibold">Explanation</th>
+      <tr className="border-b border-slate-200 bg-slate-100 dark:border-slate-600 dark:bg-slate-800">
+        <th className="p-3 font-bold text-black dark:text-white">Concept</th>
+        <th className="p-3 font-bold text-black dark:text-white">Explanation</th>
       </tr>
     </thead>
     <tbody className="text-slate-700 dark:text-slate-300">
@@ -387,6 +514,6 @@ Let&apos;s consolidate what we&apos;ve covered:
 ---
 
 <div className="not-prose mt-10 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-6 dark:border-slate-700">
-  <a href="./preserving-spatial-structure-cnns" className="text-sm font-medium text-slate-600 no-underline hover:text-teal-700 hover:underline dark:text-slate-400 dark:hover:text-teal-400">← Lesson 6 · Spatial structure & CNNs</a>
-  <a href="./learning-to-see-cnns" className="text-sm font-semibold text-teal-700 no-underline hover:underline dark:text-teal-400">Next: Lesson 8 — Inner workings →</a>
+  <a href="./preserving-spatial-structure-cnns" className="text-sm font-medium text-slate-600 no-underline hover:text-teal-700 hover:underline dark:text-slate-400 dark:hover:text-teal-400">← Lesson 5 · Spatial structure & CNNs</a>
+  <a href="./learning-to-see-cnns" className="text-sm font-semibold text-teal-700 no-underline hover:underline dark:text-teal-400">Next: Lesson 7 — Inner workings →</a>
 </div>

@@ -1,7 +1,7 @@
 ---
 hide_title: true
-sidebar_label: '8 · Learning to see (CNNs)'
-title: 'Lesson 8 — Learning to See: Understanding the Inner Workings of CNNs'
+sidebar_label: '7 · Learning to see (CNNs)'
+title: 'Lesson 7 — Learning to See: Understanding the Inner Workings of CNNs'
 description: >-
   Conv → ReLU → pooling stacks, receptive fields, feature volumes, training
   filters, visualizations, softmax classification, and the full pipeline.
@@ -15,41 +15,20 @@ tutor_concepts:
   - "CNN core operations order"
 ---
 
-import nonLinearityReluLesson8 from './Non-Linearity-with-relu-lesson8.png';
 import MNISTPlayground from '@site/src/components/viz/MNISTPlayground';
 
-<LessonHero course="Deep Computer Vision (CNN)" number="8" title="Learning to see: how CNNs work" subtitle="Inside the network architecture that changed computer vision" />
+<LessonHero course="Deep Computer Vision (CNN)" number="7" title="Learning to see: how CNNs work" subtitle="Inside the network architecture that changed computer vision" />
 
-## From Convolution to CNN: Zooming Out
+## Forward Pass of the CNN
 
-You already know the basic idea:
+The CNN&apos;s forward pass has **two distinct phases**:
 
-<div className="not-prose my-6 grid gap-3 md:grid-cols-2">
-  <div className="rounded-xl border-2 border-teal-300 bg-teal-50/90 p-4 dark:border-teal-800 dark:bg-teal-950/30">
-    <p className="m-0 text-xs font-bold uppercase tracking-wide text-teal-800 dark:text-teal-300">Input</p>
-    <p className="mt-2 mb-0 text-sm text-slate-800 dark:text-slate-200">The <strong>image</strong> is input.</p>
-  </div>
-  <div className="rounded-xl border-2 border-indigo-300 bg-indigo-50/90 p-4 dark:border-indigo-800 dark:bg-indigo-950/30">
-    <p className="m-0 text-xs font-bold uppercase tracking-wide text-indigo-800 dark:text-indigo-300">Convolution</p>
-    <p className="mt-2 mb-0 text-sm text-slate-800 dark:text-slate-200">
-      The <strong>filters</strong> (also called <strong>kernels</strong>) are <em>slid</em> over the image to compute <strong>feature maps</strong> via convolution.
-    </p>
-  </div>
-</div>
+1. A **feature extractor** — stacked **conv blocks** that turn pixels into rich feature maps.
+2. A **classifier head** — **fully-connected (FC / FFN) layers** ending in a **softmax** that turns those features into class probabilities.
 
-The resulting numbers capture the <strong>presence</strong> (or <strong>absence</strong>) of specific patterns (<em>edges</em>, <em>corners</em>, etc.) in the image.
+Without the FC head, you&apos;d have *feature maps* — not class predictions. **Conv blocks alone aren&apos;t a CNN.** The FC layers on the end are what turn extracted features into a usable answer.
 
-But so far, we <strong>assumed</strong> we had those filters. In real CNNs:
-
-<div className="not-prose my-5 rounded-xl border-2 border-dashed border-emerald-400 bg-emerald-50/70 p-4 text-center dark:border-emerald-700 dark:bg-emerald-950/30">
-  <p className="m-0 text-base font-semibold text-emerald-900 dark:text-emerald-200">We <strong>learn</strong> those filters <strong>automatically from data</strong>.</p>
-</div>
-
----
-
-## The Core Components of a CNN
-
-There are <strong>three core operations</strong> you&apos;ll repeatedly see in CNNs:
+There are <strong>three core operations</strong> inside each conv block:
 
 <div className="not-prose my-6 space-y-4">
   <div className="rounded-xl border-2 border-sky-400 bg-gradient-to-br from-sky-50 to-white p-5 shadow-sm dark:border-sky-700 dark:from-sky-950/40 dark:to-slate-900/40">
@@ -74,15 +53,6 @@ There are <strong>three core operations</strong> you&apos;ll repeatedly see in C
       </li>
     </ul>
   </div>
-  <div className="not-prose overflow-hidden rounded-xl border-2 border-amber-300 bg-white shadow-sm dark:border-amber-700 dark:bg-slate-900">
-    <img
-      src={nonLinearityReluLesson8}
-      alt="Illustration of non-linearity with ReLU on feature map values"
-      className="mx-auto block h-auto w-full max-w-2xl object-contain p-2"
-      loading="lazy"
-      decoding="async"
-    />
-  </div>
   <div className="rounded-xl border-2 border-violet-400 bg-gradient-to-br from-violet-50 to-white p-5 shadow-sm dark:border-violet-700 dark:from-violet-950/40 dark:to-slate-900/40">
     <p className="m-0 text-sm font-bold text-violet-900 dark:text-violet-200">(iii) Pooling (Downsampling)</p>
     <ul className="mt-3 mb-0 list-disc space-y-2 pl-5 text-sm text-slate-800 dark:text-slate-200">
@@ -100,7 +70,9 @@ There are <strong>three core operations</strong> you&apos;ll repeatedly see in C
   </div>
 </div>
 
-These steps <strong>repeat across layers</strong>, allowing the network to learn <em>increasingly abstract</em> and <em>complex</em> representations.
+These steps <strong>repeat across layers</strong>, allowing the network to learn <em>increasingly abstract</em> and <em>complex</em> representations. Then the **classifier head** (Flatten → FC → Softmax) turns those features into a class prediction. **Step through every stage** below to watch a toy CNN classify a vertical bar:
+
+<ForwardPassAnimation />
 
 <div className="not-prose my-10 flex flex-col items-center">
   <p className="mb-3 text-center text-xs font-bold uppercase tracking-wide text-slate-600 dark:text-slate-400">Typical CNN architecture</p>
@@ -189,9 +161,9 @@ Stacking all of these maps together gives a <strong>feature volume</strong> (lik
 <div className="not-prose my-6 overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-700">
   <table className="w-full min-w-[min(100%,520px)] border-collapse text-left text-sm">
     <thead>
-      <tr className="border-b border-slate-200 bg-slate-800 text-white dark:border-slate-600 dark:bg-slate-900">
-        <th className="p-3 font-semibold">Stage</th>
-        <th className="p-3 font-semibold">Tensor shape (H × W × depth)</th>
+      <tr className="border-b border-slate-200 bg-slate-100 dark:border-slate-600 dark:bg-slate-800">
+        <th className="p-3 font-bold text-black dark:text-white">Stage</th>
+        <th className="p-3 font-bold text-black dark:text-white">Tensor shape (H × W × depth)</th>
       </tr>
     </thead>
     <tbody className="text-slate-700 dark:text-slate-300">
@@ -223,32 +195,120 @@ The <strong>depth increases</strong>, but the height/width may <strong>decrease 
 
 ## Training: How Filters Are Learned
 
-Filters (i.e., <strong>weights of the convolution kernels</strong>) are learned via <strong>gradient descent</strong>.
+Filters are **not designed** — they are **learned from data** via **gradient descent**. Three steps repeat for every training batch:
 
-**How?**
-
-<div className="not-prose my-6 space-y-0 rounded-xl border-2 border-rose-200 overflow-hidden dark:border-rose-900/40">
-  {[
-    { n: '1', t: 'The network makes a prediction (e.g., "this is a cat").' },
-    { n: '2', t: "If it's wrong, a loss is calculated." },
-    { n: '3', t: 'The error is back-propagated through the network.' },
-    { n: '4', t: 'This updates the filters to reduce future error.' },
-  ].map((step, i) => (
-    <div
-      key={step.n}
-      className={`flex gap-3 border-b border-rose-100 p-4 text-sm text-slate-800 last:border-b-0 dark:border-rose-900/30 dark:text-slate-200 ${
-        i % 2 === 0 ? 'bg-rose-50/50 dark:bg-rose-950/15' : 'bg-white dark:bg-slate-950/30'
-      }`}
-    >
-      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-rose-600 text-xs font-bold text-white">
-        {step.n}
-      </span>
-      <span className="pt-1">{step.t}</span>
+<div className="not-prose my-6 grid gap-3 md:grid-cols-3">
+  <div className="rounded-xl border-2 border-sky-300 bg-sky-50/70 p-4 dark:border-sky-800 dark:bg-sky-950/25">
+    <div className="flex items-center gap-2">
+      <span className="flex h-7 w-7 items-center justify-center rounded-full bg-sky-600 text-xs font-bold text-white">1</span>
+      <p className="m-0 text-sm font-bold text-sky-900 dark:text-sky-200">Forward pass + loss</p>
     </div>
-  ))}
+    <p className="mt-2 mb-0 text-sm text-slate-800 dark:text-slate-200">
+      Push the image through the CNN; compare prediction <span className="font-mono">ŷ</span> to the true label <span className="font-mono">y</span> via a loss <span className="font-mono">L(ŷ, y)</span> (typically <strong>cross-entropy</strong>).
+    </p>
+  </div>
+  <div className="rounded-xl border-2 border-rose-300 bg-rose-50/70 p-4 dark:border-rose-800 dark:bg-rose-950/25">
+    <div className="flex items-center gap-2">
+      <span className="flex h-7 w-7 items-center justify-center rounded-full bg-rose-600 text-xs font-bold text-white">2</span>
+      <p className="m-0 text-sm font-bold text-rose-900 dark:text-rose-200">Backward pass</p>
+    </div>
+    <p className="mt-2 mb-0 text-sm text-slate-800 dark:text-slate-200">
+      Compute <span className="font-mono">∂L/∂w</span> for every weight using the <strong>chain rule</strong> — gradients flow <em>backwards</em> through the same layers used for the forward pass.
+    </p>
+  </div>
+  <div className="rounded-xl border-2 border-emerald-300 bg-emerald-50/70 p-4 dark:border-emerald-800 dark:bg-emerald-950/25">
+    <div className="flex items-center gap-2">
+      <span className="flex h-7 w-7 items-center justify-center rounded-full bg-emerald-600 text-xs font-bold text-white">3</span>
+      <p className="m-0 text-sm font-bold text-emerald-900 dark:text-emerald-200">Update</p>
+    </div>
+    <p className="mt-2 mb-0 text-sm text-slate-800 dark:text-slate-200">
+      Nudge every weight a tiny step against its gradient:{' '}
+      <span className="font-mono font-bold">w ← w − η · ∂L/∂w</span>, where <span className="font-mono">η</span> is the <em>learning rate</em>.
+    </p>
+  </div>
 </div>
 
-So over time, filters <strong>specialize</strong> to detect patterns <em>most useful</em> for distinguishing between the <strong>target classes</strong>.
+**Which loss?** That depends on the task — the rest of the training loop stays the same:
+
+<div className="not-prose my-6 rounded-xl border-2 border-dashed border-slate-300 bg-slate-50/60 p-5 dark:border-slate-700 dark:bg-slate-800/30">
+  <p className="m-0 text-[11px] font-bold uppercase tracking-wide text-slate-600 dark:text-slate-400">
+    Common loss choices
+  </p>
+  <div className="mt-3 grid gap-4 sm:grid-cols-3">
+    <div className="rounded-lg border border-slate-200 bg-white p-3 dark:border-slate-600 dark:bg-slate-900/50">
+      <p className="m-0 text-sm font-bold text-slate-900 dark:text-slate-100">Binary cross-entropy</p>
+      <p className="m-0 mt-1 text-[11px] italic text-slate-600 dark:text-slate-400">2-class (cat vs. dog)</p>
+      <p className="m-0 mt-2 font-mono text-[11px] text-slate-700 dark:text-slate-300">
+        L = −[y · log ŷ + (1−y) · log(1−ŷ)]
+      </p>
+    </div>
+    <div className="rounded-lg border border-slate-200 bg-white p-3 dark:border-slate-600 dark:bg-slate-900/50">
+      <p className="m-0 text-sm font-bold text-slate-900 dark:text-slate-100">Categorical cross-entropy</p>
+      <p className="m-0 mt-1 text-[11px] italic text-slate-600 dark:text-slate-400">K-class with softmax outputs</p>
+      <p className="m-0 mt-2 font-mono text-[11px] text-slate-700 dark:text-slate-300">
+        L = −Σ<sub>k</sub> y<sub>k</sub> · log ŷ<sub>k</sub>
+      </p>
+    </div>
+    <div className="rounded-lg border border-slate-200 bg-white p-3 dark:border-slate-600 dark:bg-slate-900/50">
+      <p className="m-0 text-sm font-bold text-slate-900 dark:text-slate-100">Mean Squared Error</p>
+      <p className="m-0 mt-1 text-[11px] italic text-slate-600 dark:text-slate-400">regression (predict a number)</p>
+      <p className="m-0 mt-2 font-mono text-[11px] text-slate-700 dark:text-slate-300">
+        L = (1/N) · Σ (y − ŷ)<sup>2</sup>
+      </p>
+    </div>
+  </div>
+  <p className="m-0 mt-3 text-[11px] italic text-slate-600 dark:text-slate-400">
+    The loss shapes which gradients flow back; everything downstream — backward pass, weight update — is unchanged.
+  </p>
+</div>
+
+**Gradients travel the same path — in reverse.** The forward pass produces activations layer by layer; the backward pass produces gradients layer by layer, in opposite order:
+
+<div className="not-prose my-6 overflow-x-auto rounded-2xl border-2 border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-800/30">
+  <div className="flex min-w-[640px] flex-col gap-3">
+    <div className="flex items-center gap-2">
+      <span className="w-24 shrink-0 text-right text-[10px] font-bold uppercase tracking-wide text-teal-700 dark:text-teal-300">
+        Forward →
+      </span>
+      <div className="flex flex-1 items-center justify-between gap-1">
+        {['Input', 'Conv', 'ReLU', 'Pool', 'Conv', 'ReLU', 'FC', 'Loss'].map((label, i) => (
+          <div key={`fwd-${i}`} className="flex items-center gap-1">
+            <div className="rounded-md border-2 border-teal-300 bg-teal-50 px-2 py-1 text-[11px] font-semibold text-teal-900 dark:border-teal-700 dark:bg-teal-950/40 dark:text-teal-200">
+              {label}
+            </div>
+            {i < 7 && <span className="text-sm text-teal-500" aria-hidden>→</span>}
+          </div>
+        ))}
+      </div>
+    </div>
+    <div className="flex items-center gap-2">
+      <span className="w-24 shrink-0 text-right text-[10px] font-bold uppercase tracking-wide text-rose-700 dark:text-rose-300">
+        ← Backward
+      </span>
+      <div className="flex flex-1 items-center justify-between gap-1">
+        {['∂L/∂x', '∂L/∂Wᶜ', '∂L/∂ReLU', '∂L/∂Pool', '∂L/∂Wᶜ', '∂L/∂ReLU', '∂L/∂W', 'L'].map((label, i) => (
+          <div key={`bwd-${i}`} className="flex items-center gap-1">
+            <div className="rounded-md border-2 border-rose-300 bg-rose-50 px-2 py-1 font-mono text-[11px] font-semibold text-rose-900 dark:border-rose-700 dark:bg-rose-950/40 dark:text-rose-200">
+              {label}
+            </div>
+            {i < 7 && <span className="text-sm text-rose-500" aria-hidden>←</span>}
+          </div>
+        ))}
+      </div>
+    </div>
+    <p className="m-0 mt-1 text-center text-[11px] italic text-slate-600 dark:text-slate-400">
+      Chain rule: gradient at each layer is computed from the gradient at the layer <em>after</em> it.
+    </p>
+  </div>
+</div>
+
+Repeat this loop **millions of times** across batches of training images. Each pass nudges every filter weight in the direction that lowers the loss. Over time, filters **specialize** to detect patterns most useful for distinguishing the target classes.
+
+### Watch a filter learn from scratch
+
+The animation below runs **real gradient descent in your browser**. A 3×3 kernel starts as random noise. Each step computes the gradient of the loss against a target (a clean vertical-edge response) and applies <span className="font-mono">w ← w − η · ∂L/∂w</span>. No one tells the kernel to look like a Sobel filter — it discovers that shape on its own.
+
+<LearnableFilters />
 
 ---
 
@@ -285,27 +345,25 @@ You&apos;re left with <strong>abstract high-level features</strong>.
 
 <strong>Flatten</strong> them and feed them into a <strong>fully connected (dense) layer</strong>.
 
-The <strong>final layer</strong> uses <strong>Softmax</strong> to produce a <strong>probability distribution</strong> over possible classes.
+The <strong>final layer</strong> uses <strong>Softmax</strong> to produce a <strong>probability distribution</strong> over possible classes:
 
-**Softmax formula:**
-
-$$
-\text{Softmax}(z_i) = \frac{e^{z_i}}{\sum_{j=1}^{K} e^{z_j}}
-$$
-
-<div className="not-prose my-5 rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-600 dark:bg-slate-900/50">
-  <p className="m-0 text-xs font-bold uppercase tracking-wide text-slate-600 dark:text-slate-400">Where</p>
-  <ul className="mt-2 mb-0 list-disc space-y-1 pl-5 text-sm text-slate-800 dark:text-slate-200">
-    <li>
-      <span className="font-mono font-semibold">z<sub>i</sub></span> is the score for class <em>i</em>
-    </li>
-    <li>
-      <span className="font-mono font-semibold">K</span> is the total number of classes
-    </li>
-  </ul>
+<div className="not-prose my-6 flex flex-col items-center gap-2 rounded-xl border-2 border-dashed border-violet-300 bg-violet-50/40 p-5 dark:border-violet-800 dark:bg-violet-950/20">
+  <p className="m-0 text-[11px] font-bold uppercase tracking-wide text-violet-700 dark:text-violet-300">
+    Softmax
+  </p>
+  <p className="m-0 text-center text-lg font-semibold text-slate-900 dark:text-slate-100">
+    Softmax(z<sub>i</sub>) ={' '}
+    <span className="inline-flex flex-col items-center align-middle">
+      <span className="border-b-2 border-slate-700 px-2 dark:border-slate-300">e<sup>z<sub>i</sub></sup></span>
+      <span className="px-2">Σ<sub>j=1</sub><sup>K</sup> e<sup>z<sub>j</sub></sup></span>
+    </span>
+  </p>
+  <p className="m-0 text-xs text-slate-600 dark:text-slate-400">
+    <span className="font-mono">z<sub>i</sub></span> = logit for class <em>i</em> · <span className="font-mono">K</span> = number of classes
+  </p>
 </div>
 
-**This ensures:**
+**Softmax ensures:**
 
 <div className="not-prose my-4 grid gap-3 sm:grid-cols-2">
   <div className="rounded-lg border-2 border-emerald-300 bg-emerald-50/80 p-3 text-center text-sm font-medium text-emerald-900 dark:border-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-200">
@@ -315,37 +373,6 @@ $$
     All outputs <strong>sum to 1</strong> (so they form a valid <em>probability distribution</em>)
   </div>
 </div>
-
----
-
-## Overall Pipeline: CNN for Classification
-
-<div className="not-prose my-8 flex flex-col items-center gap-0">
-  {[
-    { label: 'Input Image', tone: 'from-teal-100 to-teal-50 border-teal-400 dark:from-teal-950/50 dark:to-teal-950/20 dark:border-teal-700' },
-    { label: 'Convolution Layer(s) → ReLU → Pooling', tone: 'from-sky-100 to-sky-50 border-sky-400 dark:from-sky-950/50 dark:to-sky-950/20 dark:border-sky-700' },
-    { label: 'More Conv Layers → ReLU → Pooling', tone: 'from-indigo-100 to-indigo-50 border-indigo-400 dark:from-indigo-950/50 dark:to-indigo-950/20 dark:border-indigo-700' },
-    { label: 'Flatten', tone: 'from-amber-100 to-amber-50 border-amber-400 dark:from-amber-950/50 dark:to-amber-950/20 dark:border-amber-700' },
-    { label: 'Fully Connected Layer', tone: 'from-violet-100 to-violet-50 border-violet-400 dark:from-violet-950/50 dark:to-violet-950/20 dark:border-violet-700' },
-    { label: 'Softmax', tone: 'from-rose-100 to-rose-50 border-rose-400 dark:from-rose-950/50 dark:to-rose-950/20 dark:border-rose-700' },
-    { label: 'Predicted Class Probabilities', tone: 'from-emerald-100 to-emerald-50 border-emerald-400 dark:from-emerald-950/50 dark:to-emerald-950/20 dark:border-emerald-700' },
-  ].map((step, idx) => (
-    <div key={step.label} className="flex w-full max-w-lg flex-col items-center">
-      <div
-        className={`w-full rounded-xl border-2 bg-gradient-to-b px-4 py-3 text-center text-sm font-semibold text-slate-900 shadow-sm dark:text-slate-100 ${step.tone}`}
-      >
-        {step.label}
-      </div>
-      {idx < 6 && (
-        <span className="py-1 text-lg font-bold text-slate-400 dark:text-slate-500" aria-hidden>
-          ↓
-        </span>
-      )}
-    </div>
-  ))}
-</div>
-
-The CNN learns to extract patterns that are <strong>invariant</strong>, <strong>informative</strong>, and <strong>interpretable</strong>, and then uses those to <strong>classify</strong> the input.
 
 ---
 
@@ -396,6 +423,6 @@ A few things worth noticing:
 ---
 
 <div className="not-prose mt-10 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-6 dark:border-slate-700">
-  <a href="./filters-features-convolutions" className="text-sm font-medium text-slate-600 no-underline hover:text-teal-700 hover:underline dark:text-slate-400 dark:hover:text-teal-400">← Lesson 7 · Filters & feature maps</a>
+  <a href="./filters-features-convolutions" className="text-sm font-medium text-slate-600 no-underline hover:text-teal-700 hover:underline dark:text-slate-400 dark:hover:text-teal-400">← Lesson 6 · Filters & feature maps</a>
   <a href="./intro" className="text-sm font-semibold text-teal-700 no-underline hover:underline dark:text-teal-400">Course overview →</a>
 </div>

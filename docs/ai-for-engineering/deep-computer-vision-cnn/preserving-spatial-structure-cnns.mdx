@@ -1,7 +1,7 @@
 ---
 hide_title: true
-sidebar_label: '6 · Spatial structure & CNNs'
-title: 'Lesson 6 — Preserving spatial structure with convolutional neural networks'
+sidebar_label: '5 · Spatial structure & CNNs'
+title: 'Lesson 5 — Preserving spatial structure with convolutional neural networks'
 description: >-
   Why fully connected layers break images, what CNNs preserve instead, and how
   convolution, locality, and weight sharing fit together.
@@ -15,7 +15,7 @@ tutor_concepts:
   - "translation equivariance in convolutions"
 ---
 
-<LessonHero course="Deep Computer Vision (CNN)" number="6" title="Preserving spatial structure" subtitle="How convolutions maintain the 2D layout of an image" />
+<LessonHero course="Deep Computer Vision (CNN)" number="5" title="Preserving spatial structure" subtitle="How convolutions maintain the 2D layout of an image" />
 
 ## The limits of fully connected networks in vision
 
@@ -23,161 +23,15 @@ We have explored **fully connected neural networks** models where **each neuron 
 
 But **images are fundamentally different**.
 
-An image is a **two-dimensional structure** — width and height (and possibly **channels** for color). Every pixel has **SPATIAL meaning**: a pixel next to another shares **more visual relevance** than one on the *opposite side* of the image. **Flattening** this structure into a **one-dimensional vector** *destroys this locality*.
+An image is a **two-dimensional structure** — width and height (and possibly **channels** for color). Every pixel has **SPATIAL meaning**: a pixel next to another shares **more visual relevance** than one on the *opposite side* of the image. **Flattening** this structure into a **one-dimensional vector** *destroys this locality* — and the parameter count explodes (the interactive in [Lesson 4](./feature-detection-hierarchy#deep-learning-as-the-paradigm-shift) lets you watch that happen directly).
 
-<div className="not-prose my-6 grid gap-4 md:grid-cols-2">
-  <div className="rounded-xl border-2 border-slate-200 bg-slate-50 p-4 dark:border-slate-600 dark:bg-slate-900/50">
-    <p className="m-0 text-xs font-bold uppercase tracking-wide text-slate-600 dark:text-slate-400">Where FC layers fit</p>
-    <p className="mt-2 mb-0 text-sm text-slate-800 dark:text-slate-200">
-      Inputs where <strong>ordering</strong> matters but <em>neighbourhood on a grid</em> does not — or 1D signals treated as a vector.
-    </p>
-  </div>
-  <div className="rounded-xl border-2 border-rose-300 bg-rose-50/90 p-4 dark:border-rose-900/45 dark:bg-rose-950/25">
-    <p className="m-0 text-xs font-bold uppercase tracking-wide text-rose-800 dark:text-rose-300">Why images push back</p>
-    <p className="mt-2 mb-0 text-sm text-slate-800 dark:text-slate-200">
-      <strong>2D layout</strong> + <strong>channels</strong> → neighbours carry signal; flattening throws that away.
-    </p>
-  </div>
-</div>
-
-Let&apos;s say we flatten a **100×100** image (grayscale). That&apos;s a vector of size **10,000**. If our hidden layer has **1,000** neurons, we now have **10 million parameters** just between two layers. *Worse*, we&apos;ve lost all of the **rich structure** that defines images — **edges**, **shapes**, **orientation**, and **locality**.
-
-<div className="not-prose my-6 overflow-x-auto rounded-xl border border-amber-200 dark:border-amber-900/40">
-  <table className="w-full min-w-[300px] border-collapse text-sm">
-    <thead>
-      <tr className="border-b border-amber-200 bg-amber-100 font-semibold dark:border-amber-900/50 dark:bg-amber-950/50">
-        <th className="p-3 text-left text-amber-950 dark:text-amber-100">Quantity</th>
-        <th className="p-3 text-left text-amber-950 dark:text-amber-100">Value</th>
-      </tr>
-    </thead>
-    <tbody className="text-slate-800 dark:text-slate-200">
-      <tr className="border-b border-amber-100 dark:border-slate-800">
-        <td className="p-3 font-medium">Input pixels (flattened)</td>
-        <td className="p-3 font-mono text-xs">100 × 100 = <strong>10,000</strong></td>
-      </tr>
-      <tr className="border-b border-amber-100 dark:border-slate-800">
-        <td className="p-3 font-medium">Hidden neurons</td>
-        <td className="p-3 font-mono text-xs"><strong>1,000</strong></td>
-      </tr>
-      <tr className="bg-amber-50/60 dark:bg-amber-950/20">
-        <td className="p-3 font-medium">Weights (this block alone)</td>
-        <td className="p-3 font-mono text-xs">
-          10,000 × 1,000 = <strong className="text-amber-900 dark:text-amber-300">10,000,000</strong>
-        </td>
-      </tr>
-    </tbody>
-  </table>
-</div>
+<FlatteningDestroysMeaning />
 
 ---
 
 ## What we need instead
 
-To model vision tasks effectively, we need a network architecture that:
-
-<div className="not-prose my-6 grid gap-3 sm:grid-cols-2">
-  <div className="rounded-xl border-2 border-teal-300 bg-teal-50/90 p-4 dark:border-teal-800 dark:bg-teal-950/30">
-    <p className="m-0 text-sm font-bold text-teal-900 dark:text-teal-200">Preserves layout</p>
-    <p className="mt-2 mb-0 text-sm text-slate-800 dark:text-slate-200">
-      Preserves the <strong>SPATIAL arrangement</strong> of pixels.
-    </p>
-  </div>
-  <div className="rounded-xl border-2 border-cyan-300 bg-cyan-50/90 p-4 dark:border-cyan-800 dark:bg-cyan-950/30">
-    <p className="m-0 text-sm font-bold text-cyan-900 dark:text-cyan-200">Local connectivity</p>
-    <p className="mt-2 mb-0 text-sm text-slate-800 dark:text-slate-200">
-      Maintains <strong>LOCAL CONNECTIVITY</strong> (pixels that are <em>near</em> each other matter most).
-    </p>
-  </div>
-  <div className="rounded-xl border-2 border-violet-300 bg-violet-50/90 p-4 dark:border-violet-800 dark:bg-violet-950/30">
-    <p className="m-0 text-sm font-bold text-violet-900 dark:text-violet-200">Parameter efficiency</p>
-    <p className="mt-2 mb-0 text-sm text-slate-800 dark:text-slate-200">
-      Is <strong>parameter-efficient</strong>, sharing computations across regions of the image. <em>(downsample parameters)</em>
-    </p>
-  </div>
-  <div className="rounded-xl border-2 border-emerald-300 bg-emerald-50/90 p-4 dark:border-emerald-800 dark:bg-emerald-950/30">
-    <p className="m-0 text-sm font-bold text-emerald-900 dark:text-emerald-200">Hierarchy</p>
-    <p className="mt-2 mb-0 text-sm text-slate-800 dark:text-slate-200">
-      Builds <strong>hierarchical features</strong>, where local patterns form edges, shapes, and entire objects. <em>(deeper hierarchical features)</em>
-    </p>
-  </div>
-</div>
-
-This is the idea behind **Convolutional Neural Networks (CNNs)**.
-
----
-
-## Local connectivity and weight sharing
-
-Instead of connecting **every input pixel** to **every neuron** in the next layer, CNNs use **local receptive fields** (**KERNELS**) in **small patches** of the input image.
-
-Let&apos;s say we use a **filter** (also called a **kernel**) of size **4×4**. This filter is a small set of weights (**just 16 numbers**) that will be applied across the image:
-
-<div className="not-prose my-6 rounded-xl border border-slate-300 bg-gradient-to-br from-slate-50 to-teal-50/40 p-5 dark:border-slate-600 dark:from-slate-900 dark:to-teal-950/20">
-  <p className="m-0 text-center text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-400">Sliding the same 4×4 filter</p>
-  <div className="mt-4 flex flex-col items-center gap-3 text-sm text-slate-800 dark:text-slate-200">
-    <div className="flex flex-wrap items-center justify-center gap-2">
-      <span className="rounded-lg border-2 border-teal-500 bg-white px-3 py-2 font-mono text-xs shadow-sm dark:bg-slate-800">Top-left 4×4 patch</span>
-      <span className="text-teal-600 dark:text-teal-400">→</span>
-      <span className="rounded-lg border-2 border-teal-600 bg-teal-100 px-3 py-2 text-xs font-semibold dark:border-teal-500 dark:bg-teal-950/50">1st output neuron</span>
-    </div>
-    <span className="text-slate-400" aria-hidden>
-      ↓ shift 1 pixel right
-    </span>
-    <div className="flex flex-wrap items-center justify-center gap-2">
-      <span className="rounded-lg border-2 border-teal-500 bg-white px-3 py-2 font-mono text-xs shadow-sm dark:bg-slate-800">Next 4×4 patch</span>
-      <span className="text-teal-600 dark:text-teal-400">→</span>
-      <span className="rounded-lg border-2 border-teal-600 bg-teal-100 px-3 py-2 text-xs font-semibold dark:border-teal-500 dark:bg-teal-950/50">2nd output neuron</span>
-    </div>
-    <p className="mb-0 mt-1 text-center text-xs text-slate-600 dark:text-slate-400">
-      <em>Same weights</em> everywhere — that&apos;s <strong>weight sharing</strong>.
-    </p>
-  </div>
-</div>
-
-The **first output neuron** in the next layer is computed by applying this filter to the **top-left 4×4 patch** of the image.
-
-The **next neuron** is computed by applying the **same filter** to the **next 4×4 patch**, shifted **one pixel** to the right.
-
-This continues **across the entire image**.
-
-This operation is called a **convolution**.
-
----
-
-## Why convolutions work so well
-
-<div className="not-prose my-6 overflow-x-auto rounded-xl border border-indigo-200 dark:border-indigo-900/40">
-  <table className="w-full min-w-[min(100%,720px)] border-collapse text-left text-sm">
-    <thead>
-      <tr className="border-b border-indigo-200 bg-indigo-600 text-white dark:border-indigo-800 dark:bg-indigo-800">
-        <th className="p-3 font-semibold">Property</th>
-        <th className="p-3 font-semibold">What it gives you</th>
-      </tr>
-    </thead>
-    <tbody className="text-slate-700 dark:text-slate-300">
-      <tr className="border-b border-indigo-100 bg-indigo-50/40 dark:border-slate-800 dark:bg-indigo-950/15">
-        <td className="p-3 font-bold text-indigo-900 dark:text-indigo-200">Locality</td>
-        <td className="p-3">
-          Each neuron sees only a <strong>small patch</strong> of the input (<em>local features</em>).
-        </td>
-      </tr>
-      <tr className="border-b border-indigo-100 dark:border-slate-800">
-        <td className="p-3 font-bold text-indigo-900 dark:text-indigo-200">Weight sharing</td>
-        <td className="p-3">
-          The <strong>same filter</strong> is used everywhere in the image, which <strong>drastically reduces parameters</strong>.
-        </td>
-      </tr>
-      <tr className="bg-white dark:bg-slate-950/30">
-        <td className="p-3 font-bold text-indigo-900 dark:text-indigo-200">Translation invariance</td>
-        <td className="p-3">
-          Because the same filter is applied across locations, the network can <strong>detect a pattern regardless of where it occurs</strong>.
-        </td>
-      </tr>
-    </tbody>
-  </table>
-</div>
-
-This is **fundamentally different** from fully connected layers, where **each neuron** has a **separate weight** for **every input pixel**.
+We need an architecture that <span className="rounded bg-rose-100 px-1 py-0.5 dark:bg-rose-950/50"><Term def="Keeps the image as a 2D grid throughout the network instead of flattening it into a 1D vector. Neighbor relationships (left/right/up/down) survive — every output position still corresponds to a region in the input."><strong>preserves spatial layout</strong></Term></span>, has <span className="rounded bg-rose-100 px-1 py-0.5 dark:bg-rose-950/50"><Term def="Each output neuron looks only at a small nearby region of the input (its receptive field), not every pixel. Mirrors how nearby pixels carry the most relevant visual signal."><strong>local connectivity</strong></Term></span>, is parameter-efficient via <span className="rounded bg-rose-100 px-1 py-0.5 dark:bg-rose-950/50"><Term def="The same small set of filter weights is reused at every spatial position. A handful of weights (e.g. 9 for a 3×3 filter) replaces millions of fully-connected weights — drastically reducing the parameter budget."><strong>weight sharing</strong></Term></span>, and naturally <span className="rounded bg-rose-100 px-1 py-0.5 dark:bg-rose-950/50"><Term def="Lower layers detect simple primitives (edges, color blobs); middle layers compose them into parts (eyes, wheels); higher layers assemble whole objects. Each level builds on the one below."><strong>builds hierarchies of features</strong></Term></span>. That's the idea behind **Convolutional Neural Networks (CNNs)**.
 
 ---
 
@@ -225,6 +79,10 @@ Here&apos;s how it works:
     </span>
   </div>
 </div>
+
+Watch the operation play out: a **3×3 kernel** slides across a small image, multiplies element-wise with each patch, sums the result, and writes that single number into the **feature map**. Try different kernels — the same image produces different feature maps depending on what the kernel is tuned to detect.
+
+<ConvolutionAnimation />
 
 <div className="not-prose my-8 flex flex-col items-center">
   <a
@@ -316,37 +174,60 @@ By **stacking multiple filters**, we extract **multiple types of features** — 
 
 ---
 
-## Over multiple layers, CNNs form hierarchies of features
+## Local connectivity and weight sharing
 
-<div className="not-prose my-6 grid gap-3 md:grid-cols-3">
-  <div className="rounded-xl border-2 border-orange-300 bg-orange-50/90 p-4 dark:border-orange-900/50 dark:bg-orange-950/25">
-    <p className="m-0 text-xs font-bold uppercase tracking-wide text-orange-900 dark:text-orange-200">Layer 1</p>
-    <p className="mt-2 mb-0 text-sm text-slate-800 dark:text-slate-200">
-      Local <strong>edge detectors</strong> (like <em>Sobel filters</em>).
-    </p>
-  </div>
-  <div className="rounded-xl border-2 border-fuchsia-300 bg-fuchsia-50/90 p-4 dark:border-fuchsia-900/50 dark:bg-fuchsia-950/25">
-    <p className="m-0 text-xs font-bold uppercase tracking-wide text-fuchsia-900 dark:text-fuchsia-200">Layer 2</p>
-    <p className="mt-2 mb-0 text-sm text-slate-800 dark:text-slate-200">
-      <strong>Motifs</strong> (<em>corners</em>, <em>curves</em>).
-    </p>
-  </div>
-  <div className="rounded-xl border-2 border-lime-300 bg-lime-50/90 p-4 dark:border-lime-900/50 dark:bg-lime-950/25">
-    <p className="m-0 text-xs font-bold uppercase tracking-wide text-lime-900 dark:text-lime-200">Layer 3+</p>
-    <p className="mt-2 mb-0 text-sm text-slate-800 dark:text-slate-200">
-      Parts of objects and entire objects (<em>faces</em>, <em>wheels</em>, etc.).
+Instead of connecting **every input pixel** to **every neuron** in the next layer, CNNs use **local receptive fields** (**KERNELS**) in **small patches** of the input image.
+
+Let&apos;s say we use a small **filter** (also called a **kernel**) of size **3×3**. This filter is a tiny set of weights (**just 9 numbers**) that will be applied across the image:
+
+<div className="not-prose my-6 rounded-xl border border-slate-300 bg-gradient-to-br from-slate-50 to-teal-50/40 p-5 dark:border-slate-600 dark:from-slate-900 dark:to-teal-950/20">
+  <p className="m-0 text-center text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-400">Sliding the same 3×3 filter</p>
+  <div className="mt-4 flex flex-col items-center gap-3 text-sm text-slate-800 dark:text-slate-200">
+    <div className="flex flex-wrap items-center justify-center gap-2">
+      <span className="rounded-lg border-2 border-teal-500 bg-white px-3 py-2 font-mono text-xs shadow-sm dark:bg-slate-800">Top-left 3×3 patch</span>
+      <span className="text-teal-600 dark:text-teal-400">→</span>
+      <span className="rounded-lg border-2 border-teal-600 bg-teal-100 px-3 py-2 text-xs font-semibold dark:border-teal-500 dark:bg-teal-950/50">1st output neuron</span>
+    </div>
+    <span className="text-slate-400" aria-hidden>
+      ↓ shift 1 pixel right
+    </span>
+    <div className="flex flex-wrap items-center justify-center gap-2">
+      <span className="rounded-lg border-2 border-teal-500 bg-white px-3 py-2 font-mono text-xs shadow-sm dark:bg-slate-800">Next 3×3 patch</span>
+      <span className="text-teal-600 dark:text-teal-400">→</span>
+      <span className="rounded-lg border-2 border-teal-600 bg-teal-100 px-3 py-2 text-xs font-semibold dark:border-teal-500 dark:bg-teal-950/50">2nd output neuron</span>
+    </div>
+    <p className="mb-0 mt-1 text-center text-xs text-slate-600 dark:text-slate-400">
+      <em>Same weights</em> everywhere — that&apos;s <strong>weight sharing</strong>.
     </p>
   </div>
 </div>
 
-This aligns **perfectly** with how humans understand vision — as a **composition** of *increasingly complex structures*.
+The **first output neuron** in the next layer is computed by applying this filter to the **top-left 3×3 patch** of the image.
+
+The **next neuron** is computed by applying the **same filter** to the **next 3×3 patch**, shifted **one pixel** to the right.
+
+This continues **across the entire image**, building up the **feature map** one position at a time. Step the kernel below to watch it happen — the same 9 weights are reused at every position:
+
+<WeightSharing />
+
+---
+
+## Why convolutions work so well
+
+**Locality** and **weight sharing** are now familiar from [Lesson 4](./feature-detection-hierarchy). The third property is what makes convolutions especially powerful for images:
+
+:::info[Translation invariance]
+
+Because the **same filter** is applied at every spatial position, the network can **detect a pattern wherever it appears**. A cat-ear detector that fires in the top-left corner of one image will fire on a cat-ear in the bottom-right of another — no retraining needed.
+
+:::
+
+---
 
 :::tip[Voila moments to remember]
 
-- **Flattening** images for fully connected layers **destroys spatial information** and is **inefficient**.
-- **Convolutional layers** maintain **spatial structure** and **reduce parameters** by using **local filters**.
 - A **convolution** is a **filter sliding** across the image, performing **local pattern detection**.
-- **CNNs** exploit properties of images — **locality**, **translation invariance**, and **shared structure** — to build **robust visual models**.
+- **Translation invariance**: the same filter applied at every position means a pattern is detected wherever it appears.
 
 :::
 
@@ -385,6 +266,6 @@ This aligns **perfectly** with how humans understand vision — as a **compositi
 ---
 
 <div className="not-prose mt-10 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-6 dark:border-slate-700">
-  <a href="./learning-features-from-data" className="text-sm font-medium text-slate-600 no-underline hover:text-teal-700 hover:underline dark:text-slate-400 dark:hover:text-teal-400">← Lesson 5 · Learned features from data</a>
-  <a href="./filters-features-convolutions" className="text-sm font-semibold text-teal-700 no-underline hover:underline dark:text-teal-400">Next: Lesson 7 — Filters & features →</a>
+  <a href="./feature-detection-hierarchy" className="text-sm font-medium text-slate-600 no-underline hover:text-teal-700 hover:underline dark:text-slate-400 dark:hover:text-teal-400">← Lesson 4 · Feature hierarchy</a>
+  <a href="./filters-features-convolutions" className="text-sm font-semibold text-teal-700 no-underline hover:underline dark:text-teal-400">Next: Lesson 6 — Filters & features →</a>
 </div>

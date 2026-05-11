@@ -30,9 +30,9 @@ This process may appear intuitive, but building a system that performs it reliab
 <div className="not-prose my-6 overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-700">
   <table className="w-full min-w-[480px] border-collapse text-left text-sm">
     <thead>
-      <tr className="border-b border-slate-200 bg-indigo-600 text-white dark:border-slate-600 dark:bg-indigo-800">
-        <th className="p-3 font-semibold">You want to detect…</th>
-        <th className="p-3 font-semibold">Typical features you might check for</th>
+      <tr className="border-b border-slate-200 bg-slate-100 dark:border-slate-600 dark:bg-slate-800">
+        <th className="p-3 font-bold text-black dark:text-white">You want to detect…</th>
+        <th className="p-3 font-bold text-black dark:text-white">Typical features you might check for</th>
       </tr>
     </thead>
     <tbody className="text-slate-700 dark:text-slate-300">
@@ -96,8 +96,8 @@ A single object class, such as a face, can appear vastly different depending on:
 <div className="not-prose my-4 overflow-x-auto rounded-xl border border-amber-200 dark:border-amber-900/40">
   <table className="w-full min-w-[280px] border-collapse text-sm">
     <thead>
-      <tr className="border-b border-amber-200 bg-amber-100 dark:border-amber-900/50 dark:bg-amber-950/40">
-        <th className="p-3 text-left font-semibold text-amber-950 dark:text-amber-100">
+      <tr className="border-b border-slate-200 bg-slate-100 dark:border-slate-600 dark:bg-slate-800">
+        <th className="p-3 text-left font-bold text-black dark:text-white">
           A single class (e.g. a face) can vary because of…
         </th>
       </tr>
@@ -142,57 +142,189 @@ Most importantly, these **hand-engineered pipelines are brittle**. If the featur
 
 ## Deep learning as the paradigm shift
 
-Deep learning with CNN offers a **different philosophy**. Instead of explicitly defining features, **we learn them from data**. We have built a network, a **magical neural network** that has the capability to **learn the features on the go dynamically** while it is in its training phase. The features that it learns are learned in such a way that those are the **best features for classifying an image**. They are not some random features. The neural network itself decides what kind of features it is going to learn during the training phase, and that is how it **eliminates the need for a subject matter expert** to do feature engineering on images.
+Deep neural networks were a major shift from classical ML because models could now **learn features directly from data** instead of relying on handcrafted image processing pipelines.
 
-Convolutional neural networks (**CNNs**), the backbone of modern computer vision, are structured to **automatically learn hierarchical features** from raw pixels. **Lower layers** learn edges and textures. **Middle layers** capture parts and shapes. **Higher layers** learn object-level abstractions.
+But **fully connected deep networks still struggled with images**:
 
-<div className="not-prose my-6 overflow-x-auto rounded-xl border border-emerald-200 dark:border-emerald-900/40">
-  <table className="w-full min-w-[520px] border-collapse text-sm">
+- they **ignored spatial locality**
+- **parameter count exploded** for large images
+- they did not naturally **exploit image structure**
+
+**Convolutional Neural Networks (CNNs)** solved this by introducing architectures specifically designed for visual data.
+
+:::warning[Why this hurts — feel the cost]
+
+Take a small image: **224 × 224 × 3 = 150,528 pixel values**. Flatten it and feed it to a single fully-connected layer with **1,000 units** — that one layer alone has **150,528,000 ≈ 150 million parameters**. Stack a few more and you're at **billions of weights to look at a single 224-pixel-square image**.
+
+And you've thrown away the fact that the pixel at `(50, 50)` is *adjacent to* `(50, 51)` — the MLP sees them as two unrelated inputs.
+
+:::
+
+<DNNvsCNNExplorer />
+
+<div className="not-prose my-6 overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-700">
+  <table className="w-full min-w-[640px] border-collapse text-left text-sm">
     <thead>
-      <tr className="border-b border-emerald-200 bg-emerald-700 text-white dark:border-emerald-800 dark:bg-emerald-900">
-        <th className="p-3 font-semibold">Layer depth (typical)</th>
-        <th className="p-3 font-semibold">What CNNs often learn</th>
+      <tr className="border-b border-slate-200 bg-slate-100 dark:border-slate-600 dark:bg-slate-800">
+        <th className="p-3 font-bold text-black dark:text-white">Deep Neural Networks (Dense / MLPs)</th>
+        <th className="p-3 font-bold text-black dark:text-white">Convolutional Neural Networks (CNNs)</th>
       </tr>
     </thead>
     <tbody className="text-slate-700 dark:text-slate-300">
-      <tr className="border-b border-emerald-100 bg-emerald-50/50 dark:border-slate-800 dark:bg-emerald-950/15">
-        <td className="p-3 font-medium">Lower</td>
-        <td className="p-3">Edges and textures</td>
+      <tr className="border-b border-slate-100 dark:border-slate-800">
+        <td className="p-3">Learns features directly from pixels</td>
+        <td className="p-3">Learns spatial hierarchies from pixels</td>
       </tr>
-      <tr className="border-b border-emerald-100 dark:border-slate-800">
-        <td className="p-3 font-medium">Middle</td>
-        <td className="p-3">Parts and shapes</td>
+      <tr className="border-b border-slate-100 dark:border-slate-800">
+        <td className="p-3">Fully connected architecture</td>
+        <td className="p-3">Convolution-based architecture</td>
       </tr>
-      <tr className="bg-emerald-50/30 dark:bg-emerald-950/10">
-        <td className="p-3 font-medium">Higher</td>
+      <tr className="border-b border-slate-100 dark:border-slate-800">
+        <td className="p-3">Treats image as a flattened vector</td>
+        <td className="p-3">Preserves 2D spatial structure</td>
+      </tr>
+      <tr className="border-b border-slate-100 dark:border-slate-800">
+        <td className="bg-amber-50/80 p-3 dark:bg-amber-950/30">
+          <span className="mr-2 inline-block font-bold text-amber-700 dark:text-amber-400" aria-label="critical failure">✗</span>
+          <strong>Huge parameter count</strong> for images
+        </td>
+        <td className="p-3">Weight sharing drastically reduces parameters</td>
+      </tr>
+      <tr className="border-b border-slate-100 dark:border-slate-800">
+        <td className="bg-amber-50/80 p-3 dark:bg-amber-950/30">
+          <span className="mr-2 inline-block font-bold text-amber-700 dark:text-amber-400" aria-label="critical failure">✗</span>
+          <strong>Weak inductive bias</strong> for images
+        </td>
+        <td className="p-3">Built specifically for visual patterns</td>
+      </tr>
+      <tr className="border-b border-slate-100 dark:border-slate-800">
+        <td className="bg-amber-50/80 p-3 dark:bg-amber-950/30">
+          <span className="mr-2 inline-block font-bold text-amber-700 dark:text-amber-400" aria-label="critical failure">✗</span>
+          Struggles to capture <strong>locality and translation patterns</strong>
+        </td>
+        <td className="p-3">Learns local receptive fields naturally</td>
+      </tr>
+      <tr className="border-b border-slate-100 dark:border-slate-800">
+        <td className="p-3">Representation learning emerges during training</td>
+        <td className="p-3">Hierarchical feature learning emerges layer-by-layer</td>
+      </tr>
+      <tr className="border-b border-slate-100 dark:border-slate-800">
+        <td className="bg-amber-50/80 p-3 dark:bg-amber-950/30">
+          <span className="mr-2 inline-block font-bold text-amber-700 dark:text-amber-400" aria-label="critical failure">✗</span>
+          <strong>Lower scalability</strong> for high-resolution images
+        </td>
+        <td className="p-3">Efficient and scalable for vision workloads</td>
+      </tr>
+      <tr className="border-b border-slate-100 dark:border-slate-800">
+        <td className="p-3">Dense matrix multiplications dominate computation</td>
+        <td className="p-3">Convolution operations dominate computation</td>
+      </tr>
+      <tr className="border-b border-slate-100 dark:border-slate-800">
+        <td className="p-3">End-to-end learning becomes possible</td>
+        <td className="p-3">End-to-end visual feature extraction becomes practical</td>
+      </tr>
+      <tr className="border-b border-slate-100 dark:border-slate-800">
+        <td className="p-3">Limited robustness to visual variation</td>
+        <td className="p-3">Better practical invariance to translation, scale, texture, brightness</td>
+      </tr>
+      <tr>
+        <td className="p-3">Mostly generic deep learning architecture</td>
+        <td className="p-3">Backbone of modern computer vision</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+---
+
+## Hierarchical feature learning in CNNs
+
+One of the biggest breakthroughs of CNNs was **automatic hierarchical representation learning**.
+
+<div className="not-prose my-6 overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-700">
+  <table className="w-full min-w-[520px] border-collapse text-sm">
+    <thead>
+      <tr className="border-b border-slate-200 bg-slate-100 dark:border-slate-600 dark:bg-slate-800">
+        <th className="p-3 font-bold text-black dark:text-white">CNN layer depth</th>
+        <th className="p-3 font-bold text-black dark:text-white">What CNNs often learn</th>
+      </tr>
+    </thead>
+    <tbody className="text-slate-700 dark:text-slate-300">
+      <tr className="border-b border-slate-100 bg-slate-50/60 dark:border-slate-800 dark:bg-slate-900/40">
+        <td className="p-3 font-medium">Lower layers</td>
+        <td className="p-3">Edges, gradients, textures</td>
+      </tr>
+      <tr className="border-b border-slate-100 dark:border-slate-800">
+        <td className="p-3 font-medium">Middle layers</td>
+        <td className="p-3">Shapes, corners, object parts</td>
+      </tr>
+      <tr className="bg-slate-50/40 dark:bg-slate-900/20">
+        <td className="p-3 font-medium">Higher layers</td>
         <td className="p-3">Object-level abstractions</td>
       </tr>
     </tbody>
   </table>
 </div>
 
-This **automatic feature learning** solves both core problems outlined earlier:
-
-<div className="not-prose my-5 grid gap-3 md:grid-cols-2">
-  <div className="rounded-lg border border-emerald-200 bg-white p-3 dark:border-emerald-900/40 dark:bg-slate-900">
-    <p className="m-0 text-sm font-bold text-emerald-800 dark:text-emerald-300">Hierarchy</p>
-    <p className="mt-1 mb-0 text-sm text-slate-700 dark:text-slate-300">Built into the model architecture through <strong>stacked layers</strong>.</p>
-  </div>
-  <div className="rounded-lg border border-emerald-200 bg-white p-3 dark:border-emerald-900/40 dark:bg-slate-900">
-    <p className="m-0 text-sm font-bold text-emerald-800 dark:text-emerald-300">Invariance (practical)</p>
-    <p className="mt-1 mb-0 text-sm text-slate-700 dark:text-slate-300">Pursued by training on <strong>diverse data</strong> and learning filters that <strong>generalize</strong> across scale, rotation, brightness, and more.</p>
+<div className="not-prose my-6 rounded-xl border border-slate-300 bg-gradient-to-b from-slate-50 to-slate-100 p-5 text-center dark:border-slate-600 dark:from-slate-900 dark:to-slate-950">
+  <p className="m-0 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Depth → abstraction</p>
+  <div className="mt-4 flex flex-col items-center gap-2 text-sm font-medium text-slate-800 dark:text-slate-200">
+    <span className="rounded-lg border-2 border-slate-400 bg-white px-4 py-2 shadow-sm dark:border-slate-500 dark:bg-slate-800">Pixels / local structure</span>
+    <span className="text-teal-600 dark:text-teal-400" aria-hidden>↓ layers</span>
+    <span className="rounded-lg border-2 border-slate-400 bg-white px-4 py-2 shadow-sm dark:border-slate-500 dark:bg-slate-800">Parts &amp; motifs</span>
+    <span className="text-teal-600 dark:text-teal-400" aria-hidden>↓ layers</span>
+    <span className="rounded-lg border-2 border-teal-500 bg-teal-50 px-4 py-2 shadow-sm dark:border-teal-600 dark:bg-teal-950/50">Objects &amp; semantics</span>
   </div>
 </div>
 
-What was previously a **manual, error-prone, and brittle** process is now a **scalable, data-driven, and highly robust** pipeline.
+This hierarchy **emerges automatically during training**. The network itself learns:
 
-:::tip[Voila moment]
+- **which** visual patterns matter
+- **where** they matter
+- **how to combine** them for prediction
 
-**Feature detection** is the bottleneck in classical machine learning for computer vision. **We solved it by using CNNs.**
+…without manually engineered image features like:
 
-**Deep learning with CNN** replaces hand-crafted feature engineering with **automatic representation learning**.
+- <Term def="Scale-Invariant Feature Transform (Lowe, 1999) — detects distinctive keypoints in an image and describes each with a 128-D vector robust to scale and rotation. The workhorse of pre-deep-learning vision for matching and recognition.">SIFT</Term>
+- <Term def="Histogram of Oriented Gradients — splits an image into small cells, counts the direction of intensity changes in each cell, and stitches them into a feature vector. Famous as the pre-CNN standard for pedestrian detection.">HOG</Term>
+- edge detectors
+- handcrafted histograms
 
-:::
+### Why this works: distributed & compositional representations
+
+The power of this approach lies in **two properties** of the representations CNNs learn:
+
+<div className="not-prose my-5 grid gap-4 md:grid-cols-2">
+  <div className="rounded-xl border-2 border-cyan-200 bg-cyan-50/90 p-4 dark:border-cyan-900/50 dark:bg-cyan-950/25">
+    <p className="m-0 text-base font-bold text-cyan-900 dark:text-cyan-200">Distributed</p>
+    <p className="mt-2 mb-0 text-sm text-slate-800 dark:text-slate-200">
+      No <strong>single neuron</strong> defines a concept. Instead, <em>many neurons jointly encode</em> patterns — robustness emerges from redundancy.
+    </p>
+  </div>
+  <div className="rounded-xl border-2 border-amber-200 bg-amber-50/90 p-4 dark:border-amber-900/50 dark:bg-amber-950/25">
+    <p className="m-0 text-base font-bold text-amber-900 dark:text-amber-200">Compositional</p>
+    <p className="mt-2 mb-0 text-sm text-slate-800 dark:text-slate-200">
+      High-level features are <strong>composed of lower-level ones</strong>, learned through <em>successive transformations</em> — small detectors stack into big concepts.
+    </p>
+  </div>
+</div>
+
+---
+
+## The core paradigm shift
+
+<div className="not-prose my-6 grid gap-4 md:grid-cols-2">
+  <div className="rounded-xl border-2 border-amber-200 bg-amber-50/70 p-4 dark:border-amber-900/50 dark:bg-amber-950/25">
+    <p className="m-0 text-sm font-bold uppercase tracking-wide text-amber-900 dark:text-amber-200">Earlier approach</p>
+    <pre className="mt-3 mb-0 overflow-x-auto rounded-lg bg-slate-900 p-3 text-sm leading-relaxed text-slate-100"><code>{`Image → Handcrafted Features → ML Classifier`}</code></pre>
+  </div>
+  <div className="rounded-xl border-2 border-teal-200 bg-teal-50/70 p-4 dark:border-teal-900/50 dark:bg-teal-950/25">
+    <p className="m-0 text-sm font-bold uppercase tracking-wide text-teal-900 dark:text-teal-200">Deep learning + CNN approach</p>
+    <pre className="mt-3 mb-0 overflow-x-auto rounded-lg bg-slate-900 p-3 text-sm leading-relaxed text-slate-100"><code>{`Image → CNN learns features automatically → Prediction`}</code></pre>
+  </div>
+</div>
+
+The feature extractor is **no longer manually programmed by humans**. It is **learned directly from data through optimization**.
 
 ---
 
@@ -230,5 +362,5 @@ What was previously a **manual, error-prone, and brittle** process is now a **sc
 
 <div className="not-prose mt-10 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-6 dark:border-slate-700">
   <a href="./from-pixels-to-perception" className="text-sm font-medium text-slate-600 no-underline hover:text-teal-700 hover:underline dark:text-slate-400 dark:hover:text-teal-400">← Lesson 3 · Pixels to perception</a>
-  <a href="./learning-features-from-data" className="text-sm font-semibold text-teal-700 no-underline hover:underline dark:text-teal-400">Next: Lesson 5 — Learned features →</a>
+  <a href="./preserving-spatial-structure-cnns" className="text-sm font-semibold text-teal-700 no-underline hover:underline dark:text-teal-400">Next: Lesson 5 — Spatial structure & CNNs →</a>
 </div>

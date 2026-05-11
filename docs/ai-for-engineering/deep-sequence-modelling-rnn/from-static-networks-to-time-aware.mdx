@@ -260,6 +260,10 @@ There are <strong>two primary ways</strong> to visualize an RNN:
 
 Both views are <strong>functionally equivalent</strong> but offer different insights. The unrolled view emphasizes <em>temporal flow</em>. The cyclic view emphasizes <em>structural recurrence</em>.
 
+**Step through the recurrence yourself** — toggle between unrolled and cyclic views and watch the hidden state evolve. The same `W_xh`, `W_hh`, and `b_h` are reused at every timestep; that's the recurrence insight made concrete:
+
+<RecurrenceUnroll />
+
 ---
 
 ## Why this matters

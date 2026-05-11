@@ -4,8 +4,7 @@ sidebar_label: '🎯 Interview Readiness'
 title: 'Interview Readiness — Deep Computer Vision (CNN)'
 description: >-
   High-signal computer vision and CNN interview questions across Google, Amazon,
-  Microsoft, Meta, Apple, Netflix, Stripe, Snowflake, and Databricks, organized
-  by theme and difficulty.
+  Microsoft, Meta, Apple, and Databricks, organized by theme and difficulty.
 tutor_topic: "Interview Readiness — Deep Computer Vision (CNN)"
 tutor_concepts:
   - "convolution operation and output spatial dimensions"
@@ -18,7 +17,7 @@ tutor_concepts:
 
 <LessonHero course="Deep Computer Vision (CNN)" title="Interview Readiness" subtitle="High-signal CNN questions for tier-1 ML engineering roles" />
 
-These questions are drawn from the CNN interview research dataset, synthesizing signals from 9 top employers across ML Engineer, Computer Vision Engineer, and Applied Scientist roles.  
+These questions are drawn from the CNN interview research dataset, synthesizing signals from 6 top employers across ML Engineer, Computer Vision Engineer, and Applied Scientist roles.  
 They cover convolution mechanics, residual architectures, training and debugging, and production CV system design.
 
 **How to use this page:** Try answering each question out loud in 3–5 minutes. Then open the answer and evaluate your depth, tradeoff clarity, and production maturity.
@@ -29,9 +28,6 @@ They cover convolution mechanics, residual architectures, training and debugging
   <span className="rounded-full bg-teal-100 px-3 py-1 text-teal-700 dark:bg-teal-900/40 dark:text-teal-300">Microsoft</span>
   <span className="rounded-full bg-blue-100 px-3 py-1 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300">Meta</span>
   <span className="rounded-full bg-zinc-100 px-3 py-1 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">Apple</span>
-  <span className="rounded-full bg-rose-100 px-3 py-1 text-rose-700 dark:bg-rose-900/40 dark:text-rose-300">Netflix</span>
-  <span className="rounded-full bg-violet-100 px-3 py-1 text-violet-700 dark:bg-violet-900/40 dark:text-violet-300">Stripe</span>
-  <span className="rounded-full bg-cyan-100 px-3 py-1 text-cyan-700 dark:bg-cyan-900/40 dark:text-cyan-300">Snowflake</span>
   <span className="rounded-full bg-indigo-100 px-3 py-1 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300">Databricks</span>
   <span className="rounded-full bg-violet-100 px-3 py-1 text-violet-800 dark:bg-violet-900/40 dark:text-violet-300">Fundamentals</span>
   <span className="rounded-full bg-orange-100 px-3 py-1 text-orange-800 dark:bg-orange-900/40 dark:text-orange-300">Training/Debugging</span>
@@ -48,14 +44,14 @@ They cover convolution mechanics, residual architectures, training and debugging
 | 2 | ResNet residual connections: motivation and math | Fundamentals | Fundamentals | Google, Microsoft, Meta |
 | 3 | Max pooling vs average pooling vs strided conv | Fundamentals | Fundamentals | Amazon, Apple, Meta |
 | 4 | Anchor boxes in object detection | Fundamentals | Fundamentals | Google, Meta, Amazon |
-| 5 | Fine-tuning ResNet-50 on 10k medical X-rays | Training/Debugging | Training/Debugging | Meta, Apple, Netflix |
+| 5 | Fine-tuning ResNet-50 on 10k medical X-rays | Training/Debugging | Training/Debugging | Meta, Apple, Microsoft |
 | 6 | Batch normalization: training vs inference | Training/Debugging | Training/Debugging | Google, Meta, Microsoft |
-| 7 | Object detector mAP stuck, low-confidence predictions | Training/Debugging | Training/Debugging | Amazon, Apple, Netflix |
-| 8 | Production distribution shift in a deployed CNN | Training/Debugging | Training/Debugging | Google, Amazon, Netflix |
-| 9 | Design a product image tagging pipeline at scale | System Design | System Design | Amazon, Google, Stripe |
+| 7 | Object detector mAP stuck, low-confidence predictions | Training/Debugging | Training/Debugging | Amazon, Apple, Meta |
+| 8 | Production distribution shift in a deployed CNN | Training/Debugging | Training/Debugging | Google, Amazon, Microsoft |
+| 9 | Design a product image tagging pipeline at scale | System Design | System Design | Amazon, Google |
 | 10 | Design a large-scale visual similarity search system | System Design | System Design | Meta, Apple, Google |
-| 11 | MLOps for a CV model at 100M predictions/day | System Design | System Design | Databricks, Snowflake, Amazon |
-| 12 | Design a real-time video content moderation pipeline | System Design | System Design | Meta, Apple, Netflix |
+| 11 | MLOps for a CV model at 100M predictions/day | System Design | System Design | Databricks, Google, Amazon |
+| 12 | Design a real-time video content moderation pipeline | System Design | System Design | Meta, Apple, Google |
 
 ---
 
@@ -141,7 +137,7 @@ They cover convolution mechanics, residual architectures, training and debugging
 <InterviewQuestion
   number={5}
   difficulty="Training/Debugging"
-  company={["Meta", "Apple", "Netflix"]}
+  company={["Meta", "Apple", "Microsoft"]}
   question="You're fine-tuning a pretrained ImageNet ResNet-50 on a medical imaging dataset of 10k labeled X-rays. Training loss drops fine but validation accuracy plateaus well below expectations. Walk me through your debugging and fine-tuning strategy."
 >
 
@@ -187,7 +183,7 @@ They cover convolution mechanics, residual architectures, training and debugging
 <InterviewQuestion
   number={7}
   difficulty="Training/Debugging"
-  company={["Amazon", "Apple", "Netflix"]}
+  company={["Amazon", "Apple", "Meta"]}
   question="You're training an object detector and mAP is stuck. You notice most predictions are low-confidence and many objects are missed. What are the likely causes and how do you fix them?"
 >
 
@@ -203,7 +199,7 @@ They cover convolution mechanics, residual architectures, training and debugging
 <InterviewQuestion
   number={8}
   difficulty="Training/Debugging"
-  company={["Google", "Amazon", "Netflix"]}
+  company={["Google", "Amazon", "Microsoft"]}
   question="Your deployed CNN classifier achieves 94% accuracy on your test set but quietly degrades on ~8% of production traffic. Users report confident misclassifications on inputs you expect the model to handle. Walk through your distribution shift diagnosis."
 >
 
@@ -226,7 +222,7 @@ They cover convolution mechanics, residual architectures, training and debugging
 <InterviewQuestion
   number={9}
   difficulty="System Design"
-  company={["Amazon", "Google", "Stripe"]}
+  company={["Amazon", "Google"]}
   question="Design a real-time product image classification and attribute tagging system for an e-commerce catalog of 50 million SKUs."
 >
 
@@ -269,7 +265,7 @@ They cover convolution mechanics, residual architectures, training and debugging
 <InterviewQuestion
   number={11}
   difficulty="System Design"
-  company={["Databricks", "Snowflake", "Amazon"]}
+  company={["Databricks", "Google", "Amazon"]}
   question="How would you design the MLOps infrastructure to monitor, retrain, and safely roll out updates to a computer vision model serving 100 million predictions per day?"
 >
 
@@ -294,7 +290,7 @@ They cover convolution mechanics, residual architectures, training and debugging
 <InterviewQuestion
   number={12}
   difficulty="System Design"
-  company={["Meta", "Apple", "Netflix"]}
+  company={["Meta", "Apple", "Google"]}
   question="Design a real-time video content moderation pipeline for a user-generated content platform receiving 500 hours of video per minute."
 >
 

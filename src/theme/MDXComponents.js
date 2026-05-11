@@ -10,6 +10,17 @@ import AttentionHeatmapViz from '@site/src/components/viz/AttentionHeatmapViz';
 import DecisionBoundaryViz from '@site/src/components/viz/DecisionBoundaryViz';
 import NeuralNetForwardViz from '@site/src/components/viz/NeuralNetForwardViz';
 import PythonPlayground from '@site/src/components/viz/PythonPlayground';
+import DNNvsCNNExplorer, {WeightSharing} from '@site/src/components/viz/DNNvsCNNExplorer';
+import ConvolutionAnimation from '@site/src/components/viz/ConvolutionAnimation';
+import ForwardPassAnimation from '@site/src/components/viz/ForwardPassAnimation';
+import LearnableFilters from '@site/src/components/viz/LearnableFilters';
+import RecurrenceUnroll from '@site/src/components/viz/RecurrenceUnroll';
+import RNNForwardPass from '@site/src/components/viz/RNNForwardPass';
+import LSTMCell from '@site/src/components/viz/LSTMCell';
+import BPTTFlow from '@site/src/components/viz/BPTTFlow';
+import TimeAwarePredictor from '@site/src/components/viz/TimeAwarePredictor';
+import TokenToVector from '@site/src/components/viz/TokenToVector';
+import FlatteningDestroysMeaning from '@site/src/components/viz/FlatteningDestroysMeaning';
 import ResidualConnectionFlowViz from '@site/src/components/viz/ResidualConnectionFlow';
 import LossLandscapeViz from '@site/src/components/viz/LossLandscape';
 import ChainRuleViz from '@site/src/components/viz/ChainRuleViz';
@@ -22,6 +33,7 @@ import ExcalidrawScene from '@site/src/components/ExcalidrawScene';
 import PerceptronDiagram from '@site/src/components/ExcalidrawScene/PerceptronDiagram';
 import LessonHero from '@site/src/components/LessonHero';
 import LessonVideo from '@site/src/components/LessonVideo';
+import Term from '@site/src/components/Term';
 import InterviewGuide, {
   Round as InterviewRound,
   EvalCriteria,
@@ -80,6 +92,18 @@ export default {
   DecisionBoundaryViz,
   NeuralNetForwardViz,
   PythonPlayground,
+  DNNvsCNNExplorer,
+  WeightSharing,
+  ConvolutionAnimation,
+  ForwardPassAnimation,
+  LearnableFilters,
+  RecurrenceUnroll,
+  RNNForwardPass,
+  LSTMCell,
+  BPTTFlow,
+  TimeAwarePredictor,
+  TokenToVector,
+  FlatteningDestroysMeaning,
   ResidualConnectionFlowViz,
   LossLandscapeViz,
   ChainRuleViz,
@@ -92,6 +116,7 @@ export default {
   PerceptronDiagram,
   LessonHero,
   LessonVideo,
+  Term,
   InterviewGuide,
   InterviewRound,
   EvalCriteria,

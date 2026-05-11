@@ -177,6 +177,10 @@ $$
 \frac{\partial \mathbf{h}_t}{\partial \mathbf{h}_{t-1}}
 $$
 
+**Watch BPTT play out** — the same 5-cell unrolled RNN from Lesson 3, but now the arrows reverse. The cumulative gradient norm at each timestep shows you exactly how the Jacobian product either collapses to zero or blows up to infinity:
+
+<BPTTFlow />
+
 ---
 
 ## Practical Challenge: Vanishing and Exploding Gradients
