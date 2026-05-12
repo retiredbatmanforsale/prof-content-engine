@@ -6,9 +6,9 @@ practice_mode: true
 hide_table_of_contents: true
 ---
 
-import PracticeProblem from '@site/src/components/viz/PracticeProblemPro';
+import ProblemSolver from '@site/src/components/viz/ProblemSolver';
 
-<PracticeProblem
+<ProblemSolver
   id="build-gpt-07-layer-norm"
   title="LayerNorm forward"
   difficulty="Easy"
@@ -128,4 +128,4 @@ Where `mean` and `var` are computed **along the last axis only** (per token, not
 
 The diagnostic the harness checks: with `gamma=1, beta=0`, each token's output should have mean ≈ 0 and std ≈ 1 along the feature axis, regardless of input scale. If you accidentally normalise across the batch axis (BatchNorm), the test fails immediately on the first `(B, T, C)` input — those statistics would mix tokens across positions and across batch elements.
 
-</PracticeProblem>
+</ProblemSolver>

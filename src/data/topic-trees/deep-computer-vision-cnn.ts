@@ -49,22 +49,13 @@ export const cnnTopicTree: CourseTopicTreeData = {
       lessonPrereqs: ['Lesson 3 — Pixels to perception'],
     },
     {
-      id: 'learning-features-from-data',
-      title: 'Learning features directly from data',
-      oneLiner: 'Backprop through pixels teaches filters what patterns matter',
-      why: 'Hand-crafted features are brittle — they work for one task and fail on another. When you backprop a classification loss all the way to the pixel layer, the network discovers exactly which low-level patterns (edge orientations, color contrasts) minimise that loss for your specific task.',
-      difficulty: 'intermediate',
-      minutes: 13,
-      lessonPrereqs: ['Lesson 4 — Feature hierarchy'],
-    },
-    {
       id: 'preserving-spatial-structure-cnns',
       title: 'Preserving spatial structure with CNNs',
       oneLiner: 'Convolutions respect locality; fully-connected layers discard it',
       why: 'Flattening an image and feeding it to a dense layer destroys spatial relationships — nearby pixels that define an edge are treated no differently from pixels at opposite corners. Convolutions preserve 2D structure through local receptive fields and weight sharing.',
       difficulty: 'intermediate',
       minutes: 14,
-      lessonPrereqs: ['Lesson 5 — Learning features'],
+      lessonPrereqs: ['Lesson 4 — Feature hierarchy'],
     },
     {
       id: 'filters-features-convolutions',
@@ -73,7 +64,7 @@ export const cnnTopicTree: CourseTopicTreeData = {
       why: 'A convolution filter is just a learned detector: multiply-add over a neighbourhood, everywhere. Understanding this operation — stride, padding, depth, weight sharing — is the foundational literacy for every CNN architecture you will ever read about.',
       difficulty: 'intermediate',
       minutes: 14,
-      lessonPrereqs: ['Lesson 6 — Spatial structure'],
+      lessonPrereqs: ['Lesson 5 — Spatial structure'],
     },
     {
       id: 'learning-to-see-cnns',
@@ -82,7 +73,7 @@ export const cnnTopicTree: CourseTopicTreeData = {
       why: 'Modern vision models follow a rhythm: convolution detects patterns, ReLU introduces non-linearity, pooling reduces spatial resolution while keeping the strongest activations. Each layer widens the receptive field and raises the abstraction level.',
       difficulty: 'intermediate',
       minutes: 15,
-      lessonPrereqs: ['Lesson 7 — Convolutions'],
+      lessonPrereqs: ['Lesson 6 — Convolutions'],
     },
   ],
   unlocks: [

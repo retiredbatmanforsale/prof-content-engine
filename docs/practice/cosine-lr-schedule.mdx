@@ -6,9 +6,9 @@ practice_mode: true
 hide_table_of_contents: true
 ---
 
-import PracticeProblem from '@site/src/components/viz/PracticeProblemPro';
+import ProblemSolver from '@site/src/components/viz/ProblemSolver';
 
-<PracticeProblem
+<ProblemSolver
   id="cosine-lr-schedule"
   title="Warmup + cosine decay LR schedule"
   difficulty="Easy"
@@ -123,4 +123,4 @@ Three reasons this schedule is the default:
 2. **Cosine is differentiable at both endpoints.** No restart-shock from `step==warmup` to `step==warmup+1`, no abrupt drop-off at the end. The path is smooth all the way through.
 3. **The flat tail past `max_iters`** lets you train a bit longer than originally planned without an LR cliff.
 
-</PracticeProblem>
+</ProblemSolver>

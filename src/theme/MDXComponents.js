@@ -20,6 +20,7 @@ import LSTMCell from '@site/src/components/viz/LSTMCell';
 import BPTTFlow from '@site/src/components/viz/BPTTFlow';
 import TimeAwarePredictor from '@site/src/components/viz/TimeAwarePredictor';
 import TokenToVector from '@site/src/components/viz/TokenToVector';
+import TokenizerPlayground from '@site/src/components/viz/TokenizerPlayground';
 import FlatteningDestroysMeaning from '@site/src/components/viz/FlatteningDestroysMeaning';
 import ResidualConnectionFlowViz from '@site/src/components/viz/ResidualConnectionFlow';
 import LossLandscapeViz from '@site/src/components/viz/LossLandscape';
@@ -103,6 +104,7 @@ export default {
   BPTTFlow,
   TimeAwarePredictor,
   TokenToVector,
+  TokenizerPlayground,
   FlatteningDestroysMeaning,
   ResidualConnectionFlowViz,
   LossLandscapeViz,

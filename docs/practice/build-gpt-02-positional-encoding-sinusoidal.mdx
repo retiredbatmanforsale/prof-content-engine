@@ -6,9 +6,9 @@ practice_mode: true
 hide_table_of_contents: true
 ---
 
-import PracticeProblem from '@site/src/components/viz/PracticeProblemPro';
+import ProblemSolver from '@site/src/components/viz/ProblemSolver';
 
-<PracticeProblem
+<ProblemSolver
   id="build-gpt-02-positional-encoding-sinusoidal"
   title="Sinusoidal positional encoding"
   difficulty="Easy"
@@ -126,4 +126,4 @@ Two properties that make it work:
 
 The deeper magic that the paper actually relied on: the encoding for position `t + k` is a linear function of the encoding for position `t`. That means attention can learn a "shift by k" operation as a fixed linear transform — the architecture's prior on relative position. We don't test that property explicitly here, but it's why this encoding was chosen over alternatives.
 
-</PracticeProblem>
+</ProblemSolver>

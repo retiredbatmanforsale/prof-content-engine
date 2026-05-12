@@ -6,9 +6,9 @@ practice_mode: true
 hide_table_of_contents: true
 ---
 
-import PracticeProblem from '@site/src/components/viz/PracticeProblemPro';
+import ProblemSolver from '@site/src/components/viz/ProblemSolver';
 
-<PracticeProblem
+<ProblemSolver
   id="adam-step"
   title="Adam optimiser step"
   difficulty="Medium"
@@ -166,4 +166,4 @@ Two subtleties the harness probes:
 1. **Bias correction.** `(1 − β^t)` denominators compensate for `m, v` being initialised to zero. At `t=1`, `m_hat = g` exactly (the `(1-β)*g` numerator and `(1-β)` denominator cancel) — so the very first step is roughly `lr · sign(g)`, regardless of `β`. This is what lets Adam not stall at step 1.
 2. **In-place update of three buffers.** `m` and `v` persist across steps as optimiser state; if you rebind them inside the loop, the optimiser silently resets every step.
 
-</PracticeProblem>
+</ProblemSolver>

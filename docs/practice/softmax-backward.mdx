@@ -6,9 +6,9 @@ practice_mode: true
 hide_table_of_contents: true
 ---
 
-import PracticeProblem from '@site/src/components/viz/PracticeProblemPro';
+import ProblemSolver from '@site/src/components/viz/ProblemSolver';
 
-<PracticeProblem
+<ProblemSolver
   id="softmax-backward"
   title="Softmax backward"
   difficulty="Medium"
@@ -146,4 +146,4 @@ The diagnostic test the harness probes: with `grad_out = constant`, the answer s
 
 This Jacobian-vector form is what every framework uses. PyTorch, JAX, TensorFlow all collapse the softmax Jacobian to this O(V) computation under the hood — the (V, V) matrix never exists.
 
-</PracticeProblem>
+</ProblemSolver>

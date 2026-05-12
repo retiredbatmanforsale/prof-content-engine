@@ -6,9 +6,9 @@ practice_mode: true
 hide_table_of_contents: true
 ---
 
-import PracticeProblem from '@site/src/components/viz/PracticeProblemPro';
+import ProblemSolver from '@site/src/components/viz/ProblemSolver';
 
-<PracticeProblem
+<ProblemSolver
   id="build-gpt-05-multi-head-split-recombine"
   title="Multi-head split + combine"
   difficulty="Medium"
@@ -147,4 +147,4 @@ Why this order matters: a reshape just relabels the bytes — `(B, T, C)` become
 
 Both functions ship as one line each (assertion plus reshape-transpose), but getting the axis order right is the whole point. After this problem, `build-gpt-06-multi-head-attention` calls these to wrap the single-head `attention` from problem 03.
 
-</PracticeProblem>
+</ProblemSolver>

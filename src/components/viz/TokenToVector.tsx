@@ -1,58 +1,35 @@
-import React, {useCallback, useEffect, useMemo, useState} from 'react';
+import React, {useMemo, useState} from 'react';
 
-// ─── Vocabulary (16 words — keeps one-hot legible) ────────────
+// ─── Vocab (hand-picked for cluster demo) ─────────────────────
 const VOCAB: string[] = [
-  '<UNK>', 'the',  'cat', 'dog',
-  'mouse', 'bird', 'sat', 'lay',
-  'ran',   'on',   'in',  'at',
-  'mat',   'big',  'small', 'good',
+  'cat', 'dog', 'mouse', 'bird',
+  'sat', 'lay', 'ran',
+  'on', 'in', 'at',
+  'big', 'small', 'good',
+  'mat', 'the',
 ];
 const VOCAB_SIZE = VOCAB.length;
 const EMBED_DIM = 4;
 
-// Hand-designed 4-D embeddings — semantic axes baked in.
-// Dim 0: animal · Dim 1: action verb · Dim 2: preposition · Dim 3: descriptor
+// Embeddings — semantic axes baked in.
+// Dim 0: animal · Dim 1: action · Dim 2: preposition · Dim 3: descriptor
 const EMBED_TABLE: Record<string, number[]> = {
-  '<UNK>': [0.0,  0.0,  0.0,  0.0],
-  'the':   [0.04, 0.04, 0.04, 0.04],
-  'cat':   [0.92, -0.05, 0.0, 0.1],
-  'dog':   [0.88, -0.05, 0.0, 0.12],
-  'mouse': [0.78, -0.05, 0.0, -0.08],
-  'bird':  [0.75, -0.05, 0.05, 0.05],
-  'sat':   [-0.05, 0.92, 0.0, 0.0],
-  'lay':   [-0.05, 0.88, 0.0, 0.0],
-  'ran':   [-0.05, 0.85, 0.0, 0.25],
-  'on':    [0.0, 0.0, 0.92, 0.0],
-  'in':    [0.0, 0.0, 0.88, 0.0],
-  'at':    [0.0, 0.0, 0.78, 0.0],
-  'mat':   [0.22, 0.0, 0.0, 0.0],
-  'big':   [0.0, 0.0, 0.0, 0.88],
-  'small': [0.0, 0.0, 0.0, -0.88],
-  'good':  [0.0, 0.0, 0.0, 0.92],
+  cat:   [0.92, -0.05, 0.0, 0.1],
+  dog:   [0.88, -0.05, 0.0, 0.12],
+  mouse: [0.78, -0.05, 0.0, -0.08],
+  bird:  [0.75, -0.05, 0.05, 0.05],
+  sat:   [-0.05, 0.92, 0.0, 0.0],
+  lay:   [-0.05, 0.88, 0.0, 0.0],
+  ran:   [-0.05, 0.85, 0.0, 0.25],
+  on:    [0.0, 0.0, 0.92, 0.0],
+  in:    [0.0, 0.0, 0.88, 0.0],
+  at:    [0.0, 0.0, 0.78, 0.0],
+  big:   [0.0, 0.0, 0.0, 0.88],
+  small: [0.0, 0.0, 0.0, -0.88],
+  good:  [0.0, 0.0, 0.0, 0.92],
+  mat:   [0.22, 0.0, 0.0, 0.0],
+  the:   [0.04, 0.04, 0.04, 0.04],
 };
-
-function tokenize(text: string): string[] {
-  return text
-    .toLowerCase()
-    .replace(/[^a-z\s]/g, '')
-    .split(/\s+/)
-    .filter((w) => w.length > 0);
-}
-
-function vocabIndex(token: string): number {
-  const i = VOCAB.indexOf(token);
-  return i === -1 ? 0 : i; // UNK fallback
-}
-
-function oneHot(idx: number): number[] {
-  const v = new Array(VOCAB_SIZE).fill(0);
-  v[idx] = 1;
-  return v;
-}
-
-function embed(token: string): number[] {
-  return EMBED_TABLE[token] ?? EMBED_TABLE['<UNK>'];
-}
 
 function cosine(a: number[], b: number[]): number {
   let dot = 0, na = 0, nb = 0;
@@ -65,7 +42,6 @@ function cosine(a: number[], b: number[]): number {
   return dot / Math.sqrt(na * nb);
 }
 
-// ─── Color helpers ────────────────────────────────────────────
 function signedFill(v: number, maxAbs: number): string {
   if (maxAbs === 0) return '#f1f5f9';
   const t = Math.min(1, Math.abs(v) / maxAbs);
@@ -74,210 +50,148 @@ function signedFill(v: number, maxAbs: number): string {
   return '#f1f5f9';
 }
 
-// ─── Main component ───────────────────────────────────────────
-const DEFAULT_TEXT = 'the cat sat on the mat';
-
 export default function TokenToVector() {
-  const [text, setText] = useState(DEFAULT_TEXT);
-  const [selectedIdx, setSelectedIdx] = useState(1); // index into tokens
+  const [selected, setSelected] = useState('cat');
+  const idx = VOCAB.indexOf(selected);
+  const em = EMBED_TABLE[selected] ?? new Array(EMBED_DIM).fill(0);
 
-  const tokens = useMemo(() => tokenize(text), [text]);
-  const indices = useMemo(() => tokens.map(vocabIndex), [tokens]);
-
-  // Clamp selectedIdx to a valid token (or 0 if no tokens)
-  useEffect(() => {
-    if (tokens.length === 0) {
-      setSelectedIdx(0);
-    } else if (selectedIdx >= tokens.length) {
-      setSelectedIdx(tokens.length - 1);
-    }
-  }, [tokens, selectedIdx]);
-
-  const selectedToken = tokens[selectedIdx] ?? '<UNK>';
-  const selectedVocabIdx = indices[selectedIdx] ?? 0;
-  const oh = useMemo(() => oneHot(selectedVocabIdx), [selectedVocabIdx]);
-  const em = useMemo(() => embed(selectedToken), [selectedToken]);
-
-  // Cosine similarities of selected embedding vs every other vocab embedding
   const similarities = useMemo(() => {
-    return VOCAB.map((w) => ({word: w, sim: cosine(em, embed(w))}))
-      .filter((x) => x.word !== selectedToken && x.word !== '<UNK>')
+    return VOCAB.filter((w) => w !== selected)
+      .map((w) => ({word: w, sim: cosine(em, EMBED_TABLE[w])}))
       .sort((a, b) => b.sim - a.sim)
       .slice(0, 4);
-  }, [em, selectedToken]);
+  }, [em, selected]);
 
   return (
-    <div className="not-prose my-6 overflow-hidden rounded-2xl border-2 border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-900">
+    <div className="not-prose my-6 overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-md dark:border-slate-700 dark:bg-slate-900">
       <div className="border-b border-slate-200 bg-gradient-to-br from-slate-50 to-white px-6 py-5 dark:border-slate-700 dark:from-slate-800 dark:to-slate-900">
         <p className="m-0 text-xl font-bold text-slate-900 dark:text-slate-100">
-          Tokens to vectors
+          From token ID to vector
         </p>
         <p className="m-0 mt-2 max-w-3xl text-sm leading-relaxed text-slate-600 dark:text-slate-400">
-          Type a sentence (try the default or your own — uses a 16-word vocab). Each token becomes an
-          integer, then a vector. Click any token to compare its <strong>one-hot</strong> and{' '}
-          <strong>learned-embedding</strong> representations side by side.
+          After tokenization (above), each token is just an integer. The RNN can't consume an
+          integer — it needs a vector. Compare the two ways to make that integer-to-vector jump:{' '}
+          <strong className="text-rose-700 dark:text-rose-400">one-hot</strong> (sparse,
+          high-dim, no semantics) vs{' '}
+          <strong className="text-teal-700 dark:text-teal-400">learned embedding</strong> (dense,
+          low-dim, semantically clustered).
+        </p>
+        <p className="m-0 mt-2 rounded-lg bg-amber-50 px-3 py-2 text-xs leading-relaxed text-amber-900 dark:bg-amber-950/30 dark:text-amber-200">
+          ⚠️ <strong>Hand-picked 15-word vocab</strong> below. Real tokenizers handle arbitrary
+          text (try the playground above) — but to keep the cosine-similarity demo legible we
+          curate a tiny vocab and hand-tune embeddings into 4 semantic groups.
         </p>
       </div>
 
-      <div className="space-y-4 p-4 md:p-6">
-        {/* Text input */}
+      <div className="space-y-5 p-6">
+        {/* Word picker */}
         <div>
-          <label htmlFor="ttv-input" className="m-0 text-[11px] font-bold uppercase tracking-wide text-slate-700 dark:text-slate-300">
-            Stage 0 · Input text
-          </label>
-          <input
-            id="ttv-input"
-            type="text"
-            value={text}
-            onChange={(e) => setText(e.target.value)}
-            className="mt-1 w-full rounded-lg border-2 border-slate-300 bg-white px-3 py-2 font-mono text-sm text-slate-900 focus:border-teal-500 focus:outline-none dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
-            placeholder="type a sentence…"
-          />
-          <p className="m-0 mt-1 text-[10px] italic text-slate-500 dark:text-slate-400">
-            Vocab: {VOCAB.slice(1).join(', ')} (anything else → &lt;UNK&gt;)
+          <p className="m-0 mb-2 text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">
+            Pick a token
           </p>
-        </div>
-
-        {/* Stage 1: tokens */}
-        <div className="rounded-xl border-2 border-sky-300 bg-sky-50/40 p-4 dark:border-sky-700 dark:bg-sky-950/20">
-          <p className="m-0 text-[11px] font-bold uppercase tracking-wide text-sky-800 dark:text-sky-300">
-            Stage 1 · Tokenize → {tokens.length} tokens
-          </p>
-          <div className="mt-2 flex flex-wrap gap-2">
-            {tokens.length === 0 && (
-              <span className="text-xs italic text-slate-500 dark:text-slate-400">(no tokens)</span>
-            )}
-            {tokens.map((tok, i) => {
-              const isSelected = i === selectedIdx;
-              const isUnk = vocabIndex(tok) === 0;
+          <div className="flex flex-wrap gap-1.5">
+            {VOCAB.map((w) => {
+              const isSelected = w === selected;
               return (
                 <button
-                  key={`${tok}-${i}`}
+                  key={w}
                   type="button"
-                  onClick={() => setSelectedIdx(i)}
-                  className={`rounded-full border-2 px-3 py-1 font-mono text-xs font-semibold transition-all ${
+                  onClick={() => setSelected(w)}
+                  className={`rounded-lg border-2 px-3 py-1.5 font-mono text-sm font-semibold transition-all ${
                     isSelected
-                      ? 'border-teal-500 bg-teal-100 text-teal-900 shadow-md dark:border-teal-500 dark:bg-teal-950/60 dark:text-teal-100'
-                      : isUnk
-                        ? 'border-rose-300 bg-rose-50 text-rose-800 hover:bg-rose-100 dark:border-rose-700 dark:bg-rose-950/30 dark:text-rose-200'
-                        : 'border-sky-300 bg-white text-sky-900 hover:bg-sky-100 dark:border-sky-700 dark:bg-slate-800 dark:text-sky-200 dark:hover:bg-sky-950/40'
+                      ? 'border-teal-500 bg-teal-50 text-teal-900 shadow-sm dark:border-teal-500 dark:bg-teal-950/40 dark:text-teal-100'
+                      : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700'
                   }`}
                 >
-                  {tok}
+                  {w}
                 </button>
               );
             })}
           </div>
+          <p className="m-0 mt-2 text-xs text-slate-500 dark:text-slate-400">
+            Selected: <span className="font-mono font-bold text-slate-900 dark:text-slate-100">{selected}</span>{' '}
+            → vocab index{' '}
+            <span className="rounded bg-violet-100 px-1.5 py-0.5 font-mono text-xs font-bold text-violet-900 dark:bg-violet-900/40 dark:text-violet-200">
+              {idx}
+            </span>
+          </p>
         </div>
 
-        {/* Stage 2: vocab indices */}
-        <div className="rounded-xl border-2 border-violet-300 bg-violet-50/40 p-4 dark:border-violet-700 dark:bg-violet-950/20">
-          <p className="m-0 text-[11px] font-bold uppercase tracking-wide text-violet-800 dark:text-violet-300">
-            Stage 2 · Vocab lookup → integer indices
-          </p>
-          <div className="mt-2 flex flex-wrap items-center gap-2">
-            {tokens.map((tok, i) => {
-              const idx = indices[i];
-              const isSelected = i === selectedIdx;
-              return (
-                <button
-                  key={`vocab-${i}`}
-                  type="button"
-                  onClick={() => setSelectedIdx(i)}
-                  className={`flex items-center gap-1.5 rounded-md border-2 px-2.5 py-1 transition-all ${
-                    isSelected
-                      ? 'border-teal-500 bg-teal-50 shadow-sm dark:border-teal-500 dark:bg-teal-950/40'
-                      : 'border-violet-300 bg-white hover:bg-violet-50 dark:border-violet-700 dark:bg-slate-800 dark:hover:bg-violet-950/30'
-                  }`}
-                >
-                  <span className="font-mono text-xs text-slate-700 dark:text-slate-300">{tok}</span>
-                  <span className="text-slate-300 dark:text-slate-600">→</span>
-                  <span className="rounded bg-violet-200 px-1.5 py-0.5 font-mono text-xs font-bold text-violet-900 dark:bg-violet-900/60 dark:text-violet-200">
-                    {idx}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Stage 3: selected token's vector representations */}
-        <div className="rounded-xl border-2 border-amber-300 bg-amber-50/40 p-4 dark:border-amber-700 dark:bg-amber-950/20">
-          <p className="m-0 text-[11px] font-bold uppercase tracking-wide text-amber-800 dark:text-amber-300">
-            Stage 3 · Vector for{' '}
-            <span className="rounded bg-amber-200 px-1.5 py-0.5 font-mono text-amber-950 dark:bg-amber-900/60 dark:text-amber-100">
-              {selectedToken}
-            </span>{' '}
-            (index {selectedVocabIdx})
-          </p>
-
+        {/* Side-by-side: one-hot vs embedding */}
+        <div className="grid gap-4 md:grid-cols-2">
           {/* One-hot */}
-          <div className="mt-3">
-            <p className="m-0 text-[10px] font-bold uppercase tracking-wide text-slate-600 dark:text-slate-400">
-              One-hot encoding · ℝ<sup>{VOCAB_SIZE}</sup> (sparse)
+          <div className="rounded-2xl border-2 border-rose-200 bg-rose-50/40 p-5 dark:border-rose-800 dark:bg-rose-950/20">
+            <p className="m-0 text-base font-bold text-rose-900 dark:text-rose-200">One-hot encoding</p>
+            <p className="m-0 mt-1 text-xs text-slate-600 dark:text-slate-400">
+              ℝ<sup>{VOCAB_SIZE}</sup> · all zeros, single 1 at index {idx}
             </p>
-            <div className="mt-1 overflow-x-auto">
+            <div className="mt-3 overflow-x-auto">
               <svg
-                viewBox={`0 0 ${VOCAB_SIZE * 24} 32`}
+                viewBox={`0 0 ${VOCAB_SIZE * 28} 38`}
                 width="100%"
-                height="32"
-                style={{maxWidth: VOCAB_SIZE * 24}}
+                height="38"
+                style={{maxWidth: VOCAB_SIZE * 28}}
                 className="block"
               >
-                {oh.map((v, i) => (
-                  <g key={i}>
-                    <rect
-                      x={i * 24}
-                      y={0}
-                      width={24}
-                      height={32}
-                      fill={v === 1 ? '#0d9488' : '#f1f5f9'}
-                      stroke="#94a3b8"
-                      strokeWidth={0.5}
-                    />
-                    <text
-                      x={i * 24 + 12}
-                      y={20}
-                      fontSize={11}
-                      textAnchor="middle"
-                      fill={v === 1 ? '#ffffff' : '#475569'}
-                      fontFamily="ui-monospace, monospace"
-                      fontWeight={v === 1 ? 700 : 400}
-                    >
-                      {v}
-                    </text>
-                  </g>
-                ))}
+                {VOCAB.map((_, i) => {
+                  const isHot = i === idx;
+                  return (
+                    <g key={i}>
+                      <rect
+                        x={i * 28}
+                        y={0}
+                        width={28}
+                        height={38}
+                        fill={isHot ? '#e11d48' : '#f1f5f9'}
+                        stroke="#94a3b8"
+                        strokeWidth={0.5}
+                        rx={3}
+                      />
+                      <text
+                        x={i * 28 + 14}
+                        y={24}
+                        fontSize={12}
+                        textAnchor="middle"
+                        fill={isHot ? '#ffffff' : '#475569'}
+                        fontFamily="ui-monospace, monospace"
+                        fontWeight={isHot ? 700 : 400}
+                      >
+                        {isHot ? 1 : 0}
+                      </text>
+                    </g>
+                  );
+                })}
               </svg>
             </div>
-            <p className="m-0 mt-1 text-[10px] italic text-slate-500 dark:text-slate-400">
-              {VOCAB_SIZE - 1} zeros, one 1 at index {selectedVocabIdx}. Scales to{' '}
-              <strong>|V|</strong> dimensions per token — wasteful for any realistic vocabulary.
+            <p className="m-0 mt-3 text-xs italic text-slate-600 dark:text-slate-400">
+              Scales to <strong>|V|</strong> per token. No semantic relationship between any two tokens.
             </p>
           </div>
 
           {/* Embedding */}
-          <div className="mt-4">
-            <p className="m-0 text-[10px] font-bold uppercase tracking-wide text-slate-600 dark:text-slate-400">
-              Learned embedding · ℝ<sup>{EMBED_DIM}</sup> (dense)
+          <div className="rounded-2xl border-2 border-teal-200 bg-teal-50/40 p-5 dark:border-teal-800 dark:bg-teal-950/20">
+            <p className="m-0 text-base font-bold text-teal-900 dark:text-teal-200">Learned embedding</p>
+            <p className="m-0 mt-1 text-xs text-slate-600 dark:text-slate-400">
+              ℝ<sup>{EMBED_DIM}</sup> · dense values · E[{idx}]
             </p>
-            <div className="mt-1 flex items-center gap-2">
-              <svg viewBox={`0 0 ${EMBED_DIM * 56} 56`} width={EMBED_DIM * 56} height={56} className="block">
+            <div className="mt-3 flex justify-center">
+              <svg viewBox={`0 0 ${EMBED_DIM * 64} 72`} width={EMBED_DIM * 64} height={72} className="block">
                 {em.map((v, i) => (
                   <g key={i}>
                     <rect
-                      x={i * 56}
+                      x={i * 64}
                       y={0}
-                      width={56}
-                      height={56}
+                      width={64}
+                      height={64}
                       fill={signedFill(v, 1)}
                       stroke="#94a3b8"
                       strokeWidth={1}
+                      rx={5}
                     />
                     <text
-                      x={i * 56 + 28}
-                      y={32}
-                      fontSize={14}
+                      x={i * 64 + 32}
+                      y={38}
+                      fontSize={16}
                       textAnchor="middle"
                       fill="#0f172a"
                       fontFamily="ui-monospace, monospace"
@@ -286,9 +200,9 @@ export default function TokenToVector() {
                       {v.toFixed(2)}
                     </text>
                     <text
-                      x={i * 56 + 28}
-                      y={48}
-                      fontSize={9}
+                      x={i * 64 + 32}
+                      y={55}
+                      fontSize={10}
                       textAnchor="middle"
                       fill="#64748b"
                       fontFamily="ui-monospace, monospace"
@@ -299,59 +213,57 @@ export default function TokenToVector() {
                 ))}
               </svg>
             </div>
-            <p className="m-0 mt-1 text-[10px] italic text-slate-500 dark:text-slate-400">
-              Lookup{' '}
-              <span className="font-mono">E[{selectedVocabIdx}]</span>{' '}
-              in an embedding matrix{' '}
-              <span className="font-mono">E ∈ ℝ<sup>|V|×d</sup></span>. Here d = {EMBED_DIM} ≪ |V| = {VOCAB_SIZE}.
+            <p className="m-0 mt-3 text-xs italic text-slate-600 dark:text-slate-400">
+              Stays <strong>d ≪ |V|</strong> regardless of vocabulary size. Encodes meaning along each dim.
             </p>
           </div>
+        </div>
 
-          {/* Similar embeddings */}
-          {similarities.length > 0 && (
-            <div className="mt-4 border-t border-amber-200 pt-3 dark:border-amber-800/50">
-              <p className="m-0 text-[10px] font-bold uppercase tracking-wide text-slate-600 dark:text-slate-400">
-                Nearest neighbours by cosine similarity (because embeddings encode meaning)
-              </p>
-              <div className="mt-2 flex flex-wrap gap-2">
-                {similarities.map(({word, sim}) => (
-                  <div
-                    key={word}
-                    className="flex items-center gap-1.5 rounded-md border border-amber-300 bg-white/90 px-2.5 py-1 dark:border-amber-700 dark:bg-slate-800/80"
-                  >
-                    <span className="font-mono text-xs text-slate-800 dark:text-slate-200">{word}</span>
-                    <span
-                      className={`rounded px-1.5 py-0.5 font-mono text-[10px] font-bold ${
-                        sim > 0.5
-                          ? 'bg-emerald-200 text-emerald-900 dark:bg-emerald-900/60 dark:text-emerald-100'
-                          : sim > 0
-                            ? 'bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-200'
-                            : 'bg-rose-200 text-rose-900 dark:bg-rose-900/60 dark:text-rose-100'
-                      }`}
-                    >
-                      {sim.toFixed(2)}
-                    </span>
-                  </div>
-                ))}
+        {/* Semantic neighbours */}
+        <div className="rounded-2xl border border-slate-200 bg-slate-50/60 p-4 dark:border-slate-700 dark:bg-slate-800/30">
+          <div className="flex items-baseline justify-between">
+            <p className="m-0 text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+              Nearest neighbours by cosine similarity
+            </p>
+            <p className="m-0 text-[11px] italic text-slate-500 dark:text-slate-400">
+              Only embeddings cluster like this — one-hot vectors have cosine similarity 0 between every pair.
+            </p>
+          </div>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {similarities.map(({word, sim}) => (
+              <div
+                key={word}
+                className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-1.5 shadow-sm dark:border-slate-700 dark:bg-slate-800"
+              >
+                <span className="font-mono text-sm font-semibold text-slate-800 dark:text-slate-200">
+                  {word}
+                </span>
+                <span
+                  className={`rounded px-2 py-0.5 font-mono text-xs font-bold tabular-nums ${
+                    sim > 0.5
+                      ? 'bg-emerald-200 text-emerald-900 dark:bg-emerald-900/60 dark:text-emerald-100'
+                      : sim > 0.05
+                        ? 'bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-200'
+                        : 'bg-rose-200 text-rose-900 dark:bg-rose-900/60 dark:text-rose-100'
+                  }`}
+                >
+                  {sim.toFixed(2)}
+                </span>
               </div>
-            </div>
-          )}
+            ))}
+          </div>
         </div>
 
         {/* Math */}
-        <div className="rounded-xl border border-slate-200 bg-slate-50/60 p-4 dark:border-slate-700 dark:bg-slate-800/30">
-          <div className="grid gap-1 text-center font-mono text-[12px] text-slate-900 dark:text-slate-100 sm:grid-cols-2">
+        <div className="rounded-2xl bg-slate-50 px-5 py-4 dark:bg-slate-800/40">
+          <div className="grid gap-1.5 text-center font-mono text-sm text-slate-900 dark:text-slate-100 sm:grid-cols-2">
             <p className="m-0">
               one-hot(i) = e<sub>i</sub> ∈ {'{'} 0, 1 {'}'}<sup>|V|</sup>
             </p>
             <p className="m-0">
-              embed(i) = E[i] ∈ ℝ<sup>d</sup>, where E ∈ ℝ<sup>|V|×d</sup>
+              embed(i) = E[i] ∈ ℝ<sup>d</sup>, d ≪ |V|
             </p>
           </div>
-          <p className="m-0 mt-3 text-center text-[11px] italic text-slate-600 dark:text-slate-400">
-            Embeddings are <strong>learned during training</strong> — semantically similar tokens
-            (cat ↔ dog, on ↔ in) end up with similar vectors. That's the whole point of replacing one-hot.
-          </p>
         </div>
       </div>
     </div>

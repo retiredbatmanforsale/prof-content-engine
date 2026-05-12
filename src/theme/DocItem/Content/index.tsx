@@ -23,13 +23,12 @@ export default function DocItemContent(props: ContentProps): ReactNode {
     (access === 'free' && (authState === 'free-account' || authState === 'paid')) ||
     (access === 'paid' && authState === 'paid');
 
-  // While tokens are being validated, show nothing to avoid flashing paid content
+  // SSR + pre-hydration: render full content so the search indexer + crawlers
+  // see real markup. After client-side auth resolves to 'anonymous'/'free-account',
+  // the PaywallGate kicks in below for non-accessible content. This is the
+  // standard server-rendered paywall pattern (Substack / Medium / NYT).
   if (authState === 'checking') {
-    return (
-      <div style={{ padding: '3rem 1rem', color: '#a3a3a3', textAlign: 'center', fontSize: 14 }}>
-        Loading…
-      </div>
-    );
+    return <OriginalContent {...props} />;
   }
 
   if (!canAccess) {

@@ -1,12 +1,13 @@
 ---
 title: "Top-p (Nucleus) Sampling"
+practice_mode: true
 description: Implement top-p sampling — the standard inference-time decoding strategy for modern LLMs.
 sidebar_position: 4
 ---
 
-import PracticeProblem from '@site/src/components/viz/PracticeProblem';
+import ProblemSolver from '@site/src/components/viz/ProblemSolver';
 
-<PracticeProblem
+<ProblemSolver
   id="top-p-sampling"
   title="Top-p (nucleus) sampling"
   difficulty="Medium"
@@ -142,4 +143,4 @@ The algorithm in plain English:
 
 The harness fixes the RNG with a seed, so your function must use **only** the `rng` argument for randomness — no `np.random.choice(...)` (which uses global state). That's a real-world correctness requirement for reproducible inference.
 
-</PracticeProblem>
+</ProblemSolver>

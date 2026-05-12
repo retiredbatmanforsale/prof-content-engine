@@ -6,9 +6,9 @@ practice_mode: true
 hide_table_of_contents: true
 ---
 
-import PracticeProblem from '@site/src/components/viz/PracticeProblemPro';
+import ProblemSolver from '@site/src/components/viz/ProblemSolver';
 
-<PracticeProblem
+<ProblemSolver
   id="build-nn-02-relu-and-backward"
   title="ReLU forward + backward"
   difficulty="Easy"
@@ -138,4 +138,4 @@ Two subtleties the harness checks:
 1. **The sub-gradient at x = 0.** ReLU isn't differentiable at exactly 0; we pick the sub-gradient = 0 by convention. (PyTorch, JAX, and TensorFlow all pick this.) The "dying ReLU" problem flows directly from this choice — once a unit's pre-activation goes ≤ 0 across all training data, its gradient is 0 forever and the unit never recovers.
 2. **Backward takes the input, not the output.** Many candidates accidentally write `relu_backward(grad_out, relu_out)` instead of `relu_backward(grad_out, x)`. Both happen to be equivalent for ReLU specifically (since `relu_out > 0 ⟺ x > 0`), but the convention this course uses is to pass the input — that generalises to other activations where it matters.
 
-</PracticeProblem>
+</ProblemSolver>

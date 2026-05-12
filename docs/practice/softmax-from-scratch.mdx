@@ -6,7 +6,7 @@ practice_mode: true
 hide_table_of_contents: true
 ---
 
-import PracticeProblem from '@site/src/components/viz/PracticeProblemPro';
+import ProblemSolver from '@site/src/components/viz/ProblemSolver';
 
 export const STARTER = `import numpy as np
 
@@ -81,7 +81,7 @@ def softmax(x):
     return exps / exps.sum()
 `;
 
-<PracticeProblem
+<ProblemSolver
   id="softmax-from-scratch"
   title="Softmax from scratch"
   difficulty="Easy"
@@ -112,4 +112,4 @@ The mathematical definition:
 
 The numerical-stability trick: `softmax(x) == softmax(x - c)` for any constant `c`, because the constant cancels in the ratio. Picking `c = max(x)` guarantees the largest exponent is `e^0 = 1`, no overflow.
 
-</PracticeProblem>
+</ProblemSolver>

@@ -6,9 +6,9 @@ practice_mode: true
 hide_table_of_contents: true
 ---
 
-import PracticeProblem from '@site/src/components/viz/PracticeProblemPro';
+import ProblemSolver from '@site/src/components/viz/ProblemSolver';
 
-<PracticeProblem
+<ProblemSolver
   id="build-cnn-04-avg-pool-2d"
   title="Average pooling 2D forward"
   difficulty="Easy"
@@ -124,4 +124,4 @@ Modern architectures use **average pool** primarily as a *global* pool at the en
 
 The implementation is the same three nested loops as `build-cnn-03`, with `.max()` swapped for `.mean()`. The diagnostic test the harness probes for: divide by `k*k`, not by anything else.
 
-</PracticeProblem>
+</ProblemSolver>

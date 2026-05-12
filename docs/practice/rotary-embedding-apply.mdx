@@ -6,9 +6,9 @@ practice_mode: true
 hide_table_of_contents: true
 ---
 
-import PracticeProblem from '@site/src/components/viz/PracticeProblemPro';
+import ProblemSolver from '@site/src/components/viz/ProblemSolver';
 
-<PracticeProblem
+<ProblemSolver
   id="rotary-embedding-apply"
   title="Rotary Position Embedding (RoPE)"
   difficulty="Hard"
@@ -151,4 +151,4 @@ Three properties that make it work for attention:
 
 The diagnostic the harness checks: norm preservation across every position. Get the cos/sin signs wrong and rotations turn into reflections — norms still equal, but the test for position-0-identity fails.
 
-</PracticeProblem>
+</ProblemSolver>

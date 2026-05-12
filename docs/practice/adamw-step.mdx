@@ -6,9 +6,9 @@ practice_mode: true
 hide_table_of_contents: true
 ---
 
-import PracticeProblem from '@site/src/components/viz/PracticeProblemPro';
+import ProblemSolver from '@site/src/components/viz/ProblemSolver';
 
-<PracticeProblem
+<ProblemSolver
   id="adamw-step"
   title="AdamW step (decoupled weight decay)"
   difficulty="Medium"
@@ -157,4 +157,4 @@ The wrong way (Adam-with-L2): add `weight_decay · p` to `g` before computing `m
 
 The diagnostic test the harness probes: after one step, `m` should equal `(1 − β₁) · g`, NOT `(1 − β₁) · (g + wd · p)`. Get the decoupling right and that follows automatically.
 
-</PracticeProblem>
+</ProblemSolver>

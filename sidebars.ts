@@ -88,7 +88,6 @@ const sidebars: SidebarsConfig = {
             'ai-for-engineering/deep-computer-vision-cnn/transformative-deep-learning-vision',
             'ai-for-engineering/deep-computer-vision-cnn/from-pixels-to-perception',
             'ai-for-engineering/deep-computer-vision-cnn/feature-detection-hierarchy',
-            'ai-for-engineering/deep-computer-vision-cnn/learning-features-from-data',
             'ai-for-engineering/deep-computer-vision-cnn/preserving-spatial-structure-cnns',
             'ai-for-engineering/deep-computer-vision-cnn/filters-features-convolutions',
             'ai-for-engineering/deep-computer-vision-cnn/learning-to-see-cnns',
@@ -361,9 +360,6 @@ const sidebars: SidebarsConfig = {
         },
       ],
     },
-    { type: 'html', value: '<span class="sidebar-writing-header">Writing & Talks</span>' },
-    'ai-writing-and-talks/from-statistical-models-to-modern-ai-systems',
-    'ai-writing-and-talks/what-should-we-learn-engineer-modern-ai',
   ],
 };
 

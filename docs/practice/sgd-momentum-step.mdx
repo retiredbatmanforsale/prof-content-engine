@@ -6,9 +6,9 @@ practice_mode: true
 hide_table_of_contents: true
 ---
 
-import PracticeProblem from '@site/src/components/viz/PracticeProblemPro';
+import ProblemSolver from '@site/src/components/viz/ProblemSolver';
 
-<PracticeProblem
+<ProblemSolver
   id="sgd-momentum-step"
   title="SGD with momentum (one step)"
   difficulty="Easy"
@@ -135,4 +135,4 @@ Two subtleties the harness probes:
 
 Typical setting: `lr=0.01, momentum=0.9` for ResNet-style CNNs. Not used directly for transformers (which prefer AdamW), but every implementation of SGD+momentum starts from this exact two-line update.
 
-</PracticeProblem>
+</ProblemSolver>

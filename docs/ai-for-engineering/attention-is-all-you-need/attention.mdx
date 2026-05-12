@@ -51,7 +51,7 @@ That blend is the output of attention. You never asked for *book #3*; you descri
 
 ## Scaled dot-product attention
 
-For a single query vector **q** and a set of key–value pairs **(kⱼ, vⱼ)** with **kⱼ, q ∈ ℝ^{d_k}**:
+For a single query vector **q** and a set of key–value pairs **(kⱼ, vⱼ)** with $\mathbf{k}_j, \mathbf{q} \in \mathbb{R}^{d_k}$:
 
 $$
 \text{Attention}(q, K, V) = \sum_j \underbrace{\frac{\exp(q \cdot k_j / \sqrt{d_k})}{\sum_{j'} \exp(q \cdot k_{j'} / \sqrt{d_k})}}_{\text{softmax weights } \alpha_j} v_j

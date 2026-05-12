@@ -161,7 +161,15 @@ Here&apos;s how that happens:
 
 This transformation gives us a <strong>numerical representation of language</strong> that RNNs can operate on.
 
-**Try it on a sentence.** Type any text, click a token, and compare its sparse one-hot representation against its dense learned embedding — including which words sit closest to it in embedding space:
+### How real tokenizers do it
+
+Before any embedding lookup, text has to become **token IDs**. Modern systems use subword tokenizers (BPE, WordPiece, SentencePiece) so any input — including words the tokenizer has never seen — can be represented as a sequence of integers. Type anything below and watch three real tokenizers carve it up differently:
+
+<TokenizerPlayground />
+
+This step is **architecture-agnostic** — RNNs, transformers, and everything in between consume the same kind of token IDs. The interesting RNN-specific question is what happens *after* tokenization: how do we turn each integer into a vector the recurrent cell can use?
+
+### From token IDs to vectors
 
 <TokenToVector />
 

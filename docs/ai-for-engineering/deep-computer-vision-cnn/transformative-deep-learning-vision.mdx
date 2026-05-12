@@ -20,86 +20,114 @@ import CLIPPlayground from '@site/src/components/viz/CLIPPlayground';
 
 Over the last decade, **deep learning** turned computer vision from **hand-tuned features and brittle rules** into **models that learn straight from pixels**. That change is not a small tweak; it is a different way to think about **perception**.
 
-| | **Earlier mainstream approach** | **Deep learning–centric approach** |
-| --- | --- | --- |
-| **Features** | Handcrafted (edges, corners, histograms, heuristics) | Learned layers that build their own representations |
-| **Pipeline** | Many separate stages, lots of manual design | Often **end-to-end**: pixels (or tensors) in, predictions out |
-| **Where it shines** | Constrained, stable setups | Large data, varied scenes, many industries |
+| Classical ML + Handcrafted Features | Deep Neural Networks (Dense / MLPs) |
+| --- | --- |
+| Manual feature engineering required | Learns features directly from pixels |
+| Raw pixels were weak inputs for traditional ML algorithms | Pixels can be fed directly into neural networks |
+| Required image processing expertise | Reduced dependence on handcrafted features |
+| Features: <Term def="Scale-Invariant Feature Transform (Lowe, 1999) — detects distinctive keypoints in an image and describes each with a 128-D vector robust to scale and rotation. The workhorse of pre-deep-learning vision for matching and recognition.">SIFT</Term>, <Term def="Histogram of Oriented Gradients — splits an image into small cells, counts the direction of intensity changes in each cell, and stitches them into a feature vector. Famous as the pre-CNN standard for pedestrian detection.">HOG</Term>, <Term def="Locations where pixel intensity changes sharply, typically marking object boundaries. Detected with operators like Sobel or Canny — the most basic 'low-level' visual feature.">edges</Term>, <Term def="A count of how often each value (e.g. pixel intensity, color, gradient direction) appears in an image or region. A compact summary statistic — useful when exact pixel layout doesn't matter.">histograms</Term>, <Term def="Points where intensity changes sharply in two directions at once — useful as stable landmarks for matching across views. Classic detectors: Harris (1988), Shi–Tomasi.">corners</Term> | Representation learning emerges during training |
+| Separate feature extraction + classifier pipeline | End-to-end learning becomes possible |
+| Traditional ML: SVMs, Random Forests | Deep fully connected neural networks |
+| Limited performance on complex visual tasks | Better learning capacity with large datasets |
+| **Math:** `y = ML(f(x))` where `f(x)` is handcrafted features | **Math:** `y = NN(x)` where the network learns features automatically |
+| **Code intuition:** `features = hog(image)` | **Code intuition:** `prediction = model(image_tensor)` |
+
+<div className="not-prose my-6 grid gap-4 md:grid-cols-2">
+  <div className="rounded-xl border-2 border-amber-200 bg-amber-50/70 p-4 dark:border-amber-900/50 dark:bg-amber-950/25">
+    <p className="m-0 text-sm font-bold uppercase tracking-wide text-amber-900 dark:text-amber-200">Classical ML pipeline</p>
+    <pre className="mt-3 mb-0 overflow-x-auto rounded-lg bg-slate-900 p-3 text-sm leading-relaxed text-slate-100"><code>{`features   = hog(image)
+prediction = svm.predict(features)`}</code></pre>
+  </div>
+  <div className="rounded-xl border-2 border-teal-200 bg-teal-50/70 p-4 dark:border-teal-900/50 dark:bg-teal-950/25">
+    <p className="m-0 text-sm font-bold uppercase tracking-wide text-teal-900 dark:text-teal-200">Deep learning pipeline</p>
+    <pre className="mt-3 mb-0 overflow-x-auto rounded-lg bg-slate-900 p-3 text-sm leading-relaxed text-slate-100"><code>{`image_tensor = preprocess(image)
+prediction   = neural_network(image_tensor)`}</code></pre>
+  </div>
+</div>
 
 Neural networks are now the **default engine** for serious vision work—from **datacenter training** down to **phones and wearables**.
 
 ---
 
-## Real-world applications: cloud to edge
+## Real-world computer vision: cloud to edge
 
-Vision is not only in labs. It runs **in the cloud** and **on the device**, with different budgets for **latency** and **power**.
+Vision models run across very different compute environments — from datacenter GPUs to low-power edge devices.
 
-<div className="not-prose my-6 grid gap-4 md:grid-cols-2">
-  <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-900/40">
-    <p className="m-0 text-sm font-semibold text-slate-800 dark:text-slate-100">In your pocket (edge)</p>
-    <ul className="mt-2 mb-0 list-disc pl-5 text-sm text-slate-700 dark:text-slate-300">
-      <li>Face unlock and authentication</li>
-      <li>Scene / portrait enhancement</li>
-      <li>Depth for AR</li>
-    </ul>
-    <p className="mt-3 mb-0 text-xs text-slate-500 dark:text-slate-400">Models are usually **small**, **quantized**, and often **distilled or fine-tuned** from bigger teachers.</p>
-  </div>
-  <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-900/40">
-    <p className="m-0 text-sm font-semibold text-slate-800 dark:text-slate-100">Beyond the phone</p>
-    <ul className="mt-2 mb-0 list-disc pl-5 text-sm text-slate-700 dark:text-slate-300">
-      <li>Drones and robots</li>
-      <li>Smart glasses and wearables</li>
-      <li>Industrial cameras on the line</li>
-    </ul>
-    <p className="mt-3 mb-0 text-xs text-slate-500 dark:text-slate-400">Same idea: **tight compute**, **real-time** needs, **heavy optimization**.</p>
-  </div>
-</div>
+| Environment | Typical constraints | Common vision tasks |
+| --- | --- | --- |
+| **Mobile / edge devices** | Low latency, low power, small memory | Face unlock, portrait enhancement, AR depth |
+| **Robots / drones / wearables** | Real-time inference, constrained hardware | Navigation, tracking, obstacle perception |
+| **Cloud / datacenter** | Large-scale training and serving | Foundation models, large-scale inference |
+
+Edge models are often:
+
+- **quantized** — lower-precision weights and activations
+- **pruned** — redundant connections removed
+- **distilled** — a small student trained to mimic a large teacher
+- **hardware-optimized** — kernels tuned for specific accelerators
 
 ---
 
-## Vision in healthcare and biology
+## Vision in healthcare
 
-Deep learning is used where images already carry life-critical signal: **find the abnormality**, **classify tissue**, **triage workload**.
+Medical imaging already contains high-signal visual patterns, making it a strong domain for deep learning.
 
-| **Setting** | **What vision models often do** |
+| Domain | Typical vision tasks |
 | --- | --- |
-| **Radiology / CT / MRI** | Flag suspicious regions, rank cases for urgent read |
-| **Pathology slides** | Assist tissue and cell-level patterns |
-| **Retina (e.g. diabetic retinopathy)** | Screening support for eye specialists |
+| **Radiology (CT / MRI / X-ray)** | Detection, localization, triaging |
+| **Pathology** | Tissue and cell-level analysis |
+| **Retina imaging** | Disease screening (e.g. diabetic retinopathy) |
 
-They can surface **subtle, repeatable cues** across many cases—always as **tools next to clinicians**, not a wholesale replacement of judgment.
+Models help surface **subtle and repeatable patterns** across large datasets, usually as **decision-support systems alongside clinicians** — not a replacement for clinical judgment.
 
 ---
 
-## Self-driving: a hard test for vision
+## Autonomous driving
 
-Driving stacks **perception**, **prediction**, and **planning** under **safety pressure**. One famous research direction (including work at **MIT**) asked: can a model map **camera pixels → driving commands** **end-to-end**, without a classic chain of hand-designed perception + map + planner modules?
+Self-driving systems combine:
 
-| | **Idea in one line** |
+- **perception** — what's in the scene
+- **prediction** — what will it do next
+- **planning** — what should we do
+- **control** — how do we execute it
+
+One important research direction explored a much simpler framing:
+
+| Input | Output |
 | --- | --- |
-| **Input** | Raw video from forward cameras |
-| **Output** | Steering / drive commands |
-| **Appeal** | One network; can **generalize to new roads** without a handcrafted HD map in the loop |
-| **Reality check** | Elegant, but **very hard**: rules, rare events, and safety need more than a single loss on pixels |
+| Camera frames / video | Steering and driving commands |
 
-So this story is less “problem solved” and more “**why industrial autonomy still mixes learned vision with systems engineering**."
+This introduced the idea of:
+
+> **pixels → actions** (end-to-end learning)
+
+The challenge:
+
+- safety-critical edge cases
+- rare events ("long tail")
+- interpretability
+- real-world robustness
+
+Modern autonomy stacks therefore combine **learned vision systems**, **rules**, **mapping**, **planning**, and **systems engineering** — rather than betting everything on a single end-to-end network.
 
 ---
 
-## Facial recognition: from “face or not” to rich signals
+## Facial recognition and understanding
 
-| **Phase** | **Typical goal** |
+Computer vision evolved from simple face detection to rich facial understanding.
+
+| Earlier systems | Modern deep learning systems |
 | --- | --- |
-| **Classical / early CV** | **Detect** a face: is there a face in the image? |
-| **Modern deep learning** | **Detect** + **align** + **embed**: landmarks, pose, identity under occlusion, gaze, expressions, attention |
+| Detect whether a face exists | Detect, align, and embed faces |
+| Limited geometric features | Identity, landmarks, gaze, pose, expressions |
+| Simple classifiers | Deep metric-learning pipelines |
 
-Same camera stream; **much richer outputs**—and stricter needs for **privacy**, **bias**, and **consent** in real products.
+Modern systems must additionally handle:
 
----
-
-## Takeaway
-
-Deep learning did not just **improve** accuracy charts; it made **one flexible toolkit** for vision across **cloud, edge, medicine, mobility, and interfaces**. The rest of this track builds the **core ideas** behind those models; the next lessons dig into **how** they work—not only **where** they ship.
+- **occlusion** (masks, hands, hair)
+- **lighting variation**
+- **pose changes**
+- **privacy and bias concerns**
 
 ---
 

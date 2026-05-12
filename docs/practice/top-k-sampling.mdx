@@ -6,9 +6,9 @@ practice_mode: true
 hide_table_of_contents: true
 ---
 
-import PracticeProblem from '@site/src/components/viz/PracticeProblemPro';
+import ProblemSolver from '@site/src/components/viz/ProblemSolver';
 
-<PracticeProblem
+<ProblemSolver
   id="top-k-sampling"
   title="Top-k sampling"
   difficulty="Easy"
@@ -145,4 +145,4 @@ GPT-2's typical inference setting was `top_k = 40`. Most production LLMs now def
 
 The harness uses fixed RNG seeds — your function must use **only** the `rng` argument for randomness, never `np.random` global state.
 
-</PracticeProblem>
+</ProblemSolver>

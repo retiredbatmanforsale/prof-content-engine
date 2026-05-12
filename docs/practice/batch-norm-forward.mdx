@@ -6,9 +6,9 @@ practice_mode: true
 hide_table_of_contents: true
 ---
 
-import PracticeProblem from '@site/src/components/viz/PracticeProblemPro';
+import ProblemSolver from '@site/src/components/viz/ProblemSolver';
 
-<PracticeProblem
+<ProblemSolver
   id="batch-norm-forward"
   title="BatchNorm forward (train + eval modes)"
   difficulty="Medium"
@@ -158,4 +158,4 @@ The two-mode design is also why BatchNorm fails in autoregressive language model
 
 The diagnostic the harness probes: in train mode with `gamma=1, beta=0`, each feature's output has `mean ≈ 0, std ≈ 1` along the batch axis. In eval mode, the running stats *don't* change after the call.
 
-</PracticeProblem>
+</ProblemSolver>

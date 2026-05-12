@@ -6,9 +6,9 @@ practice_mode: true
 hide_table_of_contents: true
 ---
 
-import PracticeProblem from '@site/src/components/viz/PracticeProblemPro';
+import ProblemSolver from '@site/src/components/viz/ProblemSolver';
 
-<PracticeProblem
+<ProblemSolver
   id="build-gpt-08-transformer-block-forward"
   title="Transformer block forward (pre-LN, residual)"
   difficulty="Hard"
@@ -199,4 +199,4 @@ The diagnostic the harness runs: zero out the four projection matrices and verif
 
 After this problem, you've implemented every piece of a single GPT-2 layer. Stack twelve, add token + positional embeddings on the input and an unembedding+softmax on the output — and you have GPT-2 small.
 
-</PracticeProblem>
+</ProblemSolver>

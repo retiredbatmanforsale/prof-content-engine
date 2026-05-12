@@ -1,0 +1,4958 @@
+{
+  "summary": {
+    "runAt": "2026-05-10T12:38:23.685Z",
+    "fileCount": 182,
+    "totalWords": 92637,
+    "avgComposite": 1.4219780219780218
+  },
+  "results": [
+    {
+      "path": "docs/ai-for-engineering/ml-system-design/interview-readiness.mdx",
+      "title": "Interview readiness — The 45-minute mock round",
+      "wordCount": 3631,
+      "composite": 24,
+      "slopRate": 0,
+      "hedgeHits": 0,
+      "transRate": 0,
+      "transitionHits": 0,
+      "emDashes": 90,
+      "emDashDensity": 24.79,
+      "longParas": 11,
+      "longestPara": 179,
+      "stubHits": 0,
+      "fmIssues": [
+        "empty_tutor_concepts"
+      ],
+      "latexDupHits": 0,
+      "latexDupBreakdown": {
+        "patternA": [],
+        "patternB": []
+      },
+      "breakdown": {
+        "hedges": {},
+        "transitions": {},
+        "stubs": {}
+      }
+    },
+    {
+      "path": "docs/ai-for-engineering/agentic-ai/09-observability.mdx",
+      "title": "Lesson 9 — Observability: see inside the machine",
+      "wordCount": 865,
+      "composite": 7,
+      "slopRate": 0,
+      "hedgeHits": 0,
+      "transRate": 0,
+      "transitionHits": 0,
+      "emDashes": 12,
+      "emDashDensity": 13.87,
+      "longParas": 0,
+      "longestPara": 75,
+      "stubHits": 2,
+      "fmIssues": [],
+      "latexDupHits": 0,
+      "latexDupBreakdown": {
+        "patternA": [],
+        "patternB": []
+      },
+      "breakdown": {
+        "hedges": {},
+        "transitions": {},
+        "stubs": {
+          "\\bTODO\\b": 2
+        }
+      }
+    },
+    {
+      "path": "docs/ai-for-engineering/ai-research/aletheia-gemini-deep-think-math-research.mdx",
+      "title": "Aletheia — Gemini Deep Think and autonomous math research",
+      "wordCount": 2188,
+      "composite": 6.66,
+      "slopRate": 2.74,
+      "hedgeHits": 6,
+      "transRate": 0.91,
+      "transitionHits": 2,
+      "emDashes": 28,
+      "emDashDensity": 12.8,
+      "longParas": 1,
+      "longestPara": 135,
+      "stubHits": 0,
+      "fmIssues": [],
+      "latexDupHits": 0,
+      "latexDupBreakdown": {
+        "patternA": [],
+        "patternB": []
+      },
+      "breakdown": {
+        "hedges": {
+          "navigate the complexit": 1,
+          "crucial": 1,
+          "robust": 2,
+          "leverag(e|ing)": 2
+        },
+        "transitions": {
+          "|Furthermore,": 2
+        },
+        "stubs": {}
+      }
+    },
+    {
+      "path": "docs/ai-for-engineering/build-and-train-your-own-gpt2-model/09-generation-of-next-tokens.mdx",
+      "title": "Generation of Next Tokens",
+      "wordCount": 1290,
+      "composite": 6,
+      "slopRate": 0,
+      "hedgeHits": 0,
+      "transRate": 0,
+      "transitionHits": 0,
+      "emDashes": 22,
+      "emDashDensity": 17.05,
+      "longParas": 0,
+      "longestPara": 83,
+      "stubHits": 0,
+      "fmIssues": [
+        "missing_description"
+      ],
+      "latexDupHits": 2,
+      "latexDupBreakdown": {
+        "patternA": [
+          {
+            "mathLine": 94,
+            "dupLine": 98
+          },
+          {
+            "mathLine": 124,
+            "dupLine": 128
+          }
+        ],
+        "patternB": []
+      },
+      "breakdown": {
+        "hedges": {},
+        "transitions": {},
+        "stubs": {}
+      }
+    },
+    {
+      "path": "docs/ai-for-engineering/ml-system-design/01-recsys-define-the-problem.mdx",
+      "title": "Lesson 1 — Define the problem",
+      "wordCount": 836,
+      "composite": 6,
+      "slopRate": 0,
+      "hedgeHits": 0,
+      "transRate": 0,
+      "transitionHits": 0,
+      "emDashes": 11,
+      "emDashDensity": 13.16,
+      "longParas": 1,
+      "longestPara": 122,
+      "stubHits": 0,
+      "fmIssues": [
+        "empty_tutor_concepts"
+      ],
+      "latexDupHits": 1,
+      "latexDupBreakdown": {
+        "patternA": [
+          {
+            "mathLine": 167,
+            "dupLine": 174
+          }
+        ],
+        "patternB": []
+      },
+      "breakdown": {
+        "hedges": {},
+        "transitions": {},
+        "stubs": {}
+      }
+    },
+    {
+      "path": "docs/ai-for-engineering/ml-system-design/03-recsys-retrieval-two-tower.mdx",
+      "title": "Lesson 3 — Retrieval (two-tower)",
+      "wordCount": 1026,
+      "composite": 6,
+      "slopRate": 0,
+      "hedgeHits": 0,
+      "transRate": 0,
+      "transitionHits": 0,
+      "emDashes": 16,
+      "emDashDensity": 15.59,
+      "longParas": 1,
+      "longestPara": 121,
+      "stubHits": 0,
+      "fmIssues": [
+        "empty_tutor_concepts"
+      ],
+      "latexDupHits": 1,
+      "latexDupBreakdown": {
+        "patternA": [
+          {
+            "mathLine": 180,
+            "dupLine": 185
+          }
+        ],
+        "patternB": []
+      },
+      "breakdown": {
+        "hedges": {},
+        "transitions": {},
+        "stubs": {}
+      }
+    },
+    {
+      "path": "docs/ai-for-engineering/ml-system-design/08-rag-define-the-problem.mdx",
+      "title": "Lesson 8 — Define the problem (RAG)",
+      "wordCount": 1026,
+      "composite": 6,
+      "slopRate": 0,
+      "hedgeHits": 0,
+      "transRate": 0,
+      "transitionHits": 0,
+      "emDashes": 17,
+      "emDashDensity": 16.57,
+      "longParas": 1,
+      "longestPara": 145,
+      "stubHits": 0,
+      "fmIssues": [
+        "empty_tutor_concepts"
+      ],
+      "latexDupHits": 1,
+      "latexDupBreakdown": {
+        "patternA": [
+          {
+            "mathLine": 192,
+            "dupLine": 199
+          }
+        ],
+        "patternB": []
+      },
+      "breakdown": {
+        "hedges": {},
+        "transitions": {},
+        "stubs": {}
+      }
+    },
+    {
+      "path": "docs/ai-for-engineering/deep-neural-networks/forward-pass.mdx",
+      "title": "Lesson 5 — How neural networks make predictions (forward pass)",
+      "wordCount": 477,
+      "composite": 5,
+      "slopRate": 0,
+      "hedgeHits": 0,
+      "transRate": 0,
+      "transitionHits": 0,
+      "emDashes": 8,
+      "emDashDensity": 16.77,
+      "longParas": 0,
+      "longestPara": 63,
+      "stubHits": 0,
+      "fmIssues": [],
+      "latexDupHits": 2,
+      "latexDupBreakdown": {
+        "patternA": [
+          {
+            "mathLine": 173,
+            "dupLine": 181
+          }
+        ],
+        "patternB": [
+          {
+            "firstLine": 151,
+            "secondLine": 159
+          }
+        ]
+      },
+      "breakdown": {
+        "hedges": {},
+        "transitions": {},
+        "stubs": {}
+      }
+    },
+    {
+      "path": "docs/ai-for-engineering/deep-neural-networks/neural-network-from-scratch.mdx",
+      "title": "Lesson 10 — Neural networks from scratch (NumPy)",
+      "wordCount": 674,
+      "composite": 5,
+      "slopRate": 0,
+      "hedgeHits": 0,
+      "transRate": 0,
+      "transitionHits": 0,
+      "emDashes": 18,
+      "emDashDensity": 26.71,
+      "longParas": 0,
+      "longestPara": 63,
+      "stubHits": 0,
+      "fmIssues": [],
+      "latexDupHits": 2,
+      "latexDupBreakdown": {
+        "patternA": [
+          {
+            "mathLine": 78,
+            "dupLine": 86
+          },
+          {
+            "mathLine": 122,
+            "dupLine": 127
+          }
+        ],
+        "patternB": []
+      },
+      "breakdown": {
+        "hedges": {},
+        "transitions": {},
+        "stubs": {}
+      }
+    },
+    {
+      "path": "docs/ai-for-engineering/build-and-train-your-own-gpt2-model/02-token-embeddings.mdx",
+      "title": "Token Embeddings",
+      "wordCount": 1133,
+      "composite": 4,
+      "slopRate": 0,
+      "hedgeHits": 0,
+      "transRate": 0,
+      "transitionHits": 0,
+      "emDashes": 24,
+      "emDashDensity": 21.18,
+      "longParas": 0,
+      "longestPara": 116,
+      "stubHits": 0,
+      "fmIssues": [
+        "missing_description"
+      ],
+      "latexDupHits": 1,
+      "latexDupBreakdown": {
+        "patternA": [
+          {
+            "mathLine": 105,
+            "dupLine": 118
+          }
+        ],
+        "patternB": []
+      },
+      "breakdown": {
+        "hedges": {},
+        "transitions": {},
+        "stubs": {}
+      }
+    },
+    {
+      "path": "docs/ai-for-engineering/build-and-train-your-own-gpt2-model/04-attention-multi-head-attention.mdx",
+      "title": "Attention + Multi-Head Attention",
+      "wordCount": 1099,
+      "composite": 4,
+      "slopRate": 0,
+      "hedgeHits": 0,
+      "transRate": 0,
+      "transitionHits": 0,
+      "emDashes": 24,
+      "emDashDensity": 21.84,
+      "longParas": 0,
+      "longestPara": 81,
+      "stubHits": 0,
+      "fmIssues": [
+        "missing_description"
+      ],
+      "latexDupHits": 1,
+      "latexDupBreakdown": {
+        "patternA": [
+          {
+            "mathLine": 122,
+            "dupLine": 130
+          }
+        ],
+        "patternB": []
+      },
+      "breakdown": {
+        "hedges": {},
+        "transitions": {},
+        "stubs": {}
+      }
+    },
+    {
+      "path": "docs/ai-for-engineering/build-and-train-your-own-gpt2-model/07-layer-normalization.mdx",
+      "title": "Layer Normalization",
+      "wordCount": 1089,
+      "composite": 4,
+      "slopRate": 0,
+      "hedgeHits": 0,
+      "transRate": 0,
+      "transitionHits": 0,
+      "emDashes": 20,
+      "emDashDensity": 18.37,
+      "longParas": 0,
+      "longestPara": 77,
+      "stubHits": 0,
+      "fmIssues": [
+        "missing_description"
+      ],
+      "latexDupHits": 1,
+      "latexDupBreakdown": {
+        "patternA": [],
+        "patternB": [
+          {
+            "firstLine": 103,
+            "secondLine": 111
+          }
+        ]
+      },
+      "breakdown": {
+        "hedges": {},
+        "transitions": {},
+        "stubs": {}
+      }
+    },
+    {
+      "path": "docs/ai-for-engineering/build-and-train-your-own-gpt2-model/08-feed-forward-neural-networks.mdx",
+      "title": "Feed Forward Neural Networks",
+      "wordCount": 1242,
+      "composite": 4,
+      "slopRate": 0,
+      "hedgeHits": 0,
+      "transRate": 0,
+      "transitionHits": 0,
+      "emDashes": 19,
+      "emDashDensity": 15.3,
+      "longParas": 0,
+      "longestPara": 101,
+      "stubHits": 0,
+      "fmIssues": [
+        "missing_description"
+      ],
+      "latexDupHits": 1,
+      "latexDupBreakdown": {
+        "patternA": [
+          {
+            "mathLine": 179,
+            "dupLine": 183
+          }
+        ],
+        "patternB": []
+      },
+      "breakdown": {
+        "hedges": {},
+        "transitions": {},
+        "stubs": {}
+      }
+    },
+    {
+      "path": "docs/ai-for-engineering/foundations-of-regression/linear-regression-line-ssr-gradient-descent.mdx",
+      "title": "Lesson 1 — Linear regression: lines, SSR, and gradient descent",
+      "wordCount": 1156,
+      "composite": 4,
+      "slopRate": 0,
+      "hedgeHits": 0,
+      "transRate": 0,
+      "transitionHits": 0,
+      "emDashes": 1,
+      "emDashDensity": 0.87,
+      "longParas": 0,
+      "longestPara": 54,
+      "stubHits": 0,
+      "fmIssues": [],
+      "latexDupHits": 2,
+      "latexDupBreakdown": {
+        "patternA": [
+          {
+            "mathLine": 320,
+            "dupLine": 324
+          }
+        ],
+        "patternB": [
+          {
+            "firstLine": 332,
+            "secondLine": 338
+          }
+        ]
+      },
+      "breakdown": {
+        "hedges": {},
+        "transitions": {},
+        "stubs": {}
+      }
+    },
+    {
+      "path": "docs/ai-for-engineering/ml-system-design/02-recsys-data-pipeline.mdx",
+      "title": "Lesson 2 — Data pipeline",
+      "wordCount": 846,
+      "composite": 4,
+      "slopRate": 0,
+      "hedgeHits": 0,
+      "transRate": 0,
+      "transitionHits": 0,
+      "emDashes": 7,
+      "emDashDensity": 8.27,
+      "longParas": 1,
+      "longestPara": 125,
+      "stubHits": 0,
+      "fmIssues": [
+        "empty_tutor_concepts"
+      ],
+      "latexDupHits": 0,
+      "latexDupBreakdown": {
+        "patternA": [],
+        "patternB": []
+      },
+      "breakdown": {
+        "hedges": {},
+        "transitions": {},
+        "stubs": {}
+      }
+    },
+    {
+      "path": "docs/ai-for-engineering/ml-system-design/05-recsys-online-serving.mdx",
+      "title": "Lesson 5 — Online serving",
+      "wordCount": 1300,
+      "composite": 4,
+      "slopRate": 0,
+      "hedgeHits": 0,
+      "transRate": 0,
+      "transitionHits": 0,
+      "emDashes": 24,
+      "emDashDensity": 18.46,
+      "longParas": 0,
+      "longestPara": 110,
+      "stubHits": 0,
+      "fmIssues": [
+        "empty_tutor_concepts"
+      ],
+      "latexDupHits": 1,
+      "latexDupBreakdown": {
+        "patternA": [
+          {
+            "mathLine": 204,
+            "dupLine": 211
+          }
+        ],
+        "patternB": []
+      },
+      "breakdown": {
+        "hedges": {},
+        "transitions": {},
+        "stubs": {}
+      }
+    },
+    {
+      "path": "docs/ai-for-engineering/ml-system-design/11-rag-evaluation.mdx",
+      "title": "Lesson 11 — RAG evaluation",
+      "wordCount": 1525,
+      "composite": 4,
+      "slopRate": 0,
+      "hedgeHits": 0,
+      "transRate": 0,
+      "transitionHits": 0,
+      "emDashes": 23,
+      "emDashDensity": 15.08,
+      "longParas": 0,
+      "longestPara": 110,
+      "stubHits": 0,
+      "fmIssues": [
+        "empty_tutor_concepts"
+      ],
+      "latexDupHits": 1,
+      "latexDupBreakdown": {
+        "patternA": [
+          {
+            "mathLine": 179,
+            "dupLine": 184
+          }
+        ],
+        "patternB": []
+      },
+      "breakdown": {
+        "hedges": {},
+        "transitions": {},
+        "stubs": {}
+      }
+    },
+    {
+      "path": "docs/ai-for-engineering/ml-system-design/14-case-eta-prediction.mdx",
+      "title": "Lesson 14 — Case study: ETA prediction (Uber-style)",
+      "wordCount": 1471,
+      "composite": 4,
+      "slopRate": 0,
+      "hedgeHits": 0,
+      "transRate": 0,
+      "transitionHits": 0,
+      "emDashes": 25,
+      "emDashDensity": 17,
+      "longParas": 0,
+      "longestPara": 110,
+      "stubHits": 0,
+      "fmIssues": [
+        "empty_tutor_concepts"
+      ],
+      "latexDupHits": 1,
+      "latexDupBreakdown": {
+        "patternA": [
+          {
+            "mathLine": 133,
+            "dupLine": 140
+          }
+        ],
+        "patternB": []
+      },
+      "breakdown": {
+        "hedges": {},
+        "transitions": {},
+        "stubs": {}
+      }
+    },
+    {
+      "path": "docs/ai-for-engineering/mle-interview/guides/index.mdx",
+      "title": "Company Interview Guides",
+      "wordCount": 141,
+      "composite": 4,
+      "slopRate": 0,
+      "hedgeHits": 0,
+      "transRate": 0,
+      "transitionHits": 0,
+      "emDashes": 5,
+      "emDashDensity": 35.46,
+      "longParas": 0,
+      "longestPara": 41,
+      "stubHits": 1,
+      "fmIssues": [],
+      "latexDupHits": 0,
+      "latexDupBreakdown": {
+        "patternA": [],
+        "patternB": []
+      },
+      "breakdown": {
+        "hedges": {},
+        "transitions": {},
+        "stubs": {
+          "\\bcoming soon\\b": 1
+        }
+      }
+    },
+    {
+      "path": "docs/ai-writing-and-talks/from-statistical-models-to-modern-ai-systems.mdx",
+      "title": "From Statistical Models to Modern AI Systems",
+      "wordCount": 935,
+      "composite": 4,
+      "slopRate": 0,
+      "hedgeHits": 0,
+      "transRate": 0,
+      "transitionHits": 0,
+      "emDashes": 37,
+      "emDashDensity": 39.57,
+      "longParas": 0,
+      "longestPara": 72,
+      "stubHits": 1,
+      "fmIssues": [],
+      "latexDupHits": 0,
+      "latexDupBreakdown": {
+        "patternA": [],
+        "patternB": []
+      },
+      "breakdown": {
+        "hedges": {},
+        "transitions": {},
+        "stubs": {
+          "\\bplaceholder\\b": 1
+        }
+      }
+    },
+    {
+      "path": "docs/ai-for-engineering/deep-sequence-modelling-rnn/foundations-of-deep-sequence-modeling.mdx",
+      "title": "Lesson 1 — Foundations of Deep Sequence Modeling",
+      "wordCount": 509,
+      "composite": 3.93,
+      "slopRate": 3.93,
+      "hedgeHits": 2,
+      "transRate": 0,
+      "transitionHits": 0,
+      "emDashes": 2,
+      "emDashDensity": 3.93,
+      "longParas": 0,
+      "longestPara": 29,
+      "stubHits": 0,
+      "fmIssues": [],
+      "latexDupHits": 0,
+      "latexDupBreakdown": {
+        "patternA": [],
+        "patternB": []
+      },
+      "breakdown": {
+        "hedges": {
+          "essential": 1,
+          "leverag(e|ing)": 1
+        },
+        "transitions": {},
+        "stubs": {}
+      }
+    },
+    {
+      "path": "docs/ai-for-engineering/deep-sequence-modelling-rnn/training-rnn-backprop-through-time.mdx",
+      "title": "Lesson 6 — Training RNNs: From Backpropagation to Backpropagation Through Time",
+      "wordCount": 702,
+      "composite": 3.85,
+      "slopRate": 2.85,
+      "hedgeHits": 2,
+      "transRate": 0,
+      "transitionHits": 0,
+      "emDashes": 7,
+      "emDashDensity": 9.97,
+      "longParas": 0,
+      "longestPara": 36,
+      "stubHits": 0,
+      "fmIssues": [],
+      "latexDupHits": 0,
+      "latexDupBreakdown": {
+        "patternA": [],
+        "patternB": []
+      },
+      "breakdown": {
+        "hedges": {
+          "essential": 1,
+          "robust": 1
+        },
+        "transitions": {},
+        "stubs": {}
+      }
+    },
+    {
+      "path": "docs/ai-for-engineering/mle-interview/guides/amazon/sde-i.mdx",
+      "title": "Amazon SDE I Interview Guide",
+      "wordCount": 409,
+      "composite": 3.44,
+      "slopRate": 2.44,
+      "hedgeHits": 1,
+      "transRate": 0,
+      "transitionHits": 0,
+      "emDashes": 13,
+      "emDashDensity": 31.78,
+      "longParas": 0,
+      "longestPara": 90,
+      "stubHits": 0,
+      "fmIssues": [],
+      "latexDupHits": 0,
+      "latexDupBreakdown": {
+        "patternA": [],
+        "patternB": []
+      },
+      "breakdown": {
+        "hedges": {
+          "leverag(e|ing)": 1
+        },
+        "transitions": {},
+        "stubs": {}
+      }
+    },
+    {
+      "path": "docs/ai-for-engineering/deep-sequence-modelling-rnn/rnn-internal-mechanics.mdx",
+      "title": "Lesson 3 — Recurrent Neural Networks: Internal Mechanics and Formal Structure",
+      "wordCount": 741,
+      "composite": 3.35,
+      "slopRate": 1.35,
+      "hedgeHits": 1,
+      "transRate": 0,
+      "transitionHits": 0,
+      "emDashes": 3,
+      "emDashDensity": 4.05,
+      "longParas": 0,
+      "longestPara": 68,
+      "stubHits": 0,
+      "fmIssues": [],
+      "latexDupHits": 1,
+      "latexDupBreakdown": {
+        "patternA": [
+          {
+            "mathLine": 47,
+            "dupLine": 55
+          }
+        ],
+        "patternB": []
+      },
+      "breakdown": {
+        "hedges": {
+          "essential": 1
+        },
+        "transitions": {},
+        "stubs": {}
+      }
+    },
+    {
+      "path": "docs/ai-writing-and-talks/what-should-we-learn-engineer-modern-ai.mdx",
+      "title": "What should we learn as an engineer in the modern AI world?",
+      "wordCount": 952,
+      "composite": 3.1,
+      "slopRate": 2.1,
+      "hedgeHits": 2,
+      "transRate": 0,
+      "transitionHits": 0,
+      "emDashes": 22,
+      "emDashDensity": 23.11,
+      "longParas": 0,
+      "longestPara": 48,
+      "stubHits": 0,
+      "fmIssues": [],
+      "latexDupHits": 0,
+      "latexDupBreakdown": {
+        "patternA": [],
+        "patternB": []
+      },
+      "breakdown": {
+        "hedges": {
+          "leverag(e|ing)": 2
+        },
+        "transitions": {},
+        "stubs": {}
+      }
+    },
+    {
+      "path": "docs/ai-for-engineering/deep-computer-vision-cnn/visual-revolution.mdx",
+      "title": "Lesson 1 — The Visual Revolution",
+      "wordCount": 479,
+      "composite": 3.09,
+      "slopRate": 2.09,
+      "hedgeHits": 1,
+      "transRate": 0,
+      "transitionHits": 0,
+      "emDashes": 10,
+      "emDashDensity": 20.88,
+      "longParas": 0,
+      "longestPara": 88,
+      "stubHits": 0,
+      "fmIssues": [],
+      "latexDupHits": 0,
+      "latexDupBreakdown": {
+        "patternA": [],
+        "patternB": []
+      },
+      "breakdown": {
+        "hedges": {
+          "robust": 1
+        },
+        "transitions": {},
+        "stubs": {}
+      }
+    },
+    {
+      "path": "docs/ai-for-engineering/attention-is-all-you-need/multi-headed-attention.mdx",
+      "title": "Lesson 5 — Multi-headed attention",
+      "wordCount": 870,
+      "composite": 3,
+      "slopRate": 0,
+      "hedgeHits": 0,
+      "transRate": 0,
+      "transitionHits": 0,
+      "emDashes": 17,
+      "emDashDensity": 19.54,
+      "longParas": 0,
+      "longestPara": 81,
+      "stubHits": 0,
+      "fmIssues": [],
+      "latexDupHits": 1,
+      "latexDupBreakdown": {
+        "patternA": [
+          {
+            "mathLine": 78,
+            "dupLine": 88
+          }
+        ],
+        "patternB": []
+      },
+      "breakdown": {
+        "hedges": {},
+        "transitions": {},
+        "stubs": {}
+      }
+    },
+    {
+      "path": "docs/ai-for-engineering/deep-neural-networks/backward-pass.mdx",
+      "title": "Lesson 6 — How neural networks learn (backward pass)",
+      "wordCount": 818,
+      "composite": 3,
+      "slopRate": 0,
+      "hedgeHits": 0,
+      "transRate": 0,
+      "transitionHits": 0,
+      "emDashes": 9,
+      "emDashDensity": 11,
+      "longParas": 0,
+      "longestPara": 63,
+      "stubHits": 0,
+      "fmIssues": [],
+      "latexDupHits": 1,
+      "latexDupBreakdown": {
+        "patternA": [
+          {
+            "mathLine": 76,
+            "dupLine": 92
+          }
+        ],
+        "patternB": []
+      },
+      "breakdown": {
+        "hedges": {},
+        "transitions": {},
+        "stubs": {}
+      }
+    },
+    {
+      "path": "docs/ai-for-engineering/foundations-of-regression/logistic-regression-decision-boundaries.mdx",
+      "title": "Lesson 4 — Logistic regression and decision boundaries",
+      "wordCount": 401,
+      "composite": 3,
+      "slopRate": 0,
+      "hedgeHits": 0,
+      "transRate": 0,
+      "transitionHits": 0,
+      "emDashes": 4,
+      "emDashDensity": 9.98,
+      "longParas": 0,
+      "longestPara": 33,
+      "stubHits": 0,
+      "fmIssues": [],
+      "latexDupHits": 1,
+      "latexDupBreakdown": {
+        "patternA": [
+          {
+            "mathLine": 116,
+            "dupLine": 120
+          }
+        ],
+        "patternB": []
+      },
+      "breakdown": {
+        "hedges": {},
+        "transitions": {},
+        "stubs": {}
+      }
+    },
+    {
+      "path": "docs/ai-for-engineering/ml-system-design/10-rag-generation-and-serving.mdx",
+      "title": "Lesson 10 — Generation and LLM serving (RAG)",
+      "wordCount": 1001,
+      "composite": 3,
+      "slopRate": 0,
+      "hedgeHits": 0,
+      "transRate": 0,
+      "transitionHits": 0,
+      "emDashes": 8,
+      "emDashDensity": 7.99,
+      "longParas": 0,
+      "longestPara": 117,
+      "stubHits": 0,
+      "fmIssues": [
+        "empty_tutor_concepts"
+      ],
+      "latexDupHits": 1,
+      "latexDupBreakdown": {
+        "patternA": [
+          {
+            "mathLine": 221,
+            "dupLine": 226
+          }
+        ],
+        "patternB": []
+      },
+      "breakdown": {
+        "hedges": {},
+        "transitions": {},
+        "stubs": {}
+      }
+    },
+    {
+      "path": "docs/ai-for-engineering/build-and-train-your-own-gpt2-model/06-residual-connections.mdx",
+      "title": "Residual Connections",
+      "wordCount": 1043,
+      "composite": 2.96,
+      "slopRate": 0.96,
+      "hedgeHits": 1,
+      "transRate": 0,
+      "transitionHits": 0,
+      "emDashes": 17,
+      "emDashDensity": 16.3,
+      "longParas": 0,
+      "longestPara": 77,
+      "stubHits": 0,
+      "fmIssues": [
+        "missing_description"
+      ],
+      "latexDupHits": 0,
+      "latexDupBreakdown": {
+        "patternA": [],
+        "patternB": []
+      },
+      "breakdown": {
+        "hedges": {
+          "crucial": 1
+        },
+        "transitions": {},
+        "stubs": {}
+      }
+    },
+    {
+      "path": "docs/ai-for-engineering/ml-system-design/09-rag-retrieval-and-reranking.mdx",
+      "title": "Lesson 9 — Retrieval and reranking (RAG)",
+      "wordCount": 1095,
+      "composite": 2.91,
+      "slopRate": 0.91,
+      "hedgeHits": 1,
+      "transRate": 0,
+      "transitionHits": 0,
+      "emDashes": 18,
+      "emDashDensity": 16.44,
+      "longParas": 0,
+      "longestPara": 94,
+      "stubHits": 0,
+      "fmIssues": [
+        "empty_tutor_concepts"
+      ],
+      "latexDupHits": 0,
+      "latexDupBreakdown": {
+        "patternA": [],
+        "patternB": []
+      },
+      "breakdown": {
+        "hedges": {
+          "robust": 1
+        },
+        "transitions": {},
+        "stubs": {}
+      }
+    },
+    {
+      "path": "docs/ai-for-engineering/ml-system-design/12-case-ad-ctr-prediction.mdx",
+      "title": "Lesson 12 — Case study: ad CTR prediction (Google-style)",
+      "wordCount": 1325,
+      "composite": 2.75,
+      "slopRate": 0.75,
+      "hedgeHits": 1,
+      "transRate": 0,
+      "transitionHits": 0,
+      "emDashes": 25,
+      "emDashDensity": 18.87,
+      "longParas": 0,
+      "longestPara": 102,
+      "stubHits": 0,
+      "fmIssues": [
+        "empty_tutor_concepts"
+      ],
+      "latexDupHits": 0,
+      "latexDupBreakdown": {
+        "patternA": [],
+        "patternB": []
+      },
+      "breakdown": {
+        "hedges": {
+          "essential": 1
+        },
+        "transitions": {},
+        "stubs": {}
+      }
+    },
+    {
+      "path": "docs/ai-for-engineering/ml-system-design/15-case-multimodal-search.mdx",
+      "title": "Lesson 15 — Case study: multimodal search (CLIP-style)",
+      "wordCount": 1585,
+      "composite": 2.63,
+      "slopRate": 0.63,
+      "hedgeHits": 1,
+      "transRate": 0,
+      "transitionHits": 0,
+      "emDashes": 35,
+      "emDashDensity": 22.08,
+      "longParas": 0,
+      "longestPara": 90,
+      "stubHits": 0,
+      "fmIssues": [
+        "empty_tutor_concepts"
+      ],
+      "latexDupHits": 0,
+      "latexDupBreakdown": {
+        "patternA": [],
+        "patternB": []
+      },
+      "breakdown": {
+        "hedges": {
+          "essential": 1
+        },
+        "transitions": {},
+        "stubs": {}
+      }
+    },
+    {
+      "path": "docs/ai-for-leaders/prompt-engineering/hallucinations-in-large-language-models.mdx",
+      "title": "Prompt engineering — Hallucinations in large language models",
+      "wordCount": 637,
+      "composite": 2.57,
+      "slopRate": 1.57,
+      "hedgeHits": 1,
+      "transRate": 0,
+      "transitionHits": 0,
+      "emDashes": 14,
+      "emDashDensity": 21.98,
+      "longParas": 0,
+      "longestPara": 60,
+      "stubHits": 0,
+      "fmIssues": [],
+      "latexDupHits": 0,
+      "latexDupBreakdown": {
+        "patternA": [],
+        "patternB": []
+      },
+      "breakdown": {
+        "hedges": {
+          "leverag(e|ing)": 1
+        },
+        "transitions": {},
+        "stubs": {}
+      }
+    },
+    {
+      "path": "docs/ai-for-engineering/deep-sequence-modelling-rnn/bringing-sequence-modeling-real-world.mdx",
+      "title": "Lesson 5 — Bringing Sequence Modeling to the Real World",
+      "wordCount": 725,
+      "composite": 2.38,
+      "slopRate": 1.38,
+      "hedgeHits": 1,
+      "transRate": 0,
+      "transitionHits": 0,
+      "emDashes": 10,
+      "emDashDensity": 13.79,
+      "longParas": 0,
+      "longestPara": 44,
+      "stubHits": 0,
+      "fmIssues": [],
+      "latexDupHits": 0,
+      "latexDupBreakdown": {
+        "patternA": [],
+        "patternB": []
+      },
+      "breakdown": {
+        "hedges": {
+          "essential": 1
+        },
+        "transitions": {},
+        "stubs": {}
+      }
+    },
+    {
+      "path": "docs/ai-for-engineering/deep-computer-vision-cnn/preserving-spatial-structure-cnns.mdx",
+      "title": "Lesson 6 — Preserving spatial structure with convolutional neural networks",
+      "wordCount": 813,
+      "composite": 2.23,
+      "slopRate": 1.23,
+      "hedgeHits": 1,
+      "transRate": 0,
+      "transitionHits": 0,
+      "emDashes": 12,
+      "emDashDensity": 14.76,
+      "longParas": 0,
+      "longestPara": 59,
+      "stubHits": 0,
+      "fmIssues": [],
+      "latexDupHits": 0,
+      "latexDupBreakdown": {
+        "patternA": [],
+        "patternB": []
+      },
+      "breakdown": {
+        "hedges": {
+          "robust": 1
+        },
+        "transitions": {},
+        "stubs": {}
+      }
+    },
+    {
+      "path": "docs/ai-for-engineering/build-and-train-your-own-gpt2-model/01-problem-with-rnns-lstms.mdx",
+      "title": "Problem with RNNs and LSTMs",
+      "wordCount": 1286,
+      "composite": 2,
+      "slopRate": 0,
+      "hedgeHits": 0,
+      "transRate": 0,
+      "transitionHits": 0,
+      "emDashes": 25,
+      "emDashDensity": 19.44,
+      "longParas": 0,
+      "longestPara": 72,
+      "stubHits": 0,
+      "fmIssues": [
+        "missing_description"
+      ],
+      "latexDupHits": 0,
+      "latexDupBreakdown": {
+        "patternA": [],
+        "patternB": []
+      },
+      "breakdown": {
+        "hedges": {},
+        "transitions": {},
+        "stubs": {}
+      }
+    },
+    {
+      "path": "docs/ai-for-engineering/build-and-train-your-own-gpt2-model/03-positional-embeddings.mdx",
+      "title": "Positional Embeddings / Positional Encodings",
+      "wordCount": 1026,
+      "composite": 2,
+      "slopRate": 0,
+      "hedgeHits": 0,
+      "transRate": 0,
+      "transitionHits": 0,
+      "emDashes": 18,
+      "emDashDensity": 17.54,
+      "longParas": 0,
+      "longestPara": 89,
+      "stubHits": 0,
+      "fmIssues": [
+        "missing_description"
+      ],
+      "latexDupHits": 0,
+      "latexDupBreakdown": {
+        "patternA": [],
+        "patternB": []
+      },
+      "breakdown": {
+        "hedges": {},
+        "transitions": {},
+        "stubs": {}
+      }
+    },
+    {
+      "path": "docs/ai-for-engineering/build-and-train-your-own-gpt2-model/05-causal-masking.mdx",
+      "title": "Causal Masking",
+      "wordCount": 1035,
+      "composite": 2,
+      "slopRate": 0,
+      "hedgeHits": 0,
+      "transRate": 0,
+      "transitionHits": 0,
+      "emDashes": 21,
+      "emDashDensity": 20.29,
+      "longParas": 0,
+      "longestPara": 97,
+      "stubHits": 0,
+      "fmIssues": [
+        "missing_description"
+      ],
+      "latexDupHits": 0,
+      "latexDupBreakdown": {
+        "patternA": [],
+        "patternB": []
+      },
+      "breakdown": {
+        "hedges": {},
+        "transitions": {},
+        "stubs": {}
+      }
+    },
+    {
+      "path": "docs/ai-for-engineering/build-and-train-your-own-gpt2-model/10-decoder-only-transformer.mdx",
+      "title": "Decoder Only Transformer",
+      "wordCount": 1469,
+      "composite": 2,
+      "slopRate": 0,
+      "hedgeHits": 0,
+      "transRate": 0,
+      "transitionHits": 0,
+      "emDashes": 30,
+      "emDashDensity": 20.42,
+      "longParas": 0,
+      "longestPara": 104,
+      "stubHits": 0,
+      "fmIssues": [
+        "missing_description"
+      ],
+      "latexDupHits": 0,
+      "latexDupBreakdown": {
+        "patternA": [],
+        "patternB": []
+      },
+      "breakdown": {
+        "hedges": {},
+        "transitions": {},
+        "stubs": {}
+      }
+    },
+    {
+      "path": "docs/ai-for-engineering/build-and-train-your-own-gpt2-model/intro.mdx",
+      "title": "Build and Train Your Own GPT-2 Model",
+      "wordCount": 97,
+      "composite": 2,
+      "slopRate": 0,
+      "hedgeHits": 0,
+      "transRate": 0,
+      "transitionHits": 0,
+      "emDashes": 4,
+      "emDashDensity": 41.24,
+      "longParas": 0,
+      "longestPara": 50,
+      "stubHits": 0,
+      "fmIssues": [
+        "missing_description"
+      ],
+      "latexDupHits": 0,
+      "latexDupBreakdown": {
+        "patternA": [],
+        "patternB": []
+      },
+      "breakdown": {
+        "hedges": {},
+        "transitions": {},
+        "stubs": {}
+      }
+    },
+    {
+      "path": "docs/ai-for-engineering/ml-system-design/04-recsys-ranking.mdx",
+      "title": "Lesson 4 — Ranking",
+      "wordCount": 1146,
+      "composite": 2,
+      "slopRate": 0,
+      "hedgeHits": 0,
+      "transRate": 0,
+      "transitionHits": 0,
+      "emDashes": 25,
+      "emDashDensity": 21.82,
+      "longParas": 0,
+      "longestPara": 107,
+      "stubHits": 0,
+      "fmIssues": [
+        "empty_tutor_concepts"
+      ],
+      "latexDupHits": 0,
+      "latexDupBreakdown": {
+        "patternA": [],
+        "patternB": []
+      },
+      "breakdown": {
+        "hedges": {},
+        "transitions": {},
+        "stubs": {}
+      }
+    },
+    {
+      "path": "docs/ai-for-engineering/ml-system-design/06-recsys-evaluation-and-ab-testing.mdx",
+      "title": "Lesson 6 — Evaluation and A/B testing",
+      "wordCount": 1134,
+      "composite": 2,
+      "slopRate": 0,
+      "hedgeHits": 0,
+      "transRate": 0,
+      "transitionHits": 0,
+      "emDashes": 19,
+      "emDashDensity": 16.75,
+      "longParas": 0,
+      "longestPara": 120,
+      "stubHits": 0,
+      "fmIssues": [
+        "empty_tutor_concepts"
+      ],
+      "latexDupHits": 0,
+      "latexDupBreakdown": {
+        "patternA": [],
+        "patternB": []
+      },
+      "breakdown": {
+        "hedges": {},
+        "transitions": {},
+        "stubs": {}
+      }
+    },
+    {
+      "path": "docs/ai-for-engineering/ml-system-design/07-recsys-monitoring-and-retraining.mdx",
+      "title": "Lesson 7 — Monitoring and retraining",
+      "wordCount": 1360,
+      "composite": 2,
+      "slopRate": 0,
+      "hedgeHits": 0,
+      "transRate": 0,
+      "transitionHits": 0,
+      "emDashes": 31,
+      "emDashDensity": 22.79,
+      "longParas": 0,
+      "longestPara": 117,
+      "stubHits": 0,
+      "fmIssues": [
+        "empty_tutor_concepts"
+      ],
+      "latexDupHits": 0,
+      "latexDupBreakdown": {
+        "patternA": [],
+        "patternB": []
+      },
+      "breakdown": {
+        "hedges": {},
+        "transitions": {},
+        "stubs": {}
+      }
+    },
+    {
+      "path": "docs/ai-for-engineering/ml-system-design/13-case-real-time-fraud-detection.mdx",
+      "title": "Lesson 13 — Case study: real-time fraud detection (Stripe-style)",
+      "wordCount": 1454,
+      "composite": 2,
+      "slopRate": 0,
+      "hedgeHits": 0,
+      "transRate": 0,
+      "transitionHits": 0,
+      "emDashes": 22,
+      "emDashDensity": 15.13,
+      "longParas": 0,
+      "longestPara": 117,
+      "stubHits": 0,
+      "fmIssues": [
+        "empty_tutor_concepts"
+      ],
+      "latexDupHits": 0,
+      "latexDupBreakdown": {
+        "patternA": [],
+        "patternB": []
+      },
+      "breakdown": {
+        "hedges": {},
+        "transitions": {},
+        "stubs": {}
+      }
+    },
+    {
+      "path": "docs/ai-for-engineering/deep-sequence-modelling-rnn/lstm-and-gru.mdx",
+      "title": "Lesson 4 — LSTM and GRU: Gating the Vanishing Gradient",
+      "wordCount": 1079,
+      "composite": 1.93,
+      "slopRate": 0.93,
+      "hedgeHits": 1,
+      "transRate": 0,
+      "transitionHits": 0,
+      "emDashes": 12,
+      "emDashDensity": 11.12,
+      "longParas": 0,
+      "longestPara": 65,
+      "stubHits": 0,
+      "fmIssues": [],
+      "latexDupHits": 0,
+      "latexDupBreakdown": {
+        "patternA": [],
+        "patternB": []
+      },
+      "breakdown": {
+        "hedges": {
+          "robust": 1
+        },
+        "transitions": {},
+        "stubs": {}
+      }
+    },
+    {
+      "path": "docs/ai-for-leaders/prompt-engineering/language-models-are-few-shot-learners.mdx",
+      "title": "Prompt engineering — Language models are few-shot learners",
+      "wordCount": 1606,
+      "composite": 1.62,
+      "slopRate": 0.62,
+      "hedgeHits": 1,
+      "transRate": 0,
+      "transitionHits": 0,
+      "emDashes": 34,
+      "emDashDensity": 21.17,
+      "longParas": 0,
+      "longestPara": 88,
+      "stubHits": 0,
+      "fmIssues": [],
+      "latexDupHits": 0,
+      "latexDupBreakdown": {
+        "patternA": [],
+        "patternB": []
+      },
+      "breakdown": {
+        "hedges": {
+          "robust": 1
+        },
+        "transitions": {},
+        "stubs": {}
+      }
+    },
+    {
+      "path": "docs/ai-for-engineering/deep-computer-vision-cnn/feature-detection-hierarchy.mdx",
+      "title": "Lesson 4 — Feature detection & hierarchical structure",
+      "wordCount": 777,
+      "composite": 1.29,
+      "slopRate": 1.29,
+      "hedgeHits": 1,
+      "transRate": 0,
+      "transitionHits": 0,
+      "emDashes": 1,
+      "emDashDensity": 1.29,
+      "longParas": 0,
+      "longestPara": 110,
+      "stubHits": 0,
+      "fmIssues": [],
+      "latexDupHits": 0,
+      "latexDupBreakdown": {
+        "patternA": [],
+        "patternB": []
+      },
+      "breakdown": {
+        "hedges": {
+          "robust": 1
+        },
+        "transitions": {},
+        "stubs": {}
+      }
+    },
+    {
+      "path": "docs/ai-for-engineering/deep-sequence-modelling-rnn/from-static-networks-to-time-aware.mdx",
+      "title": "Lesson 2 — From Static Networks to Time-Aware Models",
+      "wordCount": 903,
+      "composite": 1.11,
+      "slopRate": 1.11,
+      "hedgeHits": 1,
+      "transRate": 0,
+      "transitionHits": 0,
+      "emDashes": 7,
+      "emDashDensity": 7.75,
+      "longParas": 0,
+      "longestPara": 56,
+      "stubHits": 0,
+      "fmIssues": [],
+      "latexDupHits": 0,
+      "latexDupBreakdown": {
+        "patternA": [],
+        "patternB": []
+      },
+      "breakdown": {
+        "hedges": {
+          "crucial": 1
+        },
+        "transitions": {},
+        "stubs": {}
+      }
+    },
+    {
+      "path": "docs/ai-for-engineering/agentic-ai/01-bare-llm-loop.mdx",
+      "title": "Lesson 1 — The bare LLM loop",
+      "wordCount": 510,
+      "composite": 1,
+      "slopRate": 0,
+      "hedgeHits": 0,
+      "transRate": 0,
+      "transitionHits": 0,
+      "emDashes": 14,
+      "emDashDensity": 27.45,
+      "longParas": 0,
+      "longestPara": 56,
+      "stubHits": 0,
+      "fmIssues": [],
+      "latexDupHits": 0,
+      "latexDupBreakdown": {
+        "patternA": [],
+        "patternB": []
+      },
+      "breakdown": {
+        "hedges": {},
+        "transitions": {},
+        "stubs": {}
+      }
+    },
+    {
+      "path": "docs/ai-for-engineering/agentic-ai/02-tool-use.mdx",
+      "title": "Lesson 2 — Give it a tool",
+      "wordCount": 553,
+      "composite": 1,
+      "slopRate": 0,
+      "hedgeHits": 0,
+      "transRate": 0,
+      "transitionHits": 0,
+      "emDashes": 10,
+      "emDashDensity": 18.08,
+      "longParas": 0,
+      "longestPara": 50,
+      "stubHits": 0,
+      "fmIssues": [],
+      "latexDupHits": 0,
+      "latexDupBreakdown": {
+        "patternA": [],
+        "patternB": []
+      },
+      "breakdown": {
+        "hedges": {},
+        "transitions": {},
+        "stubs": {}
+      }
+    },
+    {
+      "path": "docs/ai-for-engineering/agentic-ai/03-react-reasoning.mdx",
+      "title": "Lesson 3 — ReAct: reason before you act",
+      "wordCount": 688,
+      "composite": 1,
+      "slopRate": 0,
+      "hedgeHits": 0,
+      "transRate": 0,
+      "transitionHits": 0,
+      "emDashes": 16,
+      "emDashDensity": 23.26,
+      "longParas": 0,
+      "longestPara": 58,
+      "stubHits": 0,
+      "fmIssues": [],
+      "latexDupHits": 0,
+      "latexDupBreakdown": {
+        "patternA": [],
+        "patternB": []
+      },
+      "breakdown": {
+        "hedges": {},
+        "transitions": {},
+        "stubs": {}
+      }
+    },
+    {
+      "path": "docs/ai-for-engineering/agentic-ai/04-planner.mdx",
+      "title": "Lesson 4 — The Planner: decompose before you search",
+      "wordCount": 494,
+      "composite": 1,
+      "slopRate": 0,
+      "hedgeHits": 0,
+      "transRate": 0,
+      "transitionHits": 0,
+      "emDashes": 9,
+      "emDashDensity": 18.22,
+      "longParas": 0,
+      "longestPara": 59,
+      "stubHits": 0,
+      "fmIssues": [],
+      "latexDupHits": 0,
+      "latexDupBreakdown": {
+        "patternA": [],
+        "patternB": []
+      },
+      "breakdown": {
+        "hedges": {},
+        "transitions": {},
+        "stubs": {}
+      }
+    },
+    {
+      "path": "docs/ai-for-engineering/agentic-ai/05-parallel-executors.mdx",
+      "title": "Lesson 5 — Parallel executors: run sub-questions concurrently",
+      "wordCount": 514,
+      "composite": 1,
+      "slopRate": 0,
+      "hedgeHits": 0,
+      "transRate": 0,
+      "transitionHits": 0,
+      "emDashes": 10,
+      "emDashDensity": 19.46,
+      "longParas": 0,
+      "longestPara": 76,
+      "stubHits": 0,
+      "fmIssues": [],
+      "latexDupHits": 0,
+      "latexDupBreakdown": {
+        "patternA": [],
+        "patternB": []
+      },
+      "breakdown": {
+        "hedges": {},
+        "transitions": {},
+        "stubs": {}
+      }
+    },
+    {
+      "path": "docs/ai-for-engineering/agentic-ai/06-shared-memory.mdx",
+      "title": "Lesson 6 — Shared memory: one source of truth",
+      "wordCount": 574,
+      "composite": 1,
+      "slopRate": 0,
+      "hedgeHits": 0,
+      "transRate": 0,
+      "transitionHits": 0,
+      "emDashes": 9,
+      "emDashDensity": 15.68,
+      "longParas": 0,
+      "longestPara": 61,
+      "stubHits": 0,
+      "fmIssues": [],
+      "latexDupHits": 0,
+      "latexDupBreakdown": {
+        "patternA": [],
+        "patternB": []
+      },
+      "breakdown": {
+        "hedges": {},
+        "transitions": {},
+        "stubs": {}
+      }
+    },
+    {
+      "path": "docs/ai-for-engineering/agentic-ai/07-critic.mdx",
+      "title": "Lesson 7 — The Critic: validate before you deliver",
+      "wordCount": 520,
+      "composite": 1,
+      "slopRate": 0,
+      "hedgeHits": 0,
+      "transRate": 0,
+      "transitionHits": 0,
+      "emDashes": 10,
+      "emDashDensity": 19.23,
+      "longParas": 0,
+      "longestPara": 52,
+      "stubHits": 0,
+      "fmIssues": [],
+      "latexDupHits": 0,
+      "latexDupBreakdown": {
+        "patternA": [],
+        "patternB": []
+      },
+      "breakdown": {
+        "hedges": {},
+        "transitions": {},
+        "stubs": {}
+      }
+    },
+    {
+      "path": "docs/ai-for-engineering/agentic-ai/08-full-system.mdx",
+      "title": "Lesson 8 — Close the loop: the Orchestrator",
+      "wordCount": 738,
+      "composite": 1,
+      "slopRate": 0,
+      "hedgeHits": 0,
+      "transRate": 0,
+      "transitionHits": 0,
+      "emDashes": 16,
+      "emDashDensity": 21.68,
+      "longParas": 0,
+      "longestPara": 77,
+      "stubHits": 0,
+      "fmIssues": [],
+      "latexDupHits": 0,
+      "latexDupBreakdown": {
+        "patternA": [],
+        "patternB": []
+      },
+      "breakdown": {
+        "hedges": {},
+        "transitions": {},
+        "stubs": {}
+      }
+    },
+    {
+      "path": "docs/ai-for-engineering/agentic-ai/interview-readiness.mdx",
+      "title": "Interview Readiness — Build a Multi-Agent Research Assistant",
+      "wordCount": 130,
+      "composite": 1,
+      "slopRate": 0,
+      "hedgeHits": 0,
+      "transRate": 0,
+      "transitionHits": 0,
+      "emDashes": 2,
+      "emDashDensity": 15.38,
+      "longParas": 0,
+      "longestPara": 54,
+      "stubHits": 0,
+      "fmIssues": [],
+      "latexDupHits": 0,
+      "latexDupBreakdown": {
+        "patternA": [],
+        "patternB": []
+      },
+      "breakdown": {
+        "hedges": {},
+        "transitions": {},
+        "stubs": {}
+      }
+    },
+    {
+      "path": "docs/ai-for-engineering/agentic-ai/intro.mdx",
+      "title": "Build a Multi-Agent Research Assistant",
+      "wordCount": 256,
+      "composite": 1,
+      "slopRate": 0,
+      "hedgeHits": 0,
+      "transRate": 0,
+      "transitionHits": 0,
+      "emDashes": 7,
+      "emDashDensity": 27.34,
+      "longParas": 0,
+      "longestPara": 48,
+      "stubHits": 0,
+      "fmIssues": [],
+      "latexDupHits": 0,
+      "latexDupBreakdown": {
+        "patternA": [],
+        "patternB": []
+      },
+      "breakdown": {
+        "hedges": {},
+        "transitions": {},
+        "stubs": {}
+      }
+    },
+    {
+      "path": "docs/ai-for-engineering/ai-research/intro.mdx",
+      "title": "AI Research",
+      "wordCount": 66,
+      "composite": 1,
+      "slopRate": 0,
+      "hedgeHits": 0,
+      "transRate": 0,
+      "transitionHits": 0,
+      "emDashes": 2,
+      "emDashDensity": 30.3,
+      "longParas": 0,
+      "longestPara": 32,
+      "stubHits": 0,
+      "fmIssues": [],
+      "latexDupHits": 0,
+      "latexDupBreakdown": {
+        "patternA": [],
+        "patternB": []
+      },
+      "breakdown": {
+        "hedges": {},
+        "transitions": {},
+        "stubs": {}
+      }
+    },
+    {
+      "path": "docs/ai-for-engineering/attention-is-all-you-need/attention.mdx",
+      "title": "Lesson 3 — Attention",
+      "wordCount": 596,
+      "composite": 1,
+      "slopRate": 0,
+      "hedgeHits": 0,
+      "transRate": 0,
+      "transitionHits": 0,
+      "emDashes": 15,
+      "emDashDensity": 25.17,
+      "longParas": 0,
+      "longestPara": 64,
+      "stubHits": 0,
+      "fmIssues": [],
+      "latexDupHits": 0,
+      "latexDupBreakdown": {
+        "patternA": [],
+        "patternB": []
+      },
+      "breakdown": {
+        "hedges": {},
+        "transitions": {},
+        "stubs": {}
+      }
+    },
+    {
+      "path": "docs/ai-for-engineering/attention-is-all-you-need/cross-attention.mdx",
+      "title": "Lesson 6 — Cross-attention",
+      "wordCount": 693,
+      "composite": 1,
+      "slopRate": 0,
+      "hedgeHits": 0,
+      "transRate": 0,
+      "transitionHits": 0,
+      "emDashes": 14,
+      "emDashDensity": 20.2,
+      "longParas": 0,
+      "longestPara": 73,
+      "stubHits": 0,
+      "fmIssues": [],
+      "latexDupHits": 0,
+      "latexDupBreakdown": {
+        "patternA": [],
+        "patternB": []
+      },
+      "breakdown": {
+        "hedges": {},
+        "transitions": {},
+        "stubs": {}
+      }
+    },
+    {
+      "path": "docs/ai-for-engineering/attention-is-all-you-need/encoder-decoder-transformer.mdx",
+      "title": "Lesson 8 — Encoder–decoder transformer",
+      "wordCount": 1047,
+      "composite": 1,
+      "slopRate": 0,
+      "hedgeHits": 0,
+      "transRate": 0,
+      "transitionHits": 0,
+      "emDashes": 9,
+      "emDashDensity": 8.6,
+      "longParas": 0,
+      "longestPara": 63,
+      "stubHits": 0,
+      "fmIssues": [],
+      "latexDupHits": 0,
+      "latexDupBreakdown": {
+        "patternA": [],
+        "patternB": []
+      },
+      "breakdown": {
+        "hedges": {},
+        "transitions": {},
+        "stubs": {}
+      }
+    },
+    {
+      "path": "docs/ai-for-engineering/attention-is-all-you-need/encoder-stack.mdx",
+      "title": "Lesson 7 — The encoder stack",
+      "wordCount": 653,
+      "composite": 1,
+      "slopRate": 0,
+      "hedgeHits": 0,
+      "transRate": 0,
+      "transitionHits": 0,
+      "emDashes": 10,
+      "emDashDensity": 15.31,
+      "longParas": 0,
+      "longestPara": 70,
+      "stubHits": 0,
+      "fmIssues": [],
+      "latexDupHits": 0,
+      "latexDupBreakdown": {
+        "patternA": [],
+        "patternB": []
+      },
+      "breakdown": {
+        "hedges": {},
+        "transitions": {},
+        "stubs": {}
+      }
+    },
+    {
+      "path": "docs/ai-for-engineering/attention-is-all-you-need/from-encoder-decoder-to-gpt.mdx",
+      "title": "Lesson 9 — From encoder–decoder to GPT",
+      "wordCount": 589,
+      "composite": 1,
+      "slopRate": 0,
+      "hedgeHits": 0,
+      "transRate": 0,
+      "transitionHits": 0,
+      "emDashes": 9,
+      "emDashDensity": 15.28,
+      "longParas": 0,
+      "longestPara": 99,
+      "stubHits": 0,
+      "fmIssues": [],
+      "latexDupHits": 0,
+      "latexDupBreakdown": {
+        "patternA": [],
+        "patternB": []
+      },
+      "breakdown": {
+        "hedges": {},
+        "transitions": {},
+        "stubs": {}
+      }
+    },
+    {
+      "path": "docs/ai-for-engineering/attention-is-all-you-need/intro.mdx",
+      "title": "Attention Is All You Need — The 2017 paper",
+      "wordCount": 345,
+      "composite": 1,
+      "slopRate": 0,
+      "hedgeHits": 0,
+      "transRate": 0,
+      "transitionHits": 0,
+      "emDashes": 7,
+      "emDashDensity": 20.29,
+      "longParas": 0,
+      "longestPara": 62,
+      "stubHits": 0,
+      "fmIssues": [],
+      "latexDupHits": 0,
+      "latexDupBreakdown": {
+        "patternA": [],
+        "patternB": []
+      },
+      "breakdown": {
+        "hedges": {},
+        "transitions": {},
+        "stubs": {}
+      }
+    },
+    {
+      "path": "docs/ai-for-engineering/attention-is-all-you-need/positional-embeddings.mdx",
+      "title": "Lesson 2 — Positional embeddings & positional encodings",
+      "wordCount": 823,
+      "composite": 1,
+      "slopRate": 0,
+      "hedgeHits": 0,
+      "transRate": 0,
+      "transitionHits": 0,
+      "emDashes": 19,
+      "emDashDensity": 23.09,
+      "longParas": 0,
+      "longestPara": 73,
+      "stubHits": 0,
+      "fmIssues": [],
+      "latexDupHits": 0,
+      "latexDupBreakdown": {
+        "patternA": [],
+        "patternB": []
+      },
+      "breakdown": {
+        "hedges": {},
+        "transitions": {},
+        "stubs": {}
+      }
+    },
+    {
+      "path": "docs/ai-for-engineering/attention-is-all-you-need/problem-with-rnns-and-lstms.mdx",
+      "title": "Lesson 1 — Problem with RNNs and LSTMs",
+      "wordCount": 622,
+      "composite": 1,
+      "slopRate": 0,
+      "hedgeHits": 0,
+      "transRate": 0,
+      "transitionHits": 0,
+      "emDashes": 11,
+      "emDashDensity": 17.68,
+      "longParas": 0,
+      "longestPara": 40,
+      "stubHits": 0,
+      "fmIssues": [],
+      "latexDupHits": 0,
+      "latexDupBreakdown": {
+        "patternA": [],
+        "patternB": []
+      },
+      "breakdown": {
+        "hedges": {},
+        "transitions": {},
+        "stubs": {}
+      }
+    },
+    {
+      "path": "docs/ai-for-engineering/attention-is-all-you-need/self-attention.mdx",
+      "title": "Lesson 4 — Self-attention",
+      "wordCount": 889,
+      "composite": 1,
+      "slopRate": 0,
+      "hedgeHits": 0,
+      "transRate": 0,
+      "transitionHits": 0,
+      "emDashes": 16,
+      "emDashDensity": 18,
+      "longParas": 0,
+      "longestPara": 59,
+      "stubHits": 0,
+      "fmIssues": [],
+      "latexDupHits": 0,
+      "latexDupBreakdown": {
+        "patternA": [],
+        "patternB": []
+      },
+      "breakdown": {
+        "hedges": {},
+        "transitions": {},
+        "stubs": {}
+      }
+    },
+    {
+      "path": "docs/ai-for-engineering/deep-computer-vision-cnn/filters-features-convolutions.mdx",
+      "title": "Lesson 7 — Filters, Features, and the Power of Convolutions",
+      "wordCount": 697,
+      "composite": 1,
+      "slopRate": 0,
+      "hedgeHits": 0,
+      "transRate": 0,
+      "transitionHits": 0,
+      "emDashes": 8,
+      "emDashDensity": 11.48,
+      "longParas": 0,
+      "longestPara": 47,
+      "stubHits": 0,
+      "fmIssues": [],
+      "latexDupHits": 0,
+      "latexDupBreakdown": {
+        "patternA": [],
+        "patternB": []
+      },
+      "breakdown": {
+        "hedges": {},
+        "transitions": {},
+        "stubs": {}
+      }
+    },
+    {
+      "path": "docs/ai-for-engineering/deep-computer-vision-cnn/intro.mdx",
+      "title": "Deep Computer Vision — CNN",
+      "wordCount": 293,
+      "composite": 1,
+      "slopRate": 0,
+      "hedgeHits": 0,
+      "transRate": 0,
+      "transitionHits": 0,
+      "emDashes": 4,
+      "emDashDensity": 13.65,
+      "longParas": 0,
+      "longestPara": 47,
+      "stubHits": 0,
+      "fmIssues": [],
+      "latexDupHits": 0,
+      "latexDupBreakdown": {
+        "patternA": [],
+        "patternB": []
+      },
+      "breakdown": {
+        "hedges": {},
+        "transitions": {},
+        "stubs": {}
+      }
+    },
+    {
+      "path": "docs/ai-for-engineering/deep-computer-vision-cnn/transformative-deep-learning-vision.mdx",
+      "title": "Lesson 2 — Deep learning's role in computer vision",
+      "wordCount": 516,
+      "composite": 1,
+      "slopRate": 0,
+      "hedgeHits": 0,
+      "transRate": 0,
+      "transitionHits": 0,
+      "emDashes": 8,
+      "emDashDensity": 15.5,
+      "longParas": 0,
+      "longestPara": 60,
+      "stubHits": 0,
+      "fmIssues": [],
+      "latexDupHits": 0,
+      "latexDupBreakdown": {
+        "patternA": [],
+        "patternB": []
+      },
+      "breakdown": {
+        "hedges": {},
+        "transitions": {},
+        "stubs": {}
+      }
+    },
+    {
+      "path": "docs/ai-for-engineering/deep-neural-networks/activation-functions.mdx",
+      "title": "Lesson 3 — Activation functions",
+      "wordCount": 651,
+      "composite": 1,
+      "slopRate": 0,
+      "hedgeHits": 0,
+      "transRate": 0,
+      "transitionHits": 0,
+      "emDashes": 8,
+      "emDashDensity": 12.29,
+      "longParas": 0,
+      "longestPara": 56,
+      "stubHits": 0,
+      "fmIssues": [],
+      "latexDupHits": 0,
+      "latexDupBreakdown": {
+        "patternA": [],
+        "patternB": []
+      },
+      "breakdown": {
+        "hedges": {},
+        "transitions": {},
+        "stubs": {}
+      }
+    },
+    {
+      "path": "docs/ai-for-engineering/deep-neural-networks/intro.mdx",
+      "title": "Deep Neural Networks",
+      "wordCount": 350,
+      "composite": 1,
+      "slopRate": 0,
+      "hedgeHits": 0,
+      "transRate": 0,
+      "transitionHits": 0,
+      "emDashes": 3,
+      "emDashDensity": 8.57,
+      "longParas": 0,
+      "longestPara": 44,
+      "stubHits": 0,
+      "fmIssues": [],
+      "latexDupHits": 0,
+      "latexDupBreakdown": {
+        "patternA": [],
+        "patternB": []
+      },
+      "breakdown": {
+        "hedges": {},
+        "transitions": {},
+        "stubs": {}
+      }
+    },
+    {
+      "path": "docs/ai-for-engineering/deep-neural-networks/layers-in-deep-neural-networks.mdx",
+      "title": "Lesson 2 — Layers in a deep neural network",
+      "wordCount": 793,
+      "composite": 1,
+      "slopRate": 0,
+      "hedgeHits": 0,
+      "transRate": 0,
+      "transitionHits": 0,
+      "emDashes": 21,
+      "emDashDensity": 26.48,
+      "longParas": 0,
+      "longestPara": 89,
+      "stubHits": 0,
+      "fmIssues": [],
+      "latexDupHits": 0,
+      "latexDupBreakdown": {
+        "patternA": [],
+        "patternB": []
+      },
+      "breakdown": {
+        "hedges": {},
+        "transitions": {},
+        "stubs": {}
+      }
+    },
+    {
+      "path": "docs/ai-for-engineering/deep-neural-networks/loss-functions.mdx",
+      "title": "Lesson 4 — Loss functions",
+      "wordCount": 744,
+      "composite": 1,
+      "slopRate": 0,
+      "hedgeHits": 0,
+      "transRate": 0,
+      "transitionHits": 0,
+      "emDashes": 20,
+      "emDashDensity": 26.88,
+      "longParas": 0,
+      "longestPara": 69,
+      "stubHits": 0,
+      "fmIssues": [],
+      "latexDupHits": 0,
+      "latexDupBreakdown": {
+        "patternA": [],
+        "patternB": []
+      },
+      "breakdown": {
+        "hedges": {},
+        "transitions": {},
+        "stubs": {}
+      }
+    },
+    {
+      "path": "docs/ai-for-engineering/deep-neural-networks/neural-network-architecture.mdx",
+      "title": "Lesson 9 — Neural network architecture (binary classification recap)",
+      "wordCount": 544,
+      "composite": 1,
+      "slopRate": 0,
+      "hedgeHits": 0,
+      "transRate": 0,
+      "transitionHits": 0,
+      "emDashes": 10,
+      "emDashDensity": 18.38,
+      "longParas": 0,
+      "longestPara": 64,
+      "stubHits": 0,
+      "fmIssues": [],
+      "latexDupHits": 0,
+      "latexDupBreakdown": {
+        "patternA": [],
+        "patternB": []
+      },
+      "breakdown": {
+        "hedges": {},
+        "transitions": {},
+        "stubs": {}
+      }
+    },
+    {
+      "path": "docs/ai-for-engineering/deep-neural-networks/overfitting-in-neural-networks.mdx",
+      "title": "Lesson 8 — Overfitting in neural networks",
+      "wordCount": 814,
+      "composite": 1,
+      "slopRate": 0,
+      "hedgeHits": 0,
+      "transRate": 0,
+      "transitionHits": 0,
+      "emDashes": 18,
+      "emDashDensity": 22.11,
+      "longParas": 0,
+      "longestPara": 93,
+      "stubHits": 0,
+      "fmIssues": [],
+      "latexDupHits": 0,
+      "latexDupBreakdown": {
+        "patternA": [],
+        "patternB": []
+      },
+      "breakdown": {
+        "hedges": {},
+        "transitions": {},
+        "stubs": {}
+      }
+    },
+    {
+      "path": "docs/ai-for-engineering/deep-neural-networks/perceptron-and-neuron.mdx",
+      "title": "Lesson 1 — From linear regression to the perceptron",
+      "wordCount": 619,
+      "composite": 1,
+      "slopRate": 0,
+      "hedgeHits": 0,
+      "transRate": 0,
+      "transitionHits": 0,
+      "emDashes": 11,
+      "emDashDensity": 17.77,
+      "longParas": 0,
+      "longestPara": 77,
+      "stubHits": 0,
+      "fmIssues": [],
+      "latexDupHits": 0,
+      "latexDupBreakdown": {
+        "patternA": [],
+        "patternB": []
+      },
+      "breakdown": {
+        "hedges": {},
+        "transitions": {},
+        "stubs": {}
+      }
+    },
+    {
+      "path": "docs/ai-for-engineering/deep-neural-networks/trainable-parameters-and-hyperparameters.mdx",
+      "title": "Lesson 7 — Trainable parameters and hyperparameters",
+      "wordCount": 732,
+      "composite": 1,
+      "slopRate": 0,
+      "hedgeHits": 0,
+      "transRate": 0,
+      "transitionHits": 0,
+      "emDashes": 7,
+      "emDashDensity": 9.56,
+      "longParas": 0,
+      "longestPara": 57,
+      "stubHits": 0,
+      "fmIssues": [],
+      "latexDupHits": 0,
+      "latexDupBreakdown": {
+        "patternA": [],
+        "patternB": []
+      },
+      "breakdown": {
+        "hedges": {},
+        "transitions": {},
+        "stubs": {}
+      }
+    },
+    {
+      "path": "docs/ai-for-engineering/deep-sequence-modelling-rnn/training-an-rnn-in-pytorch.mdx",
+      "title": "Lesson 7 — Training an RNN in PyTorch",
+      "wordCount": 523,
+      "composite": 1,
+      "slopRate": 0,
+      "hedgeHits": 0,
+      "transRate": 0,
+      "transitionHits": 0,
+      "emDashes": 6,
+      "emDashDensity": 11.47,
+      "longParas": 0,
+      "longestPara": 62,
+      "stubHits": 0,
+      "fmIssues": [],
+      "latexDupHits": 0,
+      "latexDupBreakdown": {
+        "patternA": [],
+        "patternB": []
+      },
+      "breakdown": {
+        "hedges": {},
+        "transitions": {},
+        "stubs": {}
+      }
+    },
+    {
+      "path": "docs/ai-for-engineering/foundations-of-regression/interview-readiness.mdx",
+      "title": "Interview Readiness — Foundations of Regression",
+      "wordCount": 97,
+      "composite": 1,
+      "slopRate": 0,
+      "hedgeHits": 0,
+      "transRate": 0,
+      "transitionHits": 0,
+      "emDashes": 1,
+      "emDashDensity": 10.31,
+      "longParas": 0,
+      "longestPara": 41,
+      "stubHits": 0,
+      "fmIssues": [],
+      "latexDupHits": 0,
+      "latexDupBreakdown": {
+        "patternA": [],
+        "patternB": []
+      },
+      "breakdown": {
+        "hedges": {},
+        "transitions": {},
+        "stubs": {}
+      }
+    },
+    {
+      "path": "docs/ai-for-engineering/foundations-of-regression/intro.mdx",
+      "title": "Foundations of Regression",
+      "wordCount": 243,
+      "composite": 1,
+      "slopRate": 0,
+      "hedgeHits": 0,
+      "transRate": 0,
+      "transitionHits": 0,
+      "emDashes": 4,
+      "emDashDensity": 16.46,
+      "longParas": 0,
+      "longestPara": 39,
+      "stubHits": 0,
+      "fmIssues": [],
+      "latexDupHits": 0,
+      "latexDupBreakdown": {
+        "patternA": [],
+        "patternB": []
+      },
+      "breakdown": {
+        "hedges": {},
+        "transitions": {},
+        "stubs": {}
+      }
+    },
+    {
+      "path": "docs/ai-for-engineering/foundations-of-regression/log-likelihood-instead-of-squared-error.mdx",
+      "title": "Lesson 6 — Log likelihood instead of squared error",
+      "wordCount": 431,
+      "composite": 1,
+      "slopRate": 0,
+      "hedgeHits": 0,
+      "transRate": 0,
+      "transitionHits": 0,
+      "emDashes": 7,
+      "emDashDensity": 16.24,
+      "longParas": 0,
+      "longestPara": 56,
+      "stubHits": 0,
+      "fmIssues": [],
+      "latexDupHits": 0,
+      "latexDupBreakdown": {
+        "patternA": [],
+        "patternB": []
+      },
+      "breakdown": {
+        "hedges": {},
+        "transitions": {},
+        "stubs": {}
+      }
+    },
+    {
+      "path": "docs/ai-for-engineering/foundations-of-regression/why-logistic-regression.mdx",
+      "title": "Lesson 2 — Why do we need logistic regression?",
+      "wordCount": 483,
+      "composite": 1,
+      "slopRate": 0,
+      "hedgeHits": 0,
+      "transRate": 0,
+      "transitionHits": 0,
+      "emDashes": 9,
+      "emDashDensity": 18.63,
+      "longParas": 0,
+      "longestPara": 64,
+      "stubHits": 0,
+      "fmIssues": [],
+      "latexDupHits": 0,
+      "latexDupBreakdown": {
+        "patternA": [],
+        "patternB": []
+      },
+      "breakdown": {
+        "hedges": {},
+        "transitions": {},
+        "stubs": {}
+      }
+    },
+    {
+      "path": "docs/ai-for-engineering/ml-system-design/00-the-ml-sd-interview.mdx",
+      "title": "Lesson 0 — The ML system design interview",
+      "wordCount": 1471,
+      "composite": 1,
+      "slopRate": 0,
+      "hedgeHits": 0,
+      "transRate": 0,
+      "transitionHits": 0,
+      "emDashes": 29,
+      "emDashDensity": 19.71,
+      "longParas": 0,
+      "longestPara": 67,
+      "stubHits": 0,
+      "fmIssues": [],
+      "latexDupHits": 0,
+      "latexDupBreakdown": {
+        "patternA": [],
+        "patternB": []
+      },
+      "breakdown": {
+        "hedges": {},
+        "transitions": {},
+        "stubs": {}
+      }
+    },
+    {
+      "path": "docs/ai-for-engineering/ml-system-design/intro.mdx",
+      "title": "ML System Design",
+      "wordCount": 363,
+      "composite": 1,
+      "slopRate": 0,
+      "hedgeHits": 0,
+      "transRate": 0,
+      "transitionHits": 0,
+      "emDashes": 4,
+      "emDashDensity": 11.02,
+      "longParas": 0,
+      "longestPara": 57,
+      "stubHits": 0,
+      "fmIssues": [],
+      "latexDupHits": 0,
+      "latexDupBreakdown": {
+        "patternA": [],
+        "patternB": []
+      },
+      "breakdown": {
+        "hedges": {},
+        "transitions": {},
+        "stubs": {}
+      }
+    },
+    {
+      "path": "docs/ai-for-engineering/mle-interview/guides/amazon/applied-scientist.mdx",
+      "title": "Amazon Applied Scientist Interview Guide",
+      "wordCount": 231,
+      "composite": 1,
+      "slopRate": 0,
+      "hedgeHits": 0,
+      "transRate": 0,
+      "transitionHits": 0,
+      "emDashes": 5,
+      "emDashDensity": 21.65,
+      "longParas": 0,
+      "longestPara": 82,
+      "stubHits": 0,
+      "fmIssues": [],
+      "latexDupHits": 0,
+      "latexDupBreakdown": {
+        "patternA": [],
+        "patternB": []
+      },
+      "breakdown": {
+        "hedges": {},
+        "transitions": {},
+        "stubs": {}
+      }
+    },
+    {
+      "path": "docs/ai-for-engineering/mle-interview/guides/amazon/sde-ii.mdx",
+      "title": "Amazon SDE II Interview Guide",
+      "wordCount": 273,
+      "composite": 1,
+      "slopRate": 0,
+      "hedgeHits": 0,
+      "transRate": 0,
+      "transitionHits": 0,
+      "emDashes": 7,
+      "emDashDensity": 25.64,
+      "longParas": 0,
+      "longestPara": 104,
+      "stubHits": 0,
+      "fmIssues": [],
+      "latexDupHits": 0,
+      "latexDupBreakdown": {
+        "patternA": [],
+        "patternB": []
+      },
+      "breakdown": {
+        "hedges": {},
+        "transitions": {},
+        "stubs": {}
+      }
+    },
+    {
+      "path": "docs/ai-for-engineering/mle-interview/guides/amazon/sde-iii.mdx",
+      "title": "Amazon SDE III Interview Guide",
+      "wordCount": 362,
+      "composite": 1,
+      "slopRate": 0,
+      "hedgeHits": 0,
+      "transRate": 0,
+      "transitionHits": 0,
+      "emDashes": 11,
+      "emDashDensity": 30.39,
+      "longParas": 0,
+      "longestPara": 76,
+      "stubHits": 0,
+      "fmIssues": [],
+      "latexDupHits": 0,
+      "latexDupBreakdown": {
+        "patternA": [],
+        "patternB": []
+      },
+      "breakdown": {
+        "hedges": {},
+        "transitions": {},
+        "stubs": {}
+      }
+    },
+    {
+      "path": "docs/ai-for-engineering/mle-interview/guides/apple/ict2.mdx",
+      "title": "Apple ICT2 Interview Guide",
+      "wordCount": 467,
+      "composite": 1,
+      "slopRate": 0,
+      "hedgeHits": 0,
+      "transRate": 0,
+      "transitionHits": 0,
+      "emDashes": 8,
+      "emDashDensity": 17.13,
+      "longParas": 0,
+      "longestPara": 108,
+      "stubHits": 0,
+      "fmIssues": [],
+      "latexDupHits": 0,
+      "latexDupBreakdown": {
+        "patternA": [],
+        "patternB": []
+      },
+      "breakdown": {
+        "hedges": {},
+        "transitions": {},
+        "stubs": {}
+      }
+    },
+    {
+      "path": "docs/ai-for-engineering/mle-interview/guides/apple/ict3.mdx",
+      "title": "Apple ICT3 Interview Guide",
+      "wordCount": 284,
+      "composite": 1,
+      "slopRate": 0,
+      "hedgeHits": 0,
+      "transRate": 0,
+      "transitionHits": 0,
+      "emDashes": 7,
+      "emDashDensity": 24.65,
+      "longParas": 0,
+      "longestPara": 97,
+      "stubHits": 0,
+      "fmIssues": [],
+      "latexDupHits": 0,
+      "latexDupBreakdown": {
+        "patternA": [],
+        "patternB": []
+      },
+      "breakdown": {
+        "hedges": {},
+        "transitions": {},
+        "stubs": {}
+      }
+    },
+    {
+      "path": "docs/ai-for-engineering/mle-interview/guides/apple/ict4.mdx",
+      "title": "Apple ICT4 Interview Guide",
+      "wordCount": 605,
+      "composite": 1,
+      "slopRate": 0,
+      "hedgeHits": 0,
+      "transRate": 0,
+      "transitionHits": 0,
+      "emDashes": 12,
+      "emDashDensity": 19.83,
+      "longParas": 0,
+      "longestPara": 101,
+      "stubHits": 0,
+      "fmIssues": [],
+      "latexDupHits": 0,
+      "latexDupBreakdown": {
+        "patternA": [],
+        "patternB": []
+      },
+      "breakdown": {
+        "hedges": {},
+        "transitions": {},
+        "stubs": {}
+      }
+    },
+    {
+      "path": "docs/ai-for-engineering/mle-interview/guides/google/l3.mdx",
+      "title": "Google L3 Interview Guide",
+      "wordCount": 157,
+      "composite": 1,
+      "slopRate": 0,
+      "hedgeHits": 0,
+      "transRate": 0,
+      "transitionHits": 0,
+      "emDashes": 6,
+      "emDashDensity": 38.22,
+      "longParas": 0,
+      "longestPara": 88,
+      "stubHits": 0,
+      "fmIssues": [],
+      "latexDupHits": 0,
+      "latexDupBreakdown": {
+        "patternA": [],
+        "patternB": []
+      },
+      "breakdown": {
+        "hedges": {},
+        "transitions": {},
+        "stubs": {}
+      }
+    },
+    {
+      "path": "docs/ai-for-engineering/mle-interview/guides/google/l4.mdx",
+      "title": "Google L4 Interview Guide",
+      "wordCount": 497,
+      "composite": 1,
+      "slopRate": 0,
+      "hedgeHits": 0,
+      "transRate": 0,
+      "transitionHits": 0,
+      "emDashes": 8,
+      "emDashDensity": 16.1,
+      "longParas": 0,
+      "longestPara": 87,
+      "stubHits": 0,
+      "fmIssues": [],
+      "latexDupHits": 0,
+      "latexDupBreakdown": {
+        "patternA": [],
+        "patternB": []
+      },
+      "breakdown": {
+        "hedges": {},
+        "transitions": {},
+        "stubs": {}
+      }
+    },
+    {
+      "path": "docs/ai-for-engineering/mle-interview/guides/google/l5.mdx",
+      "title": "Google L5 Interview Guide",
+      "wordCount": 416,
+      "composite": 1,
+      "slopRate": 0,
+      "hedgeHits": 0,
+      "transRate": 0,
+      "transitionHits": 0,
+      "emDashes": 13,
+      "emDashDensity": 31.25,
+      "longParas": 0,
+      "longestPara": 96,
+      "stubHits": 0,
+      "fmIssues": [],
+      "latexDupHits": 0,
+      "latexDupBreakdown": {
+        "patternA": [],
+        "patternB": []
+      },
+      "breakdown": {
+        "hedges": {},
+        "transitions": {},
+        "stubs": {}
+      }
+    },
+    {
+      "path": "docs/ai-for-engineering/mle-interview/guides/meta/e3.mdx",
+      "title": "Meta E3 Interview Guide",
+      "wordCount": 276,
+      "composite": 1,
+      "slopRate": 0,
+      "hedgeHits": 0,
+      "transRate": 0,
+      "transitionHits": 0,
+      "emDashes": 5,
+      "emDashDensity": 18.12,
+      "longParas": 0,
+      "longestPara": 74,
+      "stubHits": 0,
+      "fmIssues": [],
+      "latexDupHits": 0,
+      "latexDupBreakdown": {
+        "patternA": [],
+        "patternB": []
+      },
+      "breakdown": {
+        "hedges": {},
+        "transitions": {},
+        "stubs": {}
+      }
+    },
+    {
+      "path": "docs/ai-for-engineering/mle-interview/guides/meta/e4.mdx",
+      "title": "Meta E4 Interview Guide",
+      "wordCount": 168,
+      "composite": 1,
+      "slopRate": 0,
+      "hedgeHits": 0,
+      "transRate": 0,
+      "transitionHits": 0,
+      "emDashes": 2,
+      "emDashDensity": 11.9,
+      "longParas": 0,
+      "longestPara": 60,
+      "stubHits": 0,
+      "fmIssues": [],
+      "latexDupHits": 0,
+      "latexDupBreakdown": {
+        "patternA": [],
+        "patternB": []
+      },
+      "breakdown": {
+        "hedges": {},
+        "transitions": {},
+        "stubs": {}
+      }
+    },
+    {
+      "path": "docs/ai-for-engineering/mle-interview/guides/meta/e5.mdx",
+      "title": "Meta E5 Interview Guide",
+      "wordCount": 532,
+      "composite": 1,
+      "slopRate": 0,
+      "hedgeHits": 0,
+      "transRate": 0,
+      "transitionHits": 0,
+      "emDashes": 13,
+      "emDashDensity": 24.44,
+      "longParas": 0,
+      "longestPara": 106,
+      "stubHits": 0,
+      "fmIssues": [],
+      "latexDupHits": 0,
+      "latexDupBreakdown": {
+        "patternA": [],
+        "patternB": []
+      },
+      "breakdown": {
+        "hedges": {},
+        "transitions": {},
+        "stubs": {}
+      }
+    },
+    {
+      "path": "docs/ai-for-engineering/mle-interview/guides/microsoft/applied-scientist.mdx",
+      "title": "Microsoft Applied Scientist Interview Guide",
+      "wordCount": 383,
+      "composite": 1,
+      "slopRate": 0,
+      "hedgeHits": 0,
+      "transRate": 0,
+      "transitionHits": 0,
+      "emDashes": 10,
+      "emDashDensity": 26.11,
+      "longParas": 0,
+      "longestPara": 97,
+      "stubHits": 0,
+      "fmIssues": [],
+      "latexDupHits": 0,
+      "latexDupBreakdown": {
+        "patternA": [],
+        "patternB": []
+      },
+      "breakdown": {
+        "hedges": {},
+        "transitions": {},
+        "stubs": {}
+      }
+    },
+    {
+      "path": "docs/ai-for-engineering/mle-interview/guides/microsoft/l62.mdx",
+      "title": "Microsoft Level 62 Interview Guide",
+      "wordCount": 447,
+      "composite": 1,
+      "slopRate": 0,
+      "hedgeHits": 0,
+      "transRate": 0,
+      "transitionHits": 0,
+      "emDashes": 8,
+      "emDashDensity": 17.9,
+      "longParas": 0,
+      "longestPara": 100,
+      "stubHits": 0,
+      "fmIssues": [],
+      "latexDupHits": 0,
+      "latexDupBreakdown": {
+        "patternA": [],
+        "patternB": []
+      },
+      "breakdown": {
+        "hedges": {},
+        "transitions": {},
+        "stubs": {}
+      }
+    },
+    {
+      "path": "docs/ai-for-engineering/mle-interview/guides/microsoft/l63.mdx",
+      "title": "Microsoft Level 63 Interview Guide",
+      "wordCount": 278,
+      "composite": 1,
+      "slopRate": 0,
+      "hedgeHits": 0,
+      "transRate": 0,
+      "transitionHits": 0,
+      "emDashes": 7,
+      "emDashDensity": 25.18,
+      "longParas": 0,
+      "longestPara": 82,
+      "stubHits": 0,
+      "fmIssues": [],
+      "latexDupHits": 0,
+      "latexDupBreakdown": {
+        "patternA": [],
+        "patternB": []
+      },
+      "breakdown": {
+        "hedges": {},
+        "transitions": {},
+        "stubs": {}
+      }
+    },
+    {
+      "path": "docs/ai-for-engineering/mle-interview/guides/microsoft/l64.mdx",
+      "title": "Microsoft Level 64 Interview Guide",
+      "wordCount": 545,
+      "composite": 1,
+      "slopRate": 0,
+      "hedgeHits": 0,
+      "transRate": 0,
+      "transitionHits": 0,
+      "emDashes": 12,
+      "emDashDensity": 22.02,
+      "longParas": 0,
+      "longestPara": 99,
+      "stubHits": 0,
+      "fmIssues": [],
+      "latexDupHits": 0,
+      "latexDupBreakdown": {
+        "patternA": [],
+        "patternB": []
+      },
+      "breakdown": {
+        "hedges": {},
+        "transitions": {},
+        "stubs": {}
+      }
+    },
+    {
+      "path": "docs/ai-for-engineering/mle-interview/guides/microsoft/ml-research-engineer.mdx",
+      "title": "Microsoft Machine Learning Research Engineer Interview Guide",
+      "wordCount": 725,
+      "composite": 1,
+      "slopRate": 0,
+      "hedgeHits": 0,
+      "transRate": 0,
+      "transitionHits": 0,
+      "emDashes": 16,
+      "emDashDensity": 22.07,
+      "longParas": 0,
+      "longestPara": 114,
+      "stubHits": 0,
+      "fmIssues": [],
+      "latexDupHits": 0,
+      "latexDupBreakdown": {
+        "patternA": [],
+        "patternB": []
+      },
+      "breakdown": {
+        "hedges": {},
+        "transitions": {},
+        "stubs": {}
+      }
+    },
+    {
+      "path": "docs/ai-for-engineering/mle-interview/guides/microsoft/mle.mdx",
+      "title": "Microsoft Machine Learning Engineer Interview Guide",
+      "wordCount": 418,
+      "composite": 1,
+      "slopRate": 0,
+      "hedgeHits": 0,
+      "transRate": 0,
+      "transitionHits": 0,
+      "emDashes": 9,
+      "emDashDensity": 21.53,
+      "longParas": 0,
+      "longestPara": 79,
+      "stubHits": 0,
+      "fmIssues": [],
+      "latexDupHits": 0,
+      "latexDupBreakdown": {
+        "patternA": [],
+        "patternB": []
+      },
+      "breakdown": {
+        "hedges": {},
+        "transitions": {},
+        "stubs": {}
+      }
+    },
+    {
+      "path": "docs/ai-for-engineering/mle-interview/guides/recently-asked.mdx",
+      "title": "Recently Asked — AI Labs & High-Bar Tech",
+      "wordCount": 426,
+      "composite": 1,
+      "slopRate": 0,
+      "hedgeHits": 0,
+      "transRate": 0,
+      "transitionHits": 0,
+      "emDashes": 16,
+      "emDashDensity": 37.56,
+      "longParas": 0,
+      "longestPara": 47,
+      "stubHits": 0,
+      "fmIssues": [],
+      "latexDupHits": 0,
+      "latexDupBreakdown": {
+        "patternA": [],
+        "patternB": []
+      },
+      "breakdown": {
+        "hedges": {},
+        "transitions": {},
+        "stubs": {}
+      }
+    },
+    {
+      "path": "docs/ai-for-leaders/genai-for-everyone/ai-model-lifecycle-for-leaders.mdx",
+      "title": "Lesson 3 — From data to deployment: how AI models are built",
+      "wordCount": 885,
+      "composite": 1,
+      "slopRate": 0,
+      "hedgeHits": 0,
+      "transRate": 0,
+      "transitionHits": 0,
+      "emDashes": 21,
+      "emDashDensity": 23.73,
+      "longParas": 0,
+      "longestPara": 58,
+      "stubHits": 0,
+      "fmIssues": [],
+      "latexDupHits": 0,
+      "latexDupBreakdown": {
+        "patternA": [],
+        "patternB": []
+      },
+      "breakdown": {
+        "hedges": {},
+        "transitions": {},
+        "stubs": {}
+      }
+    },
+    {
+      "path": "docs/ai-for-leaders/genai-for-everyone/five-layer-ai-stack.mdx",
+      "title": "Lesson 2 — AI as a five-layer stack (“the cake”)",
+      "wordCount": 851,
+      "composite": 1,
+      "slopRate": 0,
+      "hedgeHits": 0,
+      "transRate": 0,
+      "transitionHits": 0,
+      "emDashes": 22,
+      "emDashDensity": 25.85,
+      "longParas": 0,
+      "longestPara": 86,
+      "stubHits": 0,
+      "fmIssues": [],
+      "latexDupHits": 0,
+      "latexDupBreakdown": {
+        "patternA": [],
+        "patternB": []
+      },
+      "breakdown": {
+        "hedges": {},
+        "transitions": {},
+        "stubs": {}
+      }
+    },
+    {
+      "path": "docs/ai-for-leaders/genai-for-everyone/intro.mdx",
+      "title": "AI 4 Everyone: Gen AI Systems, LLMs, Prompting & Applied AI Use cases",
+      "wordCount": 290,
+      "composite": 1,
+      "slopRate": 0,
+      "hedgeHits": 0,
+      "transRate": 0,
+      "transitionHits": 0,
+      "emDashes": 8,
+      "emDashDensity": 27.59,
+      "longParas": 0,
+      "longestPara": 42,
+      "stubHits": 0,
+      "fmIssues": [],
+      "latexDupHits": 0,
+      "latexDupBreakdown": {
+        "patternA": [],
+        "patternB": []
+      },
+      "breakdown": {
+        "hedges": {},
+        "transitions": {},
+        "stubs": {}
+      }
+    },
+    {
+      "path": "docs/ai-for-leaders/genai-for-everyone/literacy-and-the-road-to-generative-ai.mdx",
+      "title": "Lesson 1 — AI literacy & the road to generative AI",
+      "wordCount": 1219,
+      "composite": 1,
+      "slopRate": 0,
+      "hedgeHits": 0,
+      "transRate": 0,
+      "transitionHits": 0,
+      "emDashes": 32,
+      "emDashDensity": 26.25,
+      "longParas": 0,
+      "longestPara": 83,
+      "stubHits": 0,
+      "fmIssues": [],
+      "latexDupHits": 0,
+      "latexDupBreakdown": {
+        "patternA": [],
+        "patternB": []
+      },
+      "breakdown": {
+        "hedges": {},
+        "transitions": {},
+        "stubs": {}
+      }
+    },
+    {
+      "path": "docs/ai-for-leaders/genai-for-everyone/llm-design-case-study.mdx",
+      "title": "Lesson 4 — Design case study: how a large language model works",
+      "wordCount": 623,
+      "composite": 1,
+      "slopRate": 0,
+      "hedgeHits": 0,
+      "transRate": 0,
+      "transitionHits": 0,
+      "emDashes": 9,
+      "emDashDensity": 14.45,
+      "longParas": 0,
+      "longestPara": 55,
+      "stubHits": 0,
+      "fmIssues": [],
+      "latexDupHits": 0,
+      "latexDupBreakdown": {
+        "patternA": [],
+        "patternB": []
+      },
+      "breakdown": {
+        "hedges": {},
+        "transitions": {},
+        "stubs": {}
+      }
+    },
+    {
+      "path": "docs/ai-for-leaders/prompt-engineering/building-digital-assets-tutorial.mdx",
+      "title": "Prompt engineering — Building digital assets (hands-on tutorial)",
+      "wordCount": 888,
+      "composite": 1,
+      "slopRate": 0,
+      "hedgeHits": 0,
+      "transRate": 0,
+      "transitionHits": 0,
+      "emDashes": 16,
+      "emDashDensity": 18.02,
+      "longParas": 0,
+      "longestPara": 83,
+      "stubHits": 0,
+      "fmIssues": [],
+      "latexDupHits": 0,
+      "latexDupBreakdown": {
+        "patternA": [],
+        "patternB": []
+      },
+      "breakdown": {
+        "hedges": {},
+        "transitions": {},
+        "stubs": {}
+      }
+    },
+    {
+      "path": "docs/ai-for-leaders/prompt-engineering/design-of-a-prompt.mdx",
+      "title": "Prompt engineering — Design of a prompt",
+      "wordCount": 344,
+      "composite": 1,
+      "slopRate": 0,
+      "hedgeHits": 0,
+      "transRate": 0,
+      "transitionHits": 0,
+      "emDashes": 5,
+      "emDashDensity": 14.53,
+      "longParas": 0,
+      "longestPara": 28,
+      "stubHits": 0,
+      "fmIssues": [],
+      "latexDupHits": 0,
+      "latexDupBreakdown": {
+        "patternA": [],
+        "patternB": []
+      },
+      "breakdown": {
+        "hedges": {},
+        "transitions": {},
+        "stubs": {}
+      }
+    },
+    {
+      "path": "docs/ai-for-leaders/prompt-engineering/hands-on-prompt-design-webapp-cursor.mdx",
+      "title": "Prompt engineering — Hands-on: prompt design with Cursor",
+      "wordCount": 659,
+      "composite": 1,
+      "slopRate": 0,
+      "hedgeHits": 0,
+      "transRate": 0,
+      "transitionHits": 0,
+      "emDashes": 13,
+      "emDashDensity": 19.73,
+      "longParas": 0,
+      "longestPara": 57,
+      "stubHits": 0,
+      "fmIssues": [],
+      "latexDupHits": 0,
+      "latexDupBreakdown": {
+        "patternA": [],
+        "patternB": []
+      },
+      "breakdown": {
+        "hedges": {},
+        "transitions": {},
+        "stubs": {}
+      }
+    },
+    {
+      "path": "docs/ai-for-leaders/prompt-engineering/introduction.mdx",
+      "title": "Prompt engineering — Introduction",
+      "wordCount": 289,
+      "composite": 1,
+      "slopRate": 0,
+      "hedgeHits": 0,
+      "transRate": 0,
+      "transitionHits": 0,
+      "emDashes": 9,
+      "emDashDensity": 31.14,
+      "longParas": 0,
+      "longestPara": 44,
+      "stubHits": 0,
+      "fmIssues": [],
+      "latexDupHits": 0,
+      "latexDupBreakdown": {
+        "patternA": [],
+        "patternB": []
+      },
+      "breakdown": {
+        "hedges": {},
+        "transitions": {},
+        "stubs": {}
+      }
+    },
+    {
+      "path": "docs/ai-writing-and-talks/intro.mdx",
+      "title": "AI writing & talks",
+      "wordCount": 104,
+      "composite": 1,
+      "slopRate": 0,
+      "hedgeHits": 0,
+      "transRate": 0,
+      "transitionHits": 0,
+      "emDashes": 3,
+      "emDashDensity": 28.85,
+      "longParas": 0,
+      "longestPara": 28,
+      "stubHits": 0,
+      "fmIssues": [],
+      "latexDupHits": 0,
+      "latexDupBreakdown": {
+        "patternA": [],
+        "patternB": []
+      },
+      "breakdown": {
+        "hedges": {},
+        "transitions": {},
+        "stubs": {}
+      }
+    },
+    {
+      "path": "docs/practice/intro.mdx",
+      "title": "Practice",
+      "wordCount": 263,
+      "composite": 1,
+      "slopRate": 0,
+      "hedgeHits": 0,
+      "transRate": 0,
+      "transitionHits": 0,
+      "emDashes": 5,
+      "emDashDensity": 19.01,
+      "longParas": 0,
+      "longestPara": 76,
+      "stubHits": 0,
+      "fmIssues": [],
+      "latexDupHits": 0,
+      "latexDupBreakdown": {
+        "patternA": [],
+        "patternB": []
+      },
+      "breakdown": {
+        "hedges": {},
+        "transitions": {},
+        "stubs": {}
+      }
+    },
+    {
+      "path": "docs/ai-for-engineering/attention-is-all-you-need/interview-readiness.mdx",
+      "title": "Interview Readiness — Attention Is All You Need",
+      "wordCount": 116,
+      "composite": 0,
+      "slopRate": 0,
+      "hedgeHits": 0,
+      "transRate": 0,
+      "transitionHits": 0,
+      "emDashes": 0,
+      "emDashDensity": 0,
+      "longParas": 0,
+      "longestPara": 41,
+      "stubHits": 0,
+      "fmIssues": [],
+      "latexDupHits": 0,
+      "latexDupBreakdown": {
+        "patternA": [],
+        "patternB": []
+      },
+      "breakdown": {
+        "hedges": {},
+        "transitions": {},
+        "stubs": {}
+      }
+    },
+    {
+      "path": "docs/ai-for-engineering/build-and-train-your-own-gpt2-model/interview-readiness.mdx",
+      "title": "Interview Readiness — Build and Train Your Own GPT-2",
+      "wordCount": 114,
+      "composite": 0,
+      "slopRate": 0,
+      "hedgeHits": 0,
+      "transRate": 0,
+      "transitionHits": 0,
+      "emDashes": 0,
+      "emDashDensity": 0,
+      "longParas": 0,
+      "longestPara": 43,
+      "stubHits": 0,
+      "fmIssues": [],
+      "latexDupHits": 0,
+      "latexDupBreakdown": {
+        "patternA": [],
+        "patternB": []
+      },
+      "breakdown": {
+        "hedges": {},
+        "transitions": {},
+        "stubs": {}
+      }
+    },
+    {
+      "path": "docs/ai-for-engineering/deep-computer-vision-cnn/from-pixels-to-perception.mdx",
+      "title": "Lesson 3 — From pixels to perception",
+      "wordCount": 674,
+      "composite": 0,
+      "slopRate": 0,
+      "hedgeHits": 0,
+      "transRate": 0,
+      "transitionHits": 0,
+      "emDashes": 5,
+      "emDashDensity": 7.42,
+      "longParas": 0,
+      "longestPara": 85,
+      "stubHits": 0,
+      "fmIssues": [],
+      "latexDupHits": 0,
+      "latexDupBreakdown": {
+        "patternA": [],
+        "patternB": []
+      },
+      "breakdown": {
+        "hedges": {},
+        "transitions": {},
+        "stubs": {}
+      }
+    },
+    {
+      "path": "docs/ai-for-engineering/deep-computer-vision-cnn/interview-readiness.mdx",
+      "title": "Interview Readiness — Deep Computer Vision (CNN)",
+      "wordCount": 115,
+      "composite": 0,
+      "slopRate": 0,
+      "hedgeHits": 0,
+      "transRate": 0,
+      "transitionHits": 0,
+      "emDashes": 0,
+      "emDashDensity": 0,
+      "longParas": 0,
+      "longestPara": 40,
+      "stubHits": 0,
+      "fmIssues": [],
+      "latexDupHits": 0,
+      "latexDupBreakdown": {
+        "patternA": [],
+        "patternB": []
+      },
+      "breakdown": {
+        "hedges": {},
+        "transitions": {},
+        "stubs": {}
+      }
+    },
+    {
+      "path": "docs/ai-for-engineering/deep-computer-vision-cnn/learning-features-from-data.mdx",
+      "title": "Lesson 5 — Learning features directly from data with neural networks",
+      "wordCount": 546,
+      "composite": 0,
+      "slopRate": 0,
+      "hedgeHits": 0,
+      "transRate": 0,
+      "transitionHits": 0,
+      "emDashes": 4,
+      "emDashDensity": 7.33,
+      "longParas": 0,
+      "longestPara": 53,
+      "stubHits": 0,
+      "fmIssues": [],
+      "latexDupHits": 0,
+      "latexDupBreakdown": {
+        "patternA": [],
+        "patternB": []
+      },
+      "breakdown": {
+        "hedges": {},
+        "transitions": {},
+        "stubs": {}
+      }
+    },
+    {
+      "path": "docs/ai-for-engineering/deep-computer-vision-cnn/learning-to-see-cnns.mdx",
+      "title": "Lesson 8 — Learning to See: Understanding the Inner Workings of CNNs",
+      "wordCount": 914,
+      "composite": 0,
+      "slopRate": 0,
+      "hedgeHits": 0,
+      "transRate": 0,
+      "transitionHits": 0,
+      "emDashes": 7,
+      "emDashDensity": 7.66,
+      "longParas": 0,
+      "longestPara": 98,
+      "stubHits": 0,
+      "fmIssues": [],
+      "latexDupHits": 0,
+      "latexDupBreakdown": {
+        "patternA": [],
+        "patternB": []
+      },
+      "breakdown": {
+        "hedges": {},
+        "transitions": {},
+        "stubs": {}
+      }
+    },
+    {
+      "path": "docs/ai-for-engineering/deep-neural-networks/interview-readiness.mdx",
+      "title": "Interview Readiness — Deep Neural Networks",
+      "wordCount": 113,
+      "composite": 0,
+      "slopRate": 0,
+      "hedgeHits": 0,
+      "transRate": 0,
+      "transitionHits": 0,
+      "emDashes": 0,
+      "emDashDensity": 0,
+      "longParas": 0,
+      "longestPara": 37,
+      "stubHits": 0,
+      "fmIssues": [],
+      "latexDupHits": 0,
+      "latexDupBreakdown": {
+        "patternA": [],
+        "patternB": []
+      },
+      "breakdown": {
+        "hedges": {},
+        "transitions": {},
+        "stubs": {}
+      }
+    },
+    {
+      "path": "docs/ai-for-engineering/deep-sequence-modelling-rnn/interview-readiness.mdx",
+      "title": "Interview Readiness — Deep Sequence Modelling (RNN)",
+      "wordCount": 118,
+      "composite": 0,
+      "slopRate": 0,
+      "hedgeHits": 0,
+      "transRate": 0,
+      "transitionHits": 0,
+      "emDashes": 0,
+      "emDashDensity": 0,
+      "longParas": 0,
+      "longestPara": 42,
+      "stubHits": 0,
+      "fmIssues": [],
+      "latexDupHits": 0,
+      "latexDupBreakdown": {
+        "patternA": [],
+        "patternB": []
+      },
+      "breakdown": {
+        "hedges": {},
+        "transitions": {},
+        "stubs": {}
+      }
+    },
+    {
+      "path": "docs/ai-for-engineering/deep-sequence-modelling-rnn/intro.mdx",
+      "title": "Deep Sequence Modelling: RNN",
+      "wordCount": 210,
+      "composite": 0,
+      "slopRate": 0,
+      "hedgeHits": 0,
+      "transRate": 0,
+      "transitionHits": 0,
+      "emDashes": 1,
+      "emDashDensity": 4.76,
+      "longParas": 0,
+      "longestPara": 37,
+      "stubHits": 0,
+      "fmIssues": [],
+      "latexDupHits": 0,
+      "latexDupBreakdown": {
+        "patternA": [],
+        "patternB": []
+      },
+      "breakdown": {
+        "hedges": {},
+        "transitions": {},
+        "stubs": {}
+      }
+    },
+    {
+      "path": "docs/ai-for-engineering/foundations-of-regression/intuition-behind-logistic-regression.mdx",
+      "title": "Lesson 5 — Intuition behind logistic regression",
+      "wordCount": 515,
+      "composite": 0,
+      "slopRate": 0,
+      "hedgeHits": 0,
+      "transRate": 0,
+      "transitionHits": 0,
+      "emDashes": 2,
+      "emDashDensity": 3.88,
+      "longParas": 0,
+      "longestPara": 29,
+      "stubHits": 0,
+      "fmIssues": [],
+      "latexDupHits": 0,
+      "latexDupBreakdown": {
+        "patternA": [],
+        "patternB": []
+      },
+      "breakdown": {
+        "hedges": {},
+        "transitions": {},
+        "stubs": {}
+      }
+    },
+    {
+      "path": "docs/ai-for-engineering/foundations-of-regression/sigmoid-function-logistic-regression.mdx",
+      "title": "Lesson 3 — The sigmoid: the secret sauce of logistic regression",
+      "wordCount": 328,
+      "composite": 0,
+      "slopRate": 0,
+      "hedgeHits": 0,
+      "transRate": 0,
+      "transitionHits": 0,
+      "emDashes": 2,
+      "emDashDensity": 6.1,
+      "longParas": 0,
+      "longestPara": 43,
+      "stubHits": 0,
+      "fmIssues": [],
+      "latexDupHits": 0,
+      "latexDupBreakdown": {
+        "patternA": [],
+        "patternB": []
+      },
+      "breakdown": {
+        "hedges": {},
+        "transitions": {},
+        "stubs": {}
+      }
+    },
+    {
+      "path": "docs/ai-for-engineering/mle-interview/intro.mdx",
+      "title": "MLE Interview",
+      "wordCount": 119,
+      "composite": 0,
+      "slopRate": 0,
+      "hedgeHits": 0,
+      "transRate": 0,
+      "transitionHits": 0,
+      "emDashes": 0,
+      "emDashDensity": 0,
+      "longParas": 0,
+      "longestPara": 32,
+      "stubHits": 0,
+      "fmIssues": [],
+      "latexDupHits": 0,
+      "latexDupBreakdown": {
+        "patternA": [],
+        "patternB": []
+      },
+      "breakdown": {
+        "hedges": {},
+        "transitions": {},
+        "stubs": {}
+      }
+    },
+    {
+      "path": "docs/ai-for-engineering/mle-interview/rubrics-and-playbook.mdx",
+      "title": "Rubrics and Playbook",
+      "wordCount": 304,
+      "composite": 0,
+      "slopRate": 0,
+      "hedgeHits": 0,
+      "transRate": 0,
+      "transitionHits": 0,
+      "emDashes": 2,
+      "emDashDensity": 6.58,
+      "longParas": 0,
+      "longestPara": 59,
+      "stubHits": 0,
+      "fmIssues": [],
+      "latexDupHits": 0,
+      "latexDupBreakdown": {
+        "patternA": [],
+        "patternB": []
+      },
+      "breakdown": {
+        "hedges": {},
+        "transitions": {},
+        "stubs": {}
+      }
+    },
+    {
+      "path": "docs/playgrounds-preview.mdx",
+      "title": "Playgrounds Preview",
+      "wordCount": 240,
+      "composite": 0,
+      "slopRate": 0,
+      "hedgeHits": 0,
+      "transRate": 0,
+      "transitionHits": 0,
+      "emDashes": 1,
+      "emDashDensity": 4.17,
+      "longParas": 0,
+      "longestPara": 29,
+      "stubHits": 0,
+      "fmIssues": [],
+      "latexDupHits": 0,
+      "latexDupBreakdown": {
+        "patternA": [],
+        "patternB": []
+      },
+      "breakdown": {
+        "hedges": {},
+        "transitions": {},
+        "stubs": {}
+      }
+    },
+    {
+      "path": "docs/practice/adam-step.mdx",
+      "title": "Adam Step",
+      "wordCount": 4,
+      "composite": 0,
+      "slopRate": 0,
+      "hedgeHits": 0,
+      "transRate": 0,
+      "transitionHits": 0,
+      "emDashes": 0,
+      "emDashDensity": 0,
+      "longParas": 0,
+      "longestPara": 4,
+      "stubHits": 0,
+      "fmIssues": [],
+      "latexDupHits": 0,
+      "latexDupBreakdown": {
+        "patternA": [],
+        "patternB": []
+      },
+      "breakdown": {
+        "hedges": {},
+        "transitions": {},
+        "stubs": {}
+      }
+    },
+    {
+      "path": "docs/practice/adamw-step.mdx",
+      "title": "AdamW Step",
+      "wordCount": 4,
+      "composite": 0,
+      "slopRate": 0,
+      "hedgeHits": 0,
+      "transRate": 0,
+      "transitionHits": 0,
+      "emDashes": 0,
+      "emDashDensity": 0,
+      "longParas": 0,
+      "longestPara": 4,
+      "stubHits": 0,
+      "fmIssues": [],
+      "latexDupHits": 0,
+      "latexDupBreakdown": {
+        "patternA": [],
+        "patternB": []
+      },
+      "breakdown": {
+        "hedges": {},
+        "transitions": {},
+        "stubs": {}
+      }
+    },
+    {
+      "path": "docs/practice/batch-norm-forward.mdx",
+      "title": "Batch Norm Forward",
+      "wordCount": 4,
+      "composite": 0,
+      "slopRate": 0,
+      "hedgeHits": 0,
+      "transRate": 0,
+      "transitionHits": 0,
+      "emDashes": 0,
+      "emDashDensity": 0,
+      "longParas": 0,
+      "longestPara": 4,
+      "stubHits": 0,
+      "fmIssues": [],
+      "latexDupHits": 0,
+      "latexDupBreakdown": {
+        "patternA": [],
+        "patternB": []
+      },
+      "breakdown": {
+        "hedges": {},
+        "transitions": {},
+        "stubs": {}
+      }
+    },
+    {
+      "path": "docs/practice/bpe-apply-merges.mdx",
+      "title": "BPE: Apply Merges",
+      "wordCount": 4,
+      "composite": 0,
+      "slopRate": 0,
+      "hedgeHits": 0,
+      "transRate": 0,
+      "transitionHits": 0,
+      "emDashes": 0,
+      "emDashDensity": 0,
+      "longParas": 0,
+      "longestPara": 4,
+      "stubHits": 0,
+      "fmIssues": [],
+      "latexDupHits": 0,
+      "latexDupBreakdown": {
+        "patternA": [],
+        "patternB": []
+      },
+      "breakdown": {
+        "hedges": {},
+        "transitions": {},
+        "stubs": {}
+      }
+    },
+    {
+      "path": "docs/practice/bpe-train-merges.mdx",
+      "title": "BPE Train Merges",
+      "wordCount": 4,
+      "composite": 0,
+      "slopRate": 0,
+      "hedgeHits": 0,
+      "transRate": 0,
+      "transitionHits": 0,
+      "emDashes": 0,
+      "emDashDensity": 0,
+      "longParas": 0,
+      "longestPara": 4,
+      "stubHits": 0,
+      "fmIssues": [],
+      "latexDupHits": 0,
+      "latexDupBreakdown": {
+        "patternA": [],
+        "patternB": []
+      },
+      "breakdown": {
+        "hedges": {},
+        "transitions": {},
+        "stubs": {}
+      }
+    },
+    {
+      "path": "docs/practice/build-cnn-01-conv2d-naive.mdx",
+      "title": "Build a CNN · 01 · Conv2D Naive",
+      "wordCount": 4,
+      "composite": 0,
+      "slopRate": 0,
+      "hedgeHits": 0,
+      "transRate": 0,
+      "transitionHits": 0,
+      "emDashes": 0,
+      "emDashDensity": 0,
+      "longParas": 0,
+      "longestPara": 4,
+      "stubHits": 0,
+      "fmIssues": [],
+      "latexDupHits": 0,
+      "latexDupBreakdown": {
+        "patternA": [],
+        "patternB": []
+      },
+      "breakdown": {
+        "hedges": {},
+        "transitions": {},
+        "stubs": {}
+      }
+    },
+    {
+      "path": "docs/practice/build-cnn-02-conv2d-padding-stride.mdx",
+      "title": "Build a CNN · 02 · Conv2D + Padding + Stride",
+      "wordCount": 4,
+      "composite": 0,
+      "slopRate": 0,
+      "hedgeHits": 0,
+      "transRate": 0,
+      "transitionHits": 0,
+      "emDashes": 0,
+      "emDashDensity": 0,
+      "longParas": 0,
+      "longestPara": 4,
+      "stubHits": 0,
+      "fmIssues": [],
+      "latexDupHits": 0,
+      "latexDupBreakdown": {
+        "patternA": [],
+        "patternB": []
+      },
+      "breakdown": {
+        "hedges": {},
+        "transitions": {},
+        "stubs": {}
+      }
+    },
+    {
+      "path": "docs/practice/build-cnn-03-max-pool-2d.mdx",
+      "title": "Build a CNN · 03 · Max Pool 2D",
+      "wordCount": 4,
+      "composite": 0,
+      "slopRate": 0,
+      "hedgeHits": 0,
+      "transRate": 0,
+      "transitionHits": 0,
+      "emDashes": 0,
+      "emDashDensity": 0,
+      "longParas": 0,
+      "longestPara": 4,
+      "stubHits": 0,
+      "fmIssues": [],
+      "latexDupHits": 0,
+      "latexDupBreakdown": {
+        "patternA": [],
+        "patternB": []
+      },
+      "breakdown": {
+        "hedges": {},
+        "transitions": {},
+        "stubs": {}
+      }
+    },
+    {
+      "path": "docs/practice/build-cnn-04-avg-pool-2d.mdx",
+      "title": "Build a CNN · 04 · Avg Pool 2D",
+      "wordCount": 4,
+      "composite": 0,
+      "slopRate": 0,
+      "hedgeHits": 0,
+      "transRate": 0,
+      "transitionHits": 0,
+      "emDashes": 0,
+      "emDashDensity": 0,
+      "longParas": 0,
+      "longestPara": 4,
+      "stubHits": 0,
+      "fmIssues": [],
+      "latexDupHits": 0,
+      "latexDupBreakdown": {
+        "patternA": [],
+        "patternB": []
+      },
+      "breakdown": {
+        "hedges": {},
+        "transitions": {},
+        "stubs": {}
+      }
+    },
+    {
+      "path": "docs/practice/build-cnn-05-conv2d-backward.mdx",
+      "title": "Build a CNN · 05 · Conv2D Backward",
+      "wordCount": 4,
+      "composite": 0,
+      "slopRate": 0,
+      "hedgeHits": 0,
+      "transRate": 0,
+      "transitionHits": 0,
+      "emDashes": 0,
+      "emDashDensity": 0,
+      "longParas": 0,
+      "longestPara": 4,
+      "stubHits": 0,
+      "fmIssues": [],
+      "latexDupHits": 0,
+      "latexDupBreakdown": {
+        "patternA": [],
+        "patternB": []
+      },
+      "breakdown": {
+        "hedges": {},
+        "transitions": {},
+        "stubs": {}
+      }
+    },
+    {
+      "path": "docs/practice/build-cnn-06-mini-cnn-forward.mdx",
+      "title": "Build a CNN · 06 · Mini CNN Forward (Capstone)",
+      "wordCount": 4,
+      "composite": 0,
+      "slopRate": 0,
+      "hedgeHits": 0,
+      "transRate": 0,
+      "transitionHits": 0,
+      "emDashes": 0,
+      "emDashDensity": 0,
+      "longParas": 0,
+      "longestPara": 4,
+      "stubHits": 0,
+      "fmIssues": [],
+      "latexDupHits": 0,
+      "latexDupBreakdown": {
+        "patternA": [],
+        "patternB": []
+      },
+      "breakdown": {
+        "hedges": {},
+        "transitions": {},
+        "stubs": {}
+      }
+    },
+    {
+      "path": "docs/practice/build-gpt-01-token-embedding.mdx",
+      "title": "Build a GPT · 01 · Token Embedding",
+      "wordCount": 4,
+      "composite": 0,
+      "slopRate": 0,
+      "hedgeHits": 0,
+      "transRate": 0,
+      "transitionHits": 0,
+      "emDashes": 0,
+      "emDashDensity": 0,
+      "longParas": 0,
+      "longestPara": 4,
+      "stubHits": 0,
+      "fmIssues": [],
+      "latexDupHits": 0,
+      "latexDupBreakdown": {
+        "patternA": [],
+        "patternB": []
+      },
+      "breakdown": {
+        "hedges": {},
+        "transitions": {},
+        "stubs": {}
+      }
+    },
+    {
+      "path": "docs/practice/build-gpt-02-positional-encoding-sinusoidal.mdx",
+      "title": "Build a GPT · 02 · Sinusoidal Positional Encoding",
+      "wordCount": 4,
+      "composite": 0,
+      "slopRate": 0,
+      "hedgeHits": 0,
+      "transRate": 0,
+      "transitionHits": 0,
+      "emDashes": 0,
+      "emDashDensity": 0,
+      "longParas": 0,
+      "longestPara": 4,
+      "stubHits": 0,
+      "fmIssues": [],
+      "latexDupHits": 0,
+      "latexDupBreakdown": {
+        "patternA": [],
+        "patternB": []
+      },
+      "breakdown": {
+        "hedges": {},
+        "transitions": {},
+        "stubs": {}
+      }
+    },
+    {
+      "path": "docs/practice/build-gpt-03-scaled-dot-product-attention.mdx",
+      "title": "Build a GPT · 03 · Scaled Dot-Product Attention",
+      "wordCount": 4,
+      "composite": 0,
+      "slopRate": 0,
+      "hedgeHits": 0,
+      "transRate": 0,
+      "transitionHits": 0,
+      "emDashes": 0,
+      "emDashDensity": 0,
+      "longParas": 0,
+      "longestPara": 4,
+      "stubHits": 0,
+      "fmIssues": [],
+      "latexDupHits": 0,
+      "latexDupBreakdown": {
+        "patternA": [],
+        "patternB": []
+      },
+      "breakdown": {
+        "hedges": {},
+        "transitions": {},
+        "stubs": {}
+      }
+    },
+    {
+      "path": "docs/practice/build-gpt-04-causal-mask.mdx",
+      "title": "Build a GPT · 04 · Causal Mask",
+      "wordCount": 4,
+      "composite": 0,
+      "slopRate": 0,
+      "hedgeHits": 0,
+      "transRate": 0,
+      "transitionHits": 0,
+      "emDashes": 0,
+      "emDashDensity": 0,
+      "longParas": 0,
+      "longestPara": 4,
+      "stubHits": 0,
+      "fmIssues": [],
+      "latexDupHits": 0,
+      "latexDupBreakdown": {
+        "patternA": [],
+        "patternB": []
+      },
+      "breakdown": {
+        "hedges": {},
+        "transitions": {},
+        "stubs": {}
+      }
+    },
+    {
+      "path": "docs/practice/build-gpt-05-multi-head-split-recombine.mdx",
+      "title": "Build a GPT · 05 · Split + Combine Heads",
+      "wordCount": 4,
+      "composite": 0,
+      "slopRate": 0,
+      "hedgeHits": 0,
+      "transRate": 0,
+      "transitionHits": 0,
+      "emDashes": 0,
+      "emDashDensity": 0,
+      "longParas": 0,
+      "longestPara": 4,
+      "stubHits": 0,
+      "fmIssues": [],
+      "latexDupHits": 0,
+      "latexDupBreakdown": {
+        "patternA": [],
+        "patternB": []
+      },
+      "breakdown": {
+        "hedges": {},
+        "transitions": {},
+        "stubs": {}
+      }
+    },
+    {
+      "path": "docs/practice/build-gpt-06-multi-head-attention.mdx",
+      "title": "Build a GPT · 06 · Multi-Head Attention",
+      "wordCount": 4,
+      "composite": 0,
+      "slopRate": 0,
+      "hedgeHits": 0,
+      "transRate": 0,
+      "transitionHits": 0,
+      "emDashes": 0,
+      "emDashDensity": 0,
+      "longParas": 0,
+      "longestPara": 4,
+      "stubHits": 0,
+      "fmIssues": [],
+      "latexDupHits": 0,
+      "latexDupBreakdown": {
+        "patternA": [],
+        "patternB": []
+      },
+      "breakdown": {
+        "hedges": {},
+        "transitions": {},
+        "stubs": {}
+      }
+    },
+    {
+      "path": "docs/practice/build-gpt-07-layer-norm.mdx",
+      "title": "Build a GPT · 07 · Layer Norm",
+      "wordCount": 4,
+      "composite": 0,
+      "slopRate": 0,
+      "hedgeHits": 0,
+      "transRate": 0,
+      "transitionHits": 0,
+      "emDashes": 0,
+      "emDashDensity": 0,
+      "longParas": 0,
+      "longestPara": 4,
+      "stubHits": 0,
+      "fmIssues": [],
+      "latexDupHits": 0,
+      "latexDupBreakdown": {
+        "patternA": [],
+        "patternB": []
+      },
+      "breakdown": {
+        "hedges": {},
+        "transitions": {},
+        "stubs": {}
+      }
+    },
+    {
+      "path": "docs/practice/build-gpt-08-transformer-block-forward.mdx",
+      "title": "Build a GPT · 08 · Transformer Block (Capstone)",
+      "wordCount": 4,
+      "composite": 0,
+      "slopRate": 0,
+      "hedgeHits": 0,
+      "transRate": 0,
+      "transitionHits": 0,
+      "emDashes": 0,
+      "emDashDensity": 0,
+      "longParas": 0,
+      "longestPara": 4,
+      "stubHits": 0,
+      "fmIssues": [],
+      "latexDupHits": 0,
+      "latexDupBreakdown": {
+        "patternA": [],
+        "patternB": []
+      },
+      "breakdown": {
+        "hedges": {},
+        "transitions": {},
+        "stubs": {}
+      }
+    },
+    {
+      "path": "docs/practice/build-nn-01-linear-forward.mdx",
+      "title": "Build a NN · 01 · Linear Forward",
+      "wordCount": 4,
+      "composite": 0,
+      "slopRate": 0,
+      "hedgeHits": 0,
+      "transRate": 0,
+      "transitionHits": 0,
+      "emDashes": 0,
+      "emDashDensity": 0,
+      "longParas": 0,
+      "longestPara": 4,
+      "stubHits": 0,
+      "fmIssues": [],
+      "latexDupHits": 0,
+      "latexDupBreakdown": {
+        "patternA": [],
+        "patternB": []
+      },
+      "breakdown": {
+        "hedges": {},
+        "transitions": {},
+        "stubs": {}
+      }
+    },
+    {
+      "path": "docs/practice/build-nn-02-relu-and-backward.mdx",
+      "title": "Build a NN · 02 · ReLU + Backward",
+      "wordCount": 4,
+      "composite": 0,
+      "slopRate": 0,
+      "hedgeHits": 0,
+      "transRate": 0,
+      "transitionHits": 0,
+      "emDashes": 0,
+      "emDashDensity": 0,
+      "longParas": 0,
+      "longestPara": 4,
+      "stubHits": 0,
+      "fmIssues": [],
+      "latexDupHits": 0,
+      "latexDupBreakdown": {
+        "patternA": [],
+        "patternB": []
+      },
+      "breakdown": {
+        "hedges": {},
+        "transitions": {},
+        "stubs": {}
+      }
+    },
+    {
+      "path": "docs/practice/build-nn-03-sigmoid-and-backward.mdx",
+      "title": "Build a NN · 03 · Sigmoid + Backward",
+      "wordCount": 4,
+      "composite": 0,
+      "slopRate": 0,
+      "hedgeHits": 0,
+      "transRate": 0,
+      "transitionHits": 0,
+      "emDashes": 0,
+      "emDashDensity": 0,
+      "longParas": 0,
+      "longestPara": 4,
+      "stubHits": 0,
+      "fmIssues": [],
+      "latexDupHits": 0,
+      "latexDupBreakdown": {
+        "patternA": [],
+        "patternB": []
+      },
+      "breakdown": {
+        "hedges": {},
+        "transitions": {},
+        "stubs": {}
+      }
+    },
+    {
+      "path": "docs/practice/build-nn-04-mse-loss-and-backward.mdx",
+      "title": "Build a NN · 04 · MSE Loss + Backward",
+      "wordCount": 4,
+      "composite": 0,
+      "slopRate": 0,
+      "hedgeHits": 0,
+      "transRate": 0,
+      "transitionHits": 0,
+      "emDashes": 0,
+      "emDashDensity": 0,
+      "longParas": 0,
+      "longestPara": 4,
+      "stubHits": 0,
+      "fmIssues": [],
+      "latexDupHits": 0,
+      "latexDupBreakdown": {
+        "patternA": [],
+        "patternB": []
+      },
+      "breakdown": {
+        "hedges": {},
+        "transitions": {},
+        "stubs": {}
+      }
+    },
+    {
+      "path": "docs/practice/build-nn-05-linear-backward.mdx",
+      "title": "Build a NN · 05 · Linear Backward",
+      "wordCount": 4,
+      "composite": 0,
+      "slopRate": 0,
+      "hedgeHits": 0,
+      "transRate": 0,
+      "transitionHits": 0,
+      "emDashes": 0,
+      "emDashDensity": 0,
+      "longParas": 0,
+      "longestPara": 4,
+      "stubHits": 0,
+      "fmIssues": [],
+      "latexDupHits": 0,
+      "latexDupBreakdown": {
+        "patternA": [],
+        "patternB": []
+      },
+      "breakdown": {
+        "hedges": {},
+        "transitions": {},
+        "stubs": {}
+      }
+    },
+    {
+      "path": "docs/practice/build-nn-06-sgd-step.mdx",
+      "title": "Build a NN · 06 · SGD Step",
+      "wordCount": 4,
+      "composite": 0,
+      "slopRate": 0,
+      "hedgeHits": 0,
+      "transRate": 0,
+      "transitionHits": 0,
+      "emDashes": 0,
+      "emDashDensity": 0,
+      "longParas": 0,
+      "longestPara": 4,
+      "stubHits": 0,
+      "fmIssues": [],
+      "latexDupHits": 0,
+      "latexDupBreakdown": {
+        "patternA": [],
+        "patternB": []
+      },
+      "breakdown": {
+        "hedges": {},
+        "transitions": {},
+        "stubs": {}
+      }
+    },
+    {
+      "path": "docs/practice/build-nn-07-train-mlp-xor.mdx",
+      "title": "Build a NN · 07 · Train MLP on XOR",
+      "wordCount": 4,
+      "composite": 0,
+      "slopRate": 0,
+      "hedgeHits": 0,
+      "transRate": 0,
+      "transitionHits": 0,
+      "emDashes": 0,
+      "emDashDensity": 0,
+      "longParas": 0,
+      "longestPara": 4,
+      "stubHits": 0,
+      "fmIssues": [],
+      "latexDupHits": 0,
+      "latexDupBreakdown": {
+        "patternA": [],
+        "patternB": []
+      },
+      "breakdown": {
+        "hedges": {},
+        "transitions": {},
+        "stubs": {}
+      }
+    },
+    {
+      "path": "docs/practice/byte-level-tokenize.mdx",
+      "title": "Byte-Level Tokenize",
+      "wordCount": 4,
+      "composite": 0,
+      "slopRate": 0,
+      "hedgeHits": 0,
+      "transRate": 0,
+      "transitionHits": 0,
+      "emDashes": 0,
+      "emDashDensity": 0,
+      "longParas": 0,
+      "longestPara": 4,
+      "stubHits": 0,
+      "fmIssues": [],
+      "latexDupHits": 0,
+      "latexDupBreakdown": {
+        "patternA": [],
+        "patternB": []
+      },
+      "breakdown": {
+        "hedges": {},
+        "transitions": {},
+        "stubs": {}
+      }
+    },
+    {
+      "path": "docs/practice/cosine-lr-schedule.mdx",
+      "title": "Cosine LR Schedule",
+      "wordCount": 4,
+      "composite": 0,
+      "slopRate": 0,
+      "hedgeHits": 0,
+      "transRate": 0,
+      "transitionHits": 0,
+      "emDashes": 0,
+      "emDashDensity": 0,
+      "longParas": 0,
+      "longestPara": 4,
+      "stubHits": 0,
+      "fmIssues": [],
+      "latexDupHits": 0,
+      "latexDupBreakdown": {
+        "patternA": [],
+        "patternB": []
+      },
+      "breakdown": {
+        "hedges": {},
+        "transitions": {},
+        "stubs": {}
+      }
+    },
+    {
+      "path": "docs/practice/cross-entropy-gradient.mdx",
+      "title": "Cross-Entropy Gradient",
+      "wordCount": 4,
+      "composite": 0,
+      "slopRate": 0,
+      "hedgeHits": 0,
+      "transRate": 0,
+      "transitionHits": 0,
+      "emDashes": 0,
+      "emDashDensity": 0,
+      "longParas": 0,
+      "longestPara": 4,
+      "stubHits": 0,
+      "fmIssues": [],
+      "latexDupHits": 0,
+      "latexDupBreakdown": {
+        "patternA": [],
+        "patternB": []
+      },
+      "breakdown": {
+        "hedges": {},
+        "transitions": {},
+        "stubs": {}
+      }
+    },
+    {
+      "path": "docs/practice/f1-score.mdx",
+      "title": "F1 Score (Binary)",
+      "wordCount": 4,
+      "composite": 0,
+      "slopRate": 0,
+      "hedgeHits": 0,
+      "transRate": 0,
+      "transitionHits": 0,
+      "emDashes": 0,
+      "emDashDensity": 0,
+      "longParas": 0,
+      "longestPara": 4,
+      "stubHits": 0,
+      "fmIssues": [],
+      "latexDupHits": 0,
+      "latexDupBreakdown": {
+        "patternA": [],
+        "patternB": []
+      },
+      "breakdown": {
+        "hedges": {},
+        "transitions": {},
+        "stubs": {}
+      }
+    },
+    {
+      "path": "docs/practice/focal-loss.mdx",
+      "title": "Focal Loss",
+      "wordCount": 4,
+      "composite": 0,
+      "slopRate": 0,
+      "hedgeHits": 0,
+      "transRate": 0,
+      "transitionHits": 0,
+      "emDashes": 0,
+      "emDashDensity": 0,
+      "longParas": 0,
+      "longestPara": 4,
+      "stubHits": 0,
+      "fmIssues": [],
+      "latexDupHits": 0,
+      "latexDupBreakdown": {
+        "patternA": [],
+        "patternB": []
+      },
+      "breakdown": {
+        "hedges": {},
+        "transitions": {},
+        "stubs": {}
+      }
+    },
+    {
+      "path": "docs/practice/gelu-backward.mdx",
+      "title": "GELU Backward",
+      "wordCount": 4,
+      "composite": 0,
+      "slopRate": 0,
+      "hedgeHits": 0,
+      "transRate": 0,
+      "transitionHits": 0,
+      "emDashes": 0,
+      "emDashDensity": 0,
+      "longParas": 0,
+      "longestPara": 4,
+      "stubHits": 0,
+      "fmIssues": [],
+      "latexDupHits": 0,
+      "latexDupBreakdown": {
+        "patternA": [],
+        "patternB": []
+      },
+      "breakdown": {
+        "hedges": {},
+        "transitions": {},
+        "stubs": {}
+      }
+    },
+    {
+      "path": "docs/practice/gelu-forward.mdx",
+      "title": "GELU Forward",
+      "wordCount": 4,
+      "composite": 0,
+      "slopRate": 0,
+      "hedgeHits": 0,
+      "transRate": 0,
+      "transitionHits": 0,
+      "emDashes": 0,
+      "emDashDensity": 0,
+      "longParas": 0,
+      "longestPara": 4,
+      "stubHits": 0,
+      "fmIssues": [],
+      "latexDupHits": 0,
+      "latexDupBreakdown": {
+        "patternA": [],
+        "patternB": []
+      },
+      "breakdown": {
+        "hedges": {},
+        "transitions": {},
+        "stubs": {}
+      }
+    },
+    {
+      "path": "docs/practice/gradient-clip-norm.mdx",
+      "title": "Gradient Clip by Norm",
+      "wordCount": 4,
+      "composite": 0,
+      "slopRate": 0,
+      "hedgeHits": 0,
+      "transRate": 0,
+      "transitionHits": 0,
+      "emDashes": 0,
+      "emDashDensity": 0,
+      "longParas": 0,
+      "longestPara": 4,
+      "stubHits": 0,
+      "fmIssues": [],
+      "latexDupHits": 0,
+      "latexDupBreakdown": {
+        "patternA": [],
+        "patternB": []
+      },
+      "breakdown": {
+        "hedges": {},
+        "transitions": {},
+        "stubs": {}
+      }
+    },
+    {
+      "path": "docs/practice/greedy-decode.mdx",
+      "title": "Greedy Decode",
+      "wordCount": 4,
+      "composite": 0,
+      "slopRate": 0,
+      "hedgeHits": 0,
+      "transRate": 0,
+      "transitionHits": 0,
+      "emDashes": 0,
+      "emDashDensity": 0,
+      "longParas": 0,
+      "longestPara": 4,
+      "stubHits": 0,
+      "fmIssues": [],
+      "latexDupHits": 0,
+      "latexDupBreakdown": {
+        "patternA": [],
+        "patternB": []
+      },
+      "breakdown": {
+        "hedges": {},
+        "transitions": {},
+        "stubs": {}
+      }
+    },
+    {
+      "path": "docs/practice/kl-divergence.mdx",
+      "title": "KL Divergence",
+      "wordCount": 4,
+      "composite": 0,
+      "slopRate": 0,
+      "hedgeHits": 0,
+      "transRate": 0,
+      "transitionHits": 0,
+      "emDashes": 0,
+      "emDashDensity": 0,
+      "longParas": 0,
+      "longestPara": 4,
+      "stubHits": 0,
+      "fmIssues": [],
+      "latexDupHits": 0,
+      "latexDupBreakdown": {
+        "patternA": [],
+        "patternB": []
+      },
+      "breakdown": {
+        "hedges": {},
+        "transitions": {},
+        "stubs": {}
+      }
+    },
+    {
+      "path": "docs/practice/kmeans-step.mdx",
+      "title": "K-Means Step",
+      "wordCount": 4,
+      "composite": 0,
+      "slopRate": 0,
+      "hedgeHits": 0,
+      "transRate": 0,
+      "transitionHits": 0,
+      "emDashes": 0,
+      "emDashDensity": 0,
+      "longParas": 0,
+      "longestPara": 4,
+      "stubHits": 0,
+      "fmIssues": [],
+      "latexDupHits": 0,
+      "latexDupBreakdown": {
+        "patternA": [],
+        "patternB": []
+      },
+      "breakdown": {
+        "hedges": {},
+        "transitions": {},
+        "stubs": {}
+      }
+    },
+    {
+      "path": "docs/practice/knn-classify.mdx",
+      "title": "K-Nearest Neighbours Classify",
+      "wordCount": 4,
+      "composite": 0,
+      "slopRate": 0,
+      "hedgeHits": 0,
+      "transRate": 0,
+      "transitionHits": 0,
+      "emDashes": 0,
+      "emDashDensity": 0,
+      "longParas": 0,
+      "longestPara": 4,
+      "stubHits": 0,
+      "fmIssues": [],
+      "latexDupHits": 0,
+      "latexDupBreakdown": {
+        "patternA": [],
+        "patternB": []
+      },
+      "breakdown": {
+        "hedges": {},
+        "transitions": {},
+        "stubs": {}
+      }
+    },
+    {
+      "path": "docs/practice/label-smoothing-loss.mdx",
+      "title": "Label Smoothing Loss",
+      "wordCount": 4,
+      "composite": 0,
+      "slopRate": 0,
+      "hedgeHits": 0,
+      "transRate": 0,
+      "transitionHits": 0,
+      "emDashes": 0,
+      "emDashDensity": 0,
+      "longParas": 0,
+      "longestPara": 4,
+      "stubHits": 0,
+      "fmIssues": [],
+      "latexDupHits": 0,
+      "latexDupBreakdown": {
+        "patternA": [],
+        "patternB": []
+      },
+      "breakdown": {
+        "hedges": {},
+        "transitions": {},
+        "stubs": {}
+      }
+    },
+    {
+      "path": "docs/practice/matmul-backward.mdx",
+      "title": "Matmul Backward",
+      "wordCount": 4,
+      "composite": 0,
+      "slopRate": 0,
+      "hedgeHits": 0,
+      "transRate": 0,
+      "transitionHits": 0,
+      "emDashes": 0,
+      "emDashDensity": 0,
+      "longParas": 0,
+      "longestPara": 4,
+      "stubHits": 0,
+      "fmIssues": [],
+      "latexDupHits": 0,
+      "latexDupBreakdown": {
+        "patternA": [],
+        "patternB": []
+      },
+      "breakdown": {
+        "hedges": {},
+        "transitions": {},
+        "stubs": {}
+      }
+    },
+    {
+      "path": "docs/practice/repetition-penalty.mdx",
+      "title": "Repetition Penalty",
+      "wordCount": 4,
+      "composite": 0,
+      "slopRate": 0,
+      "hedgeHits": 0,
+      "transRate": 0,
+      "transitionHits": 0,
+      "emDashes": 0,
+      "emDashDensity": 0,
+      "longParas": 0,
+      "longestPara": 4,
+      "stubHits": 0,
+      "fmIssues": [],
+      "latexDupHits": 0,
+      "latexDupBreakdown": {
+        "patternA": [],
+        "patternB": []
+      },
+      "breakdown": {
+        "hedges": {},
+        "transitions": {},
+        "stubs": {}
+      }
+    },
+    {
+      "path": "docs/practice/rnn-cell-forward.mdx",
+      "title": "Vanilla RNN Cell Forward",
+      "wordCount": 4,
+      "composite": 0,
+      "slopRate": 0,
+      "hedgeHits": 0,
+      "transRate": 0,
+      "transitionHits": 0,
+      "emDashes": 0,
+      "emDashDensity": 0,
+      "longParas": 0,
+      "longestPara": 4,
+      "stubHits": 0,
+      "fmIssues": [],
+      "latexDupHits": 0,
+      "latexDupBreakdown": {
+        "patternA": [],
+        "patternB": []
+      },
+      "breakdown": {
+        "hedges": {},
+        "transitions": {},
+        "stubs": {}
+      }
+    },
+    {
+      "path": "docs/practice/rotary-embedding-apply.mdx",
+      "title": "Rotary Position Embedding (Apply)",
+      "wordCount": 4,
+      "composite": 0,
+      "slopRate": 0,
+      "hedgeHits": 0,
+      "transRate": 0,
+      "transitionHits": 0,
+      "emDashes": 0,
+      "emDashDensity": 0,
+      "longParas": 0,
+      "longestPara": 4,
+      "stubHits": 0,
+      "fmIssues": [],
+      "latexDupHits": 0,
+      "latexDupBreakdown": {
+        "patternA": [],
+        "patternB": []
+      },
+      "breakdown": {
+        "hedges": {},
+        "transitions": {},
+        "stubs": {}
+      }
+    },
+    {
+      "path": "docs/practice/scaled-dot-product-attention.mdx",
+      "title": "Scaled Dot-Product Attention",
+      "wordCount": 4,
+      "composite": 0,
+      "slopRate": 0,
+      "hedgeHits": 0,
+      "transRate": 0,
+      "transitionHits": 0,
+      "emDashes": 0,
+      "emDashDensity": 0,
+      "longParas": 0,
+      "longestPara": 4,
+      "stubHits": 0,
+      "fmIssues": [],
+      "latexDupHits": 0,
+      "latexDupBreakdown": {
+        "patternA": [],
+        "patternB": []
+      },
+      "breakdown": {
+        "hedges": {},
+        "transitions": {},
+        "stubs": {}
+      }
+    },
+    {
+      "path": "docs/practice/sgd-momentum-step.mdx",
+      "title": "SGD with Momentum Step",
+      "wordCount": 4,
+      "composite": 0,
+      "slopRate": 0,
+      "hedgeHits": 0,
+      "transRate": 0,
+      "transitionHits": 0,
+      "emDashes": 0,
+      "emDashDensity": 0,
+      "longParas": 0,
+      "longestPara": 4,
+      "stubHits": 0,
+      "fmIssues": [],
+      "latexDupHits": 0,
+      "latexDupBreakdown": {
+        "patternA": [],
+        "patternB": []
+      },
+      "breakdown": {
+        "hedges": {},
+        "transitions": {},
+        "stubs": {}
+      }
+    },
+    {
+      "path": "docs/practice/softmax-backward.mdx",
+      "title": "Softmax Backward",
+      "wordCount": 4,
+      "composite": 0,
+      "slopRate": 0,
+      "hedgeHits": 0,
+      "transRate": 0,
+      "transitionHits": 0,
+      "emDashes": 0,
+      "emDashDensity": 0,
+      "longParas": 0,
+      "longestPara": 4,
+      "stubHits": 0,
+      "fmIssues": [],
+      "latexDupHits": 0,
+      "latexDupBreakdown": {
+        "patternA": [],
+        "patternB": []
+      },
+      "breakdown": {
+        "hedges": {},
+        "transitions": {},
+        "stubs": {}
+      }
+    },
+    {
+      "path": "docs/practice/softmax-from-scratch.mdx",
+      "title": "Softmax from Scratch",
+      "wordCount": 19,
+      "composite": 0,
+      "slopRate": 0,
+      "hedgeHits": 0,
+      "transRate": 0,
+      "transitionHits": 0,
+      "emDashes": 0,
+      "emDashDensity": 0,
+      "longParas": 0,
+      "longestPara": 5,
+      "stubHits": 0,
+      "fmIssues": [],
+      "latexDupHits": 0,
+      "latexDupBreakdown": {
+        "patternA": [],
+        "patternB": []
+      },
+      "breakdown": {
+        "hedges": {},
+        "transitions": {},
+        "stubs": {}
+      }
+    },
+    {
+      "path": "docs/practice/temperature-scaling.mdx",
+      "title": "Temperature Scaling",
+      "wordCount": 4,
+      "composite": 0,
+      "slopRate": 0,
+      "hedgeHits": 0,
+      "transRate": 0,
+      "transitionHits": 0,
+      "emDashes": 0,
+      "emDashDensity": 0,
+      "longParas": 0,
+      "longestPara": 4,
+      "stubHits": 0,
+      "fmIssues": [],
+      "latexDupHits": 0,
+      "latexDupBreakdown": {
+        "patternA": [],
+        "patternB": []
+      },
+      "breakdown": {
+        "hedges": {},
+        "transitions": {},
+        "stubs": {}
+      }
+    },
+    {
+      "path": "docs/practice/top-k-sampling.mdx",
+      "title": "Top-k Sampling",
+      "wordCount": 4,
+      "composite": 0,
+      "slopRate": 0,
+      "hedgeHits": 0,
+      "transRate": 0,
+      "transitionHits": 0,
+      "emDashes": 0,
+      "emDashDensity": 0,
+      "longParas": 0,
+      "longestPara": 4,
+      "stubHits": 0,
+      "fmIssues": [],
+      "latexDupHits": 0,
+      "latexDupBreakdown": {
+        "patternA": [],
+        "patternB": []
+      },
+      "breakdown": {
+        "hedges": {},
+        "transitions": {},
+        "stubs": {}
+      }
+    },
+    {
+      "path": "docs/practice/top-p-sampling.mdx",
+      "title": "Top-p (Nucleus) Sampling",
+      "wordCount": 4,
+      "composite": 0,
+      "slopRate": 0,
+      "hedgeHits": 0,
+      "transRate": 0,
+      "transitionHits": 0,
+      "emDashes": 0,
+      "emDashDensity": 0,
+      "longParas": 0,
+      "longestPara": 4,
+      "stubHits": 0,
+      "fmIssues": [],
+      "latexDupHits": 0,
+      "latexDupBreakdown": {
+        "patternA": [],
+        "patternB": []
+      },
+      "breakdown": {
+        "hedges": {},
+        "transitions": {},
+        "stubs": {}
+      }
+    }
+  ]
+}

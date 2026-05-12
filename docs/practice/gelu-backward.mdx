@@ -6,9 +6,9 @@ practice_mode: true
 hide_table_of_contents: true
 ---
 
-import PracticeProblem from '@site/src/components/viz/PracticeProblemPro';
+import ProblemSolver from '@site/src/components/viz/ProblemSolver';
 
-<PracticeProblem
+<ProblemSolver
   id="gelu-backward"
   title="GELU backward (tanh approximation)"
   difficulty="Medium"
@@ -149,4 +149,4 @@ Two correctness checks the harness probes:
 
 Reuse `tanh(g(x))` — calling `np.tanh` is the expensive part and you need it for both `(1 + tanh)` and `(1 − tanh²)`.
 
-</PracticeProblem>
+</ProblemSolver>

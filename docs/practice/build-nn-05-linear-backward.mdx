@@ -6,9 +6,9 @@ practice_mode: true
 hide_table_of_contents: true
 ---
 
-import PracticeProblem from '@site/src/components/viz/PracticeProblemPro';
+import ProblemSolver from '@site/src/components/viz/ProblemSolver';
 
-<PracticeProblem
+<ProblemSolver
   id="build-nn-05-linear-backward"
   title="Linear backward (chain rule)"
   difficulty="Medium"
@@ -169,4 +169,4 @@ Backward (this problem): given `grad_out = ∂L / ∂y` of shape `(B, out)`, com
 
 The harness checks each gradient independently and finishes with a finite-difference cross-check on `dW` (the trickiest of the three). Get the shapes right and the algebra is forced — there's exactly one way to multiply these matrices that matches the dimensions.
 
-</PracticeProblem>
+</ProblemSolver>

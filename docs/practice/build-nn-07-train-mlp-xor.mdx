@@ -6,9 +6,9 @@ practice_mode: true
 hide_table_of_contents: true
 ---
 
-import PracticeProblem from '@site/src/components/viz/PracticeProblemPro';
+import ProblemSolver from '@site/src/components/viz/ProblemSolver';
 
-<PracticeProblem
+<ProblemSolver
   id="build-nn-07-train-mlp-xor"
   title="Train a 2-layer MLP on XOR"
   difficulty="Hard"
@@ -156,4 +156,4 @@ Why XOR? It's the smallest non-linearly-separable problem — a single linear la
 
 If you've shipped problems 01–06 and the loss in this problem doesn't drop, the bug is almost always in the backward chain — re-derive each step's `grad_*` shape on paper before running.
 
-</PracticeProblem>
+</ProblemSolver>

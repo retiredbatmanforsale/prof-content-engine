@@ -1,12 +1,13 @@
 ---
 title: "Cross-Entropy Gradient"
+practice_mode: true
 description: Derive and implement the gradient of cross-entropy loss with respect to logits. Verified against finite-difference numerical gradient.
 sidebar_position: 5
 ---
 
-import PracticeProblem from '@site/src/components/viz/PracticeProblem';
+import ProblemSolver from '@site/src/components/viz/ProblemSolver';
 
-<PracticeProblem
+<ProblemSolver
   id="cross-entropy-gradient"
   title="Cross-entropy gradient"
   difficulty="Medium"
@@ -144,4 +145,4 @@ Two things the harness checks beyond correctness:
 - **Numerical stability.** Same trick as the softmax problem — subtract the max before exp, or your gradient will NaN on real LLM-scale logits.
 - **Agreement with a numerical gradient.** A finite-difference reference verifies you derived the analytic gradient correctly, not just memorized the formula. This is exactly how you'd debug a backprop bug in real life.
 
-</PracticeProblem>
+</ProblemSolver>

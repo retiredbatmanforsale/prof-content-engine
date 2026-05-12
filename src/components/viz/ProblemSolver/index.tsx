@@ -45,15 +45,15 @@ const DIFFICULTY_STYLE: Record<Difficulty, string> = {
   Hard: 'text-red-700 bg-red-50 border-red-200',
 };
 
-export default function PracticeProblemPro(props: Props) {
+export default function ProblemSolver(props: Props) {
   return (
     <BrowserOnly fallback={<div className="text-slate-500 text-sm">Loading practice runner…</div>}>
-      {() => <PracticeProblemProInner {...props} />}
+      {() => <ProblemSolverInner {...props} />}
     </BrowserOnly>
   );
 }
 
-function PracticeProblemProInner({
+function ProblemSolverInner({
   id,
   title,
   difficulty,
@@ -66,7 +66,6 @@ function PracticeProblemProInner({
   children,
 }: Props) {
   const [code, setCode] = useState(starter.replace(/^\n/, ''));
-  const [fullscreen, setFullscreen] = useState(false);
   const [leftTab, setLeftTab] = useState<LeftTab>('description');
   const [bottomTab, setBottomTab] = useState<BottomTab>('testcase');
   const [revealedHints, setRevealedHints] = useState(0);
@@ -86,20 +85,6 @@ function PracticeProblemProInner({
     if (results !== null) setBottomTab('result');
   }, [results]);
 
-  useEffect(() => {
-    if (!fullscreen) return;
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setFullscreen(false); };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [fullscreen]);
-
-  useEffect(() => {
-    if (!fullscreen) return;
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    return () => { document.body.style.overflow = prev; };
-  }, [fullscreen]);
-
   const onRun = useCallback(() => runTests(code, tests), [code, tests, runTests]);
 
   const onReset = useCallback(() => {
@@ -116,13 +101,11 @@ function PracticeProblemProInner({
 
   const inPracticePage = useInPracticePage();
 
-  const containerCls = fullscreen
-    ? 'fixed inset-0 z-50 bg-white text-slate-800 flex flex-col'
-    : inPracticePage
+  const containerCls = inPracticePage
     ? 'bg-white text-slate-800 flex flex-col h-full'
     : 'not-prose my-6 rounded-xl overflow-hidden border border-slate-200 bg-white text-slate-800 flex flex-col shadow-sm';
 
-  const containerStyle: React.CSSProperties = fullscreen || inPracticePage
+  const containerStyle: React.CSSProperties = inPracticePage
     ? { fontFamily: 'system-ui, -apple-system, sans-serif' }
     : { height: '720px', fontFamily: 'system-ui, -apple-system, sans-serif' };
 
@@ -140,13 +123,6 @@ function PracticeProblemProInner({
           </span>
         ))}
         <span className="flex-1" />
-        <button
-          onClick={() => setFullscreen((v) => !v)}
-          className="text-[11px] font-medium text-slate-600 hover:text-slate-900 px-2 py-1 rounded hover:bg-slate-100 transition-colors"
-          title={fullscreen ? 'Exit fullscreen (Esc)' : 'Enter fullscreen'}
-        >
-          {fullscreen ? '⤓ Exit fullscreen' : '⤢ Fullscreen'}
-        </button>
       </div>
 
       {/* Body — resizable split */}

@@ -1,12 +1,13 @@
 ---
 title: "BPE: Apply Merges"
+practice_mode: true
 description: Implement the merge step of byte-pair encoding. Given a list of single-character tokens and an ordered list of merge rules, produce the merged token list.
 sidebar_position: 3
 ---
 
-import PracticeProblem from '@site/src/components/viz/PracticeProblem';
+import ProblemSolver from '@site/src/components/viz/ProblemSolver';
 
-<PracticeProblem
+<ProblemSolver
   id="bpe-apply-merges"
   title="BPE: apply merges"
   difficulty="Medium"
@@ -123,4 +124,4 @@ The algorithm is small but subtle:
 
 The tricky part is step 2: don't process merges one-by-one in list order. Each iteration scans the *current* tokens and picks the globally best pair. Otherwise you'll get the wrong tokenization for the test case where one merge enables another.
 
-</PracticeProblem>
+</ProblemSolver>

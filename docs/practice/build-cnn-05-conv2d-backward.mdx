@@ -6,9 +6,9 @@ practice_mode: true
 hide_table_of_contents: true
 ---
 
-import PracticeProblem from '@site/src/components/viz/PracticeProblemPro';
+import ProblemSolver from '@site/src/components/viz/ProblemSolver';
 
-<PracticeProblem
+<ProblemSolver
   id="build-cnn-05-conv2d-backward"
   title="Conv2D backward (dx, dW)"
   difficulty="Hard"
@@ -177,4 +177,4 @@ Implement both with the **same iteration as the forward**: for each output posit
 
 The diagnostic tests are finite-difference checks — both `dx` and `dW` cross-validated against numerical gradients of `conv2d_naive(x, W).sum()`. If your derivation is wrong, the differences will be order-of-magnitude visible, not subtle.
 
-</PracticeProblem>
+</ProblemSolver>

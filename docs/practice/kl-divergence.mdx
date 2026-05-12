@@ -6,9 +6,9 @@ practice_mode: true
 hide_table_of_contents: true
 ---
 
-import PracticeProblem from '@site/src/components/viz/PracticeProblemPro';
+import ProblemSolver from '@site/src/components/viz/ProblemSolver';
 
-<PracticeProblem
+<ProblemSolver
   id="kl-divergence"
   title="KL divergence (discrete)"
   difficulty="Easy"
@@ -123,4 +123,4 @@ Three properties the harness checks:
 
 The single subtlety: **the `0 · log(0) = 0` convention.** Mathematically `log(0) = -∞`, but the product is the limit of `x · log(x)` as `x → 0`, which is `0`. Implementation-wise: mask out `p_i = 0` before taking the log. Don't add `eps` inside the log — it biases the answer.
 
-</PracticeProblem>
+</ProblemSolver>

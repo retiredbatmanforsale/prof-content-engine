@@ -6,9 +6,9 @@ practice_mode: true
 hide_table_of_contents: true
 ---
 
-import PracticeProblem from '@site/src/components/viz/PracticeProblemPro';
+import ProblemSolver from '@site/src/components/viz/ProblemSolver';
 
-<PracticeProblem
+<ProblemSolver
   id="byte-level-tokenize"
   title="Byte-level UTF-8 tokenizer"
   difficulty="Medium"
@@ -115,4 +115,4 @@ Three things the harness checks:
 
 The trade-off vs subword BPE: byte-level tokens are universal but verbose — every character costs 1-4 tokens. BPE compresses common byte sequences into single tokens (GPT-2's vocab compresses ~50K English byte-pairs into ~50K vocab entries, so English text averages ~3.5 chars/token).
 
-</PracticeProblem>
+</ProblemSolver>

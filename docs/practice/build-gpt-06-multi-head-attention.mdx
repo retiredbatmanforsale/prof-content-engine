@@ -6,9 +6,9 @@ practice_mode: true
 hide_table_of_contents: true
 ---
 
-import PracticeProblem from '@site/src/components/viz/PracticeProblemPro';
+import ProblemSolver from '@site/src/components/viz/ProblemSolver';
 
-<PracticeProblem
+<ProblemSolver
   id="build-gpt-06-multi-head-attention"
   title="Multi-Head Attention (full layer)"
   difficulty="Medium"
@@ -171,4 +171,4 @@ The shapes and parameter budget:
 
 Helpers are provided in the starter — your job is the five-line wiring that turns a `(B, T, C)` input plus the projection matrices into a `(B, T, C)` output. The mask (if given) flows through unchanged; the causal triangular mask is the standard choice for autoregressive language modelling.
 
-</PracticeProblem>
+</ProblemSolver>

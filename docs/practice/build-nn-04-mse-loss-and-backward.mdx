@@ -6,9 +6,9 @@ practice_mode: true
 hide_table_of_contents: true
 ---
 
-import PracticeProblem from '@site/src/components/viz/PracticeProblemPro';
+import ProblemSolver from '@site/src/components/viz/ProblemSolver';
 
-<PracticeProblem
+<ProblemSolver
   id="build-nn-04-mse-loss-and-backward"
   title="MSE loss + backward"
   difficulty="Easy"
@@ -142,4 +142,4 @@ The math:
 
 The single subtlety the harness probes for: **what is `N`?** For 1-D inputs it's the obvious thing — `len(pred)`. For 2-D inputs (batch × features) it's `pred.size`, the total element count. The "loss is averaged over ALL elements" choice matches PyTorch's `MSELoss(reduction='mean')` default and keeps the gradient magnitude scale-invariant to batch size. If you divide by the wrong N, the analytic gradient won't match the finite-difference reference — and the harness will catch it.
 
-</PracticeProblem>
+</ProblemSolver>

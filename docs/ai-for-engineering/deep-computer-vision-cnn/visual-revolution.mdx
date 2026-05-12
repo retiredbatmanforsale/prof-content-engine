@@ -18,13 +18,51 @@ access: public
 
 :::tip[Start here: vision & CNNs]
 
-**Computer vision** is machine learning on **images or video**: you take a grid of pixels (often with extra sensors or metadata) and produce **outputs a product can use**—class labels, bounding boxes, segmentation masks, depth maps, poses, tracks, or signals for control. In production, that almost always means coping with **noise, lighting, motion blur, occlusion, and data that doesn’t match your training set**. Your job as an engineer is to design and train models that stay **correct and robust enough** when the world refuses to look like the benchmark.
+**Computer vision** is machine learning on **images and video**. You take pixel data (sometimes with sensor metadata) and generate outputs a product can use — **class labels, bounding boxes, segmentation masks, depth maps, poses, object tracks, captions, or control signals**.
+
+Computer vision problems are commonly framed as:
+
+- **Classification** — predicting discrete categories (e.g. cat vs. dog, defect vs. no-defect)
+- **Regression** — predicting continuous values like coordinates, depth, or motion vectors
+- **Vision + language tasks** — generating or understanding text from images, such as **image captioning** or visual question answering. These are usually framed as **conditional language modeling** — a sequence-generation problem conditioned on an image.
+
+In production, that almost always means coping with **noise, lighting, motion blur, occlusion, and data that doesn’t match your training set**. Your job as an engineer is to design and train models that stay **correct and robust enough** when the world refuses to look like the benchmark.
 
 :::
 
 ## Introduction to vision as a human and machine capability
 
 For humans, sight is one of the main ways we understand the world—reading faces, streets, and traffic lights, often **without thinking hard about each step**. This lesson is about the same idea for **machines**: using **raw images or video** so computers can **see** (in a useful, engineered sense). Deep learning is the usual tool today for turning pixels into predictions.
+
+<div className="not-prose my-6 grid gap-4 md:grid-cols-2">
+  <div className="rounded-xl border-2 border-teal-200 bg-teal-50/70 p-4 dark:border-teal-900/50 dark:bg-teal-950/25">
+    <p className="m-0 text-base font-bold text-teal-900 dark:text-teal-200">Human vision</p>
+    <ul className="mt-3 mb-0 list-disc space-y-2 pl-5 text-sm text-slate-800 dark:text-slate-200">
+      <li>Eyes capture light and the <strong>brain interprets</strong> scenes, objects, depth, and motion.</li>
+      <li>Humans perceive <strong>meaning directly</strong>.</li>
+      <li>Vision is <strong>continuous and semantic</strong>.</li>
+      <li>Humans reason using <strong>memory and context</strong>.</li>
+      <li>Humans <strong>generalize naturally</strong> across new scenes.</li>
+      <li><strong>Output:</strong> perception and action.</li>
+    </ul>
+  </div>
+  <div className="rounded-xl border-2 border-violet-200 bg-violet-50/70 p-4 dark:border-violet-900/50 dark:bg-violet-950/25">
+    <p className="m-0 text-base font-bold text-violet-900 dark:text-violet-200">Machine vision</p>
+    <ul className="mt-3 mb-0 list-disc space-y-2 pl-5 text-sm text-slate-800 dark:text-slate-200">
+      <li>Cameras capture images as <strong>pixel grids</strong> represented numerically as <Term def="A multi-dimensional array — generalizes vectors (1D) and matrices (2D) to N dimensions. In deep learning, the universal data container for inputs, weights, and activations (e.g. images, batches, feature maps).">tensors</Term>/matrices.</li>
+      <li>Models process <strong>numerical pixel values</strong> to learn patterns and representations.</li>
+      <li>Images are <strong>arrays of numbers</strong> (RGB intensities, grayscale values, depth values).</li>
+      <li>Neural networks transform pixel tensors into <strong>embeddings, predictions, and actions</strong>.</li>
+      <li>Models learn <strong>statistical patterns</strong> from training data.</li>
+      <li><strong>Output:</strong> classification, detection, segmentation, captioning, tracking, or control signals.</li>
+    </ul>
+  </div>
+</div>
+
+Concretely, an image enters a model as a numeric tensor whose shape depends on how many channels it carries:
+
+- **Grayscale image** → **2D matrix** of shape **(H × W)**, one intensity value per pixel.
+- **RGB image** → **3D tensor** of shape **(H × W × 3)**, where each pixel contains **Red, Green, and Blue** intensity values.
 
 <div className="not-prose my-8 mx-auto flex w-full max-w-2xl flex-col items-center">
   <p className="mb-2 text-center text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
@@ -69,39 +107,6 @@ For humans, sight is one of the main ways we understand the world—reading face
     (public domain dedication), via Wikimedia Commons.
   </p>
 </div>
-
-## What is vision, conceptually?
-
-A compact definition: **vision is figuring out what is where, from what you see.** One image still forces you to settle many questions at once:
-
-- **What** objects or regions matter?
-- **Where** are they, and how big are they?
-- Are things **moving** or still?
-- How do parts of the scene **relate** to each other?
-- What might **happen next**?
-
-So perception is not only “paint the right label on each pixel.” It blends **space** (layout), **time** (motion and change), and **prediction** (what the scene suggests will happen).
-
-## Static vs. dynamic perception
-
-We don’t only recognize **things**; we read **situations**. Same street, different story:
-
-- A **parked van** reads as static; a **moving sedan** reads as motion—even if both are “cars.”
-- **Pedestrians on the sidewalk** vs. **stepping into the road** change how you interpret risk and intent.
-- A **red light** isn’t just a color; it cues **how traffic should behave next.**
-
-**Takeaway:** useful vision often needs **how the world changes over time**, not a single frozen frame. Building systems with that in mind is a big part of modern computer vision.
-
-## Why computer vision matters
-
-You’ll see the same pattern in many industries: **sense the scene → decide or act**, often under **latency** pressure.
-
-- **Driving & mobility** — lanes, people, signs, obstacles  
-- **Healthcare** — findings in scans and images  
-- **AR & robotics** — maps, poses, object and scene understanding  
-- **Manufacturing** — scratches, dents, assembly mistakes  
-
-These problems usually need more than a single **class label**; they need **where**, **what**, **how it’s changing**, and sometimes **what to do next**—often in **real time**.
 
 ---
 

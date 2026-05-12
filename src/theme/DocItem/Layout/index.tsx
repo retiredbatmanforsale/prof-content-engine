@@ -51,15 +51,21 @@ export default function DocItemLayout({ children }: Props): ReactNode {
   const tutorConcepts = fm.tutor_concepts;
   const practiceMode = !!fm.practice_mode;
 
-  // Toggle a body class so global CSS can strip the doc chrome on practice pages.
+  // Toggle a body class so global CSS can adjust the doc chrome on practice pages
+  // (collapse sidebar to a rail, hide breadcrumbs/TOC/footer, full-bleed workbench).
   useEffect(() => {
     if (!practiceMode) return;
     document.body.classList.add('practice-mode');
-    return () => { document.body.classList.remove('practice-mode'); };
+    return () => {
+      document.body.classList.remove('practice-mode');
+      document.body.classList.remove('practice-mode-sidebar-open');
+    };
   }, [practiceMode]);
 
-  // Practice pages: bypass everything (no tutor, no scroll sentinel, no original wrapper).
-  // The MDX content itself (which is the PracticeProblemPro) handles all rendering.
+  // Practice pages bypass OriginalDocItemLayout entirely (which renders the
+  // article + breadcrumbs + TOC + column structure we don't want). The sidebar
+  // comes from DocRootLayout one level up, which we leave untouched. The body
+  // class + sidebar-toggle drive the visual adjustments from inside the workbench.
   if (practiceMode) {
     return <div className="practice-page-content">{children}</div>;
   }

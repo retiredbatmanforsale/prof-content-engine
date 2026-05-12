@@ -6,9 +6,9 @@ practice_mode: true
 hide_table_of_contents: true
 ---
 
-import PracticeProblem from '@site/src/components/viz/PracticeProblemPro';
+import ProblemSolver from '@site/src/components/viz/ProblemSolver';
 
-<PracticeProblem
+<ProblemSolver
   id="temperature-scaling"
   title="Temperature scaling"
   difficulty="Easy"
@@ -112,4 +112,4 @@ Common settings: `T ∈ [0.7, 1.0]` for natural-sounding LLM output. Higher gets
 
 The single subtle point: **numerical stability**. The naive `exp(z/T)` overflows for large logits — exactly the same way as the original softmax problem. Subtract the max after the temperature division, before the exp. The harness probes this with `[1000, 1001, 1002]`.
 
-</PracticeProblem>
+</ProblemSolver>

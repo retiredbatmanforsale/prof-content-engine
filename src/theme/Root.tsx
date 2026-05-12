@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react';
-import BrowserOnly from '@docusaurus/BrowserOnly';
 import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
 import { AuthContext, type AuthState } from '../context/AuthContext';
 import { ProgressProvider } from '../context/ProgressContext';
@@ -151,9 +150,11 @@ function AuthGate({ children }: { children: React.ReactNode }) {
 }
 
 export default function Root({ children }: { children: React.ReactNode }) {
-  return (
-    <BrowserOnly fallback={<div />}>
-      {() => <AuthGate>{children}</AuthGate>}
-    </BrowserOnly>
-  );
+  // AuthGate is SSR-safe: useState initializer guards `typeof window`, useEffect
+  // doesn't run server-side, and SSR initial state is 'checking' which makes
+  // <DocItemContent> render gated/anonymous-aware content during build. We must
+  // NOT wrap this in <BrowserOnly>: that would skip SSR for every page, which
+  // produced empty index.html files and broke @easyops-cn/docusaurus-search-local
+  // (the indexer scrapes server-rendered HTML at build time).
+  return <AuthGate>{children}</AuthGate>;
 }

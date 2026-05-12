@@ -6,9 +6,9 @@ practice_mode: true
 hide_table_of_contents: true
 ---
 
-import PracticeProblem from '@site/src/components/viz/PracticeProblemPro';
+import ProblemSolver from '@site/src/components/viz/ProblemSolver';
 
-<PracticeProblem
+<ProblemSolver
   id="gradient-clip-norm"
   title="Clip gradients by global L2 norm"
   difficulty="Easy"
@@ -135,4 +135,4 @@ The two correct properties the harness checks:
 
 The return value (original norm) is what you log at training time. A healthy run shows the norm hovering well below `max_norm`; spikes past `max_norm` mean you just clipped, and a sustained climb is the early warning of training-loss divergence.
 
-</PracticeProblem>
+</ProblemSolver>
