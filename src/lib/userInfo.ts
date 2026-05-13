@@ -7,6 +7,37 @@
 const TOKEN_KEY = 'lexai_access_token';
 const REFRESH_KEY = 'lexai_refresh_token';
 
+/**
+ * Reads the access token from the `.lexailabs.com` cookie that
+ * prof-frontend writes on login. Returns the most recently set
+ * token regardless of which subdomain you were on when you signed in.
+ *
+ * Falls back to sessionStorage so flows that *do* store the token
+ * locally (legacy, direct OAuth callbacks landing on this site) still
+ * work.
+ */
+function readAccessToken(): string | null {
+  if (typeof document !== 'undefined') {
+    const m = document.cookie.match(/(?:^|;\s*)lexai_access_token=([^;]*)/);
+    if (m) {
+      try {
+        return decodeURIComponent(m[1]);
+      } catch {
+        return m[1];
+      }
+    }
+  }
+  if (typeof sessionStorage !== 'undefined') {
+    return sessionStorage.getItem(TOKEN_KEY);
+  }
+  return null;
+}
+
+function clearSharedAccessCookie() {
+  if (typeof document === 'undefined') return;
+  document.cookie = `${TOKEN_KEY}=; Domain=.lexailabs.com; Path=/; Max-Age=0`;
+}
+
 export type UserInfo = {
   email?: string;
   name?: string;
@@ -27,7 +58,7 @@ function decodeJwtPayload(token: string): Record<string, unknown> | null {
 
 export function getCurrentUser(): UserInfo | null {
   if (typeof window === 'undefined') return null;
-  const token = sessionStorage.getItem(TOKEN_KEY);
+  const token = readAccessToken();
   if (!token) return null;
   const p = decodeJwtPayload(token);
   if (!p) return null;
@@ -47,6 +78,7 @@ export function signOut(redirectUrl: string): void {
   try {
     sessionStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem(REFRESH_KEY);
+    clearSharedAccessCookie();
   } catch {
     /* ignore quota / private mode */
   }
