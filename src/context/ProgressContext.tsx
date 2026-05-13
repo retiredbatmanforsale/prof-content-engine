@@ -7,6 +7,14 @@ import React, {
 } from 'react';
 import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
 import ExecutionEnvironment from '@docusaurus/ExecutionEnvironment';
+import { recordActivity } from '@site/src/lib/streakMemory';
+
+function humanizeLessonId(lessonId: string): string {
+  const slug = lessonId.split('/').pop() ?? lessonId;
+  return slug
+    .replace(/[-_]/g, ' ')
+    .replace(/\b\w/g, (c) => c.toUpperCase());
+}
 
 export type ProgressStatus = 'IN_PROGRESS' | 'READ' | 'MASTERED';
 
@@ -127,6 +135,9 @@ export function ProgressProvider({ children }: { children: React.ReactNode }) {
       if (current === 'READ' || current === 'MASTERED') return prev;
       const next = { ...prev, [lessonId]: 'READ' as ProgressStatus };
       saveProgress(next);
+      // Fire streak update only on the *first* transition to READ for
+      // this lesson — re-reading shouldn't keep extending the streak.
+      recordActivity('lesson', humanizeLessonId(lessonId));
       return next;
     });
     postToBackend('read', lessonId);

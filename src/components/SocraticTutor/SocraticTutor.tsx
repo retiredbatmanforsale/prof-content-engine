@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
 import { Sparkles } from 'lucide-react';
 import PixelButton from '@site/src/components/PixelButton';
+import { recordActivity as recordStreakActivity } from '@site/src/lib/streakMemory';
 
 const TOKEN_KEY = 'lexai_access_token';
 const REFRESH_KEY = 'lexai_refresh_token';
@@ -178,6 +179,8 @@ export default function SocraticTutor({ topic, concepts, lessonId }: Props) {
 
     if (displayMsg !== 'Begin.') {
       setMessages((prev) => [...prev, { role: 'user', content: displayMsg }]);
+      // Streak signal — a real user message to Prof counts as engagement.
+      recordStreakActivity('tutor', `Asked Prof · ${topic}`);
     }
 
     setStreamingText('');

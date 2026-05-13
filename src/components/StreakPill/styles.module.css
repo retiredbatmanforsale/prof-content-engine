@@ -1,0 +1,378 @@
+/* Streak pill + popover — flame icon + count in the navbar.
+   Tiered visuals: starter (subtle) → legend (full warm gradient + halo). */
+
+.wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.placeholder {
+  width: 52px;
+  height: 26px;
+}
+
+/* ── Pill ────────────────────────────────────────────────────────────── */
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  height: 26px;
+  padding: 0 0.625rem;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%);
+  border: 1px solid #fed7aa;
+  font-family: 'Geist', system-ui, sans-serif;
+  cursor: pointer;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.6),
+    0 1px 2px rgba(15, 15, 15, 0.04);
+  transition:
+    transform 0.15s var(--prof-ease),
+    border-color 0.15s var(--prof-ease),
+    box-shadow 0.15s var(--prof-ease);
+}
+
+.pill:hover {
+  transform: translateY(-1px);
+  border-color: #fdba74;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.6),
+    0 4px 12px -4px rgba(234, 88, 12, 0.25);
+}
+
+.pill:active {
+  transform: translateY(0);
+}
+
+.pill:focus-visible {
+  outline: 2px solid #ea580c;
+  outline-offset: 3px;
+}
+
+.flameWrap {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.flame {
+  color: #ea580c;
+  flex-shrink: 0;
+}
+
+.count {
+  font-family: 'Geist Mono', 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: #7c2d12;
+  line-height: 1;
+}
+
+/* ── Tier overrides ─────────────────────────────────────────────────── */
+
+.tier_warm {
+  /* default — already styled above */
+}
+
+.tier_committed .flame {
+  animation: streakFlameFlicker 2.4s var(--prof-ease) infinite;
+}
+
+.tier_habit {
+  background: linear-gradient(135deg, #ffedd5 0%, #fed7aa 100%);
+  border-color: #fdba74;
+}
+
+.tier_habit .flame {
+  color: #c2410c;
+  animation: streakFlameFlicker 2.4s var(--prof-ease) infinite;
+}
+
+.tier_disciplined,
+.tier_serious {
+  background: linear-gradient(135deg, #fed7aa 0%, #fb923c 100%);
+  border-color: #f97316;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.4),
+    0 0 10px -2px rgba(234, 88, 12, 0.45);
+}
+
+.tier_disciplined .flame,
+.tier_serious .flame {
+  color: #ffffff;
+  filter: drop-shadow(0 1px 1px rgba(124, 45, 18, 0.6));
+  animation: streakFlameFlicker 1.8s var(--prof-ease) infinite;
+}
+
+.tier_disciplined .count,
+.tier_serious .count {
+  color: #ffffff;
+  text-shadow: 0 1px 0 rgba(124, 45, 18, 0.4);
+}
+
+.tier_ironclad,
+.tier_legend {
+  background: linear-gradient(135deg, #f97316 0%, #dc2626 100%);
+  border-color: #b91c1c;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.3),
+    0 0 14px -2px rgba(220, 38, 38, 0.55);
+}
+
+.tier_ironclad .flame,
+.tier_legend .flame {
+  color: #ffffff;
+  filter: drop-shadow(0 1px 2px rgba(124, 45, 18, 0.7));
+  animation: streakFlameFlicker 1.4s var(--prof-ease) infinite;
+}
+
+.tier_ironclad .count,
+.tier_legend .count {
+  color: #ffffff;
+}
+
+.tier_legend::before {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border-radius: 999px;
+  background: radial-gradient(closest-side, rgba(234, 88, 12, 0.5), transparent 70%);
+  z-index: -1;
+  animation: streakHalo 3s var(--prof-ease) infinite;
+}
+
+@keyframes streakFlameFlicker {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.06); }
+}
+
+@keyframes streakHalo {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 1; }
+}
+
+/* ── Popover ─────────────────────────────────────────────────────────── */
+
+.popover {
+  position: absolute;
+  top: calc(100% + 12px);
+  left: 0;
+  width: 340px;
+  background: #ffffff;
+  border: 1px solid var(--prof-border, #ebebeb);
+  border-radius: 14px;
+  box-shadow:
+    0 1px 2px rgba(15, 15, 15, 0.04),
+    0 12px 32px -8px rgba(15, 15, 15, 0.10);
+  padding: 16px;
+  z-index: 200;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(-4px);
+  transition:
+    opacity 0.18s var(--prof-ease),
+    transform 0.18s var(--prof-ease);
+}
+
+.popoverOpen {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0);
+}
+
+@media (max-width: 480px) {
+  .popover {
+    width: calc(100vw - 32px);
+    left: -8px;
+  }
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.divider {
+  height: 1px;
+  background: var(--prof-border, #ebebeb);
+  margin: 12px -16px;
+}
+
+.eyebrow {
+  font-family: 'Geist', system-ui, sans-serif;
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--prof-text-muted, #a3a3a3);
+  line-height: 1;
+}
+
+/* Hero row */
+
+.heroRow {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.heroFlame {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%);
+  border: 1px solid #fed7aa;
+  color: #ea580c;
+  flex-shrink: 0;
+}
+
+.heroFlame.tier_disciplined,
+.heroFlame.tier_serious,
+.heroFlame.tier_ironclad,
+.heroFlame.tier_legend {
+  background: linear-gradient(135deg, #f97316 0%, #dc2626 100%);
+  border-color: #b91c1c;
+  color: #ffffff;
+}
+
+.heroNumber {
+  font-family: 'Geist', system-ui, sans-serif;
+  font-size: 1.5rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--prof-text-primary, #0a0a0a);
+  line-height: 1.1;
+}
+
+.heroNumberSuffix {
+  font-size: 0.95rem;
+  font-weight: 400;
+  color: var(--prof-text-secondary, #525252);
+  margin-left: 0.15rem;
+}
+
+.heroSub {
+  font-family: 'Geist', system-ui, sans-serif;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--prof-accent, #3b82f6);
+  margin-top: 2px;
+}
+
+.heroMeta {
+  font-family: 'Geist', system-ui, sans-serif;
+  font-size: 0.75rem;
+  color: var(--prof-text-secondary, #525252);
+  margin-top: 0.25rem;
+  letter-spacing: -0.005em;
+}
+
+/* Heatmap — 28 cells in a 7×4 grid */
+
+.heatmap {
+  display: grid;
+  grid-template-columns: repeat(14, 1fr);
+  gap: 4px;
+  margin-top: 0.3rem;
+}
+
+.heatCell {
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: 3px;
+  background: var(--prof-surface-sunken, #f5f5f5);
+  border: 1px solid var(--prof-border, #ebebeb);
+}
+
+.heatCellActive {
+  background: #ea580c;
+  border-color: #c2410c;
+}
+
+/* Freeze row */
+
+.freezeRow {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+}
+
+.freezeIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 8px;
+  background: rgba(59, 130, 246, 0.08);
+  color: var(--prof-accent, #3b82f6);
+  flex-shrink: 0;
+}
+
+.freezeText {
+  flex: 1;
+}
+
+.freezeCount {
+  font-family: 'Geist', system-ui, sans-serif;
+  font-size: 0.825rem;
+  font-weight: 500;
+  color: var(--prof-text-primary, #0a0a0a);
+  letter-spacing: -0.005em;
+  line-height: 1.3;
+}
+
+.freezeNote {
+  font-family: 'Geist', system-ui, sans-serif;
+  font-size: 0.725rem;
+  font-weight: 400;
+  color: var(--prof-text-secondary, #525252);
+  letter-spacing: -0.005em;
+  line-height: 1.4;
+  margin-top: 2px;
+}
+
+/* Activity list */
+
+.activityList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.activityItem {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  font-family: 'Geist', system-ui, sans-serif;
+  font-size: 0.8rem;
+  color: var(--prof-text-primary, #0a0a0a);
+  letter-spacing: -0.005em;
+}
+
+.activityKind {
+  flex-shrink: 0;
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--prof-text-muted, #a3a3a3);
+  min-width: 70px;
+}
+
+.activityLabel {
+  color: var(--prof-text-secondary, #525252);
+  font-weight: 400;
+}

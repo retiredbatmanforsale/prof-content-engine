@@ -4,6 +4,8 @@ import { useNavbarMobileSidebar } from '@docusaurus/theme-common/internal';
 import NavbarMobileSidebarToggle from '@theme/Navbar/MobileSidebar/Toggle';
 import SearchBar from '@theme/SearchBar';
 import EarlyAccessPill from '@site/src/components/EarlyAccessPill';
+import StreakPill from '@site/src/components/StreakPill';
+import StreakToast from '@site/src/components/StreakToast';
 
 const HOME_URL = 'https://prof.lexailabs.com';
 
@@ -31,7 +33,10 @@ export default function NavbarContent(): ReactNode {
 
       <div className="prof-navbar__earlyAccess">
         <EarlyAccessPill />
+        <StreakPill />
       </div>
+
+      <StreakToast />
 
       <div className="prof-navbar__spacer" />
 

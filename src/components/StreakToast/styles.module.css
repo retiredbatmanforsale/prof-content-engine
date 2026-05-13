@@ -1,0 +1,119 @@
+/* End-of-activity streak toast — slides in from bottom-right, fades after
+   ~4.5s. Hot tier (30+ day streak) gets the warm gradient treatment. */
+
+.toast {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 9999;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  width: 300px;
+  padding: 14px 16px 14px 14px;
+  background: #ffffff;
+  border: 1px solid var(--prof-border, #ebebeb);
+  border-radius: 14px;
+  box-shadow:
+    0 1px 2px rgba(15, 15, 15, 0.06),
+    0 16px 40px -8px rgba(15, 15, 15, 0.20);
+  animation:
+    streakToastIn 0.32s var(--prof-ease) both,
+    streakToastOut 0.28s var(--prof-ease) 4.2s both;
+  font-family: 'Geist', system-ui, sans-serif;
+}
+
+.toastHot {
+  background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 60%, #fed7aa 100%);
+  border-color: #fdba74;
+  box-shadow:
+    0 1px 2px rgba(15, 15, 15, 0.06),
+    0 16px 40px -8px rgba(234, 88, 12, 0.30);
+}
+
+@keyframes streakToastIn {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes streakToastOut {
+  to {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+
+.iconWrap {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%);
+  border: 1px solid #fed7aa;
+  color: #ea580c;
+  flex-shrink: 0;
+}
+
+.toastHot .iconWrap {
+  background: linear-gradient(135deg, #f97316 0%, #dc2626 100%);
+  border-color: #b91c1c;
+  color: #ffffff;
+}
+
+.content {
+  flex: 1;
+  min-width: 0;
+}
+
+.headline {
+  font-family: 'Geist', system-ui, sans-serif;
+  font-size: 0.95rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--prof-text-primary, #0a0a0a);
+  line-height: 1.25;
+}
+
+.body {
+  font-family: 'Geist', system-ui, sans-serif;
+  font-size: 0.8rem;
+  font-weight: 400;
+  letter-spacing: -0.005em;
+  color: var(--prof-text-secondary, #525252);
+  line-height: 1.45;
+  margin-top: 2px;
+}
+
+.dismiss {
+  position: absolute;
+  top: 6px;
+  right: 8px;
+  width: 20px;
+  height: 20px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  color: var(--prof-text-muted, #a3a3a3);
+  font-size: 1.1rem;
+  line-height: 1;
+  cursor: pointer;
+  border-radius: 6px;
+  transition:
+    color 0.12s var(--prof-ease),
+    background 0.12s var(--prof-ease);
+}
+
+.dismiss:hover {
+  color: var(--prof-text-primary, #0a0a0a);
+  background: rgba(15, 15, 15, 0.04);
+}

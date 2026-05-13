@@ -13,6 +13,7 @@ import {
   getConceptAccuracy,
   isWeakConcept,
 } from './quizMemory';
+import { recordActivity as recordStreakActivity } from '@site/src/lib/streakMemory';
 import styles from './styles.module.css';
 
 const TOKEN_KEY = 'lexai_access_token';
@@ -128,6 +129,10 @@ export default function Quiz({
     setPhase('results');
     if (submittedRef.current) return;
     submittedRef.current = true;
+
+    // Streak signal — quiz completion counts as a qualifying activity.
+    const quizLabel = lessonId.split('/').pop()?.replace(/[-_]/g, ' ') ?? 'Quiz';
+    recordStreakActivity('quiz', `Quiz · ${quizLabel}`);
 
     // Fire-and-forget API submit (preserves existing /quiz/attempts behavior)
     try {
