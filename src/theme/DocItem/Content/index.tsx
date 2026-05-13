@@ -4,6 +4,7 @@ import { useDoc } from '@docusaurus/plugin-content-docs/client';
 import { useAuthState } from '../../../context/AuthContext';
 import PaywallGate from '../../../components/PaywallGate';
 import FreeBanner from '../../../components/FreeBanner';
+import LastUpdatedPill from '../../../components/LastUpdatedPill';
 
 type ContentProps = React.ComponentProps<typeof OriginalContent>;
 
@@ -44,9 +45,18 @@ export default function DocItemContent(props: ContentProps): ReactNode {
   const showBanner =
     (access === 'public' || access === 'free') && authState !== 'paid';
 
+  // metadata.lastUpdatedAt is a unix timestamp in seconds when
+  // showLastUpdateTime is enabled in docusaurus.config.ts.
+  const lastUpdatedAt = (metadata as { lastUpdatedAt?: number }).lastUpdatedAt;
+
   return (
     <>
       {showBanner && <FreeBanner access={access as 'public' | 'free'} />}
+      {lastUpdatedAt !== undefined && (
+        <div className="prof-last-updated-row">
+          <LastUpdatedPill date={lastUpdatedAt} />
+        </div>
+      )}
       <OriginalContent {...props} />
     </>
   );

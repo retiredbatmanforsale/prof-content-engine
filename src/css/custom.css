@@ -935,6 +935,19 @@ body.practice-mode .practice-page-content {
   display: none !important;
 }
 
+/* Row that holds the LastUpdatedPill — sits above the H1, right-aligned. */
+.prof-last-updated-row {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 0.75rem;
+}
+
+/* Hide Docusaurus's default "Last updated" text in the doc footer — our
+   LastUpdatedPill at the top of the article already carries that signal. */
+.theme-last-updated {
+  display: none !important;
+}
+
 /* ===== Metallic shimmer for premium headings (AI tutor, etc.) =================
    Title stays anchored as charcoal at rest. A blue-tinted white highlight
    sweeps diagonally across once every ~6.5s, with a long pause between sweeps
