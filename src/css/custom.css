@@ -217,6 +217,18 @@ body.prof-scrolled .navbar {
   flex: 1;
 }
 
+.prof-navbar__earlyAccess {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 0.5rem;
+}
+
+@media (max-width: 640px) {
+  .prof-navbar__earlyAccess {
+    display: none;
+  }
+}
+
 .prof-navbar__right {
   margin-left: auto;
   display: flex;

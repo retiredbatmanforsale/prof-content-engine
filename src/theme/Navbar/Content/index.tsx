@@ -3,6 +3,7 @@ import useBaseUrl from '@docusaurus/useBaseUrl';
 import { useNavbarMobileSidebar } from '@docusaurus/theme-common/internal';
 import NavbarMobileSidebarToggle from '@theme/Navbar/MobileSidebar/Toggle';
 import SearchBar from '@theme/SearchBar';
+import EarlyAccessPill from '@site/src/components/EarlyAccessPill';
 
 const HOME_URL = 'https://prof.lexailabs.com';
 
@@ -27,6 +28,10 @@ export default function NavbarContent(): ReactNode {
         <img src={logoUrl} alt="Lex AI Labs" width={28} height={28} />
         <span className="prof-navbar__title">Prof</span>
       </a>
+
+      <div className="prof-navbar__earlyAccess">
+        <EarlyAccessPill />
+      </div>
 
       <div className="prof-navbar__spacer" />
 
