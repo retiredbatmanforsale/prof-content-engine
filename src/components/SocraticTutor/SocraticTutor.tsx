@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
+import { Sparkles, ArrowRight } from 'lucide-react';
 
 const TOKEN_KEY = 'lexai_access_token';
 const REFRESH_KEY = 'lexai_refresh_token';
@@ -236,26 +237,136 @@ export default function SocraticTutor({ topic, concepts, lessonId }: Props) {
   if (!isOpen) {
     return (
       <div className="not-prose my-10">
-        <div className="rounded-2xl border border-indigo-200 bg-gradient-to-br from-indigo-50 to-violet-50 p-6 dark:border-indigo-800/50 dark:from-indigo-950/30 dark:to-violet-950/30">
-          <div className="flex items-start gap-4">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-indigo-600 text-white text-lg font-bold shadow-sm">
-              P
+        <div
+          className="group relative overflow-hidden rounded-2xl border p-6 transition-all"
+          style={{
+            background:
+              'linear-gradient(135deg, rgba(255,255,255,0.92) 0%, rgba(250,250,250,0.85) 50%, rgba(245,245,245,0.78) 100%)',
+            backdropFilter: 'saturate(180%) blur(12px)',
+            WebkitBackdropFilter: 'saturate(180%) blur(12px)',
+            borderColor: 'var(--prof-border, #ebebeb)',
+            boxShadow:
+              '0 1px 2px rgba(15,15,15,0.04), 0 8px 24px -8px rgba(15,15,15,0.06)',
+          }}
+        >
+          {/* Faint brand accent — radial wash in the corner, not a heavy fill */}
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute -right-12 -top-12 h-40 w-40 rounded-full opacity-60"
+            style={{
+              background:
+                'radial-gradient(closest-side, rgba(59,130,246,0.10), transparent 70%)',
+            }}
+          />
+
+          <div className="relative flex items-start gap-3.5">
+            {/* Sparkles icon in a soft bordered square */}
+            <div
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg"
+              style={{
+                background: 'var(--prof-surface, #ffffff)',
+                border: '1px solid var(--prof-border, #ebebeb)',
+                color: 'var(--prof-accent, #3b82f6)',
+                boxShadow: '0 1px 2px rgba(15,15,15,0.04)',
+              }}
+            >
+              <Sparkles size={16} strokeWidth={1.75} />
             </div>
+
             <div className="flex-1">
-              <p className="m-0 text-sm font-semibold text-indigo-900 dark:text-indigo-200">
-                Test your understanding
-              </p>
-              <p className="mt-1 mb-0 text-sm text-slate-600 dark:text-slate-400">
-                Prof will ask you questions about <strong>{topic}</strong> — not explain it. You'll be surprised what you don't know until you have to say it.
+              {/* Title + animated readiness indicator */}
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                <p
+                  className="shimmer-text-title m-0 text-[0.95rem] font-semibold leading-tight"
+                  style={{ letterSpacing: '-0.01em' }}
+                >
+                  Test your understanding
+                </p>
+                <span
+                  className="inline-flex items-center gap-1.5"
+                  style={{
+                    color: 'var(--prof-text-muted, #a3a3a3)',
+                    fontSize: '0.7rem',
+                    fontWeight: 500,
+                    letterSpacing: '0.04em',
+                    textTransform: 'uppercase',
+                  }}
+                >
+                  <span className="relative inline-flex h-1.5 w-1.5">
+                    <span
+                      className="absolute inline-flex h-full w-full animate-ping rounded-full opacity-60"
+                      style={{ background: '#10b981' }}
+                    />
+                    <span
+                      className="relative inline-flex h-1.5 w-1.5 rounded-full"
+                      style={{ background: '#10b981' }}
+                    />
+                  </span>
+                  Prof is ready
+                </span>
+              </div>
+
+              <p
+                className="mt-1.5 mb-0 text-sm leading-relaxed"
+                style={{ color: 'var(--prof-text-secondary, #525252)' }}
+              >
+                Prof will ask you questions about{' '}
+                <strong style={{ color: 'var(--prof-text-primary, #0a0a0a)' }}>
+                  {topic}
+                </strong>{' '}
+                — not explain it.{' '}
+                <em
+                  style={{
+                    fontFamily: "'Instrument Serif', Georgia, serif",
+                    fontStyle: 'italic',
+                    fontSize: '1.0rem',
+                    color: 'var(--prof-text-primary, #0a0a0a)',
+                  }}
+                >
+                  You'll be surprised what you don't know until you have to say it.
+                </em>
               </p>
             </div>
           </div>
-          <button
-            onClick={handleOpen}
-            className="mt-4 w-full rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-indigo-700 active:scale-[0.98]"
-          >
-            Start session
-          </button>
+
+          <div className="relative mt-5 flex justify-end">
+            <button
+              onClick={handleOpen}
+              className="group/btn inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition-all"
+              style={{
+                background: 'var(--prof-text-primary, #0a0a0a)',
+                color: '#ffffff',
+                border: '1px solid var(--prof-text-primary, #0a0a0a)',
+                boxShadow:
+                  '0 1px 2px rgba(15,15,15,0.06), inset 0 1px 0 rgba(255,255,255,0.06)',
+                letterSpacing: '-0.005em',
+                transitionTimingFunction: 'var(--prof-ease)',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = 'translateY(-1px)';
+                e.currentTarget.style.boxShadow =
+                  '0 6px 18px -4px rgba(59,130,246,0.35), inset 0 1px 0 rgba(255,255,255,0.06)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow =
+                  '0 1px 2px rgba(15,15,15,0.06), inset 0 1px 0 rgba(255,255,255,0.06)';
+              }}
+              onMouseDown={(e) => {
+                e.currentTarget.style.transform = 'translateY(0) scale(0.985)';
+              }}
+              onMouseUp={(e) => {
+                e.currentTarget.style.transform = 'translateY(-1px)';
+              }}
+            >
+              Start session
+              <ArrowRight
+                size={14}
+                strokeWidth={2}
+                className="transition-transform duration-200 group-hover/btn:translate-x-0.5"
+              />
+            </button>
+          </div>
         </div>
       </div>
     );

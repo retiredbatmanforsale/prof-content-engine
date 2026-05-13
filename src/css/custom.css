@@ -914,3 +914,48 @@ body.practice-mode .practice-page-content {
   overflow: hidden;
   background: var(--prof-surface);
 }
+
+/* Hide Docusaurus's per-lesson Previous/Next paginator — the sidebar handles
+   lesson-level navigation and the SectionBar handles cross-section moves, so
+   the bottom pagination duplicates affordances and clutters the end of every
+   lesson. */
+.pagination-nav {
+  display: none !important;
+}
+
+/* ===== Metallic shimmer for premium headings (AI tutor, etc.) =================
+   Title stays anchored as charcoal at rest. A blue-tinted white highlight
+   sweeps diagonally across once every ~6.5s, with a long pause between sweeps
+   so it reads as intentional polish, not constant flicker. */
+
+.shimmer-text-title {
+  background-image: linear-gradient(
+    110deg,
+    var(--prof-text-primary, #0a0a0a) 30%,
+    #525252 44%,
+    #3b82f6 49%,
+    #ffffff 50%,
+    #3b82f6 51%,
+    #525252 56%,
+    var(--prof-text-primary, #0a0a0a) 70%
+  );
+  background-size: 300% 100%;
+  background-position: 200% 0;
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+  animation: shimmer-text-title 5s linear infinite;
+}
+
+@keyframes shimmer-text-title {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -100% 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .shimmer-text-title {
+    animation: none;
+    background-position: 50% 0;
+  }
+}
