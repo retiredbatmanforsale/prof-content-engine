@@ -39,6 +39,12 @@
   /* Apple-style ease-out — fast start, gentle settle */
   --prof-ease: cubic-bezier(0.32, 0.72, 0, 1);
 
+  /* Shared mobile breakpoint — kept in lockstep with prof-frontend so the
+     nav drawer flips at the same width on both sites. CSS variables can't be
+     used inside @media values, so this is the documented source of truth;
+     update any `max-width: 1024px` queries together with this value. */
+  --prof-mobile-bp: 1024px;
+
   /* Map brand tokens into Infima theme variables */
   --ifm-color-primary: var(--lexai-blue-500);
   --ifm-color-primary-dark: var(--lexai-blue-600);
@@ -300,7 +306,7 @@ body.prof-scrolled .navbar {
   margin: 0;
 }
 
-@media (max-width: 996px) {
+@media (max-width: 1024px) {
   .prof-navbar__links,
   .prof-navbar__right {
     display: none;
@@ -312,7 +318,7 @@ body.prof-scrolled .navbar {
   top: calc(var(--ifm-navbar-height, 64px) + 76px) !important;
 }
 
-@media (max-width: 996px) {
+@media (max-width: 1024px) {
   .theme-doc-sidebar-container {
     top: calc(var(--ifm-navbar-height, 64px) + 64px) !important;
   }

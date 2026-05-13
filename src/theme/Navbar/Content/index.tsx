@@ -28,7 +28,7 @@ export default function NavbarContent(): ReactNode {
       {!mobileSidebar.disabled && <NavbarMobileSidebarToggle />}
 
       <a href={HOME_URL} className="navbar__brand prof-navbar__brand">
-        <img src={logoUrl} alt="Lex AI Labs" width={28} height={28} />
+        <img src={logoUrl} alt="Prof by Lex AI Labs — home" width={28} height={28} />
         <span className="prof-navbar__title shimmer-text-mark">Prof</span>
       </a>
 

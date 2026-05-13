@@ -8,6 +8,7 @@ import {
   type StreakState,
   type StreakTier,
 } from '@site/src/lib/streakMemory';
+import { useDismissible } from '@site/src/lib/useDismissible';
 import styles from './styles.module.css';
 
 const TIER_DESCRIPTORS: Record<StreakTier, string> = {
@@ -43,24 +44,7 @@ export default function StreakPill() {
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
 
-  // Click-outside + Escape close
-  useEffect(() => {
-    if (!open) return;
-    const handleClick = (e: MouseEvent) => {
-      if (wrapRef.current && !wrapRef.current.contains(e.target as Node)) {
-        setOpen(false);
-      }
-    };
-    const handleEsc = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setOpen(false);
-    };
-    document.addEventListener('mousedown', handleClick);
-    document.addEventListener('keydown', handleEsc);
-    return () => {
-      document.removeEventListener('mousedown', handleClick);
-      document.removeEventListener('keydown', handleEsc);
-    };
-  }, [open]);
+  useDismissible(wrapRef, open, () => setOpen(false));
 
   if (!mounted) {
     // Render a neutral placeholder of the same width to avoid layout shift

@@ -1,7 +1,8 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { ChevronDown } from 'lucide-react';
 import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
 import { PREVIEW_STATUS } from '@site/src/lib/preview-status';
+import { useDismissible } from '@site/src/lib/useDismissible';
 import styles from './styles.module.css';
 
 function formatMonthDay(iso: string): string {
@@ -25,23 +26,7 @@ export default function EarlyAccessPill() {
     ? `${mainPlatformUrl}${PREVIEW_STATUS.lastShipped.href}`
     : PREVIEW_STATUS.lastShipped.href;
 
-  useEffect(() => {
-    if (!open) return;
-    const handleClick = (e: MouseEvent) => {
-      if (wrapRef.current && !wrapRef.current.contains(e.target as Node)) {
-        setOpen(false);
-      }
-    };
-    const handleEsc = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setOpen(false);
-    };
-    document.addEventListener('mousedown', handleClick);
-    document.addEventListener('keydown', handleEsc);
-    return () => {
-      document.removeEventListener('mousedown', handleClick);
-      document.removeEventListener('keydown', handleEsc);
-    };
-  }, [open]);
+  useDismissible(wrapRef, open, () => setOpen(false));
 
   const lastShippedDate = formatMonthDay(PREVIEW_STATUS.lastShipped.date);
 

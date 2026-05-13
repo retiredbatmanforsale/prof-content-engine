@@ -9,6 +9,7 @@ import {
   userInitial,
   type UserInfo,
 } from '@site/src/lib/userInfo';
+import { useDismissible } from '@site/src/lib/useDismissible';
 import PixelButton from '@site/src/components/PixelButton';
 import styles from './styles.module.css';
 
@@ -44,24 +45,7 @@ export default function ProfileMenu() {
     };
   }, [user?.email, user?.image]);
 
-  // Click-outside + Escape close
-  useEffect(() => {
-    if (!open) return;
-    const handleClick = (e: MouseEvent) => {
-      if (wrapRef.current && !wrapRef.current.contains(e.target as Node)) {
-        setOpen(false);
-      }
-    };
-    const handleEsc = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setOpen(false);
-    };
-    document.addEventListener('mousedown', handleClick);
-    document.addEventListener('keydown', handleEsc);
-    return () => {
-      document.removeEventListener('mousedown', handleClick);
-      document.removeEventListener('keydown', handleEsc);
-    };
-  }, [open]);
+  useDismissible(wrapRef, open, () => setOpen(false));
 
   // SSR / pre-hydration → render nothing to avoid flash
   if (authState === 'checking') return null;
