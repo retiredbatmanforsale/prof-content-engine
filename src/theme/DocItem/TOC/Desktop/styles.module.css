@@ -1,9 +1,17 @@
 /* ── Outer sticky + scrollable container ── */
 .tocContainer {
   position: sticky;
-  top: calc(var(--ifm-navbar-height) + 1rem);
-  max-height: calc(100vh - var(--ifm-navbar-height) - 2rem);
+  /* navbar (64px) + SectionBar (76px) + 1rem breathing room */
+  top: calc(var(--ifm-navbar-height) + 76px + 1rem);
+  max-height: calc(100vh - var(--ifm-navbar-height) - 76px - 2rem);
   overflow-y: auto;
+}
+
+@media (max-width: 996px) {
+  .tocContainer {
+    top: calc(var(--ifm-navbar-height) + 64px + 1rem);
+    max-height: calc(100vh - var(--ifm-navbar-height) - 64px - 2rem);
+  }
 }
 
 /* ── Progress bar — sits naturally at the top, no sticky chrome ── */

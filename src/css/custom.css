@@ -36,6 +36,9 @@
   --prof-accent-soft: rgba(59, 130, 246, 0.08);
   --prof-coral: #ff7f50;
 
+  /* Apple-style ease-out — fast start, gentle settle */
+  --prof-ease: cubic-bezier(0.32, 0.72, 0, 1);
+
   /* Map brand tokens into Infima theme variables */
   --ifm-color-primary: var(--lexai-blue-500);
   --ifm-color-primary-dark: var(--lexai-blue-600);
@@ -145,7 +148,7 @@ body {
   border-bottom: 1px solid var(--prof-border) !important;
   box-shadow: none !important;
   height: var(--ifm-navbar-height);
-  transition: background 0.2s ease, border-color 0.2s ease;
+  transition: background 0.2s var(--prof-ease), border-color 0.2s var(--prof-ease);
 }
 
 body.prof-scrolled .navbar {
@@ -226,7 +229,7 @@ body.prof-scrolled .navbar {
   font-size: 0.825rem;
   font-weight: 500;
   color: var(--prof-text-muted);
-  transition: color 0.15s ease;
+  transition: color 0.15s var(--prof-ease);
   text-decoration: none !important;
 }
 
@@ -248,7 +251,7 @@ body.prof-scrolled .navbar {
   height: 38px;
   padding: 0 0.875rem 0 2.25rem;
   color: var(--prof-text-muted);
-  transition: border-color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
+  transition: border-color 0.15s var(--prof-ease), background 0.15s var(--prof-ease), box-shadow 0.15s var(--prof-ease);
   min-width: 320px;
 }
 
@@ -325,7 +328,7 @@ body.prof-scrolled .navbar {
   color: var(--prof-text-secondary);
   padding: 0.4rem 0.75rem;
   border-radius: 0.5rem;
-  transition: color 0.15s ease, background 0.15s ease;
+  transition: color 0.15s var(--prof-ease), background 0.15s var(--prof-ease);
   white-space: nowrap;
   line-height: 1;
   letter-spacing: -0.005em;
@@ -352,7 +355,7 @@ body.prof-scrolled .navbar {
   display: inline-flex;
   align-items: center;
   opacity: 0.45;
-  transition: transform 0.2s ease;
+  transition: transform 0.2s var(--prof-ease);
   margin-top: 1px;
 }
 
@@ -377,7 +380,7 @@ body.prof-scrolled .navbar {
   opacity: 0;
   pointer-events: none;
   transform: translateY(-6px);
-  transition: opacity 0.15s ease, transform 0.15s ease;
+  transition: opacity 0.15s var(--prof-ease), transform 0.15s var(--prof-ease);
 }
 
 .prof-dropdown__panel--open {
@@ -412,7 +415,7 @@ body.prof-scrolled .navbar {
   padding: 0.45rem 0.75rem;
   border-radius: 0.4rem;
   text-decoration: none !important;
-  transition: background 0.12s ease, color 0.12s ease;
+  transition: background 0.12s var(--prof-ease), color 0.12s var(--prof-ease);
   letter-spacing: -0.005em;
 }
 
@@ -447,7 +450,11 @@ aside.theme-doc-sidebar-container {
   color: var(--prof-text-secondary);
   border-radius: 0.5rem;
   padding: 0.4rem 0.625rem;
-  transition: background 0.12s ease, color 0.12s ease;
+  transition:
+    background 0.12s var(--prof-ease),
+    color 0.12s var(--prof-ease),
+    transform 0.15s var(--prof-ease),
+    box-shadow 0.15s var(--prof-ease);
   letter-spacing: -0.005em;
   line-height: 1.4;
 }
@@ -455,6 +462,13 @@ aside.theme-doc-sidebar-container {
 .menu__link:hover {
   background: var(--prof-surface-sunken);
   color: var(--prof-text-primary);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px -2px rgba(15, 15, 15, 0.06);
+}
+
+.menu__link:active {
+  transform: translateY(0);
+  box-shadow: none;
 }
 
 .menu__link--active {
@@ -505,7 +519,7 @@ aside.theme-doc-sidebar-container {
   color: var(--prof-text-primary);
   border-radius: 0.5rem;
   padding: 0.45rem 0.625rem;
-  transition: background 0.12s ease, color 0.12s ease;
+  transition: background 0.12s var(--prof-ease), color 0.12s var(--prof-ease);
   background: none !important;
   margin-top: 1px;
   margin-bottom: 1px;
@@ -639,6 +653,26 @@ a:hover {
 }
 
 /* Buttons */
+.button {
+  transition:
+    background-color 0.15s var(--prof-ease),
+    border-color 0.15s var(--prof-ease),
+    color 0.15s var(--prof-ease),
+    transform 0.12s var(--prof-ease),
+    box-shadow 0.15s var(--prof-ease);
+}
+
+.button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px -2px rgba(15, 15, 15, 0.08);
+}
+
+.button:active {
+  transform: translateY(1px) scale(0.985);
+  box-shadow: none;
+  transition-duration: 0.06s;
+}
+
 .button.button--primary {
   background-color: var(--lexai-blue-500);
   border-color: var(--lexai-blue-500);
@@ -689,7 +723,7 @@ a:hover {
 .card {
   border-radius: var(--ifm-global-radius);
   border: 1px solid var(--prof-border);
-  transition: border-color 0.2s ease, background-color 0.2s ease;
+  transition: border-color 0.2s var(--prof-ease), background-color 0.2s var(--prof-ease);
   overflow: hidden;
 }
 

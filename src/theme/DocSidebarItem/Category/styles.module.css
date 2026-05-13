@@ -16,7 +16,7 @@
   background: var(--prof-surface, #fafafa);
   border: 1px solid var(--prof-border, #ebebeb);
   color: var(--prof-text-secondary, #525252);
-  transition: background 0.12s ease, border-color 0.12s ease, color 0.12s ease;
+  transition: background 0.12s var(--prof-ease), border-color 0.12s var(--prof-ease), color 0.12s var(--prof-ease);
 }
 
 :global(.menu__link:hover) .sidebarIcon {

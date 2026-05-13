@@ -1,4 +1,4 @@
-import React, { type ReactNode } from 'react';
+import React, { type CSSProperties, type ReactNode, useMemo } from 'react';
 import Link from '@docusaurus/Link';
 import { useLocation } from '@docusaurus/router';
 import {
@@ -13,6 +13,7 @@ import {
   Waves,
   type LucideIcon,
 } from 'lucide-react';
+import { useProgress } from '@site/src/context/ProgressContext';
 import styles from './styles.module.css';
 
 type Tab = {
@@ -105,6 +106,25 @@ const TABS: Tab[] = [
   },
 ];
 
+// Strip the `/courses/` prefix so we can match against lesson IDs in ProgressContext.
+const PROGRESS_PREFIXES: Record<string, string[]> = TABS.reduce((acc, tab) => {
+  acc[tab.id] = tab.matchPrefixes.map((p) => p.replace(/^\/courses\//, '').replace(/\/$/, ''));
+  return acc;
+}, {} as Record<string, string[]>);
+
+function rightmostCompletedIndex(progress: Record<string, string>): number {
+  let last = -1;
+  TABS.forEach((tab, i) => {
+    const prefixes = PROGRESS_PREFIXES[tab.id];
+    const hasProgress = Object.entries(progress).some(([lessonId, status]) => {
+      if (status !== 'READ' && status !== 'MASTERED') return false;
+      return prefixes.some((p) => lessonId === p || lessonId.startsWith(p + '/'));
+    });
+    if (hasProgress) last = i;
+  });
+  return last;
+}
+
 function matchActiveTab(pathname: string): string | null {
   // Longest prefix wins (so /mle-interview wins over /ai-for-engineering catch-all)
   let best: { id: string; len: number } | null = null;
@@ -121,10 +141,21 @@ function matchActiveTab(pathname: string): string | null {
 export default function SectionBar(): ReactNode {
   const { pathname } = useLocation();
   const activeId = matchActiveTab(pathname);
+  const { progress } = useProgress();
+
+  const fillFraction = useMemo(() => {
+    const last = rightmostCompletedIndex(progress);
+    if (last < 0) return 0;
+    return TABS.length > 1 ? last / (TABS.length - 1) : 0;
+  }, [progress]);
 
   return (
     <nav className={styles.sectionBar} aria-label="Section navigation">
-      <div className={styles.inner}>
+      <div
+        className={styles.inner}
+        style={{ ['--fill-pct' as keyof CSSProperties]: fillFraction } as CSSProperties}
+      >
+        <span className={styles.fillLine} aria-hidden="true" />
         {TABS.map((tab) => {
           const Icon = tab.icon;
           const isActive = tab.id === activeId;
