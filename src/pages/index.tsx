@@ -11,6 +11,7 @@ const tracks = [
     icon: '{ }',
     accent: 'var(--lexai-blue-500)',
   },
+  /* AI for Leaders track hidden 2026-05-13. Re-add this entry to restore.
   {
     title: 'AI for Leaders',
     description:
@@ -19,6 +20,7 @@ const tracks = [
     icon: '\u25B2',
     accent: 'var(--lexai-coral-500)',
   },
+  */
 ];
 
 export default function Home(): React.JSX.Element {

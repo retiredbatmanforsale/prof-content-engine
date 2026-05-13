@@ -1,40 +1,9 @@
 import type { SidebarsConfig } from '@docusaurus/plugin-content-docs';
 
 const sidebars: SidebarsConfig = {
-  // ─────────────────────────────────────────────────────────────────────────
-  // AI Literacy — non-engineering, conceptual content (the Leaders track)
-  // ─────────────────────────────────────────────────────────────────────────
-  literacy: [
-    {
-      type: 'category',
-      label: 'AI for Everyone — Gen AI & use cases',
-      className: 'sidebar-course',
-      customProps: { icon: 'sparkles' },
-      link: { type: 'doc', id: 'ai-for-leaders/genai-for-everyone/intro' },
-      items: [
-        'ai-for-leaders/genai-for-everyone/intro',
-        'ai-for-leaders/genai-for-everyone/literacy-and-the-road-to-generative-ai',
-        'ai-for-leaders/genai-for-everyone/five-layer-ai-stack',
-        'ai-for-leaders/genai-for-everyone/ai-model-lifecycle-for-leaders',
-        'ai-for-leaders/genai-for-everyone/llm-design-case-study',
-      ],
-    },
-    {
-      type: 'category',
-      label: 'Prompt Engineering',
-      className: 'sidebar-course',
-      customProps: { icon: 'compass' },
-      link: { type: 'doc', id: 'ai-for-leaders/prompt-engineering/introduction' },
-      items: [
-        'ai-for-leaders/prompt-engineering/introduction',
-        'ai-for-leaders/prompt-engineering/design-of-a-prompt',
-        'ai-for-leaders/prompt-engineering/language-models-are-few-shot-learners',
-        'ai-for-leaders/prompt-engineering/hallucinations-in-large-language-models',
-        'ai-for-leaders/prompt-engineering/hands-on-prompt-design-webapp-cursor',
-        'ai-for-leaders/prompt-engineering/building-digital-assets-tutorial',
-      ],
-    },
-  ],
+  // AI Literacy track (ai-for-leaders/*) was hidden from nav 2026-05-13.
+  // MDX files retained on disk — re-introduce a `literacy:` key here to
+  // restore the sidebar if the track is brought back.
 
   // ─────────────────────────────────────────────────────────────────────────
   // Foundations

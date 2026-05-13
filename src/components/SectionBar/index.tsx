@@ -3,7 +3,6 @@ import Link from '@docusaurus/Link';
 import { useLocation } from '@docusaurus/router';
 import {
   Bot,
-  BookOpen,
   Code2,
   Eye,
   GraduationCap,
@@ -26,14 +25,6 @@ type Tab = {
 };
 
 const TABS: Tab[] = [
-  {
-    id: 'ai-literacy',
-    label: 'AI Literacy',
-    description: 'For people from all backgrounds. No heavy math, no code required.',
-    icon: BookOpen,
-    href: '/courses/ai-for-leaders/genai-for-everyone/intro',
-    matchPrefixes: ['/courses/ai-for-leaders/'],
-  },
   {
     id: 'foundations',
     label: 'Foundations',

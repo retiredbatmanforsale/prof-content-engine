@@ -1,0 +1,9 @@
+# AI Literacy track hidden from nav 2026-05-13. Old bookmarks land on
+# the docs homepage rather than 404. MDX files retained on disk in
+# docs/ai-for-leaders/ — reintroduce a sidebar entry and SectionBar tab
+# to restore.
+[[redirects]]
+  from = "/courses/ai-for-leaders/*"
+  to = "/courses/"
+  status = 301
+  force = true
