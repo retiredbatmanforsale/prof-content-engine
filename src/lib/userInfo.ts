@@ -59,3 +59,53 @@ export function userInitial(user: UserInfo | null): string {
   if (user.email) return user.email.trim().charAt(0).toUpperCase();
   return 'U';
 }
+
+/**
+ * SHA-256 of the user's email (lowercased + trimmed). Gravatar accepts
+ * both MD5 and SHA-256 hashes; we use SHA-256 because it's available via
+ * the browser's native crypto.subtle (MD5 isn't).
+ */
+async function emailToSha256(email: string): Promise<string> {
+  const cleaned = email.trim().toLowerCase();
+  const buffer = new TextEncoder().encode(cleaned);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', buffer);
+  return Array.from(new Uint8Array(hashBuffer))
+    .map((b) => b.toString(16).padStart(2, '0'))
+    .join('');
+}
+
+/**
+ * Resolve the best avatar URL for a user. Priority:
+ *  1. user.image (from the JWT, if backend provides one)
+ *  2. Gravatar (if the email has one registered)
+ *  3. null — caller renders the initial fallback
+ *
+ * Uses `d=404` so missing Gravatars 404 instead of returning a "mystery
+ * man" placeholder — that lets us cleanly fall back to the initial.
+ *
+ * Pre-loads via Image() so the UI never flashes a broken image — only
+ * resolves with a URL we know loaded successfully.
+ */
+export async function resolveAvatarUrl(
+  user: UserInfo | null,
+  size = 64,
+): Promise<string | null> {
+  if (!user) return null;
+  if (user.image) return user.image;
+  if (!user.email || typeof window === 'undefined') return null;
+  if (typeof crypto?.subtle?.digest !== 'function') return null;
+
+  try {
+    const hash = await emailToSha256(user.email);
+    const url = `https://www.gravatar.com/avatar/${hash}?d=404&s=${size}`;
+
+    return await new Promise<string | null>((resolve) => {
+      const img = new Image();
+      img.onload = () => resolve(url);
+      img.onerror = () => resolve(null);
+      img.src = url;
+    });
+  } catch {
+    return null;
+  }
+}

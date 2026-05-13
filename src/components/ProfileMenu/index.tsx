@@ -4,6 +4,7 @@ import { UserCircle, Shield, LogOut, CreditCard } from 'lucide-react';
 import { useAuthState } from '@site/src/context/AuthContext';
 import {
   getCurrentUser,
+  resolveAvatarUrl,
   signOut,
   userInitial,
   type UserInfo,
@@ -20,12 +21,28 @@ export default function ProfileMenu() {
 
   const [open, setOpen] = useState(false);
   const [user, setUser] = useState<UserInfo | null>(null);
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const wrapRef = useRef<HTMLDivElement>(null);
 
   // Re-read user info whenever auth state changes (e.g. after refresh, sign-in)
   useEffect(() => {
     setUser(getCurrentUser());
   }, [authState]);
+
+  // Resolve gravatar (or JWT-provided image) — falls back to null if neither
+  // exists, in which case the component renders the user initial instead.
+  // Pre-loads the image so we never flash a broken icon.
+  useEffect(() => {
+    let cancelled = false;
+    setAvatarUrl(null);
+    if (!user) return;
+    resolveAvatarUrl(user, 64).then((url) => {
+      if (!cancelled) setAvatarUrl(url);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.email, user?.image]);
 
   // Click-outside + Escape close
   useEffect(() => {
@@ -78,9 +95,13 @@ export default function ProfileMenu() {
         aria-haspopup="menu"
         aria-label="Open profile menu"
       >
-        {user.image ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={user.image} alt="" className={styles.avatarImage} />
+        {avatarUrl ? (
+          <img
+            src={avatarUrl}
+            alt=""
+            className={styles.avatarImage}
+            referrerPolicy="no-referrer"
+          />
         ) : (
           <span className={styles.avatarInitial}>{userInitial(user)}</span>
         )}

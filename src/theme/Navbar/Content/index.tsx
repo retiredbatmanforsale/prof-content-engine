@@ -29,7 +29,7 @@ export default function NavbarContent(): ReactNode {
 
       <a href={HOME_URL} className="navbar__brand prof-navbar__brand">
         <img src={logoUrl} alt="Lex AI Labs" width={28} height={28} />
-        <span className="prof-navbar__title">Prof</span>
+        <span className="prof-navbar__title shimmer-text-mark">Prof</span>
       </a>
 
       <div className="prof-navbar__earlyAccess">
