@@ -13,7 +13,11 @@ const config: Config = {
   favicon: 'img/lexailogo.svg',
 
   url: process.env.SITE_URL || (isProd ? 'https://prof.lexailabs.com' : 'http://localhost:3001'),
-  baseUrl: '/',
+  // Served under /courses/ via Netlify rewrite on the prof-frontend site
+  // (prof.lexailabs.com/courses/* → content.lexailabs.com/courses/*).
+  // Lesson URLs are unchanged externally because routeBasePath is '/',
+  // but every asset path now sits under /courses/ which matches the proxy.
+  baseUrl: '/courses/',
 
   organizationName: 'rachit-k12',
   projectName: 'docusaurus-lexailabs',
@@ -36,7 +40,9 @@ const config: Config = {
       'classic',
       {
         docs: {
-          routeBasePath: 'courses',
+          // '/' because baseUrl is already /courses/ — docs sit directly
+          // under it. Public URL of a lesson stays /courses/<slug>.
+          routeBasePath: '/',
           path: './docs',
           sidebarPath: './sidebars.ts',
           remarkPlugins: [remarkMath],

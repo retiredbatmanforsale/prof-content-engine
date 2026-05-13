@@ -31,18 +31,18 @@ const TABS: Tab[] = [
     label: 'AI Literacy',
     description: 'For people from all backgrounds. No heavy math, no code required.',
     icon: BookOpen,
-    href: '/courses/ai-for-leaders/genai-for-everyone/intro',
-    matchPrefixes: ['/courses/ai-for-leaders/'],
+    href: '/ai-for-leaders/genai-for-everyone/intro',
+    matchPrefixes: ['/ai-for-leaders/'],
   },
   {
     id: 'foundations',
     label: 'Foundations',
     description: 'The math under every modern model — neurons, gradients, regression.',
     icon: Layers,
-    href: '/courses/ai-for-engineering/deep-neural-networks/intro',
+    href: '/ai-for-engineering/deep-neural-networks/intro',
     matchPrefixes: [
-      '/courses/ai-for-engineering/deep-neural-networks',
-      '/courses/ai-for-engineering/foundations-of-regression',
+      '/ai-for-engineering/deep-neural-networks',
+      '/ai-for-engineering/foundations-of-regression',
     ],
   },
   {
@@ -50,26 +50,26 @@ const TABS: Tab[] = [
     label: 'Vision',
     description: 'How machines learn to see — convolutions, filters, and image understanding.',
     icon: Eye,
-    href: '/courses/ai-for-engineering/deep-computer-vision-cnn/intro',
-    matchPrefixes: ['/courses/ai-for-engineering/deep-computer-vision-cnn'],
+    href: '/ai-for-engineering/deep-computer-vision-cnn/intro',
+    matchPrefixes: ['/ai-for-engineering/deep-computer-vision-cnn'],
   },
   {
     id: 'sequences',
     label: 'Sequences',
     description: 'Modeling time and language — RNNs, LSTMs, and the road to attention.',
     icon: Waves,
-    href: '/courses/ai-for-engineering/deep-sequence-modelling-rnn/intro',
-    matchPrefixes: ['/courses/ai-for-engineering/deep-sequence-modelling-rnn'],
+    href: '/ai-for-engineering/deep-sequence-modelling-rnn/intro',
+    matchPrefixes: ['/ai-for-engineering/deep-sequence-modelling-rnn'],
   },
   {
     id: 'transformers',
     label: 'Transformers',
     description: 'The architecture behind every modern LLM — attention, self-attention, GPT-2.',
     icon: Sparkles,
-    href: '/courses/ai-for-engineering/attention-is-all-you-need/intro',
+    href: '/ai-for-engineering/attention-is-all-you-need/intro',
     matchPrefixes: [
-      '/courses/ai-for-engineering/attention-is-all-you-need',
-      '/courses/ai-for-engineering/build-and-train-your-own-gpt2-model',
+      '/ai-for-engineering/attention-is-all-you-need',
+      '/ai-for-engineering/build-and-train-your-own-gpt2-model',
     ],
   },
   {
@@ -77,38 +77,40 @@ const TABS: Tab[] = [
     label: 'Agentic AI',
     description: 'Build LLM agents that plan, use tools, and reason — from a bare loop up.',
     icon: Bot,
-    href: '/courses/ai-for-engineering/agentic-ai/intro',
-    matchPrefixes: ['/courses/ai-for-engineering/agentic-ai'],
+    href: '/ai-for-engineering/agentic-ai/intro',
+    matchPrefixes: ['/ai-for-engineering/agentic-ai'],
   },
   {
     id: 'system-design',
     label: 'System Design',
     description: 'ML systems at scale — RecSys, RAG, ranking, fraud, ETA, multimodal search.',
     icon: Server,
-    href: '/courses/ai-for-engineering/ml-system-design/intro',
-    matchPrefixes: ['/courses/ai-for-engineering/ml-system-design'],
+    href: '/ai-for-engineering/ml-system-design/intro',
+    matchPrefixes: ['/ai-for-engineering/ml-system-design'],
   },
   {
     id: 'practice',
     label: 'Practice',
     description: '50+ ML problems. Implement from scratch, run hidden tests in your browser.',
     icon: Code2,
-    href: '/courses/practice',
-    matchPrefixes: ['/courses/practice'],
+    href: '/practice',
+    matchPrefixes: ['/practice'],
   },
   {
     id: 'interview',
     label: 'Interview',
     description: 'MLE interview prep — rubrics and company guides for Meta, Google, Amazon, Apple.',
     icon: GraduationCap,
-    href: '/courses/ai-for-engineering/mle-interview/intro',
-    matchPrefixes: ['/courses/ai-for-engineering/mle-interview'],
+    href: '/ai-for-engineering/mle-interview/intro',
+    matchPrefixes: ['/ai-for-engineering/mle-interview'],
   },
 ];
 
-// Strip the `/courses/` prefix so we can match against lesson IDs in ProgressContext.
+// Strip the leading `/` so we can match against lesson IDs in ProgressContext.
+// (Hrefs and matchPrefixes are baseUrl-relative — Docusaurus already strips
+// the `/courses/` baseUrl from useLocation pathname for us.)
 const PROGRESS_PREFIXES: Record<string, string[]> = TABS.reduce((acc, tab) => {
-  acc[tab.id] = tab.matchPrefixes.map((p) => p.replace(/^\/courses\//, '').replace(/\/$/, ''));
+  acc[tab.id] = tab.matchPrefixes.map((p) => p.replace(/^\//, '').replace(/\/$/, ''));
   return acc;
 }, {} as Record<string, string[]>);
 

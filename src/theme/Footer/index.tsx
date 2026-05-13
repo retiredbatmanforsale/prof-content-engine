@@ -3,9 +3,9 @@ import Link from '@docusaurus/Link';
 import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
 
 const courseLinks = [
-  { label: 'AI for Leaders', href: '/courses/ai-for-leaders/genai-for-everyone/intro' },
-  { label: 'AI for Engineers', href: '/courses/ai-for-engineering/deep-neural-networks/intro' },
-  { label: 'Prompt Engineering', href: '/courses/ai-for-leaders/prompt-engineering/introduction' },
+  { label: 'AI for Leaders', href: '/ai-for-leaders/genai-for-everyone/intro' },
+  { label: 'AI for Engineers', href: '/ai-for-engineering/deep-neural-networks/intro' },
+  { label: 'Prompt Engineering', href: '/ai-for-leaders/prompt-engineering/introduction' },
 ];
 
 const policyLinks = [

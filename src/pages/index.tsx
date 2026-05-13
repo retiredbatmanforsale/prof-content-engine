@@ -7,7 +7,7 @@ const tracks = [
     title: 'AI for Engineering',
     description:
       'Deep dive into neural networks, computer vision, sequence modelling, transformers, and building your own GPT-2 from scratch.',
-    link: '/courses/ai-for-engineering/deep-computer-vision-cnn/intro',
+    link: '/ai-for-engineering/deep-computer-vision-cnn/intro',
     icon: '{ }',
     accent: 'var(--lexai-blue-500)',
   },
@@ -15,7 +15,7 @@ const tracks = [
     title: 'AI for Leaders',
     description:
       'Understand LLMs, generative AI, prompt engineering, and AI literacy — built for business leaders and decision-makers.',
-    link: '/courses/ai-for-leaders/genai-for-everyone/intro',
+    link: '/ai-for-leaders/genai-for-everyone/intro',
     icon: '\u25B2',
     accent: 'var(--lexai-coral-500)',
   },
