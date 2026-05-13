@@ -639,6 +639,20 @@ h1 {
   letter-spacing: -0.03em;
 }
 
+/* Coral accent under the lesson title — recurring brand moment on every
+   doc page. Scoped to .theme-doc-markdown so homepage / standalone pages
+   don't get it; fixed 36px width so it reads as a flourish, not a rule. */
+.theme-doc-markdown > .markdown > h1:first-of-type::after,
+.theme-doc-markdown header h1::after {
+  content: '';
+  display: block;
+  width: 36px;
+  height: 3px;
+  margin-top: 0.5rem;
+  background: var(--prof-coral);
+  border-radius: 2px;
+}
+
 h2 {
   font-size: 1.5rem;
 }
