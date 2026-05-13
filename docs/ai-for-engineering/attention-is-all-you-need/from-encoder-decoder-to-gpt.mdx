@@ -109,6 +109,8 @@ For the **encoder-only** side of the family (BERT, embeddings, retrieval), see t
         "RNN-attention hybrids"
       ],
       correctIndex: 1,
+      explanation: "GPT-4, Claude, Gemini, Llama — all decoder-only. The architecture won because next-token prediction is one clean self-supervised objective that scales arbitrarily, and most tasks (Q&A, summarization, even translation) can be expressed as 'continue this text.'",
+      concept: "decoder-evolution",
     },
     {
       id: "fed-q2",
@@ -120,6 +122,8 @@ For the **encoder-only** side of the family (BERT, embeddings, retrieval), see t
         "BERT and the 2017 transformer are unrelated"
       ],
       correctIndex: 0,
+      explanation: "BERT keeps only the encoder stack from the 2017 paper — same bidirectional self-attention, same add-and-norm — but is pre-trained on masked language modelling (predict the [MASK] token from surrounding context) instead of next-token prediction. Same architecture branch, different objective.",
+      concept: "decoder-evolution",
     },
     {
       id: "fed-q3",
@@ -131,6 +135,8 @@ For the **encoder-only** side of the family (BERT, embeddings, retrieval), see t
         "Cross-attention is computationally infeasible at scale"
       ],
       correctIndex: 1,
+      explanation: "Three reasons stack together: (1) next-token prediction gives a gradient on every single token in the corpus — maximum signal density, (2) the objective scales cleanly with model size and data, (3) the format generalizes — anything you can prompt becomes a task. Encoder–decoder is more specialized and harder to scale to the same generality.",
+      concept: "decoder-evolution",
     },
     {
       id: "fed-q4",
@@ -142,6 +148,8 @@ For the **encoder-only** side of the family (BERT, embeddings, retrieval), see t
         "A non-transformer architecture"
       ],
       correctIndex: 2,
+      explanation: "T5 stands for 'Text-To-Text Transfer Transformer'. It's an encoder–decoder model where every task — translation, summarization, classification, regression — is framed as 'given this text, produce that text.' Influential for unification, but eventually outscaled by decoder-only models.",
+      concept: "decoder-evolution",
     },
   ]}
 />

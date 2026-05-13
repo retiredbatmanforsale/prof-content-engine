@@ -167,24 +167,32 @@ The original design **adds** so the dimension stays **d_model** and a single str
       prompt: "Why does the transformer architecture need explicit positional encodings?",
       options: ["To reduce memory usage", "Self-attention is permutation-invariant — without positions, 'cat ate fish' and 'fish ate cat' would be indistinguishable", "To compress the input", "To add randomness for regularization"],
       correctIndex: 1,
+      explanation: "Attention is fundamentally set-based: softmax(QK^T)V doesn't know which token came first — shuffle the input and you get the same output. Adding position information is what lets the model distinguish 'dog bites man' from 'man bites dog'.",
+      concept: "positional",
     },
     {
       id: "pe-q2",
       prompt: "In the original 'Attention Is All You Need' paper, positional encodings are added to token embeddings using:",
       options: ["Element-wise multiplication", "Concatenation along a new axis", "Element-wise addition: z = x + p", "Replacement (overwriting the token embedding)"],
       correctIndex: 2,
+      explanation: "Element-wise addition: z_i = x_i + p_i. Both vectors live in d_model space, and the sum stays in d_model — nothing downstream changes shape. Concatenation would force a wider model and extra parameters; addition is the cheap, elegant choice.",
+      concept: "positional",
     },
     {
       id: "pe-q3",
       prompt: "The sinusoidal PE uses sin and cos with frequencies that vary across dimensions because:",
       options: ["It's computationally fastest", "Different frequencies allow the model to attend to relative positions at multiple scales — high-frequency dims encode short distances, low-frequency dims encode long distances", "Sinusoids are mandatory in PyTorch", "It's the only way to make PEs differentiable"],
       correctIndex: 1,
+      explanation: "Each dimension uses a different frequency. High-frequency dimensions oscillate fast and disambiguate nearby positions; low-frequency dimensions oscillate slowly and encode long-range structure. The model gets a multi-scale ruler for free — no learned parameters needed.",
+      concept: "positional",
     },
     {
       id: "pe-q4",
       prompt: "Why must token embeddings and positional encodings have the same dimensionality d_model?",
       options: ["By convention only", "So they can be added element-wise (vectors must match dim for addition)", "To reduce computation cost", "PyTorch enforces it at runtime"],
       correctIndex: 1,
+      explanation: "Vector addition is element-wise — both operands need the same shape. Keeping x and p at d_model means every position injects into the residual stream without changing the architecture's dimensions, which is what makes 'just add position' such a clean design.",
+      concept: "dimensionality",
     },
   ]}
 />

@@ -190,24 +190,32 @@ Full attention materializes an **n × n** attention matrix per head—**O(n²)**
       prompt: "In self-attention, where do the Q, K, and V matrices come from?",
       options: ["Q from the encoder, K and V from the decoder", "Q from previous-layer outputs, K and V from a fixed lookup table", "All three (Q, K, V) are linear projections of the same input sequence X", "Q is the input, K is the previous hidden state, V is random"],
       correctIndex: 2,
+      explanation: "In *self*-attention, all three come from the same input X: Q = XW^Q, K = XW^K, V = XW^V. This is precisely what lets each token in the sequence look at every other token in the same sequence — the 'self' refers to the input sequence being its own context.",
+      concept: "self-attention",
     },
     {
       id: "selfattn-q2",
       prompt: "What is the time/memory complexity of self-attention with respect to sequence length n?",
       options: ["O(n)", "O(n log n)", "O(n²) — all pairs of tokens are scored", "O(n³)"],
       correctIndex: 2,
+      explanation: "Every token compares to every other token, so the QK^T matrix is n×n. Both the compute (n² dot products of length d_k) and the memory (storing the n² attention matrix) scale quadratically. This is why long-context attention is expensive and why research on linear/sparse attention exists.",
+      concept: "self-attention",
     },
     {
       id: "selfattn-q3",
       prompt: "How does self-attention differ from cross-attention?",
       options: ["Self-attention has no softmax", "In self-attention Q, K, V come from the same sequence; in cross-attention Q comes from one sequence and K, V from another", "Self-attention is causal by default; cross-attention is not", "Self-attention has no learnable parameters"],
       correctIndex: 1,
+      explanation: "The math is identical — softmax(QK^T/√d_k)V. The difference is the *source* of the tensors. Self-attention: Q/K/V all from the same X. Cross-attention: Q from one sequence (e.g. decoder), K and V from another (e.g. encoder output). This single sourcing distinction is what determines whether attention happens within or across sequences.",
+      concept: "cross-attention",
     },
     {
       id: "selfattn-q4",
       prompt: "The W^Q, W^K, W^V projection matrices serve what purpose?",
       options: ["They normalize the inputs", "They allow the same token x_i to take on different roles (query, key, value) by projecting it into three subspaces with learned linear maps", "They reduce the sequence length", "They are not actually used in practice"],
       correctIndex: 1,
+      explanation: "Each input token x_i has to serve three roles at once: 'what am I asking about?' (query), 'what do I offer to be matched against?' (key), and 'what content do I carry?' (value). The three learned projections carve out different subspaces for each role, all from the same input vector.",
+      concept: "self-attention",
     },
   ]}
 />

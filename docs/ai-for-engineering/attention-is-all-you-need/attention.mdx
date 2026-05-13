@@ -146,24 +146,32 @@ Dividing by `√d_k` rescales the variance back to ≈ 1, keeping softmax in a r
       prompt: "The output of attention for a single query is:",
       options: ["The single value v_j with the highest q · k_j score (argmax)", "A weighted sum of all values v_j, where the weights come from softmax over scaled query-key dot products", "The query vector q itself", "The product q · K · V without softmax"],
       correctIndex: 1,
+      explanation: "Attention computes a weighted average of all value vectors V — not a hard pick of one. The weights come from softmax(QK^T / √d_k). The weighted-sum formulation is what makes attention differentiable end-to-end; a hard argmax would not be.",
+      concept: "attention-core",
     },
     {
       id: "attn-q2",
       prompt: "Why divide raw QKᵀ scores by √d_k before softmax?",
       options: ["To make the math look more elegant", "Because as d_k grows, dot-product variance grows; large logits saturate softmax and kill gradients on the suppressed terms", "To enforce that weights sum to 1", "To avoid negative numbers"],
       correctIndex: 1,
+      explanation: "If q and k have unit-variance entries in d_k dimensions, their dot product has variance ≈ d_k. Big logits push softmax toward one-hot, killing gradients on every other term. Dividing by √d_k keeps variance ≈ 1 regardless of d_k, preserving learnable signal.",
+      concept: "scaling",
     },
     {
       id: "attn-q3",
       prompt: "After softmax, the attention weights α_j satisfy which property?",
       options: ["They are non-negative and sum to 1 (a convex combination)", "They are zero-mean and unit-variance", "They are exactly 0 or 1 (one-hot)", "They are unbounded reals"],
       correctIndex: 0,
+      explanation: "Softmax outputs are non-negative (numerator is exp, which is always positive) and sum to 1 (denominator is the sum of all numerators). So the attention output is a *convex combination* of the value vectors — a true probability distribution over keys.",
+      concept: "softmax",
     },
     {
       id: "attn-q4",
       prompt: "Why is attention preferred over a discrete argmax 'which-key-wins' lookup?",
       options: ["Argmax is too slow on GPUs", "Argmax is non-differentiable, blocking gradient flow; the softmax-weighted sum is fully differentiable so the model can learn what to attend to", "Argmax cannot handle multiple keys", "Argmax requires labeled data"],
       correctIndex: 1,
+      explanation: "Argmax has zero gradient almost everywhere — its output flips discretely as inputs change. You can't backpropagate through it. The softmax-weighted sum is smooth in Q, K, V, so the model can *learn* which keys to weight more heavily as training progresses.",
+      concept: "attention-core",
     },
   ]}
 />

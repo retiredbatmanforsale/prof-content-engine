@@ -254,24 +254,32 @@ Below, each cell is **darker** = **higher** attention weight **(illustrative, no
       prompt: "Why use multiple attention heads instead of one large head?",
       options: ["It saves parameters", "Each head can attend to different relationships in parallel (e.g., syntactic vs semantic), and concatenating their outputs gives the model richer representations", "Single-head attention is mathematically broken", "Multiple heads are required for backpropagation"],
       correctIndex: 1,
+      explanation: "Each head can specialize — one might learn subject-verb agreement, another long-range coreference, another semantic similarity. Probing studies on trained transformers show heads do diversify like this. A single head has to compress every kind of relationship into one attention pattern.",
+      concept: "multi-head",
     },
     {
       id: "mha-q2",
       prompt: "In the original paper with d_model = 512 and h = 8 heads, what is d_k (the key dim per head)?",
       options: ["8", "64", "256", "512"],
       correctIndex: 1,
+      explanation: "By convention d_k = d_model / h = 512 / 8 = 64. This split is what keeps total compute roughly constant as you add heads: 8 heads of dim 64 cost about the same as 1 head of dim 512. You get diversity (multiple parallel views) without paying h× the compute.",
+      concept: "multi-head",
     },
     {
       id: "mha-q3",
       prompt: "After running the h heads in parallel, what does the multi-head attention layer do with their outputs?",
       options: ["It averages them", "It concatenates them along the feature dimension and applies a final linear projection W^O", "It picks the head with the highest score", "It softmaxes across heads"],
       correctIndex: 1,
+      explanation: "Each head produces an output of shape (n, d_v). The h outputs are concatenated along the feature axis → (n, h·d_v) = (n, d_model), then a final learned linear projection W^O maps back to d_model. The W^O step is what *mixes* information across heads.",
+      concept: "multi-head",
     },
     {
       id: "mha-q4",
       prompt: "Why does the total compute of multi-head attention NOT grow proportionally with h?",
       options: ["Because heads share weights", "Because d_k is set to d_model / h, so the total work across h heads stays approximately the same as one full-size head", "Because heads run on separate GPUs", "Because softmax is parallelizable"],
       correctIndex: 1,
+      explanation: "Each head operates on d_k = d_model / h dimensions. Summing the h × O(n²·d_k) per-head work gives O(n²·d_model) total — exactly what a single full-width head would cost. The split makes the cost invariant to h (within constants).",
+      concept: "multi-head",
     },
   ]}
 />

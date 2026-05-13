@@ -247,18 +247,24 @@ That shift—**parallelizable**, **direct paths**, **shorter gradient routes**�
       prompt: "Why are RNNs and LSTMs fundamentally sequential during training?",
       options: ["They use too many parameters", "Each hidden state h_t depends on h_{t-1}, so token t can't be computed until token t-1 is done", "They only run on CPUs", "They cannot use minibatches"],
       correctIndex: 1,
+      explanation: "Recurrence is the bottleneck: h_t = f(h_{t-1}, x_t). Each step has to wait for the previous one, so you can't parallelize the time axis — even on a GPU. This is precisely what attention sidesteps by computing all positions in one big matmul.",
+      concept: "rnn-limits",
     },
     {
       id: "rnn-prob-q2",
       prompt: "Long-range dependencies are hard for vanilla RNNs primarily because:",
       options: ["The vocabulary is too small", "Gradients vanish (or explode) when backpropagated through many time steps", "RNNs cannot use embeddings", "The activation function is always tanh"],
       correctIndex: 1,
+      explanation: "Backprop through time multiplies gradients through every step. After many steps, the product either shrinks toward zero (vanishing) or blows up (exploding). LSTMs and GRUs help with gating tricks but don't fully fix it — direct token-to-token paths via attention do.",
+      concept: "rnn-limits",
     },
     {
       id: "rnn-prob-q3",
       prompt: "What is the key architectural advantage of attention over recurrence?",
       options: ["Attention has fewer parameters", "Attention provides direct, parallelizable paths between any two tokens — no information has to flow through intermediate steps", "Attention requires no embeddings", "Attention is only for vision tasks"],
       correctIndex: 1,
+      explanation: "In attention, token i can read from token j in one operation — no information has to relay through h_{i-1}, h_{i-2}, … h_j. Combined with the matrix form (QK^T), every position is computed in parallel. This is why transformers scale on GPUs the way RNNs never could.",
+      concept: "attention-core",
     },
   ]}
 />

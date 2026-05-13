@@ -170,24 +170,32 @@ In practice, cross-attention is **multi-head** just like self-attention: **h** s
       prompt: "In cross-attention (in an encoder-decoder transformer), Q, K, and V come from where?",
       options: ["All three from the encoder", "All three from the decoder", "Q from the decoder; K and V from the encoder output", "Q from the encoder; K and V from the decoder"],
       correctIndex: 2,
+      explanation: "Q from the decoder (the side doing the asking) and K, V from the encoder output (the side being read). This asymmetric sourcing is the architectural signature of cross-attention — it's how the decoder reaches back into the source sequence.",
+      concept: "cross-attention",
     },
     {
       id: "cross-q2",
       prompt: "Cross-attention is present in which architecture(s)?",
       options: ["GPT (decoder-only)", "BERT (encoder-only)", "The original encoder-decoder transformer used for translation (and similar seq2seq models)", "All transformers everywhere"],
       correctIndex: 2,
+      explanation: "Only encoder–decoder transformers — the 2017 original, T5, BART, mT5 — have a cross-attention sublayer. Decoder-only models like GPT have no encoder to look at; encoder-only models like BERT have no decoder doing the looking.",
+      concept: "cross-attention",
     },
     {
       id: "cross-q3",
       prompt: "In a translation task (English → French), what does cross-attention let the decoder do at each step?",
       options: ["Predict the next English token", "Look back at any position in the encoded English sequence to decide what French token to emit next", "Skip the encoder entirely", "Compress the input to a fixed-size vector"],
       correctIndex: 1,
+      explanation: "At each French generation step, the decoder's query attends across all English encoder outputs and produces a soft alignment over the source. This replaces the fixed 'thought vector' bottleneck of older seq2seq models — the decoder can re-attend to whichever source token it needs.",
+      concept: "cross-attention",
     },
     {
       id: "cross-q4",
       prompt: "How does cross-attention's complexity differ from self-attention?",
       options: ["It's always cheaper", "If source length is m and target length is n, cross-attention scales as O(m·n) (Q from target attends to K,V from source)", "It is O(n) regardless of m", "It's exponential in both"],
       correctIndex: 1,
+      explanation: "Q has n rows (target length), K and V each have m rows (source length). QK^T is therefore n×m, and the multiply with V costs O(n·m·d_k). Cross-attention is bilinear in source and target lengths — unlike self-attention which is just O(n²) within one sequence.",
+      concept: "cross-attention",
     },
   ]}
 />

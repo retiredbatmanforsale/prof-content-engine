@@ -192,24 +192,32 @@ Drag the slider to start the rollout from a deeper layer — you'll see the mode
       prompt: "Each encoder block contains which sublayers (in the original Vaswani et al. design)?",
       options: ["1 — multi-head attention only", "2 — multi-head self-attention, then position-wise FFN", "3 — attention, FFN, softmax", "4 — embedding, attention, FFN, output"],
       correctIndex: 1,
+      explanation: "Two sublayers per block: multi-head self-attention, then a position-wise feed-forward network (two linear layers with a non-linearity between them). Each sublayer is wrapped by add-and-norm (residual + LayerNorm). This 2-sublayer pattern is the encoder block.",
+      concept: "encoder-architecture",
     },
     {
       id: "enc-q2",
       prompt: "How many encoder blocks does the original transformer paper stack (N)?",
       options: ["2", "4", "6", "12"],
       correctIndex: 2,
+      explanation: "Vaswani et al. stack N=6 encoder blocks (and 6 decoder blocks). Modern models go much deeper — BERT-large is 24, GPT-3 is 96 — but 6 is the canonical reference number you'll see in the paper and most diagrams.",
+      concept: "encoder-architecture",
     },
     {
       id: "enc-q3",
       prompt: "In post-norm form, each encoder sublayer's output is computed as:",
       options: ["LayerNorm(Sublayer(x))", "LayerNorm(x + Sublayer(x))", "x + Sublayer(x), no normalization", "Sublayer(x) - LayerNorm(x)"],
       correctIndex: 1,
+      explanation: "Post-norm: add the residual first, then normalize → LayerNorm(x + Sublayer(x)). This was the original paper's choice. Many modern implementations use pre-norm instead — x + Sublayer(LayerNorm(x)) — which is more stable for very deep stacks because the residual path stays unnormalized.",
+      concept: "encoder-architecture",
     },
     {
       id: "enc-q4",
       prompt: "Is encoder self-attention causally masked?",
       options: ["Yes — encoders always use causal masks", "No — encoder self-attention is bidirectional; each position attends to all positions in the source sequence", "Only the first encoder layer is masked", "Only during inference"],
       correctIndex: 1,
+      explanation: "Encoders see the whole source sequence at once — bidirectional self-attention, no causal mask. This is right for understanding tasks (BERT, encoder of MT). Causal masking is the *decoder*'s job, to prevent looking at future tokens during autoregressive generation.",
+      concept: "encoder-architecture",
     },
   ]}
 />

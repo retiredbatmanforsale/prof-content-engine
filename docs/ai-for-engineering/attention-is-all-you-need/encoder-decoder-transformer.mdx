@@ -235,24 +235,32 @@ Revisit any earlier lesson for **one** mechanism in isolation—or the [Lex AI s
       prompt: "The three transformer 'families' are:",
       options: ["RNN, CNN, MLP", "Encoder-only (e.g., BERT), decoder-only (e.g., GPT), and encoder–decoder (e.g., the original transformer, T5)", "Big, medium, small", "Vision, text, audio"],
       correctIndex: 1,
+      explanation: "Three families, each with a different self-attention pattern: encoder-only (BERT, RoBERTa) for understanding, decoder-only (GPT family) for generation, encoder–decoder (the 2017 original, T5, BART) for seq2seq. Knowing which family you're dealing with tells you what masking, what objective, and what use case to expect.",
+      concept: "transformer-families",
     },
     {
       id: "edt-q2",
       prompt: "Which task is the canonical motivation for an encoder–decoder transformer?",
       options: ["Sentiment classification on a single sentence", "Sequence-to-sequence tasks like machine translation, where you have a source sequence to encode and a target sequence to generate", "Image classification", "Tabular regression"],
       correctIndex: 1,
+      explanation: "Encoder–decoder shines when you have a *source* to ingest and a *target* to generate. Translation is the canonical example: the encoder builds a rich representation of the source, and the decoder generates the target while cross-attending back to that representation.",
+      concept: "transformer-families",
     },
     {
       id: "edt-q3",
       prompt: "Why is GPT classified as decoder-only?",
       options: ["It has no attention", "It uses only the masked self-attention + FFN stack (no encoder, no cross-attention) and is trained with a causal LM objective", "It uses encoders for inference and decoders for training", "It uses LSTMs"],
       correctIndex: 1,
+      explanation: "GPT strips the architecture down to the decoder stack only — masked (causal) self-attention plus a position-wise FFN — and trains on next-token prediction. There's no encoder and no cross-attention sublayer. The architecture is the minimum you need for autoregressive generation.",
+      concept: "transformer-families",
     },
     {
       id: "edt-q4",
       prompt: "BERT is encoder-only. What does that imply about its self-attention?",
       options: ["It is causally masked", "It is bidirectional — each token can attend to all positions on both sides, which is appropriate for understanding tasks but not for autoregressive generation", "It is restricted to attend only to the previous token", "It is identical to GPT's"],
       correctIndex: 1,
+      explanation: "BERT's self-attention is bidirectional — every token sees every other token, past and future. That's ideal for understanding (you want full context for classification), but it makes BERT unable to do autoregressive generation, which fundamentally requires not seeing future tokens.",
+      concept: "transformer-families",
     },
   ]}
 />
