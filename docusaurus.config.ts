@@ -22,7 +22,7 @@ const config: Config = {
   onBrokenMarkdownLinks: 'warn',
 
   customFields: {
-    apiUrl: process.env.API_URL || 'https://lexai-auth-service-747134511273.asia-south2.run.app',
+    apiUrl: process.env.API_URL || 'https://prof-backend-747134511273.asia-south2.run.app',
     mainPlatformUrl: process.env.MAIN_PLATFORM_URL || 'https://prof.lexailabs.com',
   },
 
