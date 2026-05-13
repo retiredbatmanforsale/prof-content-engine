@@ -1,5 +1,35 @@
 .categoryLink {
   overflow: hidden;
+  display: flex;
+  align-items: center;
+}
+
+.sidebarIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  margin-right: 8px;
+  border-radius: 6px;
+  background: var(--prof-surface, #fafafa);
+  border: 1px solid var(--prof-border, #ebebeb);
+  color: var(--prof-text-secondary, #525252);
+  transition: background 0.12s ease, border-color 0.12s ease, color 0.12s ease;
+}
+
+:global(.menu__link:hover) .sidebarIcon {
+  background: var(--prof-surface, #fff);
+  border-color: var(--prof-border-strong, #d4d4d4);
+  color: var(--prof-text-primary, #0a0a0a);
+}
+
+:global(.menu__link--active) .sidebarIcon,
+:global(.menu__list-item--collapsed.sidebar-course) > :global(.menu__list-item-collapsible) > .categoryLink:hover .sidebarIcon {
+  background: var(--prof-surface, #fff);
+  border-color: var(--prof-accent, #3b82f6);
+  color: var(--prof-accent, #3b82f6);
 }
 
 :global(.menu__link--sublist-caret)::after {

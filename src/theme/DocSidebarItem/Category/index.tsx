@@ -24,6 +24,7 @@ import { translate } from '@docusaurus/Translate';
 import useIsBrowser from '@docusaurus/useIsBrowser';
 import DocSidebarItems from '@theme/DocSidebarItems';
 import DocSidebarItemLink from '@theme/DocSidebarItem/Link';
+import SidebarIcon from '@site/src/theme/DocSidebarItem/SidebarIcon';
 import type { Props } from '@theme/DocSidebarItem/Category';
 import type {
   PropSidebarItemCategory,
@@ -222,7 +223,8 @@ function DocSidebarItemCategoryCollapsible({
   index,
   ...props
 }: Props): ReactNode {
-  const { items, label, collapsible, className, href } = item;
+  const { items, label, collapsible, className, href, customProps } = item;
+  const iconName = (customProps as { icon?: string } | undefined)?.icon;
   const {
     docs: {
       sidebar: { autoCollapseCategories },
@@ -310,6 +312,7 @@ function DocSidebarItemCategoryCollapsible({
           aria-expanded={collapsible && !href ? !collapsed : undefined}
           href={collapsible ? hrefWithSSRFallback ?? '#' : hrefWithSSRFallback}
           {...props}>
+          <SidebarIcon name={iconName} className={styles.sidebarIcon} />
           <CategoryLinkLabel label={label} />
           {isCourse && <CourseProgressRing items={items} />}
         </Link>

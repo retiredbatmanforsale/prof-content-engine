@@ -17,13 +17,26 @@
 /* You can override the default Infima variables here. */
 :root {
   /* LexAI Labs brand tokens */
-  --lexai-blue-500: #3b82f6;     /* Primary Blue 500 */
-  --lexai-blue-600: #2563eb;     /* Primary Blue 600 (hover) */
-  --lexai-coral-500: #ff7f50;    /* Accent Coral 500 */
-  --lexai-content-primary: #141414;
+  --lexai-blue-500: #3b82f6;
+  --lexai-blue-600: #2563eb;
+  --lexai-coral-500: #ff7f50;
+  --lexai-content-primary: #0a0a0a;
   --lexai-bg-primary: #ffffff;
 
-  /* Map brand tokens into Infima theme variables (light mode) */
+  /* Mintlify-style neutral surface tokens */
+  --prof-surface: #ffffff;
+  --prof-surface-muted: #fafafa;
+  --prof-surface-sunken: #f5f5f5;
+  --prof-border: #ebebeb;
+  --prof-border-strong: #d4d4d4;
+  --prof-text-primary: #0a0a0a;
+  --prof-text-secondary: #525252;
+  --prof-text-muted: #a3a3a3;
+  --prof-accent: #3b82f6;
+  --prof-accent-soft: rgba(59, 130, 246, 0.08);
+  --prof-coral: #ff7f50;
+
+  /* Map brand tokens into Infima theme variables */
   --ifm-color-primary: var(--lexai-blue-500);
   --ifm-color-primary-dark: var(--lexai-blue-600);
   --ifm-color-primary-darker: #1d4ed8;
@@ -40,7 +53,6 @@
   --ifm-color-secondary-lighter: #ffc2a6;
   --ifm-color-secondary-lightest: #ffe0cf;
 
-  /* Success, info, warning, error colors (kept close to previous palette) */
   --ifm-color-success: #10b981;
   --ifm-color-info: #0ea5e9;
   --ifm-color-warning: #f59e0b;
@@ -49,15 +61,17 @@
   --ifm-link-color: var(--lexai-blue-500);
   --ifm-link-hover-color: var(--lexai-blue-600);
 
-  --ifm-code-font-size: 95%;
+  --ifm-code-font-size: 92%;
   --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.04);
 
-  /* Typography */
-  --ifm-font-family-base: 'Plus Jakarta Sans', system-ui, -apple-system, 'Segoe UI', Roboto, Ubuntu, sans-serif;
-  --ifm-heading-font-family: 'Instrument Serif', Georgia, 'Times New Roman', serif;
+  /* Typography — Geist throughout for the modern Mintlify-style feel */
+  --ifm-font-family-base: 'Geist', 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --ifm-heading-font-family: 'Geist', 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --ifm-font-family-monospace: 'Geist Mono', 'JetBrains Mono', 'Fira Code', Menlo, monospace;
   --ifm-font-size-base: 16px;
-  --ifm-line-height-base: 1.6;
-  --ifm-heading-line-height: 1.2;
+  --ifm-line-height-base: 1.65;
+  --ifm-heading-line-height: 1.25;
+  --ifm-heading-font-weight: 600;
 
   /* Spacing */
   --ifm-spacing-horizontal: 1.5rem;
@@ -65,14 +79,18 @@
 
   /* Border Radius */
   --ifm-global-radius: 0.5rem;
-  --ifm-button-border-radius: 0.375rem;
+  --ifm-button-border-radius: 0.5rem;
+
+  /* Navbar */
+  --ifm-navbar-height: 64px;
+  --ifm-navbar-background-color: var(--prof-surface);
+  --ifm-navbar-shadow: none;
 
   /* Z-index */
   --ifm-z-index-fixed: 100;
   --ifm-z-index-overlay: 200;
 }
 
-/* For readability concerns, use a lighter palette in dark mode while keeping brand feel. */
 [data-theme='dark'] {
   --ifm-color-primary: #60a5fa;
   --ifm-color-primary-dark: var(--lexai-blue-500);
@@ -82,42 +100,31 @@
   --ifm-color-primary-lighter: #bfdbfe;
   --ifm-color-primary-lightest: #dbeafe;
 
-  /* Coral accent tuned for dark backgrounds */
-  --ifm-color-secondary: #ff9a73;
-  --ifm-color-secondary-dark: var(--lexai-coral-500);
-  --ifm-color-secondary-darker: #ea5f3f;
-  --ifm-color-secondary-darkest: #c2410c;
-  --ifm-color-secondary-light: #ffc2a6;
-  --ifm-color-secondary-lighter: #ffe0cf;
-  --ifm-color-secondary-lightest: #fff2e8;
-
   --ifm-link-color: #93c5fd;
   --ifm-link-hover-color: #bfdbfe;
 
   --docusaurus-highlighted-code-line-bg: rgba(15, 23, 42, 0.85);
 }
 
-/* ===== Brand gradient background — matches prof-frontend Hero ===== */
+/* ===== Clean off-white surface with subtle dot pattern (Mintlify-style) ===== */
 
 html {
   font-size: 16px;
   scroll-behavior: smooth;
-  /* Fixed so the gradient doesn't scroll away on long pages */
-  background: linear-gradient(135deg, #fff5f2 0%, #ffffff 50%, #fffbfa 100%);
+  background: var(--prof-surface-muted);
   background-attachment: fixed;
 }
 
-/* Grain texture overlay — same SVG noise as the landing page */
+/* Subtle dot-grid overlay — soft, only visible against the muted surface */
 html::before {
   content: '';
   position: fixed;
   inset: 0;
   z-index: 0;
-  opacity: 0.35;
   pointer-events: none;
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
-  background-repeat: repeat;
-  background-size: 256px 256px;
+  opacity: 0.6;
+  background-image: radial-gradient(circle at 1px 1px, rgba(15, 15, 15, 0.05) 1px, transparent 0);
+  background-size: 24px 24px;
 }
 
 body {
@@ -125,134 +132,153 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   background: transparent !important;
-  color: var(--lexai-content-primary);
+  color: var(--prof-text-primary);
+  letter-spacing: -0.005em;
 }
 
-/* ===== Custom navbar — matches prof-frontend Navigation scroll behaviour ===== */
+/* ===== Navbar — clean white surface with hairline border ===== */
 
-/* At rest: fully transparent, same as frontend's default state */
 .navbar {
-  background: transparent !important;
-  backdrop-filter: none !important;
-  -webkit-backdrop-filter: none !important;
-  border-bottom: 1px solid transparent;
+  background: rgba(255, 255, 255, 0.85) !important;
+  backdrop-filter: saturate(180%) blur(12px);
+  -webkit-backdrop-filter: saturate(180%) blur(12px);
+  border-bottom: 1px solid var(--prof-border) !important;
   box-shadow: none !important;
-  transition: background 0.2s ease, border-color 0.2s ease, backdrop-filter 0.2s ease;
+  height: var(--ifm-navbar-height);
+  transition: background 0.2s ease, border-color 0.2s ease;
 }
 
-/* Scrolled: frosted glass — matches frontend's bg-white/90 backdrop-blur-xl */
 body.prof-scrolled .navbar {
-  background: rgba(255, 248, 245, 0.90) !important;
-  backdrop-filter: blur(16px) !important;
-  -webkit-backdrop-filter: blur(16px) !important;
-  border-bottom-color: rgba(229, 229, 229, 0.5);
+  background: rgba(255, 255, 255, 0.95) !important;
 }
 
-/* Inner layout — max-width centred, flex row */
+.navbar--fixed-top {
+  background: rgba(255, 255, 255, 0.85) !important;
+}
+
+.navbar > .navbar__inner {
+  max-width: 100%;
+  padding: 0;
+  height: 100%;
+}
+
+.navbar .dropdown__menu {
+  display: none !important;
+}
+
+.navbar__item:hover {
+  background: none;
+}
+
+.navbar__items {
+  display: contents;
+}
+
 .prof-navbar-inner {
-  max-width: 1280px;
+  max-width: 1440px;
   margin: 0 auto;
   width: 100%;
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.75rem;
   padding: 0 1.5rem;
 }
 
-/* Brand */
 .prof-navbar__brand {
   display: flex;
   align-items: center;
   gap: 0.5rem;
   text-decoration: none !important;
   flex-shrink: 0;
-  margin-right: 1rem;
+  margin-right: 1.5rem;
 }
 
 .prof-navbar__title {
   font-family: 'Instrument Serif', Georgia, serif !important;
   font-style: italic !important;
   font-weight: 400 !important;
-  font-size: 1.25rem !important;
-  color: #171717 !important;
+  font-size: 1.35rem !important;
+  color: var(--prof-text-primary) !important;
   letter-spacing: -0.01em;
+  line-height: 1;
 }
 
-/* Track links — centre-left cluster */
 .prof-navbar__links {
   display: flex;
   align-items: center;
-  gap: 0;
+  gap: 0.125rem;
   flex: 1;
 }
 
-/* Right side — search + back link */
+.prof-navbar__spacer {
+  flex: 1;
+}
+
 .prof-navbar__right {
   margin-left: auto;
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: 0.75rem;
 }
 
 .prof-navbar__back {
-  font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
-  font-size: 0.8rem;
+  font-family: 'Geist', system-ui, sans-serif;
+  font-size: 0.825rem;
   font-weight: 500;
-  color: #a3a3a3;
+  color: var(--prof-text-muted);
   transition: color 0.15s ease;
   text-decoration: none !important;
 }
 
 .prof-navbar__back:hover {
-  color: #525252;
+  color: var(--prof-text-secondary);
   text-decoration: none;
 }
 
-/* ===== Brand-match the search bar to navbar dropdowns ===== */
+/* ===== Search — prominent, centre-stage (Mintlify-style) ===== */
+
 .prof-navbar__search .navbar__search-input,
 .prof-navbar__search .DocSearch-Button,
 .prof-navbar__search .aa-DetachedSearchButton {
-  font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
-  font-size: 0.8rem;
-  background: #fafafa;
-  border: 1px solid #e5e5e5;
-  border-radius: 999px;
-  height: 36px;
-  padding: 0 0.875rem;
-  color: #525252;
+  font-family: 'Geist', system-ui, sans-serif;
+  font-size: 0.875rem;
+  background: var(--prof-surface-muted);
+  border: 1px solid var(--prof-border);
+  border-radius: 0.75rem;
+  height: 38px;
+  padding: 0 0.875rem 0 2.25rem;
+  color: var(--prof-text-muted);
   transition: border-color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
-  min-width: 200px;
+  min-width: 320px;
 }
 
 .prof-navbar__search .navbar__search-input:hover,
 .prof-navbar__search .DocSearch-Button:hover {
-  border-color: #d4d4d4;
-  background: #ffffff;
+  border-color: var(--prof-border-strong);
+  background: var(--prof-surface);
 }
 
 .prof-navbar__search .navbar__search-input:focus {
   outline: none;
-  border-color: #ff7f50;
-  background: #ffffff;
-  box-shadow: 0 0 0 3px rgba(255, 127, 80, 0.15);
+  border-color: var(--prof-accent);
+  background: var(--prof-surface);
+  box-shadow: 0 0 0 3px var(--prof-accent-soft);
 }
 
-/* The keyboard-shortcut hint pill (⌘K) */
 .prof-navbar__search .DocSearch-Button-Keys,
 .prof-navbar__search .navbar__search-input + kbd {
-  background: #ffffff;
-  border: 1px solid #e5e5e5;
+  background: var(--prof-surface);
+  border: 1px solid var(--prof-border);
   border-radius: 6px;
-  font-size: 0.65rem;
-  color: #a3a3a3;
+  font-family: 'Geist Mono', monospace;
+  font-size: 0.7rem;
+  color: var(--prof-text-muted);
 }
 
-/* Hide search results placeholder magnifying glass collision on hover */
 .prof-navbar__search .navbar__search {
   margin: 0;
 }
 
-/* Hide track links, search, and back link on mobile — Docusaurus handles mobile via sidebar toggle */
 @media (max-width: 996px) {
   .prof-navbar__links,
   .prof-navbar__right {
@@ -260,13 +286,23 @@ body.prof-scrolled .navbar {
   }
 }
 
-/* ===== Navbar dropdowns — mirror sidebar hierarchy ===== */
+/* Push doc layout below SectionBar (which is sticky under the navbar) */
+.theme-doc-sidebar-container {
+  top: calc(var(--ifm-navbar-height, 64px) + 76px) !important;
+}
+
+@media (max-width: 996px) {
+  .theme-doc-sidebar-container {
+    top: calc(var(--ifm-navbar-height, 64px) + 64px) !important;
+  }
+}
+
+/* ===== Navbar dropdowns ===== */
 
 .prof-dropdown {
   position: relative;
 }
 
-/* Invisible bridge covering the gap between trigger and panel */
 .prof-dropdown::after {
   content: '';
   position: absolute;
@@ -276,7 +312,6 @@ body.prof-scrolled .navbar {
   height: 0.75rem;
 }
 
-/* Trigger button */
 .prof-dropdown__trigger {
   display: inline-flex;
   align-items: center;
@@ -284,35 +319,35 @@ body.prof-scrolled .navbar {
   background: none;
   border: none;
   cursor: pointer;
-  font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+  font-family: 'Geist', system-ui, sans-serif;
   font-size: 0.875rem;
   font-weight: 500;
-  color: #525252;
-  padding: 0.375rem 0.75rem;
-  border-radius: 0.375rem;
+  color: var(--prof-text-secondary);
+  padding: 0.4rem 0.75rem;
+  border-radius: 0.5rem;
   transition: color 0.15s ease, background 0.15s ease;
   white-space: nowrap;
   line-height: 1;
+  letter-spacing: -0.005em;
 }
 
 .prof-dropdown__trigger:hover,
 .prof-dropdown:hover .prof-dropdown__trigger {
-  color: #171717;
-  background: rgba(0, 0, 0, 0.04);
+  color: var(--prof-text-primary);
+  background: var(--prof-surface-sunken);
 }
 
-/* Active track — coral tint to indicate current section */
 .prof-dropdown__trigger--active {
-  color: #FF7F50;
+  color: var(--prof-text-primary);
+  background: var(--prof-surface-sunken);
 }
 
 .prof-dropdown__trigger--active:hover,
 .prof-dropdown:hover .prof-dropdown__trigger--active {
-  color: #FF7F50;
-  background: rgba(255, 127, 80, 0.06);
+  color: var(--prof-text-primary);
+  background: var(--prof-surface-sunken);
 }
 
-/* Chevron rotates when open */
 .prof-dropdown__caret {
   display: inline-flex;
   align-items: center;
@@ -326,23 +361,19 @@ body.prof-scrolled .navbar {
   opacity: 0.65;
 }
 
-/* Panel */
 .prof-dropdown__panel {
   position: absolute;
   top: calc(100% + 0.6rem);
   left: 0;
-  min-width: 260px;
-  background: rgba(255, 255, 255, 0.97);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid #e5e5e5;
+  min-width: 280px;
+  background: var(--prof-surface);
+  border: 1px solid var(--prof-border);
   border-radius: 0.875rem;
   box-shadow:
-    0 4px 6px -1px rgba(0, 0, 0, 0.07),
+    0 4px 6px -1px rgba(0, 0, 0, 0.04),
     0 16px 40px -4px rgba(0, 0, 0, 0.08);
   padding: 0.5rem;
   z-index: 200;
-  /* Hidden state */
   opacity: 0;
   pointer-events: none;
   transform: translateY(-6px);
@@ -355,16 +386,15 @@ body.prof-scrolled .navbar {
   transform: translateY(0);
 }
 
-/* Divider label — matches sidebar .sidebar-divider exactly */
 .prof-dropdown__divider {
   display: block;
-  font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
-  font-size: 0.6rem;
+  font-family: 'Geist', system-ui, sans-serif;
+  font-size: 0.65rem;
   font-weight: 500;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: #d4d4d4;
-  padding: 0.85rem 0.75rem 0.3rem;
+  color: var(--prof-text-muted);
+  padding: 0.85rem 0.75rem 0.35rem;
   pointer-events: none;
   user-select: none;
 }
@@ -373,80 +403,231 @@ body.prof-scrolled .navbar {
   padding-top: 0.35rem;
 }
 
-/* Course link — Instrument Serif italic, matches sidebar course labels */
 .prof-dropdown__item {
   display: block;
-  font-family: 'Instrument Serif', Georgia, serif;
-  font-style: italic;
-  font-size: 0.92rem;
-  font-weight: 400;
-  color: #171717;
-  padding: 0.38rem 0.75rem;
+  font-family: 'Geist', system-ui, sans-serif;
+  font-size: 0.875rem;
+  font-weight: 450;
+  color: var(--prof-text-primary);
+  padding: 0.45rem 0.75rem;
   border-radius: 0.4rem;
   text-decoration: none !important;
-  border-left: 1.5px solid transparent;
-  transition: background 0.12s ease, color 0.12s ease, border-color 0.12s ease;
+  transition: background 0.12s ease, color 0.12s ease;
+  letter-spacing: -0.005em;
 }
 
 .prof-dropdown__item:hover {
-  background: #fffbfa;
-  color: #FF7F50;
-  border-left-color: #FF7F50;
+  background: var(--prof-surface-sunken);
+  color: var(--prof-text-primary);
   text-decoration: none !important;
 }
 
-/* Sidebar — transparent so gradient bleeds through */
+/* ===== Sidebar — Mintlify-style with icons + pill active state ===== */
+
 .theme-doc-sidebar-container,
 aside.theme-doc-sidebar-container {
   background: transparent !important;
+  border-right: 1px solid var(--prof-border) !important;
 }
 
-/* Main content wrapper — transparent */
 .main-wrapper {
   background: transparent !important;
 }
 
-/* Heading styles - Instrument Serif for display, Plus Jakarta Sans for smaller */
-h1, h2, h3 {
-  font-weight: 400;
-  font-family: 'Instrument Serif', Georgia, 'Times New Roman', serif;
+.menu {
+  padding: 1rem 0.75rem !important;
+  font-family: 'Geist', system-ui, sans-serif;
 }
 
-h4, h5, h6 {
+/* Generic menu links — uniform sans, tight density */
+.menu__link {
+  font-family: 'Geist', system-ui, sans-serif !important;
+  font-size: 0.875rem;
+  font-weight: 450;
+  color: var(--prof-text-secondary);
+  border-radius: 0.5rem;
+  padding: 0.4rem 0.625rem;
+  transition: background 0.12s ease, color 0.12s ease;
+  letter-spacing: -0.005em;
+  line-height: 1.4;
+}
+
+.menu__link:hover {
+  background: var(--prof-surface-sunken);
+  color: var(--prof-text-primary);
+}
+
+.menu__link--active {
+  background: var(--prof-accent-soft) !important;
+  color: var(--prof-accent) !important;
+  font-weight: 500;
+}
+
+.menu__link--active:hover {
+  background: var(--prof-accent-soft) !important;
+  color: var(--prof-accent) !important;
+}
+
+/* Caret for collapsible groups */
+.menu__caret,
+.menu__link--sublist-caret::after {
+  opacity: 0.4;
+}
+
+/* TRACK — small caps section header */
+.sidebar-track > .menu__list-item-collapsible > .menu__link {
+  font-family: 'Geist', system-ui, sans-serif !important;
+  font-size: 0.65rem;
   font-weight: 600;
-  font-family: 'Plus Jakarta Sans', system-ui, -apple-system, 'Segoe UI', Roboto, Ubuntu, sans-serif;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--prof-text-muted);
+  padding-top: 1.25rem;
+  padding-bottom: 0.5rem;
+  background: none !important;
 }
 
-/* Code blocks */
+.sidebar-track > .menu__list-item-collapsible > .menu__link:hover {
+  color: var(--prof-text-secondary);
+  background: none !important;
+}
+
+.sidebar-track > .menu__list-item-collapsible > .menu__caret {
+  opacity: 0.35;
+}
+
+/* COURSE — clean sans, normal weight (drop the italic serif) */
+.sidebar-course > .menu__list-item-collapsible > .menu__link {
+  font-family: 'Geist', system-ui, sans-serif !important;
+  font-style: normal;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--prof-text-primary);
+  border-radius: 0.5rem;
+  padding: 0.45rem 0.625rem;
+  transition: background 0.12s ease, color 0.12s ease;
+  background: none !important;
+  margin-top: 1px;
+  margin-bottom: 1px;
+  letter-spacing: -0.01em;
+}
+
+.sidebar-course > .menu__list-item-collapsible > .menu__link:hover {
+  color: var(--prof-text-primary);
+  background: var(--prof-surface-sunken) !important;
+}
+
+.sidebar-course:not(.menu__list-item--collapsed) > .menu__list-item-collapsible > .menu__link {
+  color: var(--prof-text-primary);
+  background: var(--prof-surface-sunken) !important;
+}
+
+/* LESSON — slightly smaller, muted until active */
+.theme-doc-sidebar-item-link-level-3 > .menu__link,
+.theme-doc-sidebar-item-link-level-4 > .menu__link {
+  font-family: 'Geist', system-ui, sans-serif !important;
+  font-size: 0.825rem;
+  font-weight: 450;
+  color: var(--prof-text-secondary);
+  padding-top: 0.32rem;
+  padding-bottom: 0.32rem;
+  padding-left: 0.625rem;
+  letter-spacing: -0.005em;
+}
+
+.theme-doc-sidebar-item-link-level-3 > .menu__link:hover,
+.theme-doc-sidebar-item-link-level-4 > .menu__link:hover {
+  color: var(--prof-text-primary);
+  background: var(--prof-surface-sunken);
+}
+
+.theme-doc-sidebar-item-link-level-3 > .menu__link--active,
+.theme-doc-sidebar-item-link-level-4 > .menu__link--active {
+  font-weight: 500;
+  color: var(--prof-accent) !important;
+  background: var(--prof-accent-soft) !important;
+}
+
+/* Top-level (level-1) sidebar items */
+.theme-doc-sidebar-item-link-level-1 > .menu__link {
+  font-family: 'Geist', system-ui, sans-serif !important;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--prof-text-primary);
+  padding-top: 0.45rem;
+  padding-bottom: 0.45rem;
+}
+
+/* Dividers between course groups */
+.sidebar-divider {
+  display: block;
+  font-family: 'Geist', system-ui, sans-serif;
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--prof-text-muted);
+  padding: 1.1rem 0.625rem 0.35rem;
+  pointer-events: none;
+  user-select: none;
+}
+
+.sidebar-writing-header {
+  display: block;
+  font-family: 'Geist', system-ui, sans-serif;
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--prof-text-muted);
+  padding: 1.5rem 0.625rem 0.5rem;
+  margin-top: 0.25rem;
+  border-top: 1px solid var(--prof-border);
+  pointer-events: none;
+  user-select: none;
+}
+
+/* ===== Headings — Geist for modern feel ===== */
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Geist', system-ui, -apple-system, sans-serif;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--prof-text-primary);
+}
+
+h1 {
+  font-size: 2.25rem;
+  letter-spacing: -0.03em;
+}
+
+h2 {
+  font-size: 1.5rem;
+}
+
+h3 {
+  font-size: 1.2rem;
+}
+
+/* Code */
 pre, code {
-  font-family: 'JetBrains Mono', 'Fira Code', 'Roboto Mono', Menlo, monospace;
+  font-family: 'Geist Mono', 'JetBrains Mono', 'Fira Code', Menlo, monospace;
 }
 
-/* LexAI brand: documentation / long-form reading */
+pre {
+  overflow-x: auto;
+  border-radius: 0.75rem;
+  border: 1px solid var(--prof-border);
+}
+
+/* Markdown body — use Geist for the modern look (keep editorial leanings via line-height) */
 .markdown,
 .theme-doc-markdown,
 .theme-doc-markdown p,
 .theme-doc-markdown li,
-.theme-doc-markdown table,
-.theme-doc-markdown code {
-  font-family: 'Lora', Georgia, 'Times New Roman', serif;
+.theme-doc-markdown table {
+  font-family: 'Geist', system-ui, sans-serif;
 }
-
-[data-theme='dark'] .theme-doc-markdown {
-  /* Let Docusaurus manage colors for dark mode; only keep typography. */
-  color: inherit;
-}
-
-/* LexAI brand: navbar, menus, buttons use Plus Jakarta Sans */
-.navbar,
-.navbar__brand,
-.navbar__item,
-.navbar__link,
-.menu__link,
-.button {
-  font-family: 'Plus Jakarta Sans', system-ui, -apple-system, 'Segoe UI', Roboto, Ubuntu, sans-serif;
-}
-
 
 /* Links */
 a {
@@ -457,7 +638,7 @@ a:hover {
   color: var(--ifm-link-hover-color);
 }
 
-/* Primary buttons */
+/* Buttons */
 .button.button--primary {
   background-color: var(--lexai-blue-500);
   border-color: var(--lexai-blue-500);
@@ -470,7 +651,6 @@ a:hover {
   color: #ffffff;
 }
 
-/* Secondary buttons */
 .button.button--secondary {
   background-color: transparent;
   border-color: var(--lexai-blue-500);
@@ -483,14 +663,12 @@ a:hover {
   color: var(--lexai-blue-600);
 }
 
-/* Accent-style badges / chips could use coral if needed */
 .badge--accent,
 .badge--secondary {
   background-color: var(--lexai-coral-500);
   color: #ffffff;
 }
 
-/* Special elements */
 .header-github-link:hover {
   opacity: 0.7;
 }
@@ -507,17 +685,17 @@ a:hover {
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill='%23fff' d='M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12'/%3E%3C/svg%3E");
 }
 
-/* Card styles for features and resource items */
+/* Cards */
 .card {
   border-radius: var(--ifm-global-radius);
-  border: 1px solid #f0f0f0;
+  border: 1px solid var(--prof-border);
   transition: border-color 0.2s ease, background-color 0.2s ease;
   overflow: hidden;
 }
 
 .card:hover {
-  border-color: #dbeafe;
-  background-color: #fafbff;
+  border-color: var(--prof-border-strong);
+  background-color: var(--prof-surface-muted);
 }
 
 /* Page transitions */
@@ -526,17 +704,11 @@ a:hover {
 }
 
 @keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
-/* Table styles */
+/* Tables */
 table {
   width: 100%;
   border-collapse: collapse;
@@ -544,393 +716,152 @@ table {
 
 table th, table td {
   padding: 0.75rem 1rem;
-  border: 1px solid var(--ifm-color-emphasis-300);
+  border: 1px solid var(--prof-border);
 }
 
 table th {
-  background-color: var(--ifm-color-emphasis-100);
-  color: #000;
-  font-weight: 700;
-}
-[data-theme='dark'] table th {
-  color: #fff;
+  background-color: var(--prof-surface-muted);
+  color: var(--prof-text-primary);
+  font-weight: 600;
 }
 
-/* Make code blocks scroll horizontally on small screens */
-pre {
-  overflow-x: auto;
-}
-
-/* ============================================
-   Glassmorphism Navbar Shell
-   ============================================ */
-.navbar {
-  background: rgba(255, 255, 255, 0.75) !important;
-  backdrop-filter: blur(16px) saturate(180%);
-  -webkit-backdrop-filter: blur(16px) saturate(180%);
-  border-bottom: 1px solid rgba(0, 0, 0, 0.06) !important;
-  box-shadow: none !important;
-  height: 64px;
-}
-
-.navbar--fixed-top {
-  background: rgba(255, 255, 255, 0.75) !important;
-}
-
-/* Override default Infima navbar inner padding */
-.navbar > .navbar__inner {
-  max-width: 100%;
-  padding: 0;
-  height: 100%;
-}
-
-/* Hide default Infima dropdown menus (we use custom dropdowns) */
-.navbar .dropdown__menu {
-  display: none !important;
-}
-
-/* Remove default Infima navbar item hover (replaced by custom trigger) */
-.navbar__item:hover {
-  background: none;
-}
-
-/* Hide default navbar items container since items: [] */
-.navbar__items {
-  display: contents;
-}
-
-/* Homepage track cards */
+/* Track cards on homepage */
 .track-card:hover {
   border-color: #bfdbfe !important;
   box-shadow: 0 4px 24px rgba(59, 130, 246, 0.08) !important;
 }
 
-/* Focus styles for accessibility */
 :focus-visible {
   outline: 2px solid var(--ifm-color-primary);
   outline-offset: 2px;
 }
 
-/* ============================================
-   Sidebar: Track → Course → Lesson hierarchy
-   Matches brand: neutral palette, Instrument Serif, coral accent
-   ============================================ */
-
-/* DIVIDER — groups courses inside a track */
-.sidebar-divider {
-  display: block;
-  font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
-  font-size: 0.6rem;
-  font-weight: 600;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: #525252;
-  padding: 1rem 0.75rem 0.35rem;
-  pointer-events: none;
-  user-select: none;
-}
-
-[data-theme='dark'] .sidebar-divider {
-  color: #a3a3a3;
-}
-
-/* TRACK — tiny uppercase label, like section headers on the landing page */
-.sidebar-track > .menu__list-item-collapsible > .menu__link {
-  font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
-  font-size: 0.65rem;
-  font-weight: 500;
-  letter-spacing: 0.15em;
-  text-transform: uppercase;
-  color: #a3a3a3;
-  padding-top: 1.25rem;
-  padding-bottom: 0.35rem;
-  background: none !important;
-}
-
-.sidebar-track > .menu__list-item-collapsible > .menu__link:hover {
-  color: #737373;
-  background: none !important;
-}
-
-.sidebar-track > .menu__list-item-collapsible > .menu__caret {
-  opacity: 0.35;
-}
-
-[data-theme='dark'] .sidebar-track > .menu__list-item-collapsible > .menu__link {
-  color: #525252;
-}
-
-/* COURSE — Instrument Serif italic, editorial feel */
-.sidebar-course > .menu__list-item-collapsible > .menu__link {
-  font-family: 'Instrument Serif', Georgia, serif;
-  font-style: italic;
-  font-size: 0.95rem;
-  font-weight: 400;
-  color: #171717;
-  border-left: 1.5px solid transparent;
-  padding-left: 0.85rem;
-  border-radius: 0 4px 4px 0;
-  transition: border-color 0.15s ease, color 0.15s ease;
-  margin-top: 1px;
-  margin-bottom: 1px;
-  background: none !important;
-}
-
-.sidebar-course > .menu__list-item-collapsible > .menu__link:hover {
-  color: #171717;
-  border-left-color: #e5e5e5;
-  background: #fafafa !important;
-}
-
-/* Active course — coral left border, coral text */
-.sidebar-course:not(.menu__list-item--collapsed) > .menu__list-item-collapsible > .menu__link {
-  border-left-color: #FF7F50;
-  color: #FF7F50;
-  background: #fffbfa !important;
-}
-
-[data-theme='dark'] .sidebar-course > .menu__list-item-collapsible > .menu__link {
-  color: #e5e5e5;
-}
-
-[data-theme='dark'] .sidebar-course:not(.menu__list-item--collapsed) > .menu__list-item-collapsible > .menu__link {
-  color: #FF7F50;
-  background: rgba(255, 127, 80, 0.06) !important;
-}
-
-/* LESSON — Inter, compact, muted until active */
-.theme-doc-sidebar-item-link-level-3 > .menu__link,
-.theme-doc-sidebar-item-link-level-4 > .menu__link {
-  font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
-  font-size: 0.78rem;
-  font-weight: 400;
-  color: #737373;
-  padding-top: 0.25rem;
-  padding-bottom: 0.25rem;
-}
-
-.theme-doc-sidebar-item-link-level-3 > .menu__link:hover,
-.theme-doc-sidebar-item-link-level-4 > .menu__link:hover {
-  color: #171717;
-}
-
-.theme-doc-sidebar-item-link-level-3 > .menu__link--active,
-.theme-doc-sidebar-item-link-level-4 > .menu__link--active {
-  font-weight: 500;
-  color: #171717;
-}
-
-[data-theme='dark'] .theme-doc-sidebar-item-link-level-3 > .menu__link,
-[data-theme='dark'] .theme-doc-sidebar-item-link-level-4 > .menu__link {
-  color: #525252;
-}
-
-[data-theme='dark'] .theme-doc-sidebar-item-link-level-3 > .menu__link--active,
-[data-theme='dark'] .theme-doc-sidebar-item-link-level-4 > .menu__link--active {
-  color: #e5e5e5;
-}
-
-/* Section header in sidebar — flat divider with uppercase label.
-   Class name is legacy (originally introduced for Writing & Talks); now reused
-   by the Practice section header. Don't remove without checking sidebars.ts. */
-.sidebar-writing-header {
-  display: block;
-  font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
-  font-size: 0.6rem;
-  font-weight: 600;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: #525252;
-  padding: 1.5rem 0.75rem 0.5rem;
-  margin-top: 0.25rem;
-  border-top: 1px solid #e5e5e5;
-  pointer-events: none;
-  user-select: none;
-}
-
-[data-theme='dark'] .sidebar-writing-header {
-  color: #a3a3a3;
-  border-top-color: #262626;
-}
-
-/* Top-level (level-1) sidebar items — applies to any flat doc entries */
-.theme-doc-sidebar-item-link-level-1 > .menu__link {
-  font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
-  font-size: 0.8rem;
-  font-weight: 400;
-  color: #737373;
-  padding-top: 0.28rem;
-  padding-bottom: 0.28rem;
-}
-
-.theme-doc-sidebar-item-link-level-1 > .menu__link:hover {
-  color: #171717;
-}
-
-.theme-doc-sidebar-item-link-level-1 > .menu__link--active {
-  font-weight: 500;
-  color: #171717;
-}
-
-[data-theme='dark'] .theme-doc-sidebar-item-link-level-1 > .menu__link {
-  color: #525252;
-}
-
-[data-theme='dark'] .theme-doc-sidebar-item-link-level-1 > .menu__link--active {
-  color: #e5e5e5;
-}
 /* ----------------------------------------------------------------------- */
 /* Prose readability — applies only to lesson content, not nav / sidebar.  */
 /* ----------------------------------------------------------------------- */
 
-/* Bump base font size on prose for breathing room.
-   Targets the markdown body; navigation/sidebar/footer stay at their sizes. */
 .markdown {
-  font-size: 17.5px;
-  line-height: 1.78;
-  letter-spacing: 0.005em;
+  font-size: 16px;
+  line-height: 1.72;
+  letter-spacing: -0.003em;
+  color: var(--prof-text-primary);
 }
 
-/* Slightly more vertical space between paragraphs */
 .markdown p {
-  margin-bottom: 1.3rem;
+  margin-bottom: 1.25rem;
 }
 
-/* Stronger separation between sections */
 .markdown > h2,
 .markdown > h3 {
-  margin-top: 2.75rem;
-  margin-bottom: 1rem;
-}
-.markdown > h2 {
-  padding-top: 0.25rem;
+  margin-top: 2.5rem;
+  margin-bottom: 0.875rem;
 }
 
-/* Lists inherit better line-height */
+.markdown > h2 {
+  padding-top: 0.25rem;
+  padding-bottom: 0;
+}
+
 .markdown ul,
 .markdown ol {
-  line-height: 1.78;
-  margin-bottom: 1.3rem;
+  line-height: 1.72;
+  margin-bottom: 1.25rem;
 }
+
 .markdown li {
   margin-bottom: 0.35rem;
 }
 
-/* Tables: a touch denser than prose so they scan as a unit */
 .markdown table {
-  font-size: 0.96rem;
+  font-size: 0.92rem;
 }
+
 .markdown table th {
-  font-weight: 700;
-  letter-spacing: 0.01em;
+  font-weight: 600;
 }
 
-/* Code inline: slightly tighter than prose so it visually reads as code */
 .markdown :not(pre) > code {
-  font-size: 0.92em;
+  font-size: 0.88em;
+  background: var(--prof-surface-sunken);
+  border: 1px solid var(--prof-border);
+  border-radius: 0.3rem;
+  padding: 0.1em 0.35em;
 }
 
-/* Blockquote — make pull-quote-y for italicised emphasis */
 .markdown blockquote {
   border-left: 3px solid var(--lexai-coral-500);
   background: rgba(255, 127, 80, 0.04);
   padding: 0.85rem 1.25rem;
   margin: 1.75rem 0;
-  font-style: italic;
-  color: #334155;
+  color: var(--prof-text-primary);
   border-radius: 0 6px 6px 0;
 }
-[data-theme='dark'] .markdown blockquote {
-  background: rgba(255, 127, 80, 0.06);
-  color: #cbd5e1;
-}
 
-/* Section dividers — fade in/out instead of hard line */
 .markdown hr {
-  margin: 3rem auto;
+  margin: 2.5rem auto;
   width: 100%;
   border: 0;
   height: 1px;
-  background: linear-gradient(to right, transparent, #cbd5e1 25%, #cbd5e1 75%, transparent);
-}
-[data-theme='dark'] .markdown hr {
-  background: linear-gradient(to right, transparent, #334155 25%, #334155 75%, transparent);
+  background: var(--prof-border);
 }
 
-/* Slightly wider content column for prose-heavy pages.
-   Default Docusaurus is ~960px including sidebar; loosen the article a touch. */
 .theme-doc-markdown {
   max-width: 800px;
 }
 
-/* ----------------------------------------------------------------------- */
-/* Visual polish (Pass 2 — CSS-only items)                                 */
-/* ----------------------------------------------------------------------- */
-
-/* Coral H2 underline — 4px bar under every section heading in lesson body */
-.markdown > h2 {
-  position: relative;
-  padding-bottom: 0.6rem;
-}
-.markdown > h2::after {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  width: 56px;
-  height: 4px;
-  background: var(--lexai-coral-500);
-  border-radius: 2px;
-}
-
-/* Diagram styling — rounded corners + soft shadow.
-   Scoped to <figure> images and explicit .diagram class so it does NOT
-   affect company logos, hero badges, or InterviewGuide avatars. */
+/* Diagram styling */
 .markdown figure {
   margin: 1.75rem 0;
 }
+
 .markdown figure img,
 .markdown img.diagram {
   border-radius: 12px;
-  box-shadow: 0 4px 16px rgba(15, 23, 42, 0.08);
+  border: 1px solid var(--prof-border);
   max-width: 100%;
   height: auto;
-  background: #ffffff;
-}
-[data-theme='dark'] .markdown figure img,
-[data-theme='dark'] .markdown img.diagram {
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
-  background: #f8fafc;
+  background: var(--prof-surface);
 }
 
-/* Optional figcaption styling — for when we add captions later */
 .markdown figure figcaption {
   margin-top: 0.75rem;
   text-align: center;
-  font-size: 0.88rem;
-  color: #64748b;
-  font-style: italic;
-}
-[data-theme='dark'] .markdown figure figcaption {
-  color: #94a3b8;
+  font-size: 0.85rem;
+  color: var(--prof-text-muted);
 }
 
-/* ───────────────────────── Practice mode ─────────────────────────────────
-   Set on <body> when a doc page has `practice_mode: true` in frontmatter.
+/* TOC (right rail) styling — match Mintlify "On this page" feel */
+.table-of-contents {
+  font-family: 'Geist', system-ui, sans-serif;
+  font-size: 0.8rem;
+  border-left: 1px solid var(--prof-border);
+}
 
-   Architecture:
-   - DocRoot/Layout (sidebar + main area): kept intact via OriginalDocRootLayout
-     → sidebar shows in its natural Docusaurus position; user navigates between
-        problems with it like any other doc page
-   - DocItem/Layout (article + TOC + breadcrumbs): BYPASSED for practice pages
-     so the workbench renders directly inside DocRoot's main area, edge-to-edge
-   - Footer + pagination + leftover doc chrome below the workbench: hidden */
+.table-of-contents__link {
+  color: var(--prof-text-muted);
+  letter-spacing: -0.005em;
+}
+
+.table-of-contents__link:hover {
+  color: var(--prof-text-primary);
+}
+
+.table-of-contents__link--active,
+.table-of-contents__link--active:hover {
+  color: var(--prof-accent);
+  font-weight: 500;
+}
+
+/* ───────────────────────── Practice mode ───────────────────────── */
 
 body.practice-mode {
-  background: #ffffff;
+  background: var(--prof-surface);
 }
 
-/* DocRoot's main area: full-bleed for the workbench (no Docusaurus padding/margin) */
+body.practice-mode html::before {
+  display: none;
+}
+
 body.practice-mode main {
   padding: 0 !important;
   margin: 0 !important;
@@ -938,20 +869,14 @@ body.practice-mode main {
   width: 100% !important;
 }
 
-/* Hide footer + pagination chrome that would otherwise sit below the workbench */
 body.practice-mode footer.footer,
 body.practice-mode .pagination-nav {
   display: none !important;
 }
 
-/* The wrapper our DocItem swizzle adds for practice pages */
 body.practice-mode .practice-page-content {
   width: 100%;
-  height: calc(100vh - var(--ifm-navbar-height, 60px));
+  height: calc(100vh - var(--ifm-navbar-height, 64px));
   overflow: hidden;
-  background: #ffffff;
-}
-
-[data-theme='dark'] body.practice-mode .practice-page-content {
-  background: #0f172a;
+  background: var(--prof-surface);
 }

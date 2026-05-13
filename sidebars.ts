@@ -1,285 +1,242 @@
-import type {SidebarsConfig} from '@docusaurus/plugin-content-docs';
+import type { SidebarsConfig } from '@docusaurus/plugin-content-docs';
 
 const sidebars: SidebarsConfig = {
-  docsSidebar: [
+  // ─────────────────────────────────────────────────────────────────────────
+  // AI Literacy — non-engineering, conceptual content (the Leaders track)
+  // ─────────────────────────────────────────────────────────────────────────
+  literacy: [
     {
       type: 'category',
-      label: 'AI for Leaders',
-      className: 'sidebar-track',
+      label: 'AI for Everyone — Gen AI & use cases',
+      className: 'sidebar-course',
+      customProps: { icon: 'sparkles' },
       link: { type: 'doc', id: 'ai-for-leaders/genai-for-everyone/intro' },
       items: [
-        {
-          type: 'category',
-          label: 'AI for Everyone — Gen AI & use cases',
-          className: 'sidebar-course',
-          link: { type: 'doc', id: 'ai-for-leaders/genai-for-everyone/intro' },
-          items: [
-            'ai-for-leaders/genai-for-everyone/intro',
-            'ai-for-leaders/genai-for-everyone/literacy-and-the-road-to-generative-ai',
-            'ai-for-leaders/genai-for-everyone/five-layer-ai-stack',
-            'ai-for-leaders/genai-for-everyone/ai-model-lifecycle-for-leaders',
-            'ai-for-leaders/genai-for-everyone/llm-design-case-study',
-          ],
-        },
-        {
-          type: 'category',
-          label: 'Prompt Engineering',
-          className: 'sidebar-course',
-          link: { type: 'doc', id: 'ai-for-leaders/prompt-engineering/introduction' },
-          items: [
-            'ai-for-leaders/prompt-engineering/introduction',
-            'ai-for-leaders/prompt-engineering/design-of-a-prompt',
-            'ai-for-leaders/prompt-engineering/language-models-are-few-shot-learners',
-            'ai-for-leaders/prompt-engineering/hallucinations-in-large-language-models',
-            'ai-for-leaders/prompt-engineering/hands-on-prompt-design-webapp-cursor',
-            'ai-for-leaders/prompt-engineering/building-digital-assets-tutorial',
-          ],
-        },
+        'ai-for-leaders/genai-for-everyone/intro',
+        'ai-for-leaders/genai-for-everyone/literacy-and-the-road-to-generative-ai',
+        'ai-for-leaders/genai-for-everyone/five-layer-ai-stack',
+        'ai-for-leaders/genai-for-everyone/ai-model-lifecycle-for-leaders',
+        'ai-for-leaders/genai-for-everyone/llm-design-case-study',
       ],
     },
     {
       type: 'category',
-      label: 'AI for Engineering',
-      className: 'sidebar-track',
+      label: 'Prompt Engineering',
+      className: 'sidebar-course',
+      customProps: { icon: 'compass' },
+      link: { type: 'doc', id: 'ai-for-leaders/prompt-engineering/introduction' },
       items: [
-        { type: 'html', value: '<span class="sidebar-divider">Foundations</span>' },
-        {
-          type: 'category',
-          label: 'Deep Neural Networks',
-          className: 'sidebar-course',
-          link: { type: 'doc', id: 'ai-for-engineering/deep-neural-networks/intro' },
-          items: [
-            'ai-for-engineering/deep-neural-networks/perceptron-and-neuron',
-            'ai-for-engineering/deep-neural-networks/layers-in-deep-neural-networks',
-            'ai-for-engineering/deep-neural-networks/activation-functions',
-            'ai-for-engineering/deep-neural-networks/loss-functions',
-            'ai-for-engineering/deep-neural-networks/forward-pass',
-            'ai-for-engineering/deep-neural-networks/backward-pass',
-            'ai-for-engineering/deep-neural-networks/trainable-parameters-and-hyperparameters',
-            'ai-for-engineering/deep-neural-networks/overfitting-in-neural-networks',
-            'ai-for-engineering/deep-neural-networks/neural-network-architecture',
-            'ai-for-engineering/deep-neural-networks/neural-network-from-scratch',
-            'ai-for-engineering/deep-neural-networks/interview-readiness',
-          ],
-        },
-        {
-          type: 'category',
-          label: 'Foundations of Regression',
-          className: 'sidebar-course',
-          link: { type: 'doc', id: 'ai-for-engineering/foundations-of-regression/intro' },
-          items: [
-            'ai-for-engineering/foundations-of-regression/linear-regression-line-ssr-gradient-descent',
-            'ai-for-engineering/foundations-of-regression/why-logistic-regression',
-            'ai-for-engineering/foundations-of-regression/sigmoid-function-logistic-regression',
-            'ai-for-engineering/foundations-of-regression/logistic-regression-decision-boundaries',
-            'ai-for-engineering/foundations-of-regression/intuition-behind-logistic-regression',
-            'ai-for-engineering/foundations-of-regression/log-likelihood-instead-of-squared-error',
-            'ai-for-engineering/foundations-of-regression/interview-readiness',
-          ],
-        },
-        { type: 'html', value: '<span class="sidebar-divider">Vision & Sequences</span>' },
-        {
-          type: 'category',
-          label: 'Deep Computer Vision (CNN)',
-          className: 'sidebar-course',
-          link: { type: 'doc', id: 'ai-for-engineering/deep-computer-vision-cnn/intro' },
-          items: [
-            'ai-for-engineering/deep-computer-vision-cnn/visual-revolution',
-            'ai-for-engineering/deep-computer-vision-cnn/transformative-deep-learning-vision',
-            'ai-for-engineering/deep-computer-vision-cnn/from-pixels-to-perception',
-            'ai-for-engineering/deep-computer-vision-cnn/feature-detection-hierarchy',
-            'ai-for-engineering/deep-computer-vision-cnn/preserving-spatial-structure-cnns',
-            'ai-for-engineering/deep-computer-vision-cnn/filters-features-convolutions',
-            'ai-for-engineering/deep-computer-vision-cnn/learning-to-see-cnns',
-            'ai-for-engineering/deep-computer-vision-cnn/interview-readiness',
-          ],
-        },
-        {
-          type: 'category',
-          label: 'Deep Sequence Modelling (RNN)',
-          className: 'sidebar-course',
-          link: { type: 'doc', id: 'ai-for-engineering/deep-sequence-modelling-rnn/intro' },
-          items: [
-            'ai-for-engineering/deep-sequence-modelling-rnn/foundations-of-deep-sequence-modeling',
-            'ai-for-engineering/deep-sequence-modelling-rnn/from-static-networks-to-time-aware',
-            'ai-for-engineering/deep-sequence-modelling-rnn/rnn-internal-mechanics',
-            'ai-for-engineering/deep-sequence-modelling-rnn/lstm-and-gru',
-            'ai-for-engineering/deep-sequence-modelling-rnn/bringing-sequence-modeling-real-world',
-            'ai-for-engineering/deep-sequence-modelling-rnn/training-rnn-backprop-through-time',
-            'ai-for-engineering/deep-sequence-modelling-rnn/training-an-rnn-in-pytorch',
-            'ai-for-engineering/deep-sequence-modelling-rnn/interview-readiness',
-          ],
-        },
-        { type: 'html', value: '<span class="sidebar-divider">Transformers</span>' },
-        {
-          type: 'category',
-          label: 'Attention Is All You Need',
-          className: 'sidebar-course',
-          link: { type: 'doc', id: 'ai-for-engineering/attention-is-all-you-need/intro' },
-          items: [
-            'ai-for-engineering/attention-is-all-you-need/problem-with-rnns-and-lstms',
-            'ai-for-engineering/attention-is-all-you-need/positional-embeddings',
-            'ai-for-engineering/attention-is-all-you-need/attention',
-            'ai-for-engineering/attention-is-all-you-need/self-attention',
-            'ai-for-engineering/attention-is-all-you-need/multi-headed-attention',
-            'ai-for-engineering/attention-is-all-you-need/cross-attention',
-            'ai-for-engineering/attention-is-all-you-need/encoder-stack',
-            'ai-for-engineering/attention-is-all-you-need/encoder-decoder-transformer',
-            'ai-for-engineering/attention-is-all-you-need/from-encoder-decoder-to-gpt',
-            'ai-for-engineering/attention-is-all-you-need/interview-readiness',
-          ],
-        },
-        {
-          type: 'category',
-          label: 'Build and Train Your Own GPT-2',
-          className: 'sidebar-course',
-          link: { type: 'doc', id: 'ai-for-engineering/build-and-train-your-own-gpt2-model/intro' },
-          items: [
-            'ai-for-engineering/build-and-train-your-own-gpt2-model/problem-with-rnns-lstms',
-            'ai-for-engineering/build-and-train-your-own-gpt2-model/token-embeddings',
-            'ai-for-engineering/build-and-train-your-own-gpt2-model/positional-embeddings',
-            'ai-for-engineering/build-and-train-your-own-gpt2-model/attention-multi-head-attention',
-            'ai-for-engineering/build-and-train-your-own-gpt2-model/causal-masking',
-            'ai-for-engineering/build-and-train-your-own-gpt2-model/residual-connections',
-            'ai-for-engineering/build-and-train-your-own-gpt2-model/layer-normalization',
-            'ai-for-engineering/build-and-train-your-own-gpt2-model/feed-forward-neural-networks',
-            'ai-for-engineering/build-and-train-your-own-gpt2-model/generation-of-next-tokens',
-            'ai-for-engineering/build-and-train-your-own-gpt2-model/decoder-only-transformer',
-            'ai-for-engineering/build-and-train-your-own-gpt2-model/interview-readiness',
-          ],
-        },
-        { type: 'html', value: '<span class="sidebar-divider">Agentic AI</span>' },
-        {
-          type: 'category',
-          label: 'Build a Multi-Agent Research Assistant',
-          className: 'sidebar-course',
-          link: { type: 'doc', id: 'ai-for-engineering/agentic-ai/intro' },
-          items: [
-            'ai-for-engineering/agentic-ai/bare-llm-loop',
-            'ai-for-engineering/agentic-ai/tool-use',
-            'ai-for-engineering/agentic-ai/react-reasoning',
-            'ai-for-engineering/agentic-ai/planner',
-            'ai-for-engineering/agentic-ai/parallel-executors',
-            'ai-for-engineering/agentic-ai/shared-memory',
-            'ai-for-engineering/agentic-ai/critic',
-            'ai-for-engineering/agentic-ai/full-system',
-            'ai-for-engineering/agentic-ai/observability',
-            'ai-for-engineering/agentic-ai/interview-readiness',
-          ],
-        },
-        { type: 'html', value: '<span class="sidebar-divider">Systems & Production</span>' },
-        {
-          type: 'category',
-          label: 'ML System Design',
-          className: 'sidebar-course',
-          link: { type: 'doc', id: 'ai-for-engineering/ml-system-design/intro' },
-          items: [
-            'ai-for-engineering/ml-system-design/the-ml-sd-interview',
-            'ai-for-engineering/ml-system-design/recsys-define-the-problem',
-            'ai-for-engineering/ml-system-design/recsys-data-pipeline',
-            'ai-for-engineering/ml-system-design/recsys-retrieval-two-tower',
-            'ai-for-engineering/ml-system-design/recsys-ranking',
-            'ai-for-engineering/ml-system-design/recsys-online-serving',
-            'ai-for-engineering/ml-system-design/recsys-evaluation-and-ab-testing',
-            'ai-for-engineering/ml-system-design/recsys-monitoring-and-retraining',
-            'ai-for-engineering/ml-system-design/rag-define-the-problem',
-            'ai-for-engineering/ml-system-design/rag-retrieval-and-reranking',
-            'ai-for-engineering/ml-system-design/rag-generation-and-serving',
-            'ai-for-engineering/ml-system-design/rag-evaluation',
-            'ai-for-engineering/ml-system-design/case-ad-ctr-prediction',
-            'ai-for-engineering/ml-system-design/case-real-time-fraud-detection',
-            'ai-for-engineering/ml-system-design/case-eta-prediction',
-            'ai-for-engineering/ml-system-design/case-multimodal-search',
-            'ai-for-engineering/ml-system-design/interview-readiness',
-          ],
-        },
-        { type: 'html', value: '<span class="sidebar-divider">Career</span>' },
-        {
-          type: 'category',
-          label: 'MLE Interview',
-          className: 'sidebar-course',
-          link: { type: 'doc', id: 'ai-for-engineering/mle-interview/intro' },
-          items: [
-            'ai-for-engineering/mle-interview/intro',
-            'ai-for-engineering/mle-interview/rubrics-and-playbook',
-            {
-              type: 'category',
-              label: 'Company Interview Guides',
-              link: { type: 'doc', id: 'ai-for-engineering/mle-interview/guides/index' },
-              items: [
-                'ai-for-engineering/mle-interview/guides/recently-asked',
-                {
-                  type: 'category',
-                  label: 'Meta',
-                  items: [
-                    'ai-for-engineering/mle-interview/guides/meta/e3',
-                    'ai-for-engineering/mle-interview/guides/meta/e4',
-                    'ai-for-engineering/mle-interview/guides/meta/e5',
-                  ],
-                },
-                {
-                  type: 'category',
-                  label: 'Google',
-                  items: [
-                    'ai-for-engineering/mle-interview/guides/google/l3',
-                    'ai-for-engineering/mle-interview/guides/google/l4',
-                    'ai-for-engineering/mle-interview/guides/google/l5',
-                  ],
-                },
-                {
-                  type: 'category',
-                  label: 'Amazon',
-                  items: [
-                    'ai-for-engineering/mle-interview/guides/amazon/sde-i',
-                    'ai-for-engineering/mle-interview/guides/amazon/sde-ii',
-                    'ai-for-engineering/mle-interview/guides/amazon/sde-iii',
-                    'ai-for-engineering/mle-interview/guides/amazon/applied-scientist',
-                  ],
-                },
-                {
-                  type: 'category',
-                  label: 'Microsoft',
-                  items: [
-                    'ai-for-engineering/mle-interview/guides/microsoft/l62',
-                    'ai-for-engineering/mle-interview/guides/microsoft/l63',
-                    'ai-for-engineering/mle-interview/guides/microsoft/l64',
-                    'ai-for-engineering/mle-interview/guides/microsoft/mle',
-                    'ai-for-engineering/mle-interview/guides/microsoft/applied-scientist',
-                    'ai-for-engineering/mle-interview/guides/microsoft/ml-research-engineer',
-                  ],
-                },
-                {
-                  type: 'category',
-                  label: 'Apple',
-                  items: [
-                    'ai-for-engineering/mle-interview/guides/apple/ict2',
-                    'ai-for-engineering/mle-interview/guides/apple/ict3',
-                    'ai-for-engineering/mle-interview/guides/apple/ict4',
-                  ],
-                },
-              ],
-            },
-          ],
-        },
-        {
-          type: 'category',
-          label: 'AI Research',
-          className: 'sidebar-course',
-          link: { type: 'doc', id: 'ai-for-engineering/ai-research/intro' },
-          items: ['ai-for-engineering/ai-research/aletheia-gemini-deep-think-math-research'],
-        },
+        'ai-for-leaders/prompt-engineering/introduction',
+        'ai-for-leaders/prompt-engineering/design-of-a-prompt',
+        'ai-for-leaders/prompt-engineering/language-models-are-few-shot-learners',
+        'ai-for-leaders/prompt-engineering/hallucinations-in-large-language-models',
+        'ai-for-leaders/prompt-engineering/hands-on-prompt-design-webapp-cursor',
+        'ai-for-leaders/prompt-engineering/building-digital-assets-tutorial',
       ],
     },
-    { type: 'html', value: '<span class="sidebar-writing-header">Practice</span>' },
+  ],
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // Foundations
+  // ─────────────────────────────────────────────────────────────────────────
+  foundations: [
+    {
+      type: 'category',
+      label: 'Deep Neural Networks',
+      className: 'sidebar-course',
+      customProps: { icon: 'network' },
+      link: { type: 'doc', id: 'ai-for-engineering/deep-neural-networks/intro' },
+      items: [
+        'ai-for-engineering/deep-neural-networks/perceptron-and-neuron',
+        'ai-for-engineering/deep-neural-networks/layers-in-deep-neural-networks',
+        'ai-for-engineering/deep-neural-networks/activation-functions',
+        'ai-for-engineering/deep-neural-networks/loss-functions',
+        'ai-for-engineering/deep-neural-networks/forward-pass',
+        'ai-for-engineering/deep-neural-networks/backward-pass',
+        'ai-for-engineering/deep-neural-networks/trainable-parameters-and-hyperparameters',
+        'ai-for-engineering/deep-neural-networks/overfitting-in-neural-networks',
+        'ai-for-engineering/deep-neural-networks/neural-network-architecture',
+        'ai-for-engineering/deep-neural-networks/neural-network-from-scratch',
+        'ai-for-engineering/deep-neural-networks/interview-readiness',
+      ],
+    },
+    {
+      type: 'category',
+      label: 'Foundations of Regression',
+      className: 'sidebar-course',
+      customProps: { icon: 'chart' },
+      link: { type: 'doc', id: 'ai-for-engineering/foundations-of-regression/intro' },
+      items: [
+        'ai-for-engineering/foundations-of-regression/linear-regression-line-ssr-gradient-descent',
+        'ai-for-engineering/foundations-of-regression/why-logistic-regression',
+        'ai-for-engineering/foundations-of-regression/sigmoid-function-logistic-regression',
+        'ai-for-engineering/foundations-of-regression/logistic-regression-decision-boundaries',
+        'ai-for-engineering/foundations-of-regression/intuition-behind-logistic-regression',
+        'ai-for-engineering/foundations-of-regression/log-likelihood-instead-of-squared-error',
+        'ai-for-engineering/foundations-of-regression/interview-readiness',
+      ],
+    },
+  ],
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // Vision
+  // ─────────────────────────────────────────────────────────────────────────
+  vision: [
+    {
+      type: 'category',
+      label: 'Deep Computer Vision (CNN)',
+      className: 'sidebar-course',
+      customProps: { icon: 'eye' },
+      link: { type: 'doc', id: 'ai-for-engineering/deep-computer-vision-cnn/intro' },
+      items: [
+        'ai-for-engineering/deep-computer-vision-cnn/visual-revolution',
+        'ai-for-engineering/deep-computer-vision-cnn/transformative-deep-learning-vision',
+        'ai-for-engineering/deep-computer-vision-cnn/from-pixels-to-perception',
+        'ai-for-engineering/deep-computer-vision-cnn/feature-detection-hierarchy',
+        'ai-for-engineering/deep-computer-vision-cnn/preserving-spatial-structure-cnns',
+        'ai-for-engineering/deep-computer-vision-cnn/filters-features-convolutions',
+        'ai-for-engineering/deep-computer-vision-cnn/learning-to-see-cnns',
+        'ai-for-engineering/deep-computer-vision-cnn/interview-readiness',
+      ],
+    },
+  ],
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // Sequences
+  // ─────────────────────────────────────────────────────────────────────────
+  sequences: [
+    {
+      type: 'category',
+      label: 'Deep Sequence Modelling (RNN)',
+      className: 'sidebar-course',
+      customProps: { icon: 'waves' },
+      link: { type: 'doc', id: 'ai-for-engineering/deep-sequence-modelling-rnn/intro' },
+      items: [
+        'ai-for-engineering/deep-sequence-modelling-rnn/foundations-of-deep-sequence-modeling',
+        'ai-for-engineering/deep-sequence-modelling-rnn/from-static-networks-to-time-aware',
+        'ai-for-engineering/deep-sequence-modelling-rnn/rnn-internal-mechanics',
+        'ai-for-engineering/deep-sequence-modelling-rnn/lstm-and-gru',
+        'ai-for-engineering/deep-sequence-modelling-rnn/bringing-sequence-modeling-real-world',
+        'ai-for-engineering/deep-sequence-modelling-rnn/training-rnn-backprop-through-time',
+        'ai-for-engineering/deep-sequence-modelling-rnn/training-an-rnn-in-pytorch',
+        'ai-for-engineering/deep-sequence-modelling-rnn/interview-readiness',
+      ],
+    },
+  ],
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // Transformers
+  // ─────────────────────────────────────────────────────────────────────────
+  transformers: [
+    {
+      type: 'category',
+      label: 'Attention Is All You Need',
+      className: 'sidebar-course',
+      customProps: { icon: 'sparkles' },
+      link: { type: 'doc', id: 'ai-for-engineering/attention-is-all-you-need/intro' },
+      items: [
+        'ai-for-engineering/attention-is-all-you-need/problem-with-rnns-and-lstms',
+        'ai-for-engineering/attention-is-all-you-need/positional-embeddings',
+        'ai-for-engineering/attention-is-all-you-need/attention',
+        'ai-for-engineering/attention-is-all-you-need/self-attention',
+        'ai-for-engineering/attention-is-all-you-need/multi-headed-attention',
+        'ai-for-engineering/attention-is-all-you-need/cross-attention',
+        'ai-for-engineering/attention-is-all-you-need/encoder-stack',
+        'ai-for-engineering/attention-is-all-you-need/encoder-decoder-transformer',
+        'ai-for-engineering/attention-is-all-you-need/from-encoder-decoder-to-gpt',
+        'ai-for-engineering/attention-is-all-you-need/interview-readiness',
+      ],
+    },
+    {
+      type: 'category',
+      label: 'Build and Train Your Own GPT-2',
+      className: 'sidebar-course',
+      customProps: { icon: 'brain' },
+      link: { type: 'doc', id: 'ai-for-engineering/build-and-train-your-own-gpt2-model/intro' },
+      items: [
+        'ai-for-engineering/build-and-train-your-own-gpt2-model/problem-with-rnns-lstms',
+        'ai-for-engineering/build-and-train-your-own-gpt2-model/token-embeddings',
+        'ai-for-engineering/build-and-train-your-own-gpt2-model/positional-embeddings',
+        'ai-for-engineering/build-and-train-your-own-gpt2-model/attention-multi-head-attention',
+        'ai-for-engineering/build-and-train-your-own-gpt2-model/causal-masking',
+        'ai-for-engineering/build-and-train-your-own-gpt2-model/residual-connections',
+        'ai-for-engineering/build-and-train-your-own-gpt2-model/layer-normalization',
+        'ai-for-engineering/build-and-train-your-own-gpt2-model/feed-forward-neural-networks',
+        'ai-for-engineering/build-and-train-your-own-gpt2-model/generation-of-next-tokens',
+        'ai-for-engineering/build-and-train-your-own-gpt2-model/decoder-only-transformer',
+        'ai-for-engineering/build-and-train-your-own-gpt2-model/interview-readiness',
+      ],
+    },
+  ],
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // Agentic AI
+  // ─────────────────────────────────────────────────────────────────────────
+  agentic: [
+    {
+      type: 'category',
+      label: 'Build a Multi-Agent Research Assistant',
+      className: 'sidebar-course',
+      customProps: { icon: 'bot' },
+      link: { type: 'doc', id: 'ai-for-engineering/agentic-ai/intro' },
+      items: [
+        'ai-for-engineering/agentic-ai/bare-llm-loop',
+        'ai-for-engineering/agentic-ai/tool-use',
+        'ai-for-engineering/agentic-ai/react-reasoning',
+        'ai-for-engineering/agentic-ai/planner',
+        'ai-for-engineering/agentic-ai/parallel-executors',
+        'ai-for-engineering/agentic-ai/shared-memory',
+        'ai-for-engineering/agentic-ai/critic',
+        'ai-for-engineering/agentic-ai/full-system',
+        'ai-for-engineering/agentic-ai/observability',
+        'ai-for-engineering/agentic-ai/interview-readiness',
+      ],
+    },
+  ],
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // System Design
+  // ─────────────────────────────────────────────────────────────────────────
+  systemDesign: [
+    {
+      type: 'category',
+      label: 'ML System Design',
+      className: 'sidebar-course',
+      customProps: { icon: 'server' },
+      link: { type: 'doc', id: 'ai-for-engineering/ml-system-design/intro' },
+      items: [
+        'ai-for-engineering/ml-system-design/the-ml-sd-interview',
+        'ai-for-engineering/ml-system-design/recsys-define-the-problem',
+        'ai-for-engineering/ml-system-design/recsys-data-pipeline',
+        'ai-for-engineering/ml-system-design/recsys-retrieval-two-tower',
+        'ai-for-engineering/ml-system-design/recsys-ranking',
+        'ai-for-engineering/ml-system-design/recsys-online-serving',
+        'ai-for-engineering/ml-system-design/recsys-evaluation-and-ab-testing',
+        'ai-for-engineering/ml-system-design/recsys-monitoring-and-retraining',
+        'ai-for-engineering/ml-system-design/rag-define-the-problem',
+        'ai-for-engineering/ml-system-design/rag-retrieval-and-reranking',
+        'ai-for-engineering/ml-system-design/rag-generation-and-serving',
+        'ai-for-engineering/ml-system-design/rag-evaluation',
+        'ai-for-engineering/ml-system-design/case-ad-ctr-prediction',
+        'ai-for-engineering/ml-system-design/case-real-time-fraud-detection',
+        'ai-for-engineering/ml-system-design/case-eta-prediction',
+        'ai-for-engineering/ml-system-design/case-multimodal-search',
+        'ai-for-engineering/ml-system-design/interview-readiness',
+      ],
+    },
+  ],
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // Practice
+  // ─────────────────────────────────────────────────────────────────────────
+  practice: [
     {
       type: 'category',
       label: 'ML Coding Problems',
       className: 'sidebar-course',
+      customProps: { icon: 'code' },
       link: { type: 'doc', id: 'practice/intro' },
       items: [
-        // Series categories appear here once the first problem in each series is
-        // authored. The skill (`/ml-coding-problem-author`) injects them on first
-        // use. Markers preserved for deterministic insertion:
         {
           type: 'category',
           label: 'Series · Build a GPT',
@@ -356,6 +313,80 @@ const sidebars: SidebarsConfig = {
             'practice/rotary-embedding-apply',
             'practice/bpe-train-merges',
             // SKILL_INSERT: interview
+          ],
+        },
+      ],
+    },
+  ],
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // Interview
+  // ─────────────────────────────────────────────────────────────────────────
+  interview: [
+    {
+      type: 'category',
+      label: 'MLE Interview',
+      className: 'sidebar-course',
+      customProps: { icon: 'briefcase' },
+      link: { type: 'doc', id: 'ai-for-engineering/mle-interview/intro' },
+      items: [
+        'ai-for-engineering/mle-interview/intro',
+        'ai-for-engineering/mle-interview/rubrics-and-playbook',
+        {
+          type: 'category',
+          label: 'Company Interview Guides',
+          link: { type: 'doc', id: 'ai-for-engineering/mle-interview/guides/index' },
+          items: [
+            'ai-for-engineering/mle-interview/guides/recently-asked',
+            {
+              type: 'category',
+              label: 'Meta',
+              items: [
+                'ai-for-engineering/mle-interview/guides/meta/e3',
+                'ai-for-engineering/mle-interview/guides/meta/e4',
+                'ai-for-engineering/mle-interview/guides/meta/e5',
+              ],
+            },
+            {
+              type: 'category',
+              label: 'Google',
+              items: [
+                'ai-for-engineering/mle-interview/guides/google/l3',
+                'ai-for-engineering/mle-interview/guides/google/l4',
+                'ai-for-engineering/mle-interview/guides/google/l5',
+              ],
+            },
+            {
+              type: 'category',
+              label: 'Amazon',
+              items: [
+                'ai-for-engineering/mle-interview/guides/amazon/sde-i',
+                'ai-for-engineering/mle-interview/guides/amazon/sde-ii',
+                'ai-for-engineering/mle-interview/guides/amazon/sde-iii',
+                'ai-for-engineering/mle-interview/guides/amazon/applied-scientist',
+              ],
+            },
+            {
+              type: 'category',
+              label: 'Microsoft',
+              items: [
+                'ai-for-engineering/mle-interview/guides/microsoft/l62',
+                'ai-for-engineering/mle-interview/guides/microsoft/l63',
+                'ai-for-engineering/mle-interview/guides/microsoft/l64',
+                'ai-for-engineering/mle-interview/guides/microsoft/mle',
+                'ai-for-engineering/mle-interview/guides/microsoft/applied-scientist',
+                'ai-for-engineering/mle-interview/guides/microsoft/ml-research-engineer',
+              ],
+            },
+            {
+              type: 'category',
+              label: 'Apple',
+              items: [
+                'ai-for-engineering/mle-interview/guides/apple/ict2',
+                'ai-for-engineering/mle-interview/guides/apple/ict3',
+                'ai-for-engineering/mle-interview/guides/apple/ict4',
+              ],
+            },
           ],
         },
       ],

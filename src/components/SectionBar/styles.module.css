@@ -1,0 +1,226 @@
+.sectionBar {
+  position: sticky;
+  top: var(--ifm-navbar-height, 64px);
+  z-index: 50;
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: saturate(180%) blur(12px);
+  -webkit-backdrop-filter: saturate(180%) blur(12px);
+  border-bottom: 1px solid var(--prof-border, #ebebeb);
+}
+
+.inner {
+  position: relative;
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 0.875rem 1.5rem 0.75rem;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+/* Dashed connecting line — runs through center of the circles */
+.inner::before {
+  content: '';
+  position: absolute;
+  top: calc(0.875rem + 16px);
+  left: 3rem;
+  right: 3rem;
+  height: 0;
+  border-top: 1.5px dashed var(--prof-border-strong, #d4d4d4);
+  z-index: 0;
+  pointer-events: none;
+}
+
+.tab {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0;
+  text-decoration: none !important;
+  flex-shrink: 0;
+  min-width: 80px;
+  transition: transform 0.15s ease;
+}
+
+.tab:hover {
+  text-decoration: none !important;
+  transform: translateY(-1px);
+}
+
+.tabIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--prof-surface, #ffffff);
+  border: 1.5px solid var(--prof-border-strong, #d4d4d4);
+  color: var(--prof-text-muted, #a3a3a3);
+  transition: all 0.18s ease;
+  box-shadow: 0 0 0 4px rgba(255, 255, 255, 1);
+}
+
+.tab:hover .tabIcon {
+  border-color: var(--prof-text-secondary, #525252);
+  color: var(--prof-text-primary, #0a0a0a);
+}
+
+.tabActive .tabIcon {
+  background: var(--prof-accent, #3b82f6);
+  border-color: var(--prof-accent, #3b82f6);
+  color: #ffffff;
+  box-shadow:
+    0 0 0 4px rgba(255, 255, 255, 1),
+    0 0 0 8px rgba(59, 130, 246, 0.12);
+}
+
+.tabLabel {
+  font-family: 'Geist', system-ui, sans-serif;
+  font-size: 0.7rem;
+  font-weight: 500;
+  letter-spacing: -0.005em;
+  color: var(--prof-text-muted, #a3a3a3);
+  white-space: nowrap;
+  line-height: 1;
+  transition: color 0.15s ease, font-weight 0.15s ease;
+}
+
+.tab:hover .tabLabel {
+  color: var(--prof-text-primary, #0a0a0a);
+}
+
+.tabActive .tabLabel {
+  color: var(--prof-text-primary, #0a0a0a);
+  font-weight: 600;
+}
+
+/* Hover popover — appears below the tab with a short delay */
+.tabPopover {
+  position: absolute;
+  top: calc(100% + 14px);
+  left: 50%;
+  transform: translateX(-50%) translateY(-4px);
+  width: max-content;
+  max-width: 260px;
+  padding: 0.625rem 0.75rem;
+  background: var(--prof-surface, #ffffff);
+  border: 1px solid var(--prof-border, #ebebeb);
+  border-radius: 0.625rem;
+  box-shadow:
+    0 4px 6px -1px rgba(0, 0, 0, 0.05),
+    0 12px 32px -6px rgba(0, 0, 0, 0.10);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s ease, transform 0.15s ease;
+  z-index: 200;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  text-align: left;
+}
+
+.tab:hover .tabPopover,
+.tab:focus-visible .tabPopover {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+  transition-delay: 0.12s;
+}
+
+.tabPopoverArrow {
+  position: absolute;
+  top: -5px;
+  left: 50%;
+  transform: translateX(-50%) rotate(45deg);
+  width: 9px;
+  height: 9px;
+  background: var(--prof-surface, #ffffff);
+  border-top: 1px solid var(--prof-border, #ebebeb);
+  border-left: 1px solid var(--prof-border, #ebebeb);
+}
+
+.tabPopoverTitle {
+  font-family: 'Geist', system-ui, sans-serif;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--prof-text-primary, #0a0a0a);
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+}
+
+.tabPopoverDesc {
+  font-family: 'Geist', system-ui, sans-serif;
+  font-size: 0.75rem;
+  font-weight: 400;
+  color: var(--prof-text-secondary, #525252);
+  letter-spacing: -0.003em;
+  line-height: 1.4;
+}
+
+/* Edge handling — first tab anchors popover to its left, last to its right */
+.tab:first-child .tabPopover {
+  left: 0;
+  transform: translateX(-12px) translateY(-4px);
+}
+
+.tab:first-child:hover .tabPopover,
+.tab:first-child:focus-visible .tabPopover {
+  transform: translateX(-12px) translateY(0);
+}
+
+.tab:first-child .tabPopoverArrow {
+  left: 28px;
+}
+
+.tab:last-child .tabPopover {
+  left: auto;
+  right: 0;
+  transform: translateX(12px) translateY(-4px);
+}
+
+.tab:last-child:hover .tabPopover,
+.tab:last-child:focus-visible .tabPopover {
+  transform: translateX(12px) translateY(0);
+}
+
+.tab:last-child .tabPopoverArrow {
+  left: auto;
+  right: 28px;
+  transform: rotate(45deg);
+}
+
+@media (max-width: 996px) {
+  .inner {
+    justify-content: flex-start;
+    gap: 0.25rem;
+    padding: 0.75rem 1rem 0.5rem;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .inner::-webkit-scrollbar {
+    display: none;
+  }
+
+  .inner::before {
+    left: 2.5rem;
+    right: 2.5rem;
+  }
+
+  .tab {
+    min-width: 64px;
+  }
+
+  .tabLabel {
+    font-size: 0.65rem;
+  }
+
+  /* Hide popovers on touch / small screens — no hover affordance */
+  .tabPopover {
+    display: none;
+  }
+}

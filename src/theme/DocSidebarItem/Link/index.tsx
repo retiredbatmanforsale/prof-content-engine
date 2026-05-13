@@ -7,6 +7,7 @@ import isInternalUrl from '@docusaurus/isInternalUrl';
 import IconExternalLink from '@theme/Icon/ExternalLink';
 import type { Props } from '@theme/DocSidebarItem/Link';
 import { useProgress, type ProgressStatus } from '@site/src/context/ProgressContext';
+import SidebarIcon from '@site/src/theme/DocSidebarItem/SidebarIcon';
 
 import styles from './styles.module.css';
 
@@ -60,13 +61,14 @@ export default function DocSidebarItemLink({
   index,
   ...props
 }: Props): ReactNode {
-  const { href, label, className, autoAddBaseUrl } = item;
+  const { href, label, className, autoAddBaseUrl, customProps } = item;
   const isActive = isActiveSidebarItem(item, activePath);
   const isInternalLink = isInternalUrl(href);
 
   const { progress } = useProgress();
   const lessonId = isInternalLink ? hrefToLessonId(href) : null;
   const status = lessonId ? progress[lessonId] : undefined;
+  const iconName = (customProps as { icon?: string } | undefined)?.icon;
 
   return (
     <li
@@ -92,6 +94,7 @@ export default function DocSidebarItemLink({
           onClick: onItemClick ? () => onItemClick(item) : undefined,
         })}
         {...props}>
+        <SidebarIcon name={iconName} className={styles.sidebarIcon} />
         <ProgressIcon status={status} />
         <span title={label} className={styles.linkLabel}>
           {label}
