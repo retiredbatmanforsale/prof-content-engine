@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
-import { Sparkles, ArrowRight } from 'lucide-react';
+import { Sparkles } from 'lucide-react';
+import PixelButton from '@site/src/components/PixelButton';
 
 const TOKEN_KEY = 'lexai_access_token';
 const REFRESH_KEY = 'lexai_refresh_token';
@@ -115,7 +116,7 @@ async function streamTutorResponse(
         ? 'Your session expired. Please refresh the page and sign in again.'
         : response.status === 429
           ? 'Too many requests. Please wait a minute and try again.'
-          : `Failed to start session: ${detail}`,
+          : `Failed to reach Prof: ${detail}`,
     );
     return;
   }
@@ -330,42 +331,7 @@ export default function SocraticTutor({ topic, concepts, lessonId }: Props) {
           </div>
 
           <div className="relative mt-5 flex justify-end">
-            <button
-              onClick={handleOpen}
-              className="group/btn inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition-all"
-              style={{
-                background: 'var(--prof-text-primary, #0a0a0a)',
-                color: '#ffffff',
-                border: '1px solid var(--prof-text-primary, #0a0a0a)',
-                boxShadow:
-                  '0 1px 2px rgba(15,15,15,0.06), inset 0 1px 0 rgba(255,255,255,0.06)',
-                letterSpacing: '-0.005em',
-                transitionTimingFunction: 'var(--prof-ease)',
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.transform = 'translateY(-1px)';
-                e.currentTarget.style.boxShadow =
-                  '0 6px 18px -4px rgba(59,130,246,0.35), inset 0 1px 0 rgba(255,255,255,0.06)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.transform = 'translateY(0)';
-                e.currentTarget.style.boxShadow =
-                  '0 1px 2px rgba(15,15,15,0.06), inset 0 1px 0 rgba(255,255,255,0.06)';
-              }}
-              onMouseDown={(e) => {
-                e.currentTarget.style.transform = 'translateY(0) scale(0.985)';
-              }}
-              onMouseUp={(e) => {
-                e.currentTarget.style.transform = 'translateY(-1px)';
-              }}
-            >
-              Start session
-              <ArrowRight
-                size={14}
-                strokeWidth={2}
-                className="transition-transform duration-200 group-hover/btn:translate-x-0.5"
-              />
-            </button>
+            <PixelButton label="Ask Prof" onClick={handleOpen} />
           </div>
         </div>
       </div>
@@ -394,7 +360,7 @@ export default function SocraticTutor({ topic, concepts, lessonId }: Props) {
             onClick={handleClose}
             className="rounded-lg px-3 py-1 text-xs text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800 dark:hover:text-slate-300"
           >
-            End session
+            Close
           </button>
         </div>
 

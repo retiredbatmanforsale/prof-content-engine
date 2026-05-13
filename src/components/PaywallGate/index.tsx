@@ -2,6 +2,7 @@ import React from 'react';
 import Link from '@docusaurus/Link';
 import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
 import { useAuthState } from '../../context/AuthContext';
+import PixelButton from '@site/src/components/PixelButton';
 import styles from './styles.module.css';
 
 type Props = {
@@ -46,8 +47,8 @@ export default function PaywallGate({ access, title, description }: Props) {
   const primaryLabel = isFreeAccount
     ? 'Subscribe — from ₹1,667/mo'
     : access === 'free'
-      ? 'Create free account →'
-      : 'Get started free →';
+      ? 'Create free account'
+      : 'Get started free';
 
   const secondaryHref = `${mainPlatformUrl}/login`;
   const showSecondary = isAnonymous;
@@ -71,9 +72,7 @@ export default function PaywallGate({ access, title, description }: Props) {
         <p className={styles.subtext}>{subtext}</p>
 
         <div className={styles.actions}>
-          <Link href={primaryHref} className={styles.primaryBtn}>
-            {primaryLabel}
-          </Link>
+          <PixelButton label={primaryLabel} href={primaryHref} />
           {showSecondary && (
             <Link href={secondaryHref} className={styles.secondaryBtn}>
               Sign in

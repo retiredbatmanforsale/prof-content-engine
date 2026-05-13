@@ -1,0 +1,85 @@
+/* Pixel-style CTA button — content slides up on hover, second copy of the
+   content slides in from below. Pure CSS, no JS, no library. */
+
+.button {
+  position: relative;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
+  background: #0a0a0a;
+  color: #ffffff;
+  border: 1px solid #0a0a0a;
+  border-radius: 999px;
+  padding: 0 1.5rem;
+  height: 48px;
+  font-family: 'Geist', 'Inter', system-ui, sans-serif;
+  font-size: 0.9rem;
+  font-weight: 500;
+  letter-spacing: -0.005em;
+  cursor: pointer;
+  overflow: hidden;
+  text-decoration: none !important;
+  white-space: nowrap;
+  transition:
+    background 0.2s var(--prof-ease, cubic-bezier(0.6, 0.01, 0.05, 0.95)),
+    box-shadow 0.2s var(--prof-ease, cubic-bezier(0.6, 0.01, 0.05, 0.95)),
+    transform 0.1s var(--prof-ease, cubic-bezier(0.6, 0.01, 0.05, 0.95));
+  /* Premium inner highlight at the top edge */
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 1px 2px rgba(0, 0, 0, 0.08);
+}
+
+.button:hover {
+  background: #171717;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    0 8px 22px -6px rgba(59, 130, 246, 0.35);
+}
+
+.button:active {
+  transform: scale(0.985);
+}
+
+.button:focus-visible {
+  outline: 2px solid #3b82f6;
+  outline-offset: 3px;
+}
+
+/* The two content rows — first is visible, second is stacked below in the
+   overflow:hidden viewport. Both translate up together on hover. */
+.content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  width: 100%;
+  height: 100%;
+  flex-shrink: 0;
+  transition: transform 0.42s cubic-bezier(0.6, 0.01, 0.05, 0.95);
+}
+
+.button:hover .content {
+  transform: translateY(-100%);
+}
+
+.label {
+  display: inline-block;
+}
+
+.icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Reduced motion: drop the slide, keep the button functional and pretty */
+@media (prefers-reduced-motion: reduce) {
+  .content {
+    transition: none;
+  }
+  .button:hover .content {
+    transform: none;
+  }
+}
