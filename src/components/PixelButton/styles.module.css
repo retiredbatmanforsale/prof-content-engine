@@ -47,6 +47,15 @@
   outline-offset: 3px;
 }
 
+/* Small size — nav-bar appropriate (34px vs default 48px). Same animation,
+   smaller padding and type so it doesn't dominate. */
+.buttonSm {
+  height: 34px;
+  padding: 0 0.875rem;
+  font-size: 0.8rem;
+  border-radius: 999px;
+}
+
 /* The two content rows — first is visible, second is stacked below in the
    overflow:hidden viewport. Both translate up together on hover. */
 .content {

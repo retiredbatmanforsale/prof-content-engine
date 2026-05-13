@@ -6,6 +6,7 @@ import SearchBar from '@theme/SearchBar';
 import EarlyAccessPill from '@site/src/components/EarlyAccessPill';
 import StreakPill from '@site/src/components/StreakPill';
 import StreakToast from '@site/src/components/StreakToast';
+import ProfileMenu from '@site/src/components/ProfileMenu';
 
 const HOME_URL = 'https://prof.lexailabs.com';
 
@@ -43,6 +44,9 @@ export default function NavbarContent(): ReactNode {
       <div className="navbar__items navbar__items--right prof-navbar__right">
         <div className="prof-navbar__search">
           <SearchBar />
+        </div>
+        <div className="prof-navbar__profile">
+          <ProfileMenu />
         </div>
       </div>
     </div>

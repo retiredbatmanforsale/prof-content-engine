@@ -224,6 +224,11 @@ body.prof-scrolled .navbar {
   margin-left: 0.5rem;
 }
 
+.prof-navbar__profile {
+  display: inline-flex;
+  align-items: center;
+}
+
 @media (max-width: 640px) {
   .prof-navbar__earlyAccess {
     display: none;

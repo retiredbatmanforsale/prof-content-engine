@@ -6,11 +6,12 @@
 
 export const PREVIEW_STATUS = {
   state: 'Early access · Shipping daily',
-  gaPromise: 'Going public when our flagship courses are complete.',
   lastShipped: {
     date: '2026-05-13',
     title: 'Quiz that teaches — every wrong answer comes with an explanation.',
-    href: 'https://prof.lexailabs.com/whats-new#may-13-2026',
+    // Relative path — the pill component prepends `mainPlatformUrl` from
+    // Docusaurus config at runtime so it works in both dev and prod.
+    href: '/whats-new#may-13-2026',
   },
   comingNext: [
     'Adaptive quizzes — branching on misconception',
@@ -18,5 +19,6 @@ export const PREVIEW_STATUS = {
     'More company interview guides',
     'Voting board — vote for your favourite content',
   ],
-  bugReportHref: 'mailto:puru@lexailabs.com?subject=Prof%20bug%20report',
+  bugReportHref: 'mailto:help@lexailabs.com?subject=Prof%20%E2%80%94%20feedback%20or%20bug',
+  bugReportLabel: 'Request a feature or report a bug',
 } as const;

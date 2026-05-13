@@ -1,0 +1,164 @@
+/* ProfileMenu — avatar + dropdown in the docs navbar. Cross-site links
+   to prof-frontend for account / billing / admin. */
+
+.wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+/* ── Avatar button ──────────────────────────────────────────────────── */
+
+.avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--prof-text-primary, #0a0a0a);
+  color: #ffffff;
+  border: none;
+  cursor: pointer;
+  font-family: 'Geist', system-ui, sans-serif;
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+  overflow: hidden;
+  transition:
+    transform 0.15s var(--prof-ease),
+    box-shadow 0.15s var(--prof-ease),
+    background 0.15s var(--prof-ease);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    0 1px 2px rgba(15, 15, 15, 0.06);
+}
+
+.avatar:hover {
+  background: #171717;
+  transform: translateY(-1px);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    0 4px 12px -4px rgba(15, 15, 15, 0.18);
+}
+
+.avatar:active {
+  transform: translateY(0);
+}
+
+.avatar:focus-visible {
+  outline: 2px solid var(--prof-accent, #3b82f6);
+  outline-offset: 3px;
+}
+
+.avatarInitial {
+  line-height: 1;
+}
+
+.avatarImage {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* ── Popover ─────────────────────────────────────────────────────────── */
+
+.popover {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  width: 240px;
+  background: #ffffff;
+  border: 1px solid var(--prof-border, #ebebeb);
+  border-radius: 12px;
+  box-shadow:
+    0 1px 2px rgba(15, 15, 15, 0.04),
+    0 12px 32px -8px rgba(15, 15, 15, 0.10);
+  padding: 6px;
+  z-index: 200;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(-4px);
+  transition:
+    opacity 0.18s var(--prof-ease),
+    transform 0.18s var(--prof-ease);
+}
+
+.popoverOpen {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0);
+}
+
+.identity {
+  padding: 0.625rem 0.75rem 0.5rem;
+}
+
+.identityName {
+  margin: 0;
+  font-family: 'Geist', system-ui, sans-serif;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--prof-text-primary, #0a0a0a);
+  letter-spacing: -0.01em;
+  line-height: 1.25;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.identityEmail {
+  margin: 2px 0 0;
+  font-family: 'Geist', system-ui, sans-serif;
+  font-size: 0.75rem;
+  font-weight: 400;
+  color: var(--prof-text-muted, #a3a3a3);
+  letter-spacing: -0.005em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.divider {
+  height: 1px;
+  background: var(--prof-border, #ebebeb);
+  margin: 4px -6px;
+}
+
+.menuItem {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  border-radius: 6px;
+  background: transparent;
+  border: none;
+  font-family: 'Geist', system-ui, sans-serif;
+  font-size: 0.825rem;
+  font-weight: 450;
+  color: var(--prof-text-primary, #0a0a0a) !important;
+  text-decoration: none !important;
+  text-align: left;
+  cursor: pointer;
+  letter-spacing: -0.005em;
+  transition:
+    background 0.12s var(--prof-ease),
+    color 0.12s var(--prof-ease);
+}
+
+.menuItem:hover {
+  background: var(--prof-surface-sunken, #f5f5f5);
+  color: var(--prof-text-primary, #0a0a0a) !important;
+  text-decoration: none !important;
+}
+
+.menuItem svg {
+  color: var(--prof-text-muted, #a3a3a3);
+  flex-shrink: 0;
+  transition: color 0.12s var(--prof-ease);
+}
+
+.menuItem:hover svg {
+  color: var(--prof-text-primary, #0a0a0a);
+}

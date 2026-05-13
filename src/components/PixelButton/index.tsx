@@ -10,6 +10,8 @@ type PixelButtonProps = {
   ariaLabel?: string;
   // Open href in a new tab. Ignored when onClick is used.
   external?: boolean;
+  // 'md' (default) is hero-tier 48px. 'sm' fits in a navbar — 34px.
+  size?: 'sm' | 'md';
 };
 
 function PixelArrow() {
@@ -40,9 +42,11 @@ export default function PixelButton({
   className,
   ariaLabel,
   external,
+  size = 'md',
 }: PixelButtonProps) {
   const glyph = icon ?? <PixelArrow />;
-  const classes = `${styles.button}${className ? ` ${className}` : ''}`;
+  const sizeClass = size === 'sm' ? styles.buttonSm : '';
+  const classes = `${styles.button}${sizeClass ? ` ${sizeClass}` : ''}${className ? ` ${className}` : ''}`;
 
   const inner = (
     <>
