@@ -1,0 +1,13 @@
+# Netlify configuration for prof-content-engine.
+#
+# After the baseUrl /courses/ migration, anyone hitting the bare content
+# subdomain (e.g. content.lexailabs.com/, or a deploy-preview root URL)
+# would land on a Docusaurus mismatch warning because the site is built
+# for /courses/. Redirect them up to /courses/ so they always land on
+# usable content. 301 so search engines learn the canonical path.
+
+[[redirects]]
+  from = "/"
+  to = "/courses/"
+  status = 301
+  force = true
