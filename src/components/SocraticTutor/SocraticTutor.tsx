@@ -352,7 +352,7 @@ export default function SocraticTutor({ topic, concepts, lessonId }: Props) {
             </div>
             <div>
               <span className="text-sm font-semibold text-slate-800 dark:text-slate-100">
-                Prof — Socratic Tutor
+                Ask Prof — Prof will make you think deeper.
               </span>
               <span className="ml-2 text-xs text-slate-400 dark:text-slate-500">
                 {topic}
